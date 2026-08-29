@@ -365,12 +365,18 @@
     box-shadow:0 20px 60px rgba(59,18,48,0.25);
     z-index:41;
     display:none;
+    flex-direction:column;
     overflow:hidden;
     opacity:0;
     transition:opacity .2s ease, transform .2s ease;
   }
-  .order-modal.open{display:block; opacity:1; transform:translate(-50%,-50%) scale(1);}
-  .order-modal .modal-body{padding:28px 24px 24px;}
+  .order-modal.open{display:flex; opacity:1; transform:translate(-50%,-50%) scale(1);}
+  .order-modal .modal-body{
+    padding:28px 24px 24px;
+    overflow-y:auto;
+    flex:1;
+    min-height:0;
+  }
   .order-summary-text{
     white-space:pre-wrap; word-break:break-word;
     background:var(--cream); border-radius:14px; padding:14px;
@@ -378,6 +384,23 @@
     max-height:220px; overflow-y:auto; margin:0 0 18px; color:var(--plum);
   }
   .app-tip{font-size:11.5px; color:#8a7680; text-align:center; margin-top:10px; line-height:1.5;}
+
+  .copy-steps{display:flex; flex-direction:column; gap:14px; margin-bottom:18px;}
+  .copy-step{display:flex; gap:12px; align-items:flex-start;}
+  .step-num{
+    flex-shrink:0; width:28px; height:28px; border-radius:50%;
+    background:var(--sage); color:#fff; font-weight:700; font-size:13.5px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .step-text{font-size:14px; line-height:1.55; color:var(--plum);}
+  .step-text strong{font-weight:700;}
+  .summary-details{margin-bottom:18px;}
+  .summary-details summary{
+    font-size:12.5px; color:var(--rose-dark); cursor:pointer; font-weight:600;
+    text-decoration:underline; list-style:none;
+  }
+  .summary-details summary::-webkit-details-marker{display:none;}
+  .summary-details[open] summary{margin-bottom:10px;}
 
   /* ---------- Order details form (date / delivery method / address) ---------- */
   .form-group{margin-bottom:16px;}
@@ -539,9 +562,25 @@
 <div class="order-modal" id="orderSummaryModal">
   <button class="modal-close" onclick="closeOrderSummary()">✕</button>
   <div class="modal-body">
-    <h3>สรุปคำสั่งซื้อ</h3>
-    <p class="modal-desc">คัดลอกข้อความนี้ให้อัตโนมัติแล้ว กด "เปิด Messenger" ด้านล่าง แล้ววาง (Paste) ข้อความส่งได้เลย ถ้าไม่ขึ้นให้อัตโนมัติ</p>
-    <pre id="orderSummaryText" class="order-summary-text"></pre>
+    <h3>ส่งคำสั่งซื้อใน 3 ขั้นตอน</h3>
+    <div class="copy-steps">
+      <div class="copy-step">
+        <span class="step-num">1</span>
+        <div class="step-text">📋 <strong>คัดลอกข้อความให้แล้ว</strong><br>ระบบคัดลอกอัตโนมัติ ไม่ต้องพิมพ์เอง</div>
+      </div>
+      <div class="copy-step">
+        <span class="step-num">2</span>
+        <div class="step-text">📩 <strong>กดปุ่มสีชมพู "เปิด Messenger" ด้านล่าง</strong></div>
+      </div>
+      <div class="copy-step">
+        <span class="step-num">3</span>
+        <div class="step-text">✋ <strong>แตะค้างในช่องพิมพ์ข้อความ แล้วเลือก "วาง"</strong><br>จากนั้นกดส่ง 📤</div>
+      </div>
+    </div>
+    <details class="summary-details">
+      <summary>ดูข้อความที่จะส่ง</summary>
+      <pre id="orderSummaryText" class="order-summary-text"></pre>
+    </details>
     <div class="modal-actions">
       <a id="messengerLink" href="#" class="checkout-btn" onclick="copyToClipboard(currentOrderMessage)">📩 เปิด Messenger</a>
       <button class="add-btn secondary" onclick="copyOrderMessage()">📋 คัดลอกข้อความอีกครั้ง</button>
