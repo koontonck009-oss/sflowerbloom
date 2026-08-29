@@ -963,7 +963,7 @@ function copyOrderMessage(){
 function openMessengerFromSummary(){
   copyToClipboard(currentOrderMessage);
   const url = `${PAGE_LINK}?text=${encodeURIComponent(currentOrderMessage)}`;
-  window.open(url, '_blank');
+  window.location.href = url;
 }
 function clearCart(){
   cart = {};
