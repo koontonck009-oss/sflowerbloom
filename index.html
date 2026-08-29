@@ -49,8 +49,10 @@
     display:flex;align-items:center;justify-content:center;
     box-shadow:var(--shadow);
     flex-shrink:0;
+    overflow:hidden;
   }
   .brand-mark svg{width:30px;height:30px;}
+  .brand-mark img{width:100%;height:100%;object-fit:cover;}
   .brand h1{margin:0;font-size:26px;color:var(--sage-dark);line-height:1.1;}
   .brand p{margin:2px 0 0;font-size:13px;color:var(--rose-dark);letter-spacing:.5px;}
 
@@ -166,18 +168,24 @@
     border:1px solid transparent;
   }
   .card:hover{transform:translateY(-4px); border-color:var(--line);}
+  .thumb-wrap{position:relative; margin-bottom:14px;}
   .thumb{
     width:100%; aspect-ratio:1/1;
     border-radius:14px;
     background:var(--cream);
     display:flex; align-items:center; justify-content:center;
-    margin-bottom:14px;
     overflow:hidden;
   }
   .thumb svg{width:70%;height:70%;}
   .thumb img{width:100%; height:100%; object-fit:cover; display:block;}
-  .thumb{cursor:pointer;}
+  .thumb{cursor:pointer; margin-bottom:0;}
   .thumb:hover{opacity:0.92;}
+  .badge-ready{
+    position:absolute; top:8px; left:8px; z-index:2;
+    background:var(--sage); color:#fff; font-size:11px; font-weight:700;
+    padding:4px 10px; border-radius:999px; box-shadow:0 4px 10px rgba(0,0,0,0.15);
+    pointer-events:none;
+  }
   .card h4{margin:0 0 4px; font-size:16.5px; font-weight:700;}
   .color-row{display:flex; gap:6px; flex-wrap:wrap; margin:-2px 0 10px;}
   .color-chip{
@@ -440,7 +448,7 @@
 <header class="top">
   <div class="brand">
     <div class="brand-mark">
-      <svg viewBox="0 0 24 24" fill="none"><path d="M12 2c1.5 2 1.5 4 0 6-1.5-2-1.5-4 0-6z" fill="#FBF6EF"/><path d="M12 22c-3-3-6-6-6-10a6 6 0 0112 0c0 4-3 7-6 10z" fill="#FBF6EF" opacity="0.9"/></svg>
+      <img src="images/logo.png" alt="โลโก้ร้าน" onerror="this.parentElement.innerHTML='<svg viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot;><path d=&quot;M12 2c1.5 2 1.5 4 0 6-1.5-2-1.5-4 0-6z&quot; fill=&quot;#FBF6EF&quot;/><path d=&quot;M12 22c-3-3-6-6-6-10a6 6 0 0112 0c0 4-3 7-6 10z&quot; fill=&quot;#FBF6EF&quot; opacity=&quot;0.9&quot;/></svg>'">
     </div>
     <div>
       <h1>S.Flower Bloom</h1>
@@ -499,6 +507,7 @@
     <h3 id="modalName"></h3>
     <p class="modal-desc" id="modalDesc"></p>
     <div class="color-row" id="modalColors"></div>
+    <div class="color-row" id="modalSizes"></div>
     <div class="modal-qty" id="modalBillsRow" style="display:none;">
       <span>จำนวนธนบัตร (ใบ)</span>
       <div class="qty-ctrl">
@@ -592,7 +601,7 @@
 <script>
 /* ---------------- แก้ไขสินค้าตรงนี้ได้เลย ---------------- */
 const PRODUCTS = [
-  { id:'b1', cat:'ช่อดอกไม้', size:'เล็ก', name:'ช่อกุหลาบแดง 1 ดอก', price:99, desc:'กุหลาบแดง 1 ดอก เลือกสีช่อได้',
+  { id:'b1', cat:'ช่อดอกไม้', size:'เล็ก', name:'ช่อกุหลาบแดง 1 ดอก', price:99, desc:'กุหลาบแดง 1 ดอก เลือกสีช่อได้', ready:true,
     colors:[
       { name:'ช่อสีขาว', image:'images/กุหลาบ-99฿-แดง-ขาว.jpg' },
       { name:'ช่อสีดำ',  image:'images/กุหลาบ-99฿-แดง-ดำ.jpg' },
@@ -799,15 +808,24 @@ const PRODUCTS = [
         ]
   },
   { id:'b58', cat:'ช่อดอกไม้', size:'ใหญ่', name:'ช่อดอกไฮเดรนเยีย', price:549, desc:'ช่อดอกไฮเดรนเยีย', image:'images/ไฮเดรนเยีย-549฿-รวม-ขาว.jpg' },
-  { id:'bmoney', cat:'ช่อดอกไม้', size:'ใส่เงิน', name:'ช่อดอกไม้ใส่เงิน', desc:'ใส่ธนบัตรจริงในช่อ เลือกจำนวนใบได้เอง (1-30 ใบ)',
+  { id:'bmoney', cat:'ช่อดอกไม้ใส่เงิน', name:'ช่อดอกไม้ใส่เงิน', desc:'ใส่ธนบัตรจริงในช่อ เลือกจำนวนใบได้เอง (1-30 ใบ)',
     billSelector:true, pricePerBill:100, wrappingFee:0, minBills:1, maxBills:30, icon:'bouquet'
   },
-  { id:'f1', cat:'กรอบรูป', name:'กรอบรูปไม้สักธรรมชาติ', price:280, desc:'ขนาด 8x10 นิ้ว ผิวไม้แท้', icon:'frame' },
-  { id:'f2', cat:'กรอบรูป', name:'กรอบรูปมินิมอลสีขาว', price:220, desc:'ขนาด 5x7 นิ้ว ทรงเรียบง่าย', icon:'frame' },
-  { id:'f3', cat:'กรอบรูป', name:'กรอบรูปวินเทจลายทอง', price:350, desc:'ขนาด 8x10 นิ้ว ขอบลายนูน', icon:'frame' },
-  { id:'p1', cat:'กระถาง', name:'กระถางดินเผาลายมือวาด', price:190, desc:'ขนาดเล็ก เหมาะกับไม้อวบน้ำ', icon:'pot' },
-  { id:'p2', cat:'กระถาง', name:'กระถางเซรามิกทรงกลม', price:260, desc:'เคลือบมัน มีจานรองในตัว', icon:'pot' },
-  { id:'p3', cat:'กระถาง', name:'กระถางแขวนมาโครเม่', price:320, desc:'ถักมือ พร้อมเชือกแขวน', icon:'pot' },
+  { id:'f1a', cat:'กรอบรูป', size:'A5', name:'กรอบรูปไม้สักธรรมชาติ A5', price:220, desc:'ผิวไม้แท้ ขนาด A5', icon:'frame' },
+  { id:'f1b', cat:'กรอบรูป', size:'A4', name:'กรอบรูปไม้สักธรรมชาติ A4', price:280, desc:'ผิวไม้แท้ ขนาด A4', icon:'frame' },
+  { id:'f2a', cat:'กรอบรูป', size:'A5', name:'กรอบรูปมินิมอลสีขาว A5', price:180, desc:'ทรงเรียบง่าย ขนาด A5', icon:'frame' },
+  { id:'f2b', cat:'กรอบรูป', size:'A4', name:'กรอบรูปมินิมอลสีขาว A4', price:220, desc:'ทรงเรียบง่าย ขนาด A4', icon:'frame' },
+  { id:'f3a', cat:'กรอบรูป', size:'A5', name:'กรอบรูปวินเทจลายทอง A5', price:290, desc:'ขอบลายนูน ขนาด A5', icon:'frame' },
+  { id:'f3b', cat:'กรอบรูป', size:'A4', name:'กรอบรูปวินเทจลายทอง A4', price:350, desc:'ขอบลายนูน ขนาด A4', icon:'frame' },
+  { id:'p1a', cat:'กระถาง', size:'3 นิ้ว', name:'กระถางดินเผาลายมือวาด 3 นิ้ว', price:120, desc:'เหมาะกับไม้อวบน้ำ', icon:'pot' },
+  { id:'p1b', cat:'กระถาง', size:'5 นิ้ว', name:'กระถางดินเผาลายมือวาด 5 นิ้ว', price:190, desc:'เหมาะกับไม้อวบน้ำ', icon:'pot' },
+  { id:'p1c', cat:'กระถาง', size:'9 นิ้ว', name:'กระถางดินเผาลายมือวาด 9 นิ้ว', price:290, desc:'เหมาะกับไม้อวบน้ำ', icon:'pot' },
+  { id:'p2a', cat:'กระถาง', size:'3 นิ้ว', name:'กระถางเซรามิกทรงกลม 3 นิ้ว', price:160, desc:'เคลือบมัน มีจานรองในตัว', icon:'pot' },
+  { id:'p2b', cat:'กระถาง', size:'5 นิ้ว', name:'กระถางเซรามิกทรงกลม 5 นิ้ว', price:260, desc:'เคลือบมัน มีจานรองในตัว', icon:'pot' },
+  { id:'p2c', cat:'กระถาง', size:'9 นิ้ว', name:'กระถางเซรามิกทรงกลม 9 นิ้ว', price:390, desc:'เคลือบมัน มีจานรองในตัว', icon:'pot' },
+  { id:'p3a', cat:'กระถาง', size:'3 นิ้ว', name:'กระถางแขวนมาโครเม่ 3 นิ้ว', price:220, desc:'ถักมือ พร้อมเชือกแขวน', icon:'pot' },
+  { id:'p3b', cat:'กระถาง', size:'5 นิ้ว', name:'กระถางแขวนมาโครเม่ 5 นิ้ว', price:320, desc:'ถักมือ พร้อมเชือกแขวน', icon:'pot' },
+  { id:'p3c', cat:'กระถาง', size:'9 นิ้ว', name:'กระถางแขวนมาโครเม่ 9 นิ้ว', price:450, desc:'ถักมือ พร้อมเชือกแขวน', icon:'pot' },
   { id:'o1', cat:'อื่นๆ', name:'การ์ดอวยพรทำมือ', price:60,  desc:'เขียนข้อความอวยพรให้ฟรี', icon:'other' },
   { id:'o2', cat:'อื่นๆ', name:'ริบบิ้นห่อของขวัญ', price:40,  desc:'เลือกสีได้ตามธีมของขวัญ', icon:'other' },
 ];
@@ -841,6 +859,11 @@ function selectColor(id, idx){
   selectedColor[id] = idx;
   renderCatalog();
 }
+let selectedSizeVariant = {}; // productId -> chosen size index (for products with own per-size price, e.g. frames/pots)
+function selectSizeVariant(id, idx){
+  selectedSizeVariant[id] = idx;
+  renderCatalog();
+}
 
 function cartKeyOf(id, colorName){ return colorName ? `${id}__${colorName}` : id; }
 function parseCartKey(key){
@@ -848,8 +871,12 @@ function parseCartKey(key){
   return i === -1 ? { id:key, color:null } : { id:key.slice(0,i), color:key.slice(i+2) };
 }
 
-const CATS = ['ทั้งหมด','ช่อดอกไม้','กรอบรูป','กระถาง','อื่นๆ'];
-const SIZES = ['ทั้งหมด','เล็ก','กลาง','ใหญ่','ใส่เงิน'];
+const CATS = ['ทั้งหมด','ช่อดอกไม้','ช่อดอกไม้ใส่เงิน','กรอบรูป','กระถาง','อื่นๆ'];
+const CATEGORY_SIZES = {
+  'ช่อดอกไม้': ['ทั้งหมด','เล็ก','กลาง','ใหญ่'],
+  'กรอบรูป': ['ทั้งหมด','A5','A4'],
+  'กระถาง': ['ทั้งหมด','3 นิ้ว','5 นิ้ว','9 นิ้ว']
+};
 let activeCat = 'ทั้งหมด';
 let activeSize = 'ทั้งหมด';
 let cart = {}; // key -> { qty, unitPrice, label }
@@ -862,6 +889,12 @@ function unitPriceFor(p, bills){
   }
   return p.price;
 }
+// Current price to display for a card, accounting for a chosen size-variant (frames/pots) or bill count (money bouquet)
+function displayPrice(p){
+  if(p.billSelector) return unitPriceFor(p);
+  if(p.sizes) return p.sizes[selectedSizeVariant[p.id]||0].price;
+  return p.price;
+}
 
 function renderNav(){
   const nav = document.getElementById('catNav');
@@ -869,25 +902,29 @@ function renderNav(){
     `<button class="cat-btn ${c===activeCat?'active':''}" onclick="setCat('${c}')">${c}</button>`
   ).join('');
 }
-function setCat(c){ activeCat = c; if(c !== 'ช่อดอกไม้') activeSize = 'ทั้งหมด'; renderNav(); renderCatalog(); }
+function setCat(c){ activeCat = c; activeSize = 'ทั้งหมด'; renderNav(); renderCatalog(); }
 function setSize(s){ activeSize = s; renderCatalog(); }
 
 function renderCatalog(){
   const main = document.getElementById('catalog');
   const cats = activeCat === 'ทั้งหมด' ? CATS.slice(1) : [activeCat];
   main.innerHTML = cats.map(cat => {
-    const items = PRODUCTS.filter(p => p.cat === cat && (cat !== 'ช่อดอกไม้' || activeSize === 'ทั้งหมด' || p.size === activeSize));
+    const sizeList = CATEGORY_SIZES[cat];
+    const items = PRODUCTS.filter(p => p.cat === cat && (!sizeList || activeSize === 'ทั้งหมด' || p.size === activeSize));
     if(!items.length) return `
       <div class="section-title"><h3>${cat}</h3><span>0 รายการ</span></div>
-      ${cat==='ช่อดอกไม้' ? renderSizeRow() : ''}
+      ${sizeList ? renderSizeRow(sizeList) : ''}
     `;
     return `
       <div class="section-title"><h3>${cat}</h3><span>${items.length} รายการ</span></div>
-      ${cat==='ช่อดอกไม้' ? renderSizeRow() : ''}
+      ${sizeList ? renderSizeRow(sizeList) : ''}
       <div class="grid">
         ${items.map(p => `
           <div class="card">
-            <div class="thumb" onclick="openProductModal('${p.id}')">${renderThumb(p)}</div>
+            <div class="thumb-wrap">
+              <div class="thumb" onclick="openProductModal('${p.id}')">${renderThumb(p)}</div>
+              ${p.ready ? '<span class="badge-ready">พร้อมส่ง</span>' : ''}
+            </div>
             ${p.colors ? `
               <div class="color-row">
                 ${p.colors.map((c,i) => `
@@ -895,10 +932,17 @@ function renderCatalog(){
                 `).join('')}
               </div>
             ` : ''}
+            ${p.sizes ? `
+              <div class="color-row">
+                ${p.sizes.map((s,i) => `
+                  <button class="color-chip ${((selectedSizeVariant[p.id]||0)===i)?'active':''}" onclick="selectSizeVariant('${p.id}',${i})">${s.name}</button>
+                `).join('')}
+              </div>
+            ` : ''}
             <h4>${p.name}</h4>
             <p class="desc">${p.desc}</p>
             <div class="price-row">
-              <span class="price">${p.billSelector ? `เริ่มต้น ${fmt(unitPriceFor(p))}` : fmt(p.price)}</span>
+              <span class="price">${p.billSelector ? `เริ่มต้น ${fmt(displayPrice(p))}` : fmt(displayPrice(p))}</span>
               ${p.billSelector
                 ? `<button class="add-btn" onclick="openProductModal('${p.id}')">เลือกจำนวน</button>`
                 : `<button class="add-btn" id="add-${p.id}" onclick="addToCart('${p.id}')">+ ใส่ตะกร้า</button>`
@@ -910,18 +954,24 @@ function renderCatalog(){
     `;
   }).join('');
 }
-function renderSizeRow(){
-  return `<div class="size-row">${SIZES.map(s => `<button class="cat-btn ${s===activeSize?'active':''}" onclick="setSize('${s}')">${s}</button>`).join('')}</div>`;
+function renderSizeRow(sizeList){
+  return `<div class="size-row">${sizeList.map(s => `<button class="cat-btn ${s===activeSize?'active':''}" onclick="setSize('${s}')">${s}</button>`).join('')}</div>`;
 }
 
 function addToCart(id){
   const p = PRODUCTS.find(x=>x.id===id);
   if(!p) return;
   if(p.billSelector){ openProductModal(id); return; }
-  const colorName = p.colors ? p.colors[selectedColor[id]||0].name : null;
-  const key = cartKeyOf(id, colorName);
+  let label = null, price = p.price;
+  if(p.colors){ label = p.colors[selectedColor[id]||0].name; }
+  if(p.sizes){
+    const sv = p.sizes[selectedSizeVariant[id]||0];
+    label = label ? `${label}, ${sv.name}` : sv.name;
+    price = sv.price;
+  }
+  const key = cartKeyOf(id, label);
   if(cart[key]) cart[key].qty += 1;
-  else cart[key] = { qty:1, unitPrice:p.price, label:colorName };
+  else cart[key] = { qty:1, unitPrice:price, label };
   updateCartUI();
   showToast('เพิ่มลงตะกร้าแล้ว 🌸');
   const btn = document.getElementById('add-'+id);
@@ -1195,6 +1245,15 @@ function renderModal(){
     colorsWrap.innerHTML = '';
   }
 
+  const sizesWrap = document.getElementById('modalSizes');
+  if(p.sizes){
+    sizesWrap.innerHTML = p.sizes.map((s,i)=>`
+      <button class="color-chip ${((selectedSizeVariant[p.id]||0)===i)?'active':''}" onclick="selectSizeVariant('${p.id}',${i}); renderModal();">${s.name}</button>
+    `).join('');
+  } else {
+    sizesWrap.innerHTML = '';
+  }
+
   const billsRow = document.getElementById('modalBillsRow');
   if(p.billSelector){
     billsRow.style.display = 'flex';
@@ -1203,12 +1262,18 @@ function renderModal(){
     billsRow.style.display = 'none';
   }
 
-  document.getElementById('modalPrice').textContent = fmt(unitPriceFor(p, modalBills));
+  document.getElementById('modalPrice').textContent = fmt(currentModalVariant(p).unitPrice);
 }
 function currentModalVariant(p){
   if(p.billSelector) return { label:`ใส่ธนบัตร ${modalBills} ใบ`, unitPrice: unitPriceFor(p, modalBills) };
-  if(p.colors) return { label:p.colors[selectedColor[p.id]||0].name, unitPrice:p.price };
-  return { label:null, unitPrice:p.price };
+  let label = null, unitPrice = p.price;
+  if(p.colors){ label = p.colors[selectedColor[p.id]||0].name; }
+  if(p.sizes){
+    const sv = p.sizes[selectedSizeVariant[p.id]||0];
+    label = label ? `${label}, ${sv.name}` : sv.name;
+    unitPrice = sv.price;
+  }
+  return { label, unitPrice };
 }
 function addModalToCart(){
   const p = PRODUCTS.find(x=>x.id===modalProductId);
