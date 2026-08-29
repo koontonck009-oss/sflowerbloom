@@ -279,6 +279,7 @@
     background:var(--rose); color:#fff; font-weight:700; font-size:16px;
     display:flex; align-items:center; justify-content:center; gap:10px;
     cursor:pointer; transition:background .15s ease;
+    text-decoration:none; box-sizing:border-box;
   }
   .checkout-btn:hover{background:var(--rose-dark);}
   .checkout-btn:disabled{background:#d8cfd2; cursor:not-allowed;}
@@ -376,6 +377,30 @@
     font-family:'Sarabun'; font-size:13px; line-height:1.6;
     max-height:220px; overflow-y:auto; margin:0 0 18px; color:var(--plum);
   }
+  .app-tip{font-size:11.5px; color:#8a7680; text-align:center; margin-top:10px; line-height:1.5;}
+
+  /* ---------- Order details form (date / delivery method / address) ---------- */
+  .form-group{margin-bottom:16px;}
+  .form-group label{display:block; font-size:13.5px; font-weight:700; margin-bottom:6px; color:var(--plum);}
+  .form-input{
+    width:100%; padding:10px 12px; border-radius:12px; border:1.5px solid var(--line);
+    font-family:'Sarabun'; font-size:14px; color:var(--plum); background:#fff;
+    resize:vertical;
+  }
+  .form-input:focus{outline:none; border-color:var(--sage);}
+  .method-options{display:flex; flex-direction:column; gap:10px;}
+  .method-card{
+    display:flex; align-items:flex-start; gap:10px;
+    border:1.5px solid var(--line); border-radius:14px; padding:12px 14px;
+    cursor:pointer; font-size:13.5px; line-height:1.5;
+  }
+  .method-card input{margin-top:3px;}
+  .method-card small{color:#8a7680; font-weight:500;}
+  .method-card:has(input:checked){border-color:var(--sage); background:var(--cream);}
+  .fee-preview{background:var(--cream); border-radius:14px; padding:14px; margin-bottom:18px;}
+  .fee-row{display:flex; justify-content:space-between; font-size:13.5px; margin-bottom:6px;}
+  .fee-row.total{font-weight:700; font-size:15px; border-top:1px dashed var(--line); padding-top:8px; margin-top:4px;}
+  .fee-note{font-size:12px; color:var(--rose-dark); margin:8px 0 0; line-height:1.5;}
 
   footer{
     text-align:center; padding:26px 6vw 40px; font-size:13px; color:#8a7680;
@@ -430,10 +455,10 @@
       <span>ยอดรวมทั้งหมด</span>
       <span class="total-amt" id="totalAmt">฿0</span>
     </div>
-    <button class="checkout-btn" id="checkoutBtn" onclick="checkout()">
+    <button class="checkout-btn" id="checkoutBtn" onclick="startCheckout(buildCartOrderLines)">
       📩 ยืนยันสั่งซื้อทาง Facebook
     </button>
-    <p class="checkout-hint">กดแล้วระบบจะคัดลอกข้อความสรุปออเดอร์ให้อัตโนมัติ พร้อมเปิด Messenger</p>
+    <p class="checkout-hint">กดแล้วกรอกวันที่รับสินค้า/วิธีรับ ระบบจะคัดลอกข้อความสรุปให้อัตโนมัติ</p>
   </div>
 </aside>
 
@@ -470,24 +495,58 @@
     </div>
     <div class="modal-actions">
       <button class="add-btn secondary" onclick="addModalToCart()">🧺 ใส่ตะกร้า</button>
-      <button class="checkout-btn" onclick="orderModalNow()">📩 สั่งซื้อทันที</button>
+      <button class="checkout-btn" onclick="startCheckout(buildModalOrderLines)">📩 สั่งซื้อทันที</button>
     </div>
   </div>
 </div>
 
 <footer>© S.Flower Bloom — สั่งซื้อผ่าน Facebook Messenger</footer>
 
+<div class="overlay" id="formOverlay" onclick="closeOrderForm()"></div>
+<div class="order-modal" id="orderFormModal">
+  <button class="modal-close" onclick="closeOrderForm()">✕</button>
+  <div class="modal-body">
+    <h3>ข้อมูลการรับสินค้า</h3>
+    <div class="form-group">
+      <label>วันที่ต้องการรับสินค้า</label>
+      <input type="date" id="orderDate" class="form-input">
+    </div>
+    <div class="form-group">
+      <label>วิธีรับสินค้า</label>
+      <div class="method-options">
+        <label class="method-card">
+          <input type="radio" name="deliveryMethod" value="pickup" checked onchange="renderFeePreview()">
+          <span>🛵 นัดรับ / จัดส่งในพื้นที่<br><small>ตัวเมืองนครสวรรค์ / อ.พยุหะคีรี / ใกล้เคียง</small></span>
+        </label>
+        <label class="method-card">
+          <input type="radio" name="deliveryMethod" value="ship" onchange="renderFeePreview()">
+          <span>📮 จัดส่งไปรษณีย์ไทย<br><small>ใช้เวลาประมาณ 2-3 วัน</small></span>
+        </label>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>ที่อยู่ / สถานที่นัดรับ</label>
+      <textarea id="orderAddress" class="form-input" rows="3" placeholder="ระบุที่อยู่จัดส่ง หรือจุดนัดรับให้ชัดเจน"></textarea>
+    </div>
+    <div class="fee-preview" id="feePreview"></div>
+    <div class="modal-actions">
+      <button class="checkout-btn" onclick="submitOrderForm()">ยืนยันคำสั่งซื้อ ✓</button>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="summaryOverlay" onclick="closeOrderSummary()"></div>
 <div class="order-modal" id="orderSummaryModal">
   <button class="modal-close" onclick="closeOrderSummary()">✕</button>
   <div class="modal-body">
     <h3>สรุปคำสั่งซื้อ</h3>
-    <p class="modal-desc">คัดลอกข้อความนี้ให้อัตโนมัติแล้ว กด "เปิด Messenger" แล้ววาง (Paste) ข้อความส่งได้เลย ถ้าไม่ขึ้นให้อัตโนมัติ</p>
+    <p class="modal-desc">คัดลอกข้อความนี้ให้อัตโนมัติแล้ว กด "เปิด Messenger" ด้านล่าง แล้ววาง (Paste) ข้อความส่งได้เลย ถ้าไม่ขึ้นให้อัตโนมัติ</p>
     <pre id="orderSummaryText" class="order-summary-text"></pre>
     <div class="modal-actions">
-      <button class="checkout-btn" onclick="openMessengerFromSummary()">📩 เปิด Messenger</button>
+      <a id="messengerLink" href="#" class="checkout-btn" onclick="copyToClipboard(currentOrderMessage)">📩 เปิด Messenger</a>
       <button class="add-btn secondary" onclick="copyOrderMessage()">📋 คัดลอกข้อความอีกครั้ง</button>
     </div>
+    <p class="app-tip">💡 ถ้าเปิดเว็บนี้จากในแอป Facebook (กดลิงก์จากโพสต์/เพจ) ให้กดปุ่ม ⋮ หรือ ••• มุมขวาบนก่อน แล้วเลือก "เปิดในเบราว์เซอร์" จะช่วยให้กดเข้าแอป Messenger ได้ลื่นไหลกว่า</p>
   </div>
 </div>
 
@@ -909,23 +968,107 @@ function showToast(msg){
   toastTimer = setTimeout(()=> t.classList.remove('show'), 1800);
 }
 
-function checkout(){
+/* ---------- Checkout: collect order lines, then delivery details, then summary ---------- */
+let pendingOrder = null; // { lines: [...], subtotal }
+
+function buildCartOrderLines(){
   const entries = Object.entries(cart);
-  if(!entries.length) return;
-  let lines = ['สวัสดีค่ะ ต้องการสั่งซื้อสินค้าดังนี้ค่ะ:', ''];
+  if(!entries.length) return null;
+  let lines = [];
   entries.forEach(([key,entry])=>{
     const { id } = parseCartKey(key);
     const p = PRODUCTS.find(x=>x.id===id);
     if(p) lines.push(`• ${p.name}${entry.label ? ` (${entry.label})` : ''} x${entry.qty} = ${fmt(entry.unitPrice*entry.qty)}`);
   });
+  return { lines, subtotal: cartTotal() };
+}
+function buildModalOrderLines(){
+  const p = PRODUCTS.find(x=>x.id===modalProductId);
+  if(!p) return null;
+  const { label, unitPrice } = currentModalVariant(p);
+  const lineTotal = unitPrice * modalQty;
+  const lines = [`• ${p.name}${label ? ` (${label})` : ''} x${modalQty} = ${fmt(lineTotal)}`];
+  const result = { lines, subtotal: lineTotal };
+  closeProductModal();
+  return result;
+}
+function startCheckout(builderFn){
+  const result = builderFn();
+  if(!result){ showToast('กรุณาเลือกสินค้าก่อนค่ะ'); return; }
+  pendingOrder = result;
+  openOrderForm();
+}
+function openOrderForm(){
+  document.getElementById('orderDate').value = '';
+  document.getElementById('orderDate').min = new Date().toISOString().slice(0,10);
+  document.getElementById('orderAddress').value = '';
+  document.querySelector('input[name="deliveryMethod"][value="pickup"]').checked = true;
+  renderFeePreview();
+  document.getElementById('orderFormModal').classList.add('open');
+  document.getElementById('formOverlay').classList.add('show');
+  closeCart();
+}
+function closeOrderForm(){
+  document.getElementById('orderFormModal').classList.remove('open');
+  document.getElementById('formOverlay').classList.remove('show');
+}
+function getDeliveryMethod(){
+  const el = document.querySelector('input[name="deliveryMethod"]:checked');
+  return el ? el.value : 'pickup';
+}
+function computeDelivery(subtotal, method){
+  if(method === 'ship'){
+    return { fee:100, feeLabel:fmt(100), note:'จัดส่งทางไปรษณีย์ไทย ใช้เวลาประมาณ 2-3 วัน', methodLabel:'จัดส่งไปรษณีย์ไทย' };
+  }
+  if(subtotal >= 300){
+    return { fee:0, feeLabel:'ฟรี', note:'ฟรีค่าจัดส่ง (นัดรับ/จัดส่งในพื้นที่ตัวเมืองนครสวรรค์ อ.พยุหะคีรี หรือใกล้เคียง)', methodLabel:'นัดรับ/จัดส่งในพื้นที่' };
+  }
+  return { fee:null, feeLabel:'แจ้งราคาอีกครั้งทางแชท', note:'สั่งต่ำกว่า 300 บาท มีค่าจัดส่งตามระยะทาง ทางร้านจะแจ้งราคาให้ทางแชทอีกครั้ง', methodLabel:'นัดรับ/จัดส่งในพื้นที่' };
+}
+function renderFeePreview(){
+  if(!pendingOrder) return;
+  const method = getDeliveryMethod();
+  const d = computeDelivery(pendingOrder.subtotal, method);
+  const grand = d.fee != null ? pendingOrder.subtotal + d.fee : pendingOrder.subtotal;
+  document.getElementById('feePreview').innerHTML = `
+    <div class="fee-row"><span>ยอดสินค้า</span><span>${fmt(pendingOrder.subtotal)}</span></div>
+    <div class="fee-row"><span>ค่าจัดส่ง</span><span>${d.feeLabel}</span></div>
+    <div class="fee-row total"><span>ยอดรวม${d.fee==null?' (ไม่รวมค่าส่ง)':''}</span><span>${fmt(grand)}</span></div>
+    <p class="fee-note">${d.note}</p>
+  `;
+}
+function formatThaiDate(isoDate){
+  const d = new Date(isoDate + 'T00:00:00');
+  if(isNaN(d)) return isoDate;
+  const months = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+  return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()+543}`;
+}
+function submitOrderForm(){
+  if(!pendingOrder) return;
+  const date = document.getElementById('orderDate').value;
+  const address = document.getElementById('orderAddress').value.trim();
+  if(!date){ showToast('กรุณาเลือกวันที่รับสินค้า'); return; }
+  if(!address){ showToast('กรุณาระบุที่อยู่ / จุดนัดรับ'); return; }
+  const method = getDeliveryMethod();
+  const d = computeDelivery(pendingOrder.subtotal, method);
+  const grand = d.fee != null ? pendingOrder.subtotal + d.fee : pendingOrder.subtotal;
+
+  let lines = ['สวัสดีค่ะ ต้องการสั่งซื้อสินค้าดังนี้ค่ะ:', '', ...pendingOrder.lines, ''];
+  lines.push(`ยอดสินค้า: ${fmt(pendingOrder.subtotal)}`);
+  lines.push(`วิธีรับสินค้า: ${d.methodLabel}`);
+  lines.push(`ค่าจัดส่ง: ${d.feeLabel}`);
+  lines.push(`ยอดรวม${d.fee==null?' (ยังไม่รวมค่าส่ง)':''}: ${fmt(grand)}`);
   lines.push('');
-  lines.push(`รวมทั้งหมด: ${fmt(cartTotal())}`);
+  lines.push(`วันที่ต้องการรับสินค้า: ${formatThaiDate(date)}`);
+  lines.push(`ที่อยู่ / จุดนัดรับ: ${address}`);
   lines.push('');
-  lines.push('รบกวนสอบถามช่องทางชำระเงินและที่อยู่จัดส่งด้วยค่ะ 🙏');
+  lines.push('รบกวนสอบถามช่องทางชำระเงินด้วยค่ะ 🙏');
+
+  closeOrderForm();
   showOrderSummary(lines.join('\n'));
 }
 
-/* ---------- Order summary: auto-copy + open Messenger ---------- */
+/* ---------- Order summary: auto-copy + real link to open Messenger ---------- */
 let currentOrderMessage = '';
 
 function copyToClipboard(text){
@@ -948,6 +1091,7 @@ function showOrderSummary(message){
   currentOrderMessage = message;
   document.getElementById('orderSummaryText').textContent = message;
   copyToClipboard(message);
+  document.getElementById('messengerLink').href = `${PAGE_LINK}?text=${encodeURIComponent(message)}`;
   document.getElementById('orderSummaryModal').classList.add('open');
   document.getElementById('summaryOverlay').classList.add('show');
   closeCart();
@@ -959,11 +1103,6 @@ function closeOrderSummary(){
 function copyOrderMessage(){
   copyToClipboard(currentOrderMessage);
   showToast('คัดลอกข้อความแล้ว 📋');
-}
-function openMessengerFromSummary(){
-  copyToClipboard(currentOrderMessage);
-  const url = `${PAGE_LINK}?text=${encodeURIComponent(currentOrderMessage)}`;
-  window.location.href = url;
 }
 function clearCart(){
   cart = {};
@@ -1042,20 +1181,6 @@ function addModalToCart(){
   updateCartUI();
   showToast('เพิ่มลงตะกร้าแล้ว 🌸');
   closeProductModal();
-}
-function orderModalNow(){
-  const p = PRODUCTS.find(x=>x.id===modalProductId);
-  if(!p) return;
-  const { label, unitPrice } = currentModalVariant(p);
-  const lineTotal = unitPrice * modalQty;
-  let lines = ['สวัสดีค่ะ ต้องการสั่งซื้อสินค้านี้ค่ะ:', ''];
-  lines.push(`• ${p.name}${label ? ` (${label})` : ''} x${modalQty} = ${fmt(lineTotal)}`);
-  lines.push('');
-  lines.push(`รวม: ${fmt(lineTotal)}`);
-  lines.push('');
-  lines.push('รบกวนสอบถามช่องทางชำระเงินและที่อยู่จัดส่งด้วยค่ะ 🙏');
-  closeProductModal();
-  showOrderSummary(lines.join('\n'));
 }
 
 renderNav();
