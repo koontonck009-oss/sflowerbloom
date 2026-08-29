@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>S.Flower Bloom — แคตตาล็อกสินค้า</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Chonburi&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cream:#FFF7FC;
+    --sage:#F62188;
+    --sage-dark:#C4106D;
+    --rose:#FF8FCB;
+    --rose-dark:#E0399B;
+    --peach:#FFC6FF;
+    --plum:#3B1230;
+    --paper:#FFFFFF;
+    --line: rgba(59,18,48,0.12);
+    --shadow: 0 10px 30px rgba(246,33,136,0.10);
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--cream);
+    background-image:
+      radial-gradient(circle at 8% 12%, rgba(246,33,136,0.08) 0, transparent 40%),
+      radial-gradient(circle at 92% 88%, rgba(255,198,255,0.25) 0, transparent 40%);
+    color:var(--plum);
+    font-family:'Sarabun',sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,.display{font-family:'Chonburi',cursive; font-weight:400;}
+
+  /* ---------- Header ---------- */
+  header.top{
+    padding:28px 6vw 22px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    flex-wrap:wrap;
+  }
+  .brand{display:flex; align-items:center; gap:14px;}
+  .brand-mark{
+    width:52px;height:52px;border-radius:50%;
+    background:var(--sage);
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:var(--shadow);
+    flex-shrink:0;
+  }
+  .brand-mark svg{width:30px;height:30px;}
+  .brand h1{margin:0;font-size:26px;color:var(--sage-dark);line-height:1.1;}
+  .brand p{margin:2px 0 0;font-size:13px;color:var(--rose-dark);letter-spacing:.5px;}
+
+  .cart-pill{
+    display:flex;align-items:center;gap:10px;
+    background:var(--paper);
+    border:1.5px solid var(--line);
+    padding:10px 18px 10px 14px;
+    border-radius:999px;
+    cursor:pointer;
+    box-shadow:var(--shadow);
+    transition:transform .15s ease;
+    font-weight:600;
+  }
+  .cart-pill:hover{transform:translateY(-2px);}
+  .cart-pill .badge{
+    background:var(--rose);color:#fff;font-size:12px;
+    min-width:22px;height:22px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Sarabun'; font-weight:700;
+  }
+
+  /* ---------- Hero ---------- */
+  .hero{
+    margin:6px 6vw 10px;
+    padding:46px 6vw;
+    background:var(--sage);
+    border-radius:28px;
+    position:relative;
+    overflow:hidden;
+    color:#FFF7FC;
+    box-shadow:var(--shadow);
+  }
+  .hero::before, .hero::after{
+    content:"";
+    position:absolute;
+    border-radius:50%;
+  }
+  .hero::before{
+    width:220px;height:220px; background:rgba(255,255,255,0.08);
+    top:-90px; right:-60px;
+  }
+  .hero::after{
+    width:140px;height:140px; background:var(--peach); opacity:.25;
+    bottom:-60px; left:-30px;
+  }
+  .hero h2{
+    font-size:clamp(28px,4vw,42px);
+    margin:0 0 10px;
+    position:relative;
+    max-width:640px;
+  }
+  .hero p{
+    font-size:16px; max-width:520px; opacity:.92; position:relative; margin:0 0 22px;
+  }
+  .hero .cta{
+    position:relative;
+    display:inline-block;
+    background:var(--peach);
+    color:var(--plum);
+    padding:12px 26px;
+    border-radius:999px;
+    font-weight:700;
+    text-decoration:none;
+    box-shadow:0 6px 16px rgba(0,0,0,0.15);
+  }
+
+  /* ---------- Category nav ---------- */
+  .cat-nav{
+    display:flex; gap:10px; flex-wrap:wrap;
+    padding:26px 6vw 4px;
+    position:sticky; top:0; z-index:20;
+    background:linear-gradient(var(--cream) 78%, transparent);
+    padding-top:14px;
+  }
+  .cat-btn{
+    border:1.5px solid var(--line);
+    background:var(--paper);
+    padding:9px 18px;
+    border-radius:999px;
+    font-family:'Sarabun'; font-weight:600; font-size:14.5px;
+    color:var(--plum);
+    cursor:pointer;
+    display:flex; align-items:center; gap:8px;
+    transition:all .15s ease;
+  }
+  .cat-btn:hover{border-color:var(--rose);}
+  .cat-btn.active{background:var(--rose); border-color:var(--rose); color:#fff;}
+  .size-row{display:flex; gap:8px; flex-wrap:wrap; margin:-4px 0 18px;}
+  .size-row .cat-btn{padding:7px 15px; font-size:13px; background:var(--cream); border-color:transparent;}
+
+  /* ---------- Product grid ---------- */
+  main{padding:18px 6vw 80px;}
+  .section-title{
+    margin:34px 0 18px;
+    display:flex; align-items:baseline; gap:12px;
+  }
+  .section-title h3{font-size:24px;color:var(--sage-dark);margin:0;}
+  .section-title span{font-size:13px;color:var(--rose-dark);font-weight:600;}
+
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(230px,1fr));
+    gap:22px;
+  }
+  .card{
+    background:var(--paper);
+    border-radius:20px;
+    padding:16px;
+    box-shadow:var(--shadow);
+    display:flex; flex-direction:column;
+    transition:transform .18s ease, box-shadow .18s ease;
+    border:1px solid transparent;
+  }
+  .card:hover{transform:translateY(-4px); border-color:var(--line);}
+  .thumb{
+    width:100%; aspect-ratio:1/1;
+    border-radius:14px;
+    background:var(--cream);
+    display:flex; align-items:center; justify-content:center;
+    margin-bottom:14px;
+    overflow:hidden;
+  }
+  .thumb svg{width:70%;height:70%;}
+  .thumb img{width:100%; height:100%; object-fit:cover; display:block;}
+  .thumb{cursor:pointer;}
+  .thumb:hover{opacity:0.92;}
+  .card h4{margin:0 0 4px; font-size:16.5px; font-weight:700;}
+  .color-row{display:flex; gap:6px; flex-wrap:wrap; margin:-2px 0 10px;}
+  .color-chip{
+    border:1.5px solid var(--line); background:#fff; color:var(--plum);
+    font-family:'Sarabun'; font-weight:600; font-size:11.5px;
+    padding:5px 12px; border-radius:999px; cursor:pointer;
+    transition:all .15s ease;
+  }
+  .color-chip.active{background:var(--sage); border-color:var(--sage); color:#fff;}
+  .card .desc{font-size:13px; color:#6b5b62; margin:0 0 10px; min-height:34px; line-height:1.4;}
+  .card .price-row{
+    display:flex; align-items:center; justify-content:space-between;
+    margin-top:auto;
+  }
+  .price{font-family:'Chonburi'; font-size:19px; color:var(--rose-dark);}
+  .add-btn{
+    border:none; background:var(--sage); color:#fff;
+    padding:9px 16px; border-radius:999px;
+    font-weight:600; font-size:13.5px;
+    cursor:pointer; display:flex; align-items:center; gap:6px;
+    transition:background .15s ease, transform .1s ease;
+  }
+  .add-btn:hover{background:var(--sage-dark);}
+  .add-btn:active{transform:scale(.96);}
+  .add-btn.added{background:var(--rose);}
+
+  /* ---------- Cart drawer ---------- */
+  .overlay{
+    position:fixed; inset:0; background:rgba(59,42,51,0.35);
+    opacity:0; pointer-events:none; transition:opacity .25s ease;
+    z-index:29;
+  }
+  .overlay.show{opacity:1; pointer-events:auto;}
+
+  .drawer{
+    position:fixed; top:0; right:0; height:100%;
+    width:min(400px,92vw);
+    background:var(--cream);
+    box-shadow:-14px 0 40px rgba(0,0,0,0.15);
+    transform:translateX(100%);
+    transition:transform .3s ease;
+    z-index:30;
+    display:flex; flex-direction:column;
+  }
+  .drawer.open{transform:translateX(0);}
+  .drawer-head{
+    padding:22px 22px 14px;
+    display:flex; align-items:center; justify-content:space-between;
+    border-bottom:1px solid var(--line);
+  }
+  .drawer-head h3{margin:0; font-size:22px; color:var(--sage-dark);}
+  .drawer-head button{
+    background:none; border:none; font-size:22px; cursor:pointer; color:var(--plum);
+  }
+  .drawer-items{flex:1; overflow-y:auto; padding:14px 22px;}
+  .empty-cart{
+    text-align:center; margin-top:60px; color:#8a7680; font-size:14px;
+  }
+  .empty-cart svg{width:60px; height:60px; opacity:.5; margin-bottom:10px;}
+
+  .cart-item{
+    display:flex; gap:12px; align-items:center;
+    padding:12px 0; border-bottom:1px dashed var(--line);
+  }
+  .cart-item .mini-thumb{
+    width:52px; height:52px; border-radius:10px; background:#fff;
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+  .cart-item .mini-thumb svg{width:32px;height:32px;}
+  .cart-item .mini-thumb img{width:100%; height:100%; object-fit:cover; border-radius:10px;}
+  .cart-item .info{flex:1; min-width:0;}
+  .cart-item .info h5{margin:0 0 2px; font-size:14.5px; font-weight:700;}
+  .cart-item .info .variant{font-weight:500; color:var(--rose-dark); font-size:13px;}
+  .cart-item .info .unit{font-size:12px; color:#8a7680;}
+  .qty-ctrl{display:flex; align-items:center; gap:8px;}
+  .qty-ctrl button{
+    width:24px; height:24px; border-radius:50%; border:1px solid var(--line);
+    background:#fff; cursor:pointer; font-weight:700; line-height:1;
+  }
+  .qty-ctrl span{min-width:16px; text-align:center; font-weight:600; font-size:14px;}
+  .remove-btn{
+    background:none; border:none; color:var(--rose-dark); font-size:12px;
+    cursor:pointer; text-decoration:underline; margin-left:4px;
+  }
+
+  .drawer-foot{
+    padding:18px 22px 24px;
+    border-top:1px solid var(--line);
+    background:var(--paper);
+  }
+  .total-row{
+    display:flex; justify-content:space-between; align-items:baseline;
+    margin-bottom:14px;
+  }
+  .total-row span:first-child{font-size:14px; color:#6b5b62;}
+  .total-row .total-amt{font-family:'Chonburi'; font-size:24px; color:var(--sage-dark);}
+  .checkout-btn{
+    width:100%; padding:14px; border:none; border-radius:14px;
+    background:var(--rose); color:#fff; font-weight:700; font-size:16px;
+    display:flex; align-items:center; justify-content:center; gap:10px;
+    cursor:pointer; transition:background .15s ease;
+  }
+  .checkout-btn:hover{background:var(--rose-dark);}
+  .checkout-btn:disabled{background:#d8cfd2; cursor:not-allowed;}
+  .checkout-hint{font-size:11.5px; color:#8a7680; text-align:center; margin-top:10px;}
+
+  .toast{
+    position:fixed; bottom:26px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:var(--plum); color:#fff; padding:12px 22px; border-radius:999px;
+    font-size:14px; font-weight:600; opacity:0; pointer-events:none;
+    transition:all .25s ease; z-index:40; box-shadow:var(--shadow);
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+
+  /* ---------- Product zoom modal ---------- */
+  .product-modal{
+    position:fixed; top:50%; left:50%;
+    transform:translate(-50%,-50%) scale(.96);
+    width:min(720px,92vw);
+    max-height:88vh;
+    background:var(--paper);
+    border-radius:24px;
+    box-shadow:0 20px 60px rgba(59,18,48,0.25);
+    z-index:41;
+    display:none;
+    grid-template-columns:1fr 1fr;
+    overflow:hidden;
+    opacity:0;
+    transition:opacity .2s ease, transform .2s ease;
+  }
+  .product-modal.open{display:grid; opacity:1; transform:translate(-50%,-50%) scale(1);}
+  .modal-close{
+    position:absolute; top:14px; right:14px; z-index:2;
+    width:34px; height:34px; border-radius:50%; border:none;
+    background:rgba(59,18,48,0.55); color:#fff; font-size:16px; cursor:pointer;
+  }
+  .modal-img{
+    background:var(--cream);
+    display:flex; align-items:center; justify-content:center;
+    min-height:260px; overflow:hidden;
+  }
+  .modal-img img{width:100%; height:100%; object-fit:cover; display:block;}
+  .modal-img svg{width:55%; height:55%;}
+  .modal-body{padding:26px 26px 24px; overflow-y:auto;}
+  .modal-body h3{margin:0 0 8px; font-size:21px; color:var(--sage-dark);}
+  .modal-desc{font-size:13.5px; color:#6b5b62; line-height:1.5; margin:0 0 14px;}
+  .modal-price{font-family:'Chonburi'; font-size:24px; color:var(--rose-dark); margin-bottom:16px;}
+  .modal-qty{display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; font-size:14px; font-weight:600;}
+  .modal-actions{display:flex; flex-direction:column; gap:10px;}
+  .add-btn.secondary{background:#fff; color:var(--sage); border:1.5px solid var(--sage); justify-content:center; padding:12px;}
+  .add-btn.secondary:hover{background:var(--cream);}
+
+  @media (max-width:640px){
+    .product-modal{grid-template-columns:1fr; max-height:92vh;}
+    .modal-img{min-height:200px;}
+  }
+
+  footer{
+    text-align:center; padding:26px 6vw 40px; font-size:13px; color:#8a7680;
+  }
+
+  @media (max-width:520px){
+    .hero{padding:34px 24px; border-radius:22px;}
+    .cat-nav{position:static; background:none;}
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="brand">
+    <div class="brand-mark">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M12 2c1.5 2 1.5 4 0 6-1.5-2-1.5-4 0-6z" fill="#FBF6EF"/><path d="M12 22c-3-3-6-6-6-10a6 6 0 0112 0c0 4-3 7-6 10z" fill="#FBF6EF" opacity="0.9"/></svg>
+    </div>
+    <div>
+      <h1>S.Flower Bloom</h1>
+      <p>เลือกสินค้า แล้วสั่งซื้อผ่านแชทได้เลย</p>
+    </div>
+  </div>
+  <div class="cart-pill" onclick="openCart()">
+    🧺 ตะกร้าของฉัน
+    <span class="badge" id="cartBadge">0</span>
+  </div>
+</header>
+
+<section class="hero">
+  <h2>ช่อดอกไม้กำมะหยี่<br>สำหรับโอกาสพิเศษ</h2>
+  <p>เลือกสินค้าที่ชอบ กดใส่ตะกร้า แล้วกดปุ่มเดียวเพื่อส่งรายการสั่งซื้อมาที่แชทเพจของเราได้ทันที ไม่ต้องพิมพ์เอง</p>
+  <a href="#catalog" class="cta">เลือกดูสินค้า ↓</a>
+</section>
+
+<nav class="cat-nav" id="catNav"></nav>
+
+<main id="catalog"></main>
+
+<div class="overlay" id="overlay" onclick="closeCart()"></div>
+<aside class="drawer" id="drawer">
+  <div class="drawer-head">
+    <h3>ตะกร้าสินค้า</h3>
+    <button onclick="closeCart()">✕</button>
+  </div>
+  <div class="drawer-items" id="drawerItems"></div>
+  <div class="drawer-foot">
+    <div class="total-row">
+      <span>ยอดรวมทั้งหมด</span>
+      <span class="total-amt" id="totalAmt">฿0</span>
+    </div>
+    <button class="checkout-btn" id="checkoutBtn" onclick="checkout()">
+      📩 ยืนยันสั่งซื้อทาง Facebook
+    </button>
+    <p class="checkout-hint">กดแล้วจะเปิด Messenger พร้อมข้อความสรุปออเดอร์ให้อัตโนมัติ</p>
+  </div>
+</aside>
+
+<div class="toast" id="toast"></div>
+
+<div class="overlay" id="modalOverlay" onclick="closeProductModal()"></div>
+<div class="product-modal" id="productModal">
+  <button class="modal-close" onclick="closeProductModal()">✕</button>
+  <div class="modal-img" id="modalImg"></div>
+  <div class="modal-body">
+    <h3 id="modalName"></h3>
+    <p class="modal-desc" id="modalDesc"></p>
+    <div class="color-row" id="modalColors"></div>
+    <div class="modal-qty" id="modalBillsRow" style="display:none;">
+      <span>จำนวนธนบัตร (ใบ)</span>
+      <div class="qty-ctrl">
+        <button onclick="changeModalBills(-1)">−</button>
+        <span id="modalBills">1</span>
+        <button onclick="changeModalBills(1)">+</button>
+      </div>
+    </div>
+    <div class="modal-price" id="modalPrice"></div>
+    <div class="modal-qty">
+      <span>จำนวนช่อ</span>
+      <div class="qty-ctrl">
+        <button onclick="changeModalQty(-1)">−</button>
+        <span id="modalQty">1</span>
+        <button onclick="changeModalQty(1)">+</button>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="add-btn secondary" onclick="addModalToCart()">🧺 ใส่ตะกร้า</button>
+      <button class="checkout-btn" onclick="orderModalNow()">📩 สั่งซื้อทันที</button>
+    </div>
+  </div>
+</div>
+
+<footer>© S.Flower Bloom — สั่งซื้อผ่าน Facebook Messenger</footer>
+
+<script>
+/* ---------------- แก้ไขสินค้าตรงนี้ได้เลย ---------------- */
+const PRODUCTS = [
+  { id:'b1', cat:'ช่อดอกไม้', size:'เล็ก', name:'ช่อกุหลาบแดง 1 ดอก', price:99, desc:'กุหลาบแดง 1 ดอก เลือกสีช่อได้',
+    colors:[
+      { name:'ช่อสีขาว', image:'images/กุหลาบ-99฿-แดง-ขาว.jpg' },
+      { name:'ช่อสีดำ',  image:'images/กุหลาบ-99฿-แดง-ดำ.jpg' },
+      { name:'ช่อสีน้ำตาล',  image:'images/กุหลาบ-99฿-แดง-น้ำตาล.jpg' },
+    ]
+  },
+  { id:'b2', cat:'ช่อดอกไม้', size:'เล็ก', name:'ช่อดอกกุหลาบ 4 ดอก', price:199, desc:'กุหลาบ 4 ดอก เลือกสีดอกกุหลาบได้', 
+    colors:[
+      { name:'ดอกสีชมพู', image:'images/กุหลาบ-199฿-ชมพู-ใส.jpg' },
+      { name:'ดอกสีแดง',  image:'images/กุหลาบ-199฿-แดง-ใส.jpg' },
+        ]
+  },
+  { id:'b15', cat:'ช่อดอกไม้', size:'กลาง', name:'ช่อดอกกุหลาบ 1 ดอก', price:299, desc:'ช่อดอกกุหลาบ 1 ดอก', image:'images/กุหลาบ-299฿-แดง-ขาว.jpg' },
+  { id:'b16', cat:'ช่อดอกไม้', size:'กลาง', name:'ช่อดอกกุหลาบ 5 ดอก', price:399, desc:'ช่อดอกกุหลาบ 5 ดอก', image:'images/กุหลาบ-399฿-แดง-ขาว.jpg' },
+  { id:'b3', cat:'ช่อดอกไม้', size:'เล็ก', name:'ช่อดอกเดซี่', price:129, desc:'ดอกเดซี่ชมพู ช่อสีขาว ริบบิ้นสีชมพู', image:'images/เดซี่-129฿-ชมพู-ขาว.jpg' },
+  { id:'b4', cat:'ช่อดอกไม้', size:'เล็ก', name:'ช่อดอกเดซี่', price:199, desc:'ดอกเดซี่ชมพู ช่อสีครีม ริบบิ้นสีขาว', image:'images/เดซี่-199฿-ชมพู-ครีม.jpg' },
+  { id:'b17', cat:'ช่อดอกไม้', size:'กลาง', name:'ช่อดอกเดซี่', price:349, desc:'ช่อดอกเดซี่ เลือกสีได้',
+    colors:[
+      { name:'ขาว', image:'images/เดซี่-349฿-ขาว.jpg' },
+      { name:'ดอกคละสีช่อขาว',  image:'images/เดซี่-349฿-รวม-ขาว.jpg' },
+      { name:'ดอกคละสีช่อน้ำตาล',  image:'images/เดซี่-349฿-รวม-น้ำตาลครีม.jpg' },
+        ]
+  },
+  { id:'b18', cat:'ช่อดอกไม้', size:'กลาง', name:'ช่อดอกเดซี่ชมพูขาว', price:449, desc:'ช่อดอกเดซี่ชมพูขาว', image:'images/เดซี่-449฿-ชมพูขาว-ขาว.jpg' },
+  { id:'b5', cat:'ช่อดอกไม้', size:'เล็ก', name:'ดอกทานตะวัน 1 ดอก', price:69, desc:'ดอกทานตะวัน 1 ดอก เลือกสีดอกได้',
+    colors:[
+      { name:'ดอกสีส้ม', image:'images/ทานตะวัน-69฿-ส้ม-ใส.jpg' },
+      { name:'ดอกสีเหลือง',  image:'images/ทานตะวัน-69฿-เหลือง-ใส.jpg' },
+        ]
+  },
+  { id:'b6', cat:'ช่อดอกไม้', size:'เล็ก', name:'ดอกทานตะวัน 1 ดอก', price:79, desc:'ดอกทานตะวัน 1 ดอก', image:'images/ทานตะวัน-79฿-เหลือง-น้ำตาล.jpg' },
+  { id:'b7', cat:'ช่อดอกไม้', size:'เล็ก', name:'ช่อดอกทานตะวัน 1 ดอก', price:99, desc:'ดอกทานตะวัน 1 ดอก เลือกสีดอกได้',
+    colors:[
+      { name:'ดอกสีส้ม', image:'images/ทานตะวัน-99฿-ส้ม-ขาว.jpg' },
+      { name:'ดอกสีเหลือง',  image:'images/ทานตะวัน-99฿-เหลือง-ขาว.jpg' },
+        ]
+  },
+  { id:'b8', cat:'ช่อดอกไม้', size:'เล็ก', name:'ช่อดอกทานตะวัน 1 ดอก', price:149, desc:'ดอกทานตะวัน 1 ดอก เลือกสีได้',
+    colors:[
+      { name:'ดอกส้มช่อขาว', image:'images/ทานตะวัน-149฿-ส้ม-ขาว.jpg' },
+      { name:'ดอกส้มช่อขาว',  image:'images/ทานตะวัน-149฿-ส้ม-ครีม.jpg' },
+      { name:'ดอกสีเหลือง',  image:'images/ทานตะวัน-149฿-เหลือง-ครีม.jpg' },
+      { name:'ดอกสีเหลืองทานตะวัน',  image:'images/ทานตะวัน-149฿-เหลืองทานตะวัน-ครีม.jpg' },
+        ]
+  },
+  { id:'b9', cat:'ช่อดอกไม้', size:'เล็ก', name:'ช่อดอกทานตะวัน 3 ดอก', price:199, desc:'ดอกทานตะวัน 3 ดอก เลือกสีได้',
+    colors:[
+      { name:'ดอกส้มช่อขาว', image:'images/ทานตะวัน-199฿-ส้ม-ขาว.jpg' },
+      { name:'ดอกส้มช่อน้ำตาล',  image:'images/ทานตะวัน-199฿-ส้ม-น้ำตาล.jpg' },
+      { name:'ดอกสีเหลืองทานตะวัน',  image:'images/ทานตะวัน-199฿-เหลือง-ขาว.jpg' },
+        ]
+  },
+  { id:'b19', cat:'ช่อดอกไม้', size:'กลาง', name:'ช่อดอกทานตะวัน', price:249, desc:'ช่อดอกทานตะวัน เลือกสีได้',
+    colors:[
+      { name:'ดอกส้มช่อขาว', image:'images/ทานตะวัน-249฿-ส้ม-ขาว.jpg' },
+      { name:'ดอกเหลืองช่อขาว',  image:'images/ทานตะวัน-249฿-เหลือง-ขาว.jpg' },
+      { name:'ดอกเหลืองช่อแดง',  image:'images/ทานตะวัน-249฿-เหลือง-แดง.jpg' },
+      { name:'ดอกเหลืองทานตะวันช่อขาว',  image:'images/ทานตะวัน-249฿-เหลืองทานตะวัน-ขาว.jpg' },
+      { name:'ดอกเหลืองทานตะวันช่อแดง',  image:'images/ทานตะวัน-249฿-เหลืองทานตะวัน-แดง.jpg' },
+        ]
+  },
+  { id:'b20', cat:'ช่อดอกไม้', size:'กลาง', name:'ช่อดอกทานตะวัน 5 ดอก', price:299, desc:'ช่อดอกทานตะวัน 5 ดอก เลือกสีได้',
+    colors:[
+      { name:'ดอกส้มช่อขาว', image:'images/ทานตะวัน-299฿-แบบที่1-ส้ม-ขาว.jpg' },
+      { name:'ดอกส้มช่อน้ำเงิน',  image:'images/ทานตะวัน-299฿-แบบที่1-ส้ม-น้ำเงิน.jpg' },
+      { name:'ดอกเหลืองช่อขาว',  image:'images/ทานตะวัน-299฿-แบบที่1-เหลือง-ขาว.jpg' },
+      { name:'ดอกเหลืองทานตะวันช่อขาว',  image:'images/ทานตะวัน-299฿-แบบที่1-เหลืองทานตะวัน-ขาว.jpg' },
+        ]
+  },
+  { id:'b21', cat:'ช่อดอกไม้', size:'กลาง', name:'ช่อดอกทานตะวันทิวลิป', price:299, desc:'ช่อดอกทานตะวันทิวลิป', image:'images/ทานตะวัน-299฿-แบบที่2-เหลือง-ขาว.jpg' },
+  { id:'b10', cat:'ช่อดอกไม้', size:'เล็ก', name:'ดอกทิวลิป 1 ดอก', price:69, desc:'ดอกทิวลิป 1 ดอก เลือกสีได้',
+    colors:[
+      { name:'ขาว', image:'images/ทิวลิป-69฿-ขาว-ใส.jpg' },
+      { name:'ชมพู',  image:'images/ทิวลิป-69฿-ชมพู-ใส.jpg' },
+      { name:'แดง',  image:'images/ทิวลิป-69฿-แดง-ใส.jpg' },
+      { name:'ม่วง',  image:'images/ทิวลิป-69฿-ม่วง-ใส.jpg' },
+      { name:'เหลือง',  image:'images/ทิวลิป-69฿-เหลือง-ใส.jpg' },
+        ]
+  },
+  { id:'b11', cat:'ช่อดอกไม้', size:'เล็ก', name:'ดอกทิวลิป 1 ดอก ในการ์ด', price:79, desc:'ดอกทิวลิป 1 ดอก ในการ์ด', image:'images/ทิวลิป-79฿-รวม.jpg' },
+  { id:'b12', cat:'ช่อดอกไม้', size:'เล็ก', name:'ดอกทิวลิป 1 ดอก', price:99, desc:'ดอกทิวลิป 1 ดอก เลือกสีได้',
+    colors:[
+      { name:'ดอกชมพูช่อขาว', image:'images/ทิวลิป-99฿-ชมพู-ขาว.jpg' },
+      { name:'ช่อแดง',  image:'images/ทิวลิป-99฿-แดง.jpg' },
+      { name:'ช่อขาว',  image:'images/ทิวลิป-99฿-แดง-ขาว.jpg' },
+      { name:'ช่อดำ',  image:'images/ทิวลิป-99฿-แดง-ดำ.jpg' },
+      { name:'ช่อน้ำตาล',  image:'images/ทิวลิป-99฿-แดง-น้ำตาล.jpg' },
+        ]
+  },
+  { id:'b13', cat:'ช่อดอกไม้', size:'เล็ก', name:'ช่อดอกเยอบีร่า 1 ดอก', price:89, desc:'ดอกเยอบีร่า 1 ดอก', image:'images/เยอบีร่า-89฿-ม่วง-ขาว.jpg' },
+  { id:'b14', cat:'ช่อดอกไม้', size:'เล็ก', name:'ช่อดอกไฮเดรนเยีย', price:149, desc:'ดอกไฮเดรนเยีย เลือกสีได้',
+    colors:[
+      { name:'ชมพู', image:'images/ไฮเดรนเยีย-149฿-ชมพู-ใส.jpg' },
+      { name:'ฟ้า',  image:'images/ไฮเดรนเยีย-149฿-ฟ้า-ใส.jpg' },
+        ]
+  },
+  { id:'b15', cat:'ช่อดอกไม้', size:'กลาง', name:'ช่อดอกกุหลาบ 1 ดอก', price:299, desc:'ช่อดอกกุหลาบ 1 ดอก', image:'images/กุหลาบ-299฿-แดง-ขาว.jpg' },
+  { id:'b6', cat:'ช่อดอกไม้', size:'กลาง', name:'ช่อดอกไม้กลางหรูหรา', price:449, desc:'ดอกไม้รวมหลากสี ช่อขนาดกลาง', icon:'bouquet' },
+  { id:'b7', cat:'ช่อดอกไม้', size:'ใหญ่', name:'ช่อดอกไม้ใหญ่พิเศษ', price:690, desc:'ช่อใหญ่หรูหรา เหมาะกับโอกาสพิเศษ', icon:'bouquet' },
+  { id:'bmoney', cat:'ช่อดอกไม้', size:'ใส่เงิน', name:'ช่อดอกไม้ใส่เงิน', desc:'ใส่ธนบัตรจริงในช่อ เลือกจำนวนใบได้เอง (1-30 ใบ)',
+    billSelector:true, pricePerBill:100, wrappingFee:0, minBills:1, maxBills:30, icon:'bouquet'
+  },
+  { id:'f1', cat:'กรอบรูป', name:'กรอบรูปไม้สักธรรมชาติ', price:280, desc:'ขนาด 8x10 นิ้ว ผิวไม้แท้', icon:'frame' },
+  { id:'f2', cat:'กรอบรูป', name:'กรอบรูปมินิมอลสีขาว', price:220, desc:'ขนาด 5x7 นิ้ว ทรงเรียบง่าย', icon:'frame' },
+  { id:'f3', cat:'กรอบรูป', name:'กรอบรูปวินเทจลายทอง', price:350, desc:'ขนาด 8x10 นิ้ว ขอบลายนูน', icon:'frame' },
+  { id:'p1', cat:'กระถาง', name:'กระถางดินเผาลายมือวาด', price:190, desc:'ขนาดเล็ก เหมาะกับไม้อวบน้ำ', icon:'pot' },
+  { id:'p2', cat:'กระถาง', name:'กระถางเซรามิกทรงกลม', price:260, desc:'เคลือบมัน มีจานรองในตัว', icon:'pot' },
+  { id:'p3', cat:'กระถาง', name:'กระถางแขวนมาโครเม่', price:320, desc:'ถักมือ พร้อมเชือกแขวน', icon:'pot' },
+  { id:'o1', cat:'อื่นๆ', name:'การ์ดอวยพรทำมือ', price:60,  desc:'เขียนข้อความอวยพรให้ฟรี', icon:'other' },
+  { id:'o2', cat:'อื่นๆ', name:'ริบบิ้นห่อของขวัญ', price:40,  desc:'เลือกสีได้ตามธีมของขวัญ', icon:'other' },
+];
+const PAGE_LINK = 'https://m.me/167894813076816';
+/* --------------------------------------------------------- */
+
+const ICONS = {
+  bouquet: `<svg viewBox="0 0 64 64"><g fill="none" stroke="#F62188" stroke-width="2.5"><path d="M32 30 L26 56" stroke="#E0399B"/><path d="M32 30 L38 56" stroke="#E0399B"/><path d="M32 30 L32 58" stroke="#E0399B"/></g><circle cx="32" cy="20" r="9" fill="#F62188"/><circle cx="20" cy="26" r="8" fill="#FFC6FF"/><circle cx="44" cy="26" r="8" fill="#FFC6FF"/><circle cx="26" cy="16" r="6" fill="#E0399B"/><circle cx="38" cy="16" r="6" fill="#E0399B"/></svg>`,
+  frame: `<svg viewBox="0 0 64 64"><rect x="10" y="8" width="44" height="48" rx="3" fill="none" stroke="#E0399B" stroke-width="4"/><rect x="18" y="16" width="28" height="32" fill="#FFC6FF" opacity="0.6"/><circle cx="26" cy="26" r="4" fill="#F62188"/><path d="M18 44 L28 32 L36 40 L46 28 L46 48 L18 48 Z" fill="#E0399B" opacity="0.6"/></svg>`,
+  pot: `<svg viewBox="0 0 64 64"><path d="M18 26 H46 L41 54 H23 Z" fill="#F62188"/><rect x="16" y="20" width="32" height="8" rx="2" fill="#E0399B"/><path d="M32 20 C20 20 20 4 32 8 C44 4 44 20 32 20 Z" fill="#FF8FCB"/></svg>`,
+  other: `<svg viewBox="0 0 64 64"><rect x="12" y="14" width="40" height="36" rx="4" fill="#FFC6FF"/><path d="M12 22 H52" stroke="#E0399B" stroke-width="3"/><circle cx="32" cy="14" r="6" fill="#F62188"/></svg>`
+};
+
+function renderThumb(p, colorName){
+  let src = null, alt = p.name;
+  if(p.colors && p.colors.length){
+    const c = p.colors.find(x => x.name === colorName) || p.colors[selectedColor[p.id] || 0];
+    src = c.image; alt = p.name + ' ' + c.name;
+  } else if(p.image){
+    src = p.image;
+  }
+  if(src){
+    return `<img src="${src}" alt="${alt}" onerror="this.parentElement.innerHTML=window.ICON_FALLBACK">`;
+  }
+  return ICONS[p.icon] || ICONS.other;
+}
+window.ICON_FALLBACK = ICONS.other;
+
+let selectedColor = {}; // productId -> chosen color index
+function selectColor(id, idx){
+  selectedColor[id] = idx;
+  renderCatalog();
+}
+
+function cartKeyOf(id, colorName){ return colorName ? `${id}__${colorName}` : id; }
+function parseCartKey(key){
+  const i = key.indexOf('__');
+  return i === -1 ? { id:key, color:null } : { id:key.slice(0,i), color:key.slice(i+2) };
+}
+
+const CATS = ['ทั้งหมด','ช่อดอกไม้','กรอบรูป','กระถาง','อื่นๆ'];
+const SIZES = ['ทั้งหมด','เล็ก','กลาง','ใหญ่','ใส่เงิน'];
+let activeCat = 'ทั้งหมด';
+let activeSize = 'ทั้งหมด';
+let cart = {}; // key -> { qty, unitPrice, label }
+
+function fmt(n){ return '฿' + n.toLocaleString('th-TH'); }
+
+function unitPriceFor(p, bills){
+  if(p.billSelector){
+    return p.pricePerBill * (bills != null ? bills : (p.minBills||1)) + (p.wrappingFee||0);
+  }
+  return p.price;
+}
+
+function renderNav(){
+  const nav = document.getElementById('catNav');
+  nav.innerHTML = CATS.map(c =>
+    `<button class="cat-btn ${c===activeCat?'active':''}" onclick="setCat('${c}')">${c}</button>`
+  ).join('');
+}
+function setCat(c){ activeCat = c; if(c !== 'ช่อดอกไม้') activeSize = 'ทั้งหมด'; renderNav(); renderCatalog(); }
+function setSize(s){ activeSize = s; renderCatalog(); }
+
+function renderCatalog(){
+  const main = document.getElementById('catalog');
+  const cats = activeCat === 'ทั้งหมด' ? CATS.slice(1) : [activeCat];
+  main.innerHTML = cats.map(cat => {
+    const items = PRODUCTS.filter(p => p.cat === cat && (cat !== 'ช่อดอกไม้' || activeSize === 'ทั้งหมด' || p.size === activeSize));
+    if(!items.length) return `
+      <div class="section-title"><h3>${cat}</h3><span>0 รายการ</span></div>
+      ${cat==='ช่อดอกไม้' ? renderSizeRow() : ''}
+    `;
+    return `
+      <div class="section-title"><h3>${cat}</h3><span>${items.length} รายการ</span></div>
+      ${cat==='ช่อดอกไม้' ? renderSizeRow() : ''}
+      <div class="grid">
+        ${items.map(p => `
+          <div class="card">
+            <div class="thumb" onclick="openProductModal('${p.id}')">${renderThumb(p)}</div>
+            ${p.colors ? `
+              <div class="color-row">
+                ${p.colors.map((c,i) => `
+                  <button class="color-chip ${((selectedColor[p.id]||0)===i)?'active':''}" onclick="selectColor('${p.id}',${i})">${c.name}</button>
+                `).join('')}
+              </div>
+            ` : ''}
+            <h4>${p.name}</h4>
+            <p class="desc">${p.desc}</p>
+            <div class="price-row">
+              <span class="price">${p.billSelector ? `เริ่มต้น ${fmt(unitPriceFor(p))}` : fmt(p.price)}</span>
+              ${p.billSelector
+                ? `<button class="add-btn" onclick="openProductModal('${p.id}')">เลือกจำนวน</button>`
+                : `<button class="add-btn" id="add-${p.id}" onclick="addToCart('${p.id}')">+ ใส่ตะกร้า</button>`
+              }
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }).join('');
+}
+function renderSizeRow(){
+  return `<div class="size-row">${SIZES.map(s => `<button class="cat-btn ${s===activeSize?'active':''}" onclick="setSize('${s}')">${s}</button>`).join('')}</div>`;
+}
+
+function addToCart(id){
+  const p = PRODUCTS.find(x=>x.id===id);
+  if(!p) return;
+  if(p.billSelector){ openProductModal(id); return; }
+  const colorName = p.colors ? p.colors[selectedColor[id]||0].name : null;
+  const key = cartKeyOf(id, colorName);
+  if(cart[key]) cart[key].qty += 1;
+  else cart[key] = { qty:1, unitPrice:p.price, label:colorName };
+  updateCartUI();
+  showToast('เพิ่มลงตะกร้าแล้ว 🌸');
+  const btn = document.getElementById('add-'+id);
+  if(btn){
+    btn.classList.add('added'); btn.textContent = 'เพิ่มแล้ว ✓';
+    setTimeout(()=>{ btn.classList.remove('added'); btn.textContent='+ ใส่ตะกร้า'; }, 900);
+  }
+}
+function changeQty(key, delta){
+  if(!cart[key]) return;
+  cart[key].qty += delta;
+  if(cart[key].qty <= 0) delete cart[key];
+  updateCartUI();
+}
+function removeItem(key){ delete cart[key]; updateCartUI(); }
+
+function cartCount(){ return Object.values(cart).reduce((a,e)=>a+e.qty,0); }
+function cartTotal(){
+  return Object.values(cart).reduce((sum,e)=> sum + e.unitPrice*e.qty, 0);
+}
+
+function updateCartUI(){
+  document.getElementById('cartBadge').textContent = cartCount();
+  const wrap = document.getElementById('drawerItems');
+  const entries = Object.entries(cart);
+  if(!entries.length){
+    wrap.innerHTML = `<div class="empty-cart">
+      <svg viewBox="0 0 64 64" fill="none"><path d="M18 26 H46 L41 54 H23 Z" stroke="#8a7680" stroke-width="3"/></svg>
+      <div>ยังไม่มีสินค้าในตะกร้า</div>
+    </div>`;
+  } else {
+    wrap.innerHTML = Object.entries(cart).map(([key,entry]) => {
+      const { id } = parseCartKey(key);
+      const p = PRODUCTS.find(x=>x.id===id);
+      if(!p) return '';
+      const { qty, unitPrice, label } = entry;
+      return `
+        <div class="cart-item">
+          <div class="mini-thumb">${renderThumb(p, p.colors ? label : undefined)}</div>
+          <div class="info">
+            <h5>${p.name}${label ? ` <span class="variant">(${label})</span>` : ''}</h5>
+            <div class="unit">${fmt(unitPrice)} / ชิ้น</div>
+          </div>
+          <div class="qty-ctrl">
+            <button onclick="changeQty('${key}',-1)">−</button>
+            <span>${qty}</span>
+            <button onclick="changeQty('${key}',1)">+</button>
+          </div>
+          <button class="remove-btn" onclick="removeItem('${key}')">ลบ</button>
+        </div>
+      `;
+    }).join('');
+  }
+  document.getElementById('totalAmt').textContent = fmt(cartTotal());
+  document.getElementById('checkoutBtn').disabled = entries.length === 0;
+}
+
+function openCart(){
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('overlay').classList.add('show');
+}
+function closeCart(){
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('overlay').classList.remove('show');
+}
+
+let toastTimer;
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=> t.classList.remove('show'), 1800);
+}
+
+function checkout(){
+  const entries = Object.entries(cart);
+  if(!entries.length) return;
+  let lines = ['สวัสดีค่ะ ต้องการสั่งซื้อสินค้าดังนี้ค่ะ:', ''];
+  entries.forEach(([key,entry])=>{
+    const { id } = parseCartKey(key);
+    const p = PRODUCTS.find(x=>x.id===id);
+    if(p) lines.push(`• ${p.name}${entry.label ? ` (${entry.label})` : ''} x${entry.qty} = ${fmt(entry.unitPrice*entry.qty)}`);
+  });
+  lines.push('');
+  lines.push(`รวมทั้งหมด: ${fmt(cartTotal())}`);
+  lines.push('');
+  lines.push('รบกวนสอบถามช่องทางชำระเงินและที่อยู่จัดส่งด้วยค่ะ 🙏');
+  const message = lines.join('\n');
+  const url = `${PAGE_LINK}?text=${encodeURIComponent(message)}`;
+  window.open(url, '_blank');
+}
+
+/* ---------- Product zoom / quick-order modal ---------- */
+let modalProductId = null;
+let modalQty = 1;
+let modalBills = 1;
+
+function openProductModal(id){
+  modalProductId = id;
+  modalQty = 1;
+  const p = PRODUCTS.find(x=>x.id===id);
+  modalBills = p && p.billSelector ? (p.minBills||1) : 1;
+  renderModal();
+  document.getElementById('productModal').classList.add('open');
+  document.getElementById('modalOverlay').classList.add('show');
+}
+function closeProductModal(){
+  document.getElementById('productModal').classList.remove('open');
+  document.getElementById('modalOverlay').classList.remove('show');
+  modalProductId = null;
+}
+function changeModalQty(delta){
+  modalQty = Math.max(1, modalQty + delta);
+  document.getElementById('modalQty').textContent = modalQty;
+}
+function changeModalBills(delta){
+  const p = PRODUCTS.find(x=>x.id===modalProductId);
+  if(!p) return;
+  const min = p.minBills||1, max = p.maxBills||30;
+  modalBills = Math.min(max, Math.max(min, modalBills+delta));
+  renderModal();
+}
+function renderModal(){
+  const p = PRODUCTS.find(x=>x.id===modalProductId);
+  if(!p) return;
+  document.getElementById('modalImg').innerHTML = renderThumb(p);
+  document.getElementById('modalName').textContent = p.name;
+  document.getElementById('modalDesc').textContent = p.desc;
+  document.getElementById('modalQty').textContent = modalQty;
+
+  const colorsWrap = document.getElementById('modalColors');
+  if(p.colors){
+    colorsWrap.innerHTML = p.colors.map((c,i)=>`
+      <button class="color-chip ${((selectedColor[p.id]||0)===i)?'active':''}" onclick="selectColor('${p.id}',${i}); renderModal();">${c.name}</button>
+    `).join('');
+  } else {
+    colorsWrap.innerHTML = '';
+  }
+
+  const billsRow = document.getElementById('modalBillsRow');
+  if(p.billSelector){
+    billsRow.style.display = 'flex';
+    document.getElementById('modalBills').textContent = modalBills;
+  } else {
+    billsRow.style.display = 'none';
+  }
+
+  document.getElementById('modalPrice').textContent = fmt(unitPriceFor(p, modalBills));
+}
+function currentModalVariant(p){
+  if(p.billSelector) return { label:`ใส่ธนบัตร ${modalBills} ใบ`, unitPrice: unitPriceFor(p, modalBills) };
+  if(p.colors) return { label:p.colors[selectedColor[p.id]||0].name, unitPrice:p.price };
+  return { label:null, unitPrice:p.price };
+}
+function addModalToCart(){
+  const p = PRODUCTS.find(x=>x.id===modalProductId);
+  if(!p) return;
+  const { label, unitPrice } = currentModalVariant(p);
+  const key = cartKeyOf(p.id, label);
+  if(cart[key]) cart[key].qty += modalQty;
+  else cart[key] = { qty:modalQty, unitPrice, label };
+  updateCartUI();
+  showToast('เพิ่มลงตะกร้าแล้ว 🌸');
+  closeProductModal();
+}
+function orderModalNow(){
+  const p = PRODUCTS.find(x=>x.id===modalProductId);
+  if(!p) return;
+  const { label, unitPrice } = currentModalVariant(p);
+  const lineTotal = unitPrice * modalQty;
+  let lines = ['สวัสดีค่ะ ต้องการสั่งซื้อสินค้านี้ค่ะ:', ''];
+  lines.push(`• ${p.name}${label ? ` (${label})` : ''} x${modalQty} = ${fmt(lineTotal)}`);
+  lines.push('');
+  lines.push(`รวม: ${fmt(lineTotal)}`);
+  lines.push('');
+  lines.push('รบกวนสอบถามช่องทางชำระเงินและที่อยู่จัดส่งด้วยค่ะ 🙏');
+  const message = lines.join('\n');
+  const url = `${PAGE_LINK}?text=${encodeURIComponent(message)}`;
+  window.open(url, '_blank');
+  closeProductModal();
+}
+
+renderNav();
+renderCatalog();
+updateCartUI();
+</script>
+</body>
+</html>
