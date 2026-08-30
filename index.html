@@ -120,6 +120,30 @@
     box-shadow:0 6px 16px rgba(0,0,0,0.15);
   }
 
+  /* ---------- Custom order banner ---------- */
+  .custom-order-banner{
+    margin:0 6vw 10px;
+    padding:20px 24px;
+    background:var(--paper);
+    border:1.5px dashed var(--rose);
+    border-radius:20px;
+    display:flex; align-items:center; gap:16px; flex-wrap:wrap;
+  }
+  .custom-order-icon{font-size:32px; flex-shrink:0;}
+  .custom-order-text{flex:1; min-width:200px;}
+  .custom-order-text h3{margin:0 0 4px; font-size:16px; color:var(--sage-dark); font-family:'Sarabun'; font-weight:700;}
+  .custom-order-text p{margin:0; font-size:13px; color:#6b5b62; line-height:1.5;}
+  .custom-order-btn{
+    border:none; background:var(--rose); color:#fff; font-weight:700; font-size:13.5px;
+    padding:11px 20px; border-radius:999px; cursor:pointer; white-space:nowrap;
+    transition:background .15s ease; font-family:'Sarabun';
+  }
+  .custom-order-btn:hover{background:var(--rose-dark);}
+  @media (max-width:520px){
+    .custom-order-banner{flex-direction:column; align-items:flex-start; text-align:left;}
+    .custom-order-btn{width:100%; text-align:center;}
+  }
+
   /* ---------- Category nav ---------- */
   .cat-nav{
     display:flex; gap:10px; flex-wrap:wrap;
@@ -427,6 +451,8 @@
     resize:vertical;
   }
   .form-input:focus{outline:none; border-color:var(--sage);}
+  .field-hint{font-size:12px; color:var(--rose-dark); margin:6px 0 0; line-height:1.5;}
+  .field-warning{font-size:12px; color:#B8860B; background:#FFF7E0; border-radius:8px; padding:8px 10px; margin:8px 0 0; line-height:1.5;}
   .method-options{display:flex; flex-direction:column; gap:10px;}
   .method-card{
     display:flex; align-items:flex-start; gap:10px;
@@ -473,6 +499,15 @@
   <h2>ช่อดอกไม้กำมะหยี่<br>สำหรับโอกาสพิเศษ</h2>
   <p>เลือกสินค้าที่ชอบ กดใส่ตะกร้า แล้วกดปุ่มเดียวเพื่อส่งรายการสั่งซื้อมาที่แชทเพจของเราได้ทันที ไม่ต้องพิมพ์เอง</p>
   <a href="#catalog" class="cta">เลือกดูสินค้า ↓</a>
+</section>
+
+<section class="custom-order-banner">
+  <div class="custom-order-icon">🎨</div>
+  <div class="custom-order-text">
+    <h3>ต้องการแบบพิเศษ หรือมีรูปตัวอย่างในใจ?</h3>
+    <p>บอกรายละเอียดหรือแนบรูปที่ต้องการทางแชทได้เลย ทางร้านยินดีออกแบบให้ตามที่ต้องการ</p>
+  </div>
+  <button class="custom-order-btn" onclick="startCustomOrder()">💬 แชทสั่งแบบกำหนดเอง</button>
 </section>
 
 <nav class="cat-nav" id="catNav"></nav>
@@ -552,7 +587,9 @@
     <h3>ข้อมูลการรับสินค้า</h3>
     <div class="form-group">
       <label>วันที่ต้องการรับสินค้า</label>
-      <input type="date" id="orderDate" class="form-input">
+      <input type="date" id="orderDate" class="form-input" oninput="checkDateWarning()">
+      <p class="field-hint">📅 กรุณาเลือกวันที่ล่วงหน้าอย่างน้อย 3-5 วัน เพื่อให้ร้านเตรียมสินค้าได้ทันเวลา</p>
+      <p class="field-warning" id="dateWarning" style="display:none;">⚠️ วันที่นี้ใกล้เกินไป ร้านอาจเตรียมสินค้าไม่ทัน แนะนำเลือกวันที่ห่างจากวันนี้อย่างน้อย 3 วัน (ยกเว้นสินค้าที่มีป้าย "พร้อมส่ง")</p>
     </div>
     <div class="form-group">
       <label>วิธีรับสินค้า</label>
@@ -612,7 +649,7 @@
 <script>
 /* ---------------- แก้ไขสินค้าตรงนี้ได้เลย ---------------- */
 const PRODUCTS = [
-  { id:'b1', cat:'ช่อดอกไม้', size:'เล็ก', name:'ช่อกุหลาบแดง 1 ดอก', price:99, desc:'กุหลาบแดง 1 ดอก เลือกสีช่อได้', 
+  { id:'b1', cat:'ช่อดอกไม้', size:'เล็ก', name:'ช่อกุหลาบแดง 1 ดอก', price:99, desc:'กุหลาบแดง 1 ดอก เลือกสีช่อได้', ready:true,
     colors:[
       { name:'ช่อสีขาว', image:'images/กุหลาบ-99฿-แดง-ขาว.jpg' },
       { name:'ช่อสีดำ',  image:'images/กุหลาบ-99฿-แดง-ดำ.jpg' },
@@ -1211,7 +1248,7 @@ function buildModalOrderLines(){
 }
 function startCheckout(builderFn){
   const result = builderFn();
-  if(!result){ showToast('กรุณาเลือกสินค้าก่อนค่ะ'); return; }
+  if(!result){ showToast('กรุณาเลือกสินค้าก่อน'); return; }
   pendingOrder = result;
   openOrderForm();
 }
@@ -1220,10 +1257,22 @@ function openOrderForm(){
   document.getElementById('orderDate').min = new Date().toISOString().slice(0,10);
   document.getElementById('orderAddress').value = '';
   document.querySelector('input[name="deliveryMethod"][value="pickup"]').checked = true;
+  document.getElementById('dateWarning').style.display = 'none';
   renderFeePreview();
   document.getElementById('orderFormModal').classList.add('open');
   document.getElementById('formOverlay').classList.add('show');
   closeCart();
+}
+function isDateTooSoon(dateStr){
+  if(!dateStr) return false;
+  const chosen = new Date(dateStr + 'T00:00:00');
+  const today = new Date(); today.setHours(0,0,0,0);
+  const diffDays = Math.round((chosen - today) / 86400000);
+  return diffDays < 3;
+}
+function checkDateWarning(){
+  const date = document.getElementById('orderDate').value;
+  document.getElementById('dateWarning').style.display = isDateTooSoon(date) ? 'block' : 'none';
 }
 function closeOrderForm(){
   document.getElementById('orderFormModal').classList.remove('open');
@@ -1269,17 +1318,19 @@ function submitOrderForm(){
   const method = getDeliveryMethod();
   const d = computeDelivery(pendingOrder.subtotal, method);
   const grand = d.fee != null ? pendingOrder.subtotal + d.fee : pendingOrder.subtotal;
+  const divider = '──────────────';
 
-  let lines = ['สวัสดีค่ะ ต้องการสั่งซื้อสินค้าดังนี้ค่ะ:', '', ...pendingOrder.lines, ''];
+  let lines = ['🛒 คำสั่งซื้อใหม่ — S.Flower Bloom', divider, 'รายการสินค้า', ...pendingOrder.lines, divider];
   lines.push(`ยอดสินค้า: ${fmt(pendingOrder.subtotal)}`);
   lines.push(`วิธีรับสินค้า: ${d.methodLabel}`);
   lines.push(`ค่าจัดส่ง: ${d.feeLabel}`);
-  lines.push(`ยอดรวม${d.fee==null?' (ยังไม่รวมค่าส่ง)':''}: ${fmt(grand)}`);
+  lines.push(`ยอดรวมสุทธิ${d.fee==null?' (ยังไม่รวมค่าส่ง)':''}: ${fmt(grand)}`);
   lines.push('');
-  lines.push(`วันที่ต้องการรับสินค้า: ${formatThaiDate(date)}`);
-  lines.push(`ที่อยู่ / จุดนัดรับ: ${address}`);
+  if(isDateTooSoon(date)) lines.push('⚠️ หมายเหตุ: วันที่รับสินค้าน้อยกว่า 3 วันจากวันนี้');
+  lines.push(`📅 วันที่ต้องการรับสินค้า: ${formatThaiDate(date)}`);
+  lines.push(`📍 ที่อยู่ / จุดนัดรับ: ${address}`);
   lines.push('');
-  lines.push('รบกวนสอบถามช่องทางชำระเงินด้วยค่ะ 🙏');
+  lines.push('กรุณาแจ้งช่องทางการชำระเงินให้ทราบด้วย 🙏');
 
   closeOrderForm();
   showOrderSummary(lines.join('\n'));
@@ -1324,6 +1375,19 @@ function copyOrderMessage(){
 function clearCart(){
   cart = {};
   updateCartUI();
+}
+function startCustomOrder(){
+  const message = [
+    '🎨 สอบถามสั่งสินค้าแบบกำหนดเอง / ตามภาพตัวอย่าง — S.Flower Bloom',
+    '',
+    'รายละเอียดที่ต้องการ: (ลักษณะ สี ขนาด งบประมาณโดยประมาณ)',
+    '',
+    'วันที่ต้องการรับสินค้า: ',
+    'วิธีรับสินค้า (นัดรับ/จัดส่ง): ',
+    '',
+    '(แนบรูปตัวอย่างที่ต้องการในแชทนี้ได้เลย)'
+  ].join('\n');
+  showOrderSummary(message);
 }
 
 /* ---------- Product zoom / quick-order modal ---------- */
