@@ -218,6 +218,18 @@
     padding:4px 10px; border-radius:999px; box-shadow:0 4px 10px rgba(0,0,0,0.15);
     pointer-events:none;
   }
+  .badge-new{
+    position:absolute; top:8px; right:8px; z-index:2;
+    background:var(--rose); color:#fff; font-size:11px; font-weight:700;
+    padding:4px 10px; border-radius:999px; box-shadow:0 4px 10px rgba(0,0,0,0.15);
+    pointer-events:none;
+  }
+  .badge-inline{
+    display:inline-block; font-size:11px; font-weight:700; color:#fff;
+    padding:4px 10px; border-radius:999px; margin-right:6px;
+  }
+  .badge-inline.ready{background:var(--sage);}
+  .badge-inline.new{background:var(--rose);}
   .card h4{margin:0 0 4px; font-size:16.5px; font-weight:700;}
   .color-row{display:flex; gap:6px; flex-wrap:wrap; margin:-2px 0 10px;}
   .color-chip{
@@ -243,6 +255,24 @@
   .add-btn:hover{background:var(--sage-dark);}
   .add-btn:active{transform:scale(.96);}
   .add-btn.added{background:var(--rose);}
+  .card-actions{display:flex; gap:8px; margin-top:10px; align-items:stretch;}
+  .buy-now-btn{
+    flex:1; border:none; background:var(--sage); color:#fff;
+    padding:11px 8px; border-radius:999px; font-weight:700; font-size:14px;
+    cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;
+    transition:background .15s ease, transform .1s ease; font-family:'Sarabun';
+    box-shadow:0 6px 14px rgba(246,33,136,0.45);
+  }
+  .buy-now-btn:hover{background:var(--sage-dark);}
+  .buy-now-btn:active{transform:scale(.96);}
+  .cart-icon-btn{
+    flex-shrink:0; width:40px; height:40px; border:1.5px solid var(--line); background:#fff; color:var(--sage);
+    border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center;
+    font-size:16px; transition:all .15s ease;
+  }
+  .cart-icon-btn:hover{background:var(--cream); border-color:var(--sage);}
+  .cart-icon-btn:active{transform:scale(.9);}
+  .cart-icon-btn.added{background:var(--sage); color:#fff; border-color:var(--sage);}
 
   /* ---------- Cart drawer ---------- */
   .overlay{
@@ -471,7 +501,7 @@
     </div>
     <div>
       <h1>S.Flower Bloom</h1>
-      <p>เลือกสินค้า แล้วสั่งซื้อผ่านแชทได้เลย</p>
+      <p>เลือกสินค้า กดสั่งซื้อ แล้วรอแอดมินตอบกลับได้เลย</p>
     </div>
   </div>
   <div class="cart-pill" onclick="openCart()">
@@ -482,7 +512,7 @@
 
 <section class="hero">
   <h2>ช่อดอกไม้กำมะหยี่<br>สำหรับโอกาสพิเศษ</h2>
-  <p>เลือกสินค้าที่ชอบ กดใส่ตะกร้า แล้วกดปุ่มเดียวเพื่อส่งรายการสั่งซื้อมาที่แชทเพจของเราได้ทันที ไม่ต้องพิมพ์เอง</p>
+  <p>เลือกสินค้าที่ชอบ แล้วกดสั่งซื้อได้เลย แอดมินจะได้รับรายการสั่งซื้อและตอบกลับไปยืนยันออเดอร์ค่ะ ง่าย ๆ ไม่ต้องพิมพ์เอง</p>
   <a href="#catalog" class="cta">เลือกดูสินค้า ↓</a>
 </section>
 
@@ -539,6 +569,7 @@
   <button class="modal-close" onclick="closeProductModal()">✕</button>
   <div class="modal-img" id="modalImg"></div>
   <div class="modal-body">
+    <div id="modalBadges" style="margin-bottom:8px;"></div>
     <h3 id="modalName"></h3>
     <p class="modal-desc" id="modalDesc"></p>
     <div class="color-row" id="modalColors"></div>
@@ -575,7 +606,8 @@
 
   <div class="modal-body" id="orderReviewView">
     <p class="paste-instruction">กรุณากรอก <strong>ชื่อ Facebook ที่ใช้ทักแชทเพจร้าน</strong> เพื่อให้แอดมินยืนยันออเดอร์ถูกคน แล้วกด "ยืนยันสั่งซื้อ" ได้เลยค่ะ 🌸</p>
-    <input type="text" id="fbNameInput" class="form-input" placeholder="ชื่อ Facebook ที่ทักแชท เช่น สมหญิง ใจดี" style="margin-bottom:14px;">
+    <input type="text" id="fbNameInput" class="form-input" placeholder="ชื่อ Facebook ที่ทักแชท" style="margin-bottom:14px;">
+    <textarea id="orderNoteInput" class="form-input" rows="2" placeholder="หมายเหตุ (เช่น อยากเปลี่ยน/เพิ่มสีช่อดอกไม้ หรือข้อความอื่นๆ ถึงร้าน)" style="margin-bottom:14px;"></textarea>
     <details class="summary-details">
       <summary>ดูรายการสั่งซื้อ</summary>
       <pre id="orderSummaryText" class="order-summary-text"></pre>
@@ -599,51 +631,54 @@
 <script>
 /* ---------------- แก้ไขสินค้าตรงนี้ได้เลย ---------------- */
 const PRODUCTS = [
-  { id:'b1', cat:'ช่อดอกไม้', size:'เล็ก', name:'ช่อกุหลาบแดง 1 ดอก', price:99, desc:'กุหลาบแดง 1 ดอก เลือกสีช่อได้', ready:true,
+  { id:'r1', cat:'ช่อดอกไม้', size:'เล็ก', name:'ช่อกุหลาบแดง 1 ดอก', price:99, desc:'กุหลาบแดง 1 ดอก เลือกสีช่อได้',
     colors:[
       { name:'ช่อสีขาว', image:'images/bouquet/กุหลาบ-99฿-แดง-ขาว.jpg' },
       { name:'ช่อสีดำ',  image:'images/bouquet/กุหลาบ-99฿-แดง-ดำ.jpg' },
       { name:'ช่อสีน้ำตาล',  image:'images/bouquet/กุหลาบ-99฿-แดง-น้ำตาล.jpg' },
     ]
   },
-  { id:'b2', cat:'ช่อดอกไม้', size:'เล็ก', name:'ช่อดอกกุหลาบ 4 ดอก', price:199, desc:'กุหลาบ 4 ดอก เลือกสีดอกกุหลาบได้', 
+  { id:'r2', cat:'ช่อดอกไม้', size:'เล็ก', name:'ช่อดอกกุหลาบ 4 ดอก', price:199, desc:'กุหลาบ 4 ดอก เลือกสีดอกกุหลาบได้', 
     colors:[
       { name:'ดอกสีชมพู', image:'images/bouquet/กุหลาบ-199฿-ชมพู-ใส.jpg' },
       { name:'ดอกสีแดง',  image:'images/bouquet/กุหลาบ-199฿-แดง-ใส.jpg' },
         ]
   },
-  { id:'b15', cat:'ช่อดอกไม้', size:'กลาง', name:'ช่อดอกกุหลาบ 1 ดอก', price:299, desc:'ช่อดอกกุหลาบ 1 ดอก', image:'images/bouquet/กุหลาบ-299฿-แดง-ขาว.jpg' },
-  { id:'b16', cat:'ช่อดอกไม้', size:'กลาง', name:'ช่อดอกกุหลาบ 5 ดอก', price:399, desc:'ช่อดอกกุหลาบ 5 ดอก', image:'images/bouquet/กุหลาบ-399฿-แดง-ขาว.jpg' },
-  { id:'b33', cat:'ช่อดอกไม้', size:'ใหญ่', name:'ช่อดอกกุหลาบ 8 ดอก', price:599, desc:'ช่อดอกกุหลาบ 8 ดอก', image:'images/bouquet/กุหลาบ-599฿-แดง-ขาว.jpg' },
-  { id:'b34', cat:'ช่อดอกไม้', size:'ใหญ่', name:'ช่อดอกกุหลาบ 9 ดอก', price:649, desc:'ช่อดอกกุหลาบ 9 ดอก',
+  { id:'r3', cat:'ช่อดอกไม้', size:'กลาง', name:'ช่อดอกกุหลาบ 1 ดอก', price:299, desc:'ช่อดอกกุหลาบ 1 ดอก', image:'images/bouquet/กุหลาบ-299฿-แดง-ขาว.jpg' },
+  { id:'r4', cat:'ช่อดอกไม้', size:'กลาง', name:'ช่อดอกกุหลาบ 4 ดอก', price:349, desc:'ช่อดอกกุหลาบ 4 ดอก', image:'images/bouquet/กุหลาบ-349฿-แดง-ขาว.jpg' },
+  { id:'r5', cat:'ช่อดอกไม้', size:'กลาง', name:'ช่อดอกกุหลาบ 5 ดอก', price:399, desc:'ช่อดอกกุหลาบ 5 ดอก', image:'images/bouquet/กุหลาบ-399฿-แดง-ขาว.jpg' },
+  { id:'r6', cat:'ช่อดอกไม้', size:'ใหญ่', name:'ช่อดอกกุหลาบ 8 ดอก', price:599, desc:'ช่อดอกกุหลาบ 8 ดอก', image:'images/bouquet/กุหลาบ-599฿-แดง-ขาว.jpg' },
+  { id:'r7', cat:'ช่อดอกไม้', size:'ใหญ่', name:'ช่อดอกกุหลาบ 9 ดอก', price:649, desc:'ช่อดอกกุหลาบ 9 ดอก',
     colors:[
       { name:'ดอกชมพูช่อขาว', image:'images/bouquet/กุหลาบ-649฿-ชมพู-ขาว.jpg' },
       { name:'ดอกแดงช่อดำ',  image:'images/bouquet/กุหลาบ-649฿-แดง-ดำ.jpg' },
         ]
   },
-  { id:'b35', cat:'ช่อดอกไม้', size:'ใหญ่', name:'ช่อดอกกุหลาบ 9 ดอก', price:749, desc:'ช่อดอกกุหลาบ 9 ดอก', image:'images/bouquet/กุหลาบ-749฿-แดง-ดำ.jpg' },
-  { id:'b36', cat:'ช่อดอกไม้', size:'ใหญ่', name:'ช่อดอกกุหลาบ 15 ดอก', price:1200, desc:'ช่อดอกกุหลาบ 15 ดอก', image:'images/bouquet/กุหลาบ-1200฿-แดง-ดำ.jpg' },
-  { id:'b37', cat:'ช่อดอกไม้', size:'ใหญ่', name:'ช่อดอกกุหลาบยักษ์', price:599, desc:'ช่อดอกกุหลาบยักษ์',
-    colors:[
-      { name:'ครีม', image:'images/bouquet/กุหลาบยักษ์-599฿-ครีม.jpg' },
-      { name:'ชมพู',  image:'images/bouquet/กุหลาบยักษ์-599฿-ชมพู.jpg' },
-        ]
-  },
-  { id:'b59', cat:'ช่อดอกไม้', size:'ใส่เงิน', name:'ช่อดอกกุหลาบ ใส่เงิน 5ใบ', price:324, desc:'ช่อดอกกุหลาบ ใส่เงิน 5ใบ', image:'images/bouquet/กุหลาบเงิน5ใบ-324฿-แดง-น้ำเงิน.jpg' },
-  { id:'b60', cat:'ช่อดอกไม้', size:'ใส่เงิน', name:'ช่อดอกกุหลาบ ใส่เงิน 5ใบ+เฟอเรโร่', price:429, desc:'ช่อดอกกุหลาบ ใส่เงิน 5ใบ+เฟอเรโร่', image:'images/bouquet/กุหลาบเงิน5ใบเฟอเรโร่-429฿-แดง-น้ำเงิน.jpg' },
-  { id:'b61', cat:'ช่อดอกไม้', size:'ใส่เงิน', name:'ช่อดอกกุหลาบ ใส่เงิน 10ใบ', price:349, desc:'ช่อดอกกุหลาบ ใส่เงิน 10ใบ เลือกสีช่อได้',
+  { id:'r8', cat:'ช่อดอกไม้', size:'ใหญ่', name:'ช่อดอกกุหลาบ 9 ดอก', price:749, desc:'ช่อดอกกุหลาบ 9 ดอก', image:'images/bouquet/กุหลาบ-749฿-แดง-ดำ.jpg' },
+  { id:'r9', cat:'ช่อดอกไม้', size:'ใหญ่', name:'ช่อดอกกุหลาบ 15 ดอก', price:1200, desc:'ช่อดอกกุหลาบ 15 ดอก', image:'images/bouquet/กุหลาบ-1200฿-แดง-ดำ.jpg' },
+  
+  { id:'r10', cat:'ช่อดอกไม้', size:'ใส่เงิน', name:'ช่อดอกกุหลาบ ใส่เงิน 5ใบ', price:324, desc:'ช่อดอกกุหลาบ ใส่เงิน 5ใบ', image:'images/bouquet/กุหลาบเงิน5ใบ-324฿-แดง-น้ำเงิน.jpg' },
+  { id:'r11', cat:'ช่อดอกไม้', size:'ใส่เงิน', name:'ช่อดอกกุหลาบ ใส่เงิน 5ใบ+เฟอเรโร่', price:429, desc:'ช่อดอกกุหลาบ ใส่เงิน 5ใบ+เฟอเรโร่', image:'images/bouquet/กุหลาบเงิน5ใบเฟอเรโร่-429฿-แดง-น้ำเงิน.jpg' },
+  { id:'r12', cat:'ช่อดอกไม้', size:'ใส่เงิน', name:'ช่อดอกกุหลาบ ใส่เงิน 10ใบ', price:349, desc:'ช่อดอกกุหลาบ ใส่เงิน 10ใบ เลือกสีช่อได้',
     colors:[
       { name:'ช่อสีเขียว', image:'images/bouquet/กุหลาบเงิน10ใบ-349฿-แดง-เขียว.jpg' },
       { name:'ช่อสีกะปิ',  image:'images/bouquet/กุหลาบเงิน10ใบ-349฿-แดง-ชมพู.jpg' },
         ]
   },
-  { id:'b3', cat:'ช่อดอกไม้', size:'เล็ก', name:'ช่อดอกเดซี่', price:129, desc:'ดอกเดซี่ชมพู ช่อสีขาว ริบบิ้นสีชมพู', image:'images/bouquet/เดซี่-129฿-ชมพู-ขาว.jpg' },
-  { id:'b4', cat:'ช่อดอกไม้', size:'เล็ก', name:'ช่อดอกเดซี่', price:199, desc:'ดอกเดซี่ชมพู ช่อสีครีม ริบบิ้นสีขาว', image:'images/bouquet/เดซี่-199฿-ชมพู-ครีม.jpg' },
-  { id:'b17', cat:'ช่อดอกไม้', size:'กลาง', name:'ช่อดอกเดซี่', price:349, desc:'ช่อดอกเดซี่ เลือกสีได้',
+  { id:'r13', cat:'ช่อดอกไม้', size:'ใหญ่', name:'ช่อดอกกุหลาบยักษ์', price:599, desc:'ช่อดอกกุหลาบยักษ์',
+    colors:[
+      { name:'ครีม', image:'images/bouquet/กุหลาบยักษ์-599฿-ครีม.jpg' },
+      { name:'ชมพู',  image:'images/bouquet/กุหลาบยักษ์-599฿-ชมพู.jpg' },
+        ]
+  },
+  { id:'d1', cat:'ช่อดอกไม้', size:'เล็ก', name:'ช่อดอกเดซี่', price:129, desc:'ดอกเดซี่ชมพู ช่อสีขาว ริบบิ้นสีชมพู', image:'images/bouquet/เดซี่-129฿-ชมพู-ขาว.jpg' },
+  { id:'d2', cat:'ช่อดอกไม้', size:'เล็ก', name:'ช่อดอกเดซี่', price:199, desc:'ดอกเดซี่ชมพู ช่อสีครีม ริบบิ้นสีขาว', image:'images/bouquet/เดซี่-199฿-ชมพู-ครีม.jpg' },
+  { id:'d3', cat:'ช่อดอกไม้', size:'กลาง', name:'ช่อดอกเดซี่', price:349, desc:'ช่อดอกเดซี่ เลือกสีได้',
     colors:[
       { name:'ขาว', image:'images/bouquet/เดซี่-349฿-ขาว.jpg' },
       { name:'ดอกคละสีช่อขาว',  image:'images/bouquet/เดซี่-349฿-รวม-ขาว.jpg' },
       { name:'ดอกคละสีช่อน้ำตาล',  image:'images/bouquet/เดซี่-349฿-รวม-น้ำตาลครีม.jpg' },
+      { name:'ดอกคละสีช่อม่วง',  image:'images/bouquet/เดซี่-349฿-รวม-ม่วง.jpg' },
         ]
   },
   { id:'b18', cat:'ช่อดอกไม้', size:'กลาง', name:'ช่อดอกเดซี่ชมพูขาว', price:449, desc:'ช่อดอกเดซี่ชมพูขาว', image:'images/bouquet/เดซี่-449฿-ชมพูขาว-ขาว.jpg' },
@@ -704,6 +739,7 @@ const PRODUCTS = [
   { id:'b21', cat:'ช่อดอกไม้', size:'กลาง', name:'ช่อดอกทานตะวันทิวลิป', price:299, desc:'ช่อดอกทานตะวันทิวลิป', image:'images/bouquet/ทานตะวัน-299฿-แบบที่2-เหลือง-ขาว.jpg' },
   { id:'b22', cat:'ช่อดอกไม้', size:'กลาง', name:'ช่อดอกทาน 5 ดอก', price:319, desc:'ช่อดอกทานตะวัน 5 ดอก + ผึ้งน้อย', image:'images/bouquet/ทานตะวัน-319฿-ส้ม-น้ำเงิน.jpg' },
   { id:'b23', cat:'ช่อดอกไม้', size:'กลาง', name:'ช่อดอกทานตะวันทิวลิป', price:349, desc:'ช่อดอกทานตะวันทิวลิป', image:'images/bouquet/ทานตะวัน-349฿-เหลือง-ขาว.jpg' },
+  { id:'b58', cat:'ช่อดอกไม้', size:'กลาง', name:'ช่อดอกทานตะวัน 1 ดอก', price:399, desc:'ช่อดอกทานตะวัน 1 ดอก', image:'images/bouquet/ทานตะวัน-399฿-เหลือง-ครีม.jpg', ready:true, isNew:true },
   { id:'b23b', cat:'ช่อดอกไม้', size:'กลาง', name:'ช่อดอกทานตะวัน 7 ดอก', price:449, desc:'ช่อดอกทานตะวัน 7 ดอก เลือกสีได้',
     colors:[
       { name:'ส้ม', image:'images/bouquet/ทานตะวัน-449฿-แบบที่1-ส้ม-ขาว.jpg' },
@@ -741,7 +777,6 @@ const PRODUCTS = [
         ]
   },
   { id:'b46', cat:'ช่อดอกไม้', size:'ใหญ่', name:'ช่อดอกทานตะวันกลม', price:3000, desc:'ช่อดอกทานตะวันกลม', image:'images/bouquet/ทานตะวันกลม-3000฿-ส้ม-แดง.jpg' },
-  { id:'b47', cat:'ช่อดอกไม้', size:'ใหญ่', name:'ช่อดอกทานตะวันยักษ์', price:599, desc:'ช่อดอกทานตะวันยักษ์', image:'images/bouquet/ทานตะวันยักษ์-599฿-ส้ม-น้ำตาล.jpg' },
   { id:'b63', cat:'ช่อดอกไม้', size:'ใส่เงิน', name:'ช่อดอกทานตะวัน ใส่เงิน 1ใบ', price:254, desc:'ช่อดอกทานตะวัน ใส่เงิน 1ใบ', image:'images/bouquet/ทานตะวันเงิน1ใบ-254฿-ส้ม-ขาว.jpg' },
   { id:'b64', cat:'ช่อดอกไม้', size:'ใส่เงิน', name:'ช่อดอกทานตะวัน ใส่เงิน 4ใบ', price:269, desc:'ช่อดอกทานตะวัน ใส่เงิน 4ใบ', image:'images/bouquet/ทานตะวันเงิน4ใบ-269฿-ส้ม-ขาว.jpg' },
   { id:'b65', cat:'ช่อดอกไม้', size:'ใส่เงิน', name:'ช่อดอกทานตะวัน ใส่เงิน 5ใบ', price:274, desc:'ช่อดอกทานตะวัน ใส่เงิน 5ใบ เลือกสีดอกได้',
@@ -792,6 +827,7 @@ const PRODUCTS = [
       { name:'ฟ้าขาว',  image:'images/bouquet/ทานตะวันเงิน30ใบ-499฿-ส้ม-ฟ้าขาว.jpg' },
         ]
   },
+  { id:'b47', cat:'ช่อดอกไม้', size:'ใหญ่', name:'ช่อดอกทานตะวันยักษ์', price:599, desc:'ช่อดอกทานตะวันยักษ์', image:'images/bouquet/ทานตะวันยักษ์-599฿-ส้ม-น้ำตาล.jpg' },
   { id:'b10', cat:'ช่อดอกไม้', size:'เล็ก', name:'ดอกทิวลิป 1 ดอก', price:69, desc:'ดอกทิวลิป 1 ดอก เลือกสีได้',
     colors:[
       { name:'ขาว', image:'images/bouquet/ทิวลิป-69฿-ขาว-ใส.jpg' },
@@ -866,8 +902,16 @@ const PRODUCTS = [
       { name:'เหลือง',  image:'images/bouquet/ทิวลิปเงิน6ใบ-229฿-เหลือง-ขาว.jpg' },
         ]
   },
-  { id:'b84', cat:'ช่อดอกไม้', size:'ใส่เงิน', name:'ช่อดอกทิวลิป ใส่เงิน 10ใบ', price:249, desc:'ช่อดอกทิวลิป ใส่เงิน 10ใบ', image:'images/bouquet/ทิวลิปเงิน10ใบ-249฿-ฟ้า-น้ำเงิน.jpg' },
-  { id:'b85', cat:'ช่อดอกไม้', size:'ใส่เงิน', name:'ช่อดอกทิวลิป ใส่เงิน 10ใบ', price:399, desc:'ช่อดอกทิวลิป ใส่เงิน 10ใบ', image:'images/bouquet/ทิวลิปเงิน10ใบ-399฿-เหลือง.jpg' },
+  { id:'b84', cat:'ช่อดอกไม้', size:'ใส่เงิน', name:'ช่อดอกทิวลิป ใส่เงิน 10ใบ', price:249, desc:'ช่อดอกทิวลิป ใส่เงิน 10ใบ', 
+  colors:[
+      { name:'ดอกแดงช่อขาว',  image:'images/bouquet/ทิวลิปเงิน10ใบ-249฿-แดง-ขาว.jpg', ready:true, }, 
+      { name:'ฟ้า',  image:'images/bouquet/ทิวลิปเงิน10ใบ-249฿-ฟ้า.jpg' },
+      { name:'ดอกฟ้าช่อน้ำเงิน',  image:'images/bouquet/ทิวลิปเงิน10ใบ-249฿-ฟ้า-น้ำเงิน.jpg' },
+      { name:'ม่วง',  image:'images/bouquet/ทิวลิปเงิน10ใบ-249฿-ม่วง.jpg' },
+        ]
+  },
+  { id:'b85', cat:'ช่อดอกไม้', size:'ใส่เงิน', name:'ช่อดอกทิวลิป ใส่เงิน 10ใบ', price:349, desc:'ช่อดอกทิวลิป ใส่เงิน 10ใบ', image:'images/bouquet/ทิวลิปเงิน10ใบ-349฿-ฟ้า.jpg', ready:true, },
+  { id:'b85b', cat:'ช่อดอกไม้', size:'ใส่เงิน', name:'ช่อดอกทิวลิป ใส่เงิน 10ใบ', price:399, desc:'ช่อดอกทิวลิป ใส่เงิน 10ใบ', image:'images/bouquet/ทิวลิปเงิน10ใบ-399฿-เหลือง.jpg' },
   { id:'b86', cat:'ช่อดอกไม้', size:'ใส่เงิน', name:'ช่อดอกทิวลิป ใส่เงิน 10ใบ', price:449, desc:'ช่อดอกทิวลิป ใส่เงิน 10ใบ', image:'images/bouquet/ทิวลิปเงิน10ใบ-449฿-ชมพู.jpg' },
   { id:'b87', cat:'ช่อดอกไม้', size:'ใส่เงิน', name:'ช่อดอกทิวลิป ใส่เงิน 15ใบ', price:524, desc:'ช่อดอกทิวลิป ใส่เงิน 15ใบ', image:'images/bouquet/ทิวลิปเงิน15ใบ-524฿-ชมพู-ครีม.jpg' },
   { id:'b88', cat:'ช่อดอกไม้', size:'ใส่เงิน', name:'ช่อดอกทิวลิป ใส่เงิน 16ใบ', price:479, desc:'ช่อดอกทิวลิป ใส่เงิน 16ใบ', image:'images/bouquet/ทิวลิปเงิน16ใบ-479฿-ม่วง.jpg' },
@@ -880,7 +924,9 @@ const PRODUCTS = [
   { id:'b54', cat:'ช่อดอกไม้', size:'ใหญ่', name:'ช่อรวมดอกไม้', price:1200, desc:'ช่อรวมดอกไม้', image:'images/bouquet/รวม-1200฿-แบบที่1-เขียว.jpg' },
   { id:'b55', cat:'ช่อดอกไม้', size:'ใหญ่', name:'ช่อรวมดอกไม้', price:1200, desc:'ช่อรวมดอกไม้', image:'images/bouquet/รวมกลม-1200฿-แบบที่2-ขาว.jpg' },
   { id:'b56', cat:'ช่อดอกไม้', size:'ใหญ่', name:'ช่อรวมดอกไม้', price:2000, desc:'ช่อรวมดอกไม้', image:'images/bouquet/รวมกลม-2000฿-ชมพู.jpg' },
-  { id:'b57', cat:'ช่อดอกไม้', size:'ใหญ่', name:'ช่อลิลลี่ฟ้า', price:699, desc:'ช่อลิลลี่ฟ้า', image:'images/bouquet/ลิลลี่-699฿-ฟ้า.jpg' },
+  { id:'b57', cat:'ช่อดอกไม้', size:'ใหญ่', name:'ช่อลิลลี่ชมพู', price:599, desc:'ช่อลิลลี่ชมพู', image:'images/bouquet/ลิลลี่-599฿-ชมพู.jpg', ready:true, isNew:true },
+  { id:'b57b', cat:'ช่อดอกไม้', size:'ใหญ่', name:'ช่อลิลลี่ฟ้า', price:699, desc:'ช่อลิลลี่ฟ้า', image:'images/bouquet/ลิลลี่-699฿-ฟ้า.jpg' },
+  { id:'b57c', cat:'ช่อดอกไม้', size:'ใหญ่', name:'ช่อลิลลี่ชมพูฟ้า', price:899, desc:'ช่อลิลลี่ชมพูฟ้า', image:'images/bouquet/ลิลลี่-899฿-ชมพูฟ้า.jpg' },
   { id:'b91', cat:'ช่อดอกไม้', size:'ใส่เงิน', name:'ช่อดอกลิลลี่ ใส่เงิน 10ใบ', price:599, desc:'ช่อดอกลิลลี่ ใส่เงิน 10ใบ', image:'images/bouquet/ลิลลี่เงิน10ใบ-599฿-ฟ้า.jpg' },
   { id:'b14', cat:'ช่อดอกไม้', size:'เล็ก', name:'ช่อดอกไฮเดรนเยีย', price:149, desc:'ดอกไฮเดรนเยีย เลือกสีได้',
     colors:[
@@ -888,7 +934,8 @@ const PRODUCTS = [
       { name:'ฟ้า',  image:'images/bouquet/ไฮเดรนเยีย-149฿-ฟ้า-ใส.jpg' },
         ]
   },
-  { id:'b58', cat:'ช่อดอกไม้', size:'ใหญ่', name:'ช่อดอกไฮเดรนเยีย', price:549, desc:'ช่อดอกไฮเดรนเยีย', image:'images/bouquet/ไฮเดรนเยีย-549฿-รวม-ขาว.jpg' },  
+  { id:'b58b', cat:'ช่อดอกไม้', size:'ใหญ่', name:'ช่อดอกไฮเดรนเยีย', price:549, desc:'ช่อดอกไฮเดรนเยีย', image:'images/bouquet/ไฮเดรนเยีย-549฿-รวม-ขาว.jpg' },
+  { id:'b58c', cat:'ช่อดอกไม้', size:'กลาง', name:'ช่อดอกไฮเดรนเยียชมพู 100ดอก', price:299, desc:'ช่อดอกไฮเดรนเยียชมพู 100ดอก', image:'images/bouquet/ไฮเดรนเยีย-299฿-ชมพู-ขาว.jpg', ready:true, isNew:true },
   { id:'f1', cat:'กรอบรูป', size:'A4', name:'กรอบรูปกุหลาบ A4 แนวตั้ง', price:599, desc:'กรอบรูปกุหลาบ A4 แนวตั้ง', image:'images/frame/กุหลาบ-A4-ตั้ง-599฿.jpg' },
   { id:'f2', cat:'กรอบรูป', size:'A4', name:'กรอบรูปเดซี่ A4 แนวตั้ง', price:499, desc:'กรอบรูปกุหลาบ A4 แนวตั้ง', image:'images/frame/เดซี่-A4-ตั้ง-499฿.jpg' },
   { id:'f3', cat:'กรอบรูป', size:'A4', name:'กรอบรูปเดซี่ A4 แนวตั้ง', price:549, desc:'กรอบรูปกุหลาบ A4 แนวตั้ง', image:'images/frame/เดซี่-A4-ตั้ง-549฿.jpg' },
@@ -909,32 +956,54 @@ const PRODUCTS = [
   { id:'f8', cat:'กรอบรูป', size:'A5', name:'กรอบรูปทานตะวัน A5 แนวนอน', price:299, desc:'กรอบรูปกุหลาบ A5 แนวนอน', image:'images/frame/ทานตะวัน-A5-นอน-299฿.jpg' },
   { id:'f9', cat:'กรอบรูป', size:'A5', name:'กรอบรูปทิวลิป A5 แนวตั้ง', price:249, desc:'กรอบรูปทิวลิป A5 แนวตั้ง', image:'images/frame/ทิวลิป-A5-ตั้ง-249฿.jpg' },
   { id:'f10', cat:'กรอบรูป', size:'A5', name:'กรอบรูปทิวลิป A5 แนวนอน', price:249, desc:'กรอบรูปทิวลิป A5 แนวนอน', image:'images/frame/ทิวลิป-A5-นอน-249฿.jpg' },
+  { id:'f10b', cat:'กรอบรูป', size:'A5', name:'กรอบรูปดอกไม้โทนม่วง A5 แนวนอน', price:249, desc:'ดอกไม้โทนม่วงในกรอบA5', image:'images/frame/รวม-A5-นอน-249฿.jpg' },
   { id:'p1', cat:'กระถาง', size:'3 นิ้ว', name:'กระถางทานตะวัน 3นิ้ว', price:99, desc:'กระถางทานตะวัน 3นิ้ว', image:'images/pot/ทานตะวัน-3นิ้ว-99฿.jpg' },
   { id:'p2', cat:'กระถาง', size:'5 นิ้ว', name:'กระถางทานตะวัน 5นิ้ว', price:349, desc:'กระถางทานตะวัน 5นิ้ว', image:'images/pot/ทานตะวัน-5นิ้ว-349฿.jpg' },
+  { id:'p2b', cat:'กระถาง', size:'5 นิ้ว', name:'กระถางทานตะวัน 5นิ้ว', price:599, desc:'กระถางทานตะวัน 5นิ้ว', image:'images/pot/ทานตะวัน-5นิ้ว-599฿.jpg' },
   { id:'p3', cat:'กระถาง', size:'9 นิ้ว', name:'กระถางทานตะวัน 9นิ้ว', price:1200, desc:'กระถางทานตะวัน 9นิ้ว', image:'images/pot/ทานตะวัน-9นิ้ว-1200฿.jpg' },
   { id:'p4', cat:'กระถาง', size:'3 นิ้ว', name:'กระถางทิวลิป 3นิ้ว', price:89, desc:'กระถางทิวลิป 3นิ้ว', image:'images/pot/ทิวลิป-3นิ้ว-89฿.jpg' },
   { id:'p5', cat:'กระถาง', size:'3 นิ้ว', name:'กระถางทิวลิป 3นิ้ว', price:99, desc:'กระถางทิวลิป 3นิ้ว', image:'images/pot/ทิวลิป-3นิ้ว-99฿.jpg' },
-  { id:'p6', cat:'กระถาง', size:'5 นิ้ว', name:'กระถางทิวลิป 5นิ้ว', price:299, desc:'กระถางทิวลิป 5นิ้ว', image:'images/pot/ทิวลิป-5นิ้ว-299฿.jpg' },
-  { id:'p7', cat:'กระถาง', size:'5 นิ้ว', name:'กระถางดอกไม้ 5นิ้ว', price:599, desc:'กระถางดอกไม้ 5นิ้ว', image:'images/pot/รวม-5นิ้ว-599฿.jpg' },
+  { id:'p6', cat:'กระถาง', size:'5 นิ้ว', name:'กระถางทิวลิปจิ๋ว 5นิ้ว', price:299, desc:'กระถางทิวลิปจิ๋ว 5นิ้ว',
+  colors:[
+      { name:'แบบที่ 1', image:'images/pot/ทิวลิป-5นิ้ว-299฿-ม่วง.jpg' },
+      { name:'แบบที่ 2', image:'images/pot/ทิวลิป-5นิ้ว-299฿-ม่วงฟ้า.jpg' },
+        ]
+  },
+  { id:'p7', cat:'กระถาง', size:'5 นิ้ว', name:'กระถางดอกไม้ 5นิ้ว', price:399, desc:'กระถางดอกไม้ 5นิ้ว', image:'images/pot/รวม-5นิ้ว-399฿.jpg' },
+  { id:'p7b', cat:'กระถาง', size:'5 นิ้ว', name:'กระถางดอกไม้ 5นิ้ว แบบที่1', price:599, desc:'กระถางดอกไม้ 5นิ้ว', image:'images/pot/รวม-5นิ้ว-599฿-แบบที่1.jpg' },
+  { id:'p7c', cat:'กระถาง', size:'5 นิ้ว', name:'กระถางดอกไม้ 5นิ้ว แบบที่2', price:599, desc:'กระถางดอกไม้ 5นิ้ว', image:'images/pot/รวม-5นิ้ว-599฿-แบบที่2.jpg' },
   { id:'p8', cat:'กระถาง', size:'5 นิ้ว', name:'กระถางดอกไม้ 5นิ้ว', price:1200, desc:'กระถางดอกไม้ 5นิ้ว', image:'images/pot/รวม-5นิ้ว-1200฿.jpg' },
   { id:'p9', cat:'กระถาง', size:'9 นิ้ว', name:'กระถางดอกไม้ 9นิ้ว', price:1200, desc:'กระถางดอกไม้ 9นิ้ว', image:'images/pot/รวม-9นิ้ว-1200฿.jpg' },
-  { id:'o1', cat:'อื่นๆ', size:'กล่องดอกไม้', name:'กล่องทานตะวัน', price:1200,  desc:'กล่องทานตะวัน', image:'images/other/กล่อง-ทานตะวัน-1200฿.jpg' },
-  { id:'o2', cat:'อื่นๆ', size:'กล่องดอกไม้', name:'กล่องทิวลิป', price:1200,  desc:'กล่องทิวลิป', image:'images/other/กล่อง-ทิวลิป-1200฿.jpg' },
   { id:'o3', cat:'อื่นๆ', size:'กลิตเตอร์', name:'ช่อกุหลาบกลิตเตอร์', price:299,  desc:'ช่อดอกกุหลาบกลิตเตอร์ เลือกสีได้',
     colors:[
       { name:'ดอกชมพูช่อขาว', image:'images/other/กุหลาบ-กลิตเตอร์-299฿-ชมพู-ขาว.jpg' },
       { name:'ดอกแดงช่อดำ',  image:'images/other/กุหลาบ-กลิตเตอร์-299฿-แดง-ดำ.jpg' },
+      { name:'ดอกชมพูแดงช่อขาว',  image:'images/other/กุหลาบกลิตเตอร์-299฿-ชมพูแดง-ขาว.jpg' },
+        ]
+  },
+  { id:'o3b', cat:'อื่นๆ', size:'กลิตเตอร์', name:'ช่อกุหลาบกลิตเตอร์', price:399,  desc:'ช่อดอกกุหลาบกลิตเตอร์ เลือกสีได้',
+    colors:[
+      { name:'ชมพู', image:'images/other/กุหลาบกลิตเตอร์-399฿-ชมพู.jpg' },
+      { name:'แดง',  image:'images/other/กุหลาบกลิตเตอร์-399฿-แดง.jpg' },
+      { name:'ม่วง',  image:'images/other/กุหลาบกลิตเตอร์-399฿-ม่วง.jpg' },
+        ]
+  },
+  { id:'o1', cat:'อื่นๆ', size:'กลิตเตอร์', name:'ช่อกลิตเตอร์น้ำเงินสุดหรู', price:899, desc:'ช่อกลิตเตอร์น้ำเงินสุดหรู', image:'images/other/กุหลาบกลิตเตอร์-399฿-ม่วง.jpg' },
+  { id:'o1b', cat:'อื่นๆ', size:'กล่องดอกไม้', name:'กล่องดอกไม้', price:1200,  desc:'สามารถเลือกดอกไม้ได้',
+  colors:[
+      { name:'ทานตะวัน', image:'images/other/กล่อง-ทานตะวัน-1200฿.jpg' },
+      { name:'ทิวลิป',  image:'images/other/กล่อง-ทิวลิป-1200฿.jpg' },
         ]
   },
   { id:'o4', cat:'อื่นๆ', size:'ดอกไม้เจ้าสาว', name:'ดอกไม้เจ้าสาว', price:399,  desc:'ดอกไม้เจ้าสาว', image:'images/other/เจ้าสาว-399฿.jpg' },
-  { id:'o5', cat:'อื่นๆ', size:'ตุ๊กตา', name:'ช่อตุ๊กตา(ตุ๊กตาของลูกค้าเอง)', price:100,  desc:'ลูกค้านำตุ๊กตามาเอง', image:'images/other/ตุ๊กตา-100฿-ม่วง.jpg' },
-  { id:'o6', cat:'อื่นๆ', size:'มงกุฎ', name:'มงกุฎทานตะวัน', price:149,  desc:'มงกุฎทานตะวัน เลือกสีได้',
+  { id:'o5', cat:'อื่นๆ', size:'ตุ๊กตา', name:'ช่อตุ๊กตา(ตุ๊กตาของลูกค้าเอง)', price:100,  desc:'ลูกค้านำตุ๊กตามาเอง', image:'images/other/ตุ๊กตา-100฿-รวม.jpg' },
+  { id:'o6', cat:'อื่นๆ', size:'มงกุฎ', name:'มงกุฎดอกไม้', price:149,  desc:'มงกุฎดอกไม้ เลือกสีได้',
     colors:[
-      { name:'ส้ม', image:'images/other/มงกุฎ-ทานตะวัน-149฿-แบบที่1.jpg' },
-      { name:'เหลืองขาว',  image:'images/other/มงกุฎ-ทานตะวัน-149฿-แบบที่2.jpg' },
+      { name:'ทานตะวัน', image:'images/other/มงกุฎ-ทานตะวัน-149฿-แบบที่1.jpg' },
+      { name:'ทานตะวันเดซี่',  image:'images/other/มงกุฎ-ทานตะวัน-149฿-แบบที่2.jpg' },
+      { name:'ไฮเดรนเยีย',  image:'images/other/มงกุฎ-ไฮเดรนเยีย-149฿.jpg' },
         ]
   },
-  { id:'o7', cat:'อื่นๆ', size:'มงกุฎ', name:'มงกุฎไฮเดรนเยีย', price:149,  desc:'มงกุฎไฮเดรนเยีย', image:'images/other/มงกุฎ-ไฮเดรนเยีย-149฿.jpg' },
 ];
 const PAGE_LINK = 'https://m.me/167894813076816';
 // วาง URL ของ Google Apps Script Web App (หลัง Deploy แล้ว) แทนที่ค่าด้านล่างนี้
@@ -985,7 +1054,7 @@ const CATEGORY_SIZES = {
   'ช่อดอกไม้': ['ทั้งหมด','เล็ก','กลาง','ใหญ่','ใส่เงิน',],
   'กรอบรูป': ['ทั้งหมด','A5','A4'],
   'กระถาง': ['ทั้งหมด','3 นิ้ว','5 นิ้ว','9 นิ้ว'],
-  'อื่นๆ': ['ทั้งหมด','กล่องดอกไม้','กลิตเตอร์','ดอกไม้เจ้าสาว','ตุ๊กตา','มงกุฎ'],
+  'อื่นๆ': ['ทั้งหมด','กลิตเตอร์','กล่องดอกไม้','ดอกไม้เจ้าสาว','ตุ๊กตา','มงกุฎ'],
 };
 let activeCat = 'ทั้งหมด';
 let activeSize = 'ทั้งหมด';
@@ -1012,6 +1081,23 @@ function displayPrice(p){
   if(p.sizes) return p.sizes[selectedSizeVariant[p.id]||0].price;
   return p.price;
 }
+// A product can be "พร้อมส่ง" at the whole-product level (p.ready) or per color
+// (each entry in p.colors can carry its own `ready` flag, e.g. only the white one is in stock).
+// If the selected color defines its own ready flag, that wins; otherwise fall back to p.ready.
+function currentReadyState(p){
+  if(p.colors){
+    const c = p.colors[selectedColor[p.id]||0];
+    if(c && typeof c.ready !== 'undefined') return !!c.ready;
+  }
+  return !!p.ready;
+}
+// For the "ดูเฉพาะสินค้าพร้อมส่ง" filter: show the product if ANY variant of it is ready,
+// so the customer can still find it and pick the ready color specifically.
+function productHasAnyReady(p){
+  if(p.ready) return true;
+  if(p.colors) return p.colors.some(c => c.ready);
+  return false;
+}
 
 function renderNav(){
   const nav = document.getElementById('catNav');
@@ -1027,7 +1113,7 @@ function renderCatalog(){
   const cats = activeCat === 'ทั้งหมด' ? CATS.slice(1) : [activeCat];
   main.innerHTML = cats.map(cat => {
     const sizeList = CATEGORY_SIZES[cat];
-    const items = PRODUCTS.filter(p => p.cat === cat && (!sizeList || activeSize === 'ทั้งหมด' || p.size === activeSize) && (!showReadyOnly || p.ready));
+    const items = PRODUCTS.filter(p => p.cat === cat && (!sizeList || activeSize === 'ทั้งหมด' || p.size === activeSize) && (!showReadyOnly || productHasAnyReady(p)));
     if(!items.length) return `
       <div class="section-title"><h3>${cat}</h3><span>0 รายการ</span></div>
       ${sizeList ? renderSizeRow(sizeList) : ''}
@@ -1040,7 +1126,8 @@ function renderCatalog(){
           <div class="card">
             <div class="thumb-wrap">
               <div class="thumb" onclick="openProductModal('${p.id}')">${renderThumb(p)}</div>
-              ${p.ready ? '<span class="badge-ready">พร้อมส่ง</span>' : ''}
+              ${currentReadyState(p) ? '<span class="badge-ready">พร้อมส่ง</span>' : ''}
+              ${p.isNew ? '<span class="badge-new">ใหม่</span>' : ''}
             </div>
             ${p.colors ? `
               <div class="color-row">
@@ -1060,11 +1147,14 @@ function renderCatalog(){
             <p class="desc">${p.desc}</p>
             <div class="price-row">
               <span class="price">${p.billSelector ? `เริ่มต้น ${fmt(displayPrice(p))}` : fmt(displayPrice(p))}</span>
-              ${p.billSelector
-                ? `<button class="add-btn" onclick="openProductModal('${p.id}')">เลือกจำนวน</button>`
-                : `<button class="add-btn" id="add-${p.id}" onclick="addToCart('${p.id}')">+ ใส่ตะกร้า</button>`
-              }
             </div>
+            ${p.billSelector
+              ? `<button class="add-btn" style="width:100%; justify-content:center;" onclick="openProductModal('${p.id}')">เลือกจำนวน</button>`
+              : `<div class="card-actions">
+                  <button class="buy-now-btn" onclick="quickOrder('${p.id}')">🌸 สั่งเลย</button>
+                  <button class="cart-icon-btn" id="add-${p.id}" onclick="addToCart('${p.id}')" title="ใส่ตะกร้า" aria-label="ใส่ตะกร้า">🧺</button>
+                </div>`
+            }
           </div>
         `).join('')}
       </div>
@@ -1093,8 +1183,8 @@ function addToCart(id){
   showToast('เพิ่มลงตะกร้าแล้ว 🌸');
   const btn = document.getElementById('add-'+id);
   if(btn){
-    btn.classList.add('added'); btn.textContent = 'เพิ่มแล้ว ✓';
-    setTimeout(()=>{ btn.classList.remove('added'); btn.textContent='+ ใส่ตะกร้า'; }, 900);
+    btn.classList.add('added'); btn.textContent = '✓';
+    setTimeout(()=>{ btn.classList.remove('added'); btn.textContent='🧺'; }, 900);
   }
 }
 function changeQty(key, delta){
@@ -1196,6 +1286,22 @@ function buildModalOrderLines(){
   closeProductModal();
   return result;
 }
+function buildSingleProductLines(id){
+  const p = PRODUCTS.find(x=>x.id===id);
+  if(!p) return null;
+  let label = null, price = p.price;
+  if(p.colors){ label = p.colors[selectedColor[id]||0].name; }
+  if(p.sizes){
+    const sv = p.sizes[selectedSizeVariant[id]||0];
+    label = label ? `${label}, ${sv.name}` : sv.name;
+    price = sv.price;
+  }
+  const lines = [`• ${p.name}${label ? ` (${label})` : ''} x1 = ${fmt(price)}`];
+  return { lines, subtotal: price };
+}
+function quickOrder(id){
+  startCheckout(() => buildSingleProductLines(id));
+}
 function startCheckout(builderFn){
   const result = builderFn();
   if(!result){ showToast('กรุณาเลือกสินค้าก่อน'); return; }
@@ -1245,6 +1351,7 @@ function showOrderSummary(message, subtotal){
   currentOrderSubtotal = subtotal || 0;
   document.getElementById('orderSummaryText').textContent = message;
   document.getElementById('fbNameInput').value = '';
+  document.getElementById('orderNoteInput').value = '';
   document.getElementById('messengerLink').href = PAGE_LINK;
   document.getElementById('orderReviewView').style.display = 'block';
   document.getElementById('orderSuccessView').style.display = 'none';
@@ -1270,6 +1377,8 @@ async function confirmOrderSubmit(){
     document.getElementById('fbNameInput').focus();
     return;
   }
+  const note = document.getElementById('orderNoteInput').value.trim();
+  const orderTextWithNote = note ? `${currentOrderMessage}\n\n📝 หมายเหตุจากลูกค้า: ${note}` : currentOrderMessage;
   const btn = document.getElementById('confirmOrderBtn');
   btn.disabled = true;
   btn.textContent = 'กำลังส่งออเดอร์...';
@@ -1280,7 +1389,7 @@ async function confirmOrderSubmit(){
       headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // ใช้ text/plain เพื่อเลี่ยง CORS preflight
       body: JSON.stringify({
         fbName,
-        orderText: currentOrderMessage,
+        orderText: orderTextWithNote,
         subtotal: currentOrderSubtotal,
         timestamp: new Date().toISOString()
       })
@@ -1339,6 +1448,9 @@ function renderModal(){
   document.getElementById('modalName').textContent = p.name;
   document.getElementById('modalDesc').textContent = p.desc;
   document.getElementById('modalQty').textContent = modalQty;
+  document.getElementById('modalBadges').innerHTML =
+    (currentReadyState(p) ? '<span class="badge-inline ready">พร้อมส่ง</span>' : '') +
+    (p.isNew ? '<span class="badge-inline new">ใหม่</span>' : '');
 
   const colorsWrap = document.getElementById('modalColors');
   if(p.colors){
