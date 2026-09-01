@@ -120,30 +120,83 @@
     box-shadow:0 6px 16px rgba(0,0,0,0.15);
   }
 
-  /* ---------- Custom order banner ---------- */
-  .custom-order-banner{
-    margin:0 6vw 10px;
-    padding:22px 24px;
-    background:linear-gradient(135deg, var(--sage), var(--rose-dark));
-    border:none;
-    border-radius:20px;
-    display:flex; align-items:center; gap:16px; flex-wrap:wrap;
-    box-shadow:0 12px 28px rgba(246,33,136,0.4);
+  /* ---------- Floating chat button (bottom-right) ---------- */
+  .chat-fab-wrap{
+    position:fixed;
+    right:22px; bottom:22px;
+    z-index:70;
+    display:flex; flex-direction:column; align-items:flex-end; gap:10px;
   }
-  .custom-order-icon{font-size:34px; flex-shrink:0;}
-  .custom-order-text{flex:1; min-width:200px;}
-  .custom-order-text h3{margin:0 0 4px; font-size:17px; color:#fff; font-family:'Sarabun'; font-weight:700;}
-  .custom-order-text p{margin:0; font-size:13px; color:rgba(255,255,255,0.92); line-height:1.5;}
-  .custom-order-btn{
-    border:none; background:var(--peach); color:var(--plum); font-weight:800; font-size:14px;
-    padding:12px 22px; border-radius:999px; cursor:pointer; white-space:nowrap;
-    transition:all .15s ease; font-family:'Sarabun';
-    box-shadow:0 6px 16px rgba(0,0,0,0.25);
+  .chat-bubble{
+    position:relative;
+    max-width:230px;
+    background:var(--paper);
+    color:var(--plum);
+    padding:12px 30px 12px 14px;
+    border-radius:16px 16px 4px 16px;
+    box-shadow:var(--shadow);
+    border:1.5px solid var(--line);
+    font-size:13px; font-weight:600; line-height:1.5;
+    cursor:pointer;
+    animation:bubbleIn .35s ease;
   }
-  .custom-order-btn:hover{background:#fff; transform:translateY(-2px);}
+  .chat-bubble b{display:block; color:var(--sage-dark); margin-bottom:2px;}
+  .chat-bubble-close{
+    position:absolute; top:6px; right:7px;
+    background:none; border:none; color:var(--rose-dark);
+    font-size:14px; line-height:1; cursor:pointer; padding:3px;
+  }
+  @keyframes bubbleIn{
+    from{opacity:0; transform:translateY(8px) scale(.95);}
+    to{opacity:1; transform:translateY(0) scale(1);}
+  }
+  .chat-fab{
+    width:60px; height:60px; border-radius:50%;
+    background:var(--sage); color:#fff; border:none;
+    display:flex; align-items:center; justify-content:center;
+    font-size:27px; cursor:pointer;
+    box-shadow:0 10px 24px rgba(246,33,136,0.45);
+    transition:transform .15s ease;
+    position:relative;
+  }
+  .chat-fab:hover{transform:translateY(-3px) scale(1.05);}
+  .chat-fab .fab-dot{
+    position:absolute; top:2px; right:2px;
+    width:14px; height:14px; border-radius:50%;
+    background:var(--rose); border:2px solid var(--cream);
+  }
   @media (max-width:520px){
-    .custom-order-banner{flex-direction:column; align-items:flex-start; text-align:left;}
-    .custom-order-btn{width:100%; text-align:center;}
+    .chat-fab-wrap{right:14px; bottom:14px;}
+    .chat-fab{width:54px; height:54px; font-size:24px;}
+    .chat-bubble{max-width:170px; font-size:12.5px;}
+  }
+
+  /* ---------- Sticky custom-order bar (top-right) ---------- */
+  .sticky-custom-bar{
+    position:fixed;
+    top:16px; right:18px;
+    z-index:65;
+    display:flex; align-items:center; gap:8px;
+    background:linear-gradient(135deg, var(--sage), var(--rose-dark));
+    color:#fff;
+    padding:10px 16px;
+    border-radius:999px;
+    box-shadow:0 10px 24px rgba(246,33,136,0.35);
+    cursor:pointer;
+    font-size:13px; font-weight:700;
+    max-width:min(300px, 58vw);
+    opacity:0; visibility:hidden; pointer-events:none;
+    transform:translateY(-8px);
+    transition:opacity .25s ease, transform .25s ease, visibility .25s;
+  }
+  .sticky-custom-bar.show{
+    opacity:1; visibility:visible; pointer-events:auto; transform:translateY(0);
+  }
+  .sticky-custom-bar:hover{transform:translateY(-2px);}
+  .sticky-custom-bar .emoji{font-size:15px; flex-shrink:0;}
+  .sticky-custom-bar .txt{white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  @media (max-width:640px){
+    .sticky-custom-bar{padding:9px 14px; font-size:12px; max-width:min(230px,54vw);}
   }
 
   /* ---------- Category nav ---------- */
@@ -524,15 +577,6 @@
   <h2>ช่อดอกไม้กำมะหยี่<br>สำหรับโอกาสพิเศษ</h2>
   <p>เลือกสินค้าที่ชอบ กดใส่ตะกร้า แล้วกดปุ่มเดียวเพื่อส่งรายการสั่งซื้อมาที่แชทเพจของเราได้ทันที ไม่ต้องพิมพ์เอง</p>
   <a href="#catalog" class="cta">เลือกดูสินค้า ↓</a>
-</section>
-
-<section class="custom-order-banner">
-  <div class="custom-order-icon">🎨</div>
-  <div class="custom-order-text">
-    <h3>ต้องการแบบพิเศษ หรือมีรูปตัวอย่างในใจ?</h3>
-    <p>บอกรายละเอียดหรือแนบรูปที่ต้องการทางแชทได้เลย ทางร้านยินดีออกแบบให้ตามที่ต้องการ</p>
-  </div>
-  <button class="custom-order-btn" onclick="startCustomOrder()">💬 แชทสั่งแบบกำหนดเอง</button>
 </section>
 
 <nav class="cat-nav" id="catNav"></nav>
@@ -1493,6 +1537,36 @@ renderNav();
 renderPriceFilter();
 renderCatalog();
 updateCartUI();
+
+/* ---------- Sticky top-right bar + floating chat button ---------- */
+function closeChatBubble(){
+  const b = document.getElementById('chatBubble');
+  if(b) b.style.display = 'none';
+}
+window.addEventListener('scroll', function(){
+  const bar = document.getElementById('stickyCustomBar');
+  if(!bar) return;
+  if(window.scrollY > 260){ bar.classList.add('show'); }
+  else { bar.classList.remove('show'); }
+});
 </script>
+
+<!-- Sticky custom-order bar (top-right, appears while scrolling) -->
+<div class="sticky-custom-bar" id="stickyCustomBar" onclick="startCustomOrder()">
+  <span class="emoji">🎨</span>
+  <span class="txt">ต้องการแบบพิเศษ? ทักแชทมาได้เลย</span>
+</div>
+
+<!-- Floating chat button (bottom-right) -->
+<div class="chat-fab-wrap">
+  <div class="chat-bubble" id="chatBubble" onclick="startCustomOrder()">
+    <button class="chat-bubble-close" onclick="event.stopPropagation(); closeChatBubble();" aria-label="ปิด">✕</button>
+    <b>ต้องการแบบพิเศษ หรือมีรูปตัวอย่างในใจ?</b>ทักแชทมาได้เลย 🌸
+  </div>
+  <button class="chat-fab" onclick="startCustomOrder()" aria-label="แชทกับร้าน">
+    💬
+    <span class="fab-dot"></span>
+  </button>
+</div>
 </body>
 </html>
