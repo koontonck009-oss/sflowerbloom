@@ -120,10 +120,10 @@
     box-shadow:0 6px 16px rgba(0,0,0,0.15);
   }
 
-  /* ---------- Floating chat button (bottom-right) ---------- */
+  /* ---------- Floating chat button (bottom-right, sits above the cart FAB) ---------- */
   .chat-fab-wrap{
     position:fixed;
-    right:22px; bottom:22px;
+    right:22px; bottom:92px;
     z-index:70;
     display:flex; flex-direction:column; align-items:flex-end; gap:10px;
   }
@@ -166,37 +166,9 @@
     background:var(--rose); border:2px solid var(--cream);
   }
   @media (max-width:520px){
-    .chat-fab-wrap{right:14px; bottom:14px;}
+    .chat-fab-wrap{right:14px; bottom:76px;}
     .chat-fab{width:54px; height:54px; font-size:24px;}
     .chat-bubble{max-width:170px; font-size:12.5px;}
-  }
-
-  /* ---------- Sticky custom-order bar (top-right) ---------- */
-  .sticky-custom-bar{
-    position:fixed;
-    top:16px; right:18px;
-    z-index:65;
-    display:flex; align-items:center; gap:8px;
-    background:linear-gradient(135deg, var(--sage), var(--rose-dark));
-    color:#fff;
-    padding:10px 16px;
-    border-radius:999px;
-    box-shadow:0 10px 24px rgba(246,33,136,0.35);
-    cursor:pointer;
-    font-size:13px; font-weight:700;
-    max-width:min(300px, 58vw);
-    opacity:0; visibility:hidden; pointer-events:none;
-    transform:translateY(-8px);
-    transition:opacity .25s ease, transform .25s ease, visibility .25s;
-  }
-  .sticky-custom-bar.show{
-    opacity:1; visibility:visible; pointer-events:auto; transform:translateY(0);
-  }
-  .sticky-custom-bar:hover{transform:translateY(-2px);}
-  .sticky-custom-bar .emoji{font-size:15px; flex-shrink:0;}
-  .sticky-custom-bar .txt{white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
-  @media (max-width:640px){
-    .sticky-custom-bar{padding:9px 14px; font-size:12px; max-width:min(230px,54vw);}
   }
 
   /* ---------- Category nav ---------- */
@@ -552,6 +524,21 @@
   @media (max-width:520px){
     .hero{padding:34px 24px; border-radius:22px;}
     .cat-nav{position:static; background:none;}
+
+    /* 2 columns of products on mobile instead of 1 */
+    .grid{grid-template-columns:1fr 1fr; gap:12px;}
+    .card{padding:10px; border-radius:16px;}
+    .thumb{border-radius:10px;}
+    .badge-ready, .badge-new{font-size:9.5px; padding:3px 8px; top:6px;}
+    .card h4{font-size:13.5px; margin:0 0 3px; line-height:1.3;}
+    .card .desc{font-size:11.5px; min-height:0; margin:0 0 8px; line-height:1.35;
+      display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;}
+    .color-row{gap:4px; margin:-2px 0 8px;}
+    .color-chip{font-size:10px; padding:4px 8px;}
+    .price{font-size:15px;}
+    .card-actions{gap:6px; margin-top:8px;}
+    .buy-now-btn{font-size:11.5px; padding:9px 4px;}
+    .cart-icon-btn{width:32px; height:32px; font-size:13px;}
   }
 </style>
 </head>
@@ -1538,24 +1525,12 @@ renderPriceFilter();
 renderCatalog();
 updateCartUI();
 
-/* ---------- Sticky top-right bar + floating chat button ---------- */
+/* ---------- Chat button ---------- */
 function closeChatBubble(){
   const b = document.getElementById('chatBubble');
   if(b) b.style.display = 'none';
 }
-window.addEventListener('scroll', function(){
-  const bar = document.getElementById('stickyCustomBar');
-  if(!bar) return;
-  if(window.scrollY > 260){ bar.classList.add('show'); }
-  else { bar.classList.remove('show'); }
-});
 </script>
-
-<!-- Sticky custom-order bar (top-right, appears while scrolling) -->
-<div class="sticky-custom-bar" id="stickyCustomBar" onclick="startCustomOrder()">
-  <span class="emoji">🎨</span>
-  <span class="txt">ต้องการแบบพิเศษ? ทักแชทมาได้เลย</span>
-</div>
 
 <!-- Floating chat button (bottom-right) -->
 <div class="chat-fab-wrap">
