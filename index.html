@@ -1282,10 +1282,12 @@ function updateCartUI(){
 function openCart(){
   document.getElementById('drawer').classList.add('open');
   document.getElementById('overlay').classList.add('show');
+  updateChatFabVisibility();
 }
 function closeCart(){
   document.getElementById('drawer').classList.remove('open');
   document.getElementById('overlay').classList.remove('show');
+  updateChatFabVisibility();
 }
 
 let toastTimer;
@@ -1374,6 +1376,7 @@ function initNameGate(){
     document.getElementById('nameGateModal').classList.add('open');
     document.getElementById('nameGateOverlay').classList.add('show');
   }
+  updateChatFabVisibility();
 }
 function confirmGateName(){
   const name = document.getElementById('gateNameInput').value.trim();
@@ -1388,6 +1391,7 @@ function skipGateName(){
 function closeNameGate(){
   document.getElementById('nameGateModal').classList.remove('open');
   document.getElementById('nameGateOverlay').classList.remove('show');
+  updateChatFabVisibility();
 }
 function renderFbNameDisplay(editing){
   const wrap = document.getElementById('fbNameDisplay');
@@ -1414,10 +1418,12 @@ function showOrderSummary(message, subtotal){
   document.getElementById('orderSummaryModal').classList.add('open');
   document.getElementById('summaryOverlay').classList.add('show');
   closeCart();
+  updateChatFabVisibility();
 }
 function closeOrderSummary(){
   document.getElementById('orderSummaryModal').classList.remove('open');
   document.getElementById('summaryOverlay').classList.remove('show');
+  updateChatFabVisibility();
 }
 async function confirmOrderSubmit(){
   const editInput = document.getElementById('fbNameEditInput');
@@ -1476,11 +1482,13 @@ function openProductModal(id){
   renderModal();
   document.getElementById('productModal').classList.add('open');
   document.getElementById('modalOverlay').classList.add('show');
+  updateChatFabVisibility();
 }
 function closeProductModal(){
   document.getElementById('productModal').classList.remove('open');
   document.getElementById('modalOverlay').classList.remove('show');
   modalProductId = null;
+  updateChatFabVisibility();
 }
 function changeModalQty(delta){
   modalQty = Math.max(1, modalQty + delta);
@@ -1566,10 +1574,21 @@ function closeChatBubble(){
   const b = document.getElementById('chatBubble');
   if(b) b.style.display = 'none';
 }
+/* ซ่อนปุ่มแชทลอยทุกครั้งที่มีป็อปอัพ/ตะกร้าเปิดอยู่ ป้องกันไปบังปุ่มหรือช่องกรอกข้อมูล */
+function updateChatFabVisibility(){
+  const wrap = document.getElementById('chatFabWrap');
+  if(!wrap) return;
+  const anyOpen =
+    document.getElementById('drawer').classList.contains('open') ||
+    document.getElementById('productModal').classList.contains('open') ||
+    document.getElementById('orderSummaryModal').classList.contains('open') ||
+    document.getElementById('nameGateModal').classList.contains('open');
+  wrap.style.display = anyOpen ? 'none' : '';
+}
 </script>
 
 <!-- Floating chat button (bottom-right) -->
-<div class="chat-fab-wrap">
+<div class="chat-fab-wrap" id="chatFabWrap">
   <div class="chat-bubble" id="chatBubble" onclick="startCustomOrder()">
     <button class="chat-bubble-close" onclick="event.stopPropagation(); closeChatBubble();" aria-label="ปิด">✕</button>
     <b>ต้องการแบบพิเศษ หรือมีรูปตัวอย่างในใจ?</b>ทักแชทมาได้เลย 🌸
