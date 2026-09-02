@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>S.Flower Bloom — แคตตาล็อกสินค้า</title>
+<link rel="icon" type="image/jpeg" href="images/logo.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Chonburi&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -483,13 +484,25 @@
     flex:1;
     min-height:0;
   }
+  .order-summary-heading{
+    margin:0 0 8px; font-size:16px; color:var(--sage-dark); font-family:'Sarabun'; font-weight:700;
+  }
   .order-summary-text{
     white-space:pre-wrap; word-break:break-word;
-    background:var(--cream); border-radius:14px; padding:14px;
-    font-family:'Sarabun'; font-size:13px; line-height:1.6;
-    max-height:220px; overflow-y:auto; margin:0 0 18px; color:var(--plum);
+    background:var(--cream); border:1.5px solid var(--line); border-radius:14px; padding:14px;
+    font-family:'Sarabun'; font-size:13.5px; line-height:1.65;
+    max-height:260px; overflow-y:auto; margin:0 0 18px; color:var(--plum);
   }
   .app-tip{font-size:11.5px; color:#8a7680; text-align:center; margin-top:10px; line-height:1.5;}
+  .fb-name-chip{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    background:var(--cream); border-radius:12px; padding:10px 14px; margin-bottom:14px;
+    font-size:13.5px;
+  }
+  .fb-name-edit{
+    background:none; border:none; color:var(--sage-dark); font-weight:700; font-size:12.5px;
+    text-decoration:underline; cursor:pointer; flex-shrink:0; font-family:'Sarabun'; padding:0;
+  }
 
   .copied-banner{
     background:var(--sage); color:#fff; font-weight:700; font-size:16px;
@@ -497,13 +510,6 @@
   }
   .paste-instruction{font-size:14.5px; line-height:1.6; color:var(--plum); text-align:center; margin:0 0 18px;}
   .paste-instruction strong{font-weight:700; color:var(--rose-dark);}
-  .summary-details{margin-bottom:18px;}
-  .summary-details summary{
-    font-size:12.5px; color:var(--rose-dark); cursor:pointer; font-weight:600;
-    text-decoration:underline; list-style:none;
-  }
-  .summary-details summary::-webkit-details-marker{display:none;}
-  .summary-details[open] summary{margin-bottom:10px;}
 
   /* ---------- Order details form (date / delivery method / address) ---------- */
   .form-group{margin-bottom:16px;}
@@ -649,18 +655,14 @@
   <button class="modal-close" onclick="closeOrderSummary()">✕</button>
 
   <div class="modal-body" id="orderReviewView">
-    <p class="paste-instruction">กรุณากรอก <strong>ชื่อ Facebook ที่ใช้ทักแชทเพจร้าน</strong> เพื่อให้แอดมินยืนยันออเดอร์ถูกคน แล้วกด "ยืนยันสั่งซื้อ" ได้เลยค่ะ 🌸</p>
-    <input type="text" id="fbNameInput" class="form-input" placeholder="ชื่อ Facebook ที่ทักแชท" style="margin-bottom:14px;">
+    <h4 class="order-summary-heading">🛍️ ออเดอร์ของคุณ</h4>
+    <pre id="orderSummaryText" class="order-summary-text"></pre>
+    <div id="fbNameDisplay"></div>
     <textarea id="orderNoteInput" class="form-input" rows="2" placeholder="หมายเหตุ (เช่น อยากเปลี่ยน/เพิ่มสีช่อดอกไม้ หรือข้อความอื่นๆ ถึงร้าน)" style="margin-bottom:14px;"></textarea>
-    <details class="summary-details">
-      <summary>ดูรายการสั่งซื้อ</summary>
-      <pre id="orderSummaryText" class="order-summary-text"></pre>
-    </details>
     <div class="modal-actions">
       <button class="checkout-btn" id="confirmOrderBtn" onclick="confirmOrderSubmit()">✅ ยืนยันสั่งซื้อ</button>
-      <button class="add-btn secondary" onclick="copyOrderMessage()">📋 คัดลอกข้อความรายการ</button>
     </div>
-    <p class="app-tip">💡 ยังไม่เคยทักแชทเพจใช่ไหม <a href="#" id="messengerLink" target="_blank" rel="noopener">เปิดแชท Facebook Messenger ที่นี่</a> เพื่อทักหาแอดมินไว้ก่อนได้เลยค่ะ (ใช้ชื่อเดียวกับที่กรอกด้านบน)</p>
+    <p class="app-tip">💡 ยังไม่เคยทักแชทเพจใช่ไหม <a href="#" id="messengerLink" target="_blank" rel="noopener">เปิดแชท Facebook Messenger ที่นี่</a> เพื่อทักหาแอดมินไว้ก่อนได้เลยค่ะ (ใช้ชื่อเดียวกับที่แจ้งไว้)</p>
   </div>
 
   <div class="modal-body" id="orderSuccessView" style="display:none;">
@@ -668,6 +670,20 @@
     <p class="paste-instruction">ทีมงานได้รับรายการสั่งซื้อของคุณเรียบร้อยแล้ว แอดมินจะทักแชท Facebook Messenger กลับไปยืนยันออเดอร์ พร้อมแจ้งยอด/วิธีรับ-จัดส่งอีกครั้งเร็วๆ นี้ค่ะ 🌸</p>
     <div class="modal-actions">
       <button class="checkout-btn" onclick="closeOrderSummary()">ปิดหน้าต่าง</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="nameGateOverlay"></div>
+<div class="order-modal" id="nameGateModal">
+  <div class="modal-body" style="text-align:center;">
+    <div style="font-size:40px; margin-bottom:6px;">🌸</div>
+    <h3 style="margin-top:0;">ยินดีต้อนรับสู่ S.Flower Bloom</h3>
+    <p class="paste-instruction">ก่อนเริ่มเลือกสินค้า ขอชื่อ Facebook ที่ใช้ทักแชทร้านไว้ก่อนนะคะ จะได้ไม่ต้องกรอกซ้ำตอนสั่งซื้อ</p>
+    <input type="text" id="gateNameInput" class="form-input" placeholder="ชื่อ Facebook ของคุณ" style="margin:14px 0;">
+    <div class="modal-actions">
+      <button class="checkout-btn" onclick="confirmGateName()">เริ่มเลือกสินค้า 🌸</button>
+      <button class="add-btn secondary" onclick="skipGateName()">ข้ามไปก่อน</button>
     </div>
   </div>
 </div>
@@ -1330,7 +1346,7 @@ function onCardToggleCart(){
   document.getElementById('cardMessageCart').style.display = checked ? 'block' : 'none';
 }
 function finalizeOrder(result){
-  let lines = ['สนใจสั่งสินค้า', ...result.lines];
+  let lines = ['สินค้า', ...result.lines];
   const cardEl = document.getElementById('addCardCart');
   if(cardEl && cardEl.checked){
     const cardMsg = document.getElementById('cardMessageCart').value.trim();
@@ -1338,7 +1354,7 @@ function finalizeOrder(result){
   }
   lines.push('');
   lines.push(`ยอดรวมสินค้า: ${fmt(result.subtotal)}`);
-  lines.push('(วันที่รับสินค้า / วิธีรับ-จัดส่ง / ที่อยู่ แจ้งอีกครั้งทางแชทได้เลยค่ะ)');
+  lines.push('กดสั่งซื้อแล้ว รอแอดมินตอบกลับ เพื่อสรุปยอดและรายละเอียดการจัดส่ง');
   closeCart();
   showOrderSummary(lines.join('\n'), result.subtotal);
 }
@@ -1346,28 +1362,48 @@ function finalizeOrder(result){
 /* ---------- Order summary: capture FB name, submit to backend, show success ---------- */
 let currentOrderMessage = '';
 let currentOrderSubtotal = 0;
+let customerFbName = '';
 
-function copyToClipboard(text){
-  if(navigator.clipboard && navigator.clipboard.writeText){
-    navigator.clipboard.writeText(text).catch(()=>{ fallbackCopy(text); });
+/* ---------- Name gate: ask for FB name once, before browsing ---------- */
+function initNameGate(){
+  let saved = '';
+  try { saved = localStorage.getItem('sfb_fbName') || ''; } catch(e) { /* localStorage blocked, ignore */ }
+  if(saved){
+    customerFbName = saved;
   } else {
-    fallbackCopy(text);
+    document.getElementById('nameGateModal').classList.add('open');
+    document.getElementById('nameGateOverlay').classList.add('show');
   }
 }
-function fallbackCopy(text){
-  const ta = document.createElement('textarea');
-  ta.value = text;
-  ta.style.position = 'fixed'; ta.style.opacity = '0';
-  document.body.appendChild(ta);
-  ta.focus(); ta.select();
-  try{ document.execCommand('copy'); } catch(e){ /* ignore */ }
-  document.body.removeChild(ta);
+function confirmGateName(){
+  const name = document.getElementById('gateNameInput').value.trim();
+  if(!name){ showToast('กรุณากรอกชื่อ Facebook ก่อนนะคะ'); return; }
+  customerFbName = name;
+  try { localStorage.setItem('sfb_fbName', name); } catch(e) { /* localStorage blocked, ignore */ }
+  closeNameGate();
 }
+function skipGateName(){
+  closeNameGate();
+}
+function closeNameGate(){
+  document.getElementById('nameGateModal').classList.remove('open');
+  document.getElementById('nameGateOverlay').classList.remove('show');
+}
+function renderFbNameDisplay(editing){
+  const wrap = document.getElementById('fbNameDisplay');
+  if(editing || !customerFbName){
+    const current = customerFbName ? customerFbName.replace(/"/g,'&quot;') : '';
+    wrap.innerHTML = `<input type="text" id="fbNameEditInput" class="form-input" placeholder="ชื่อ Facebook ที่ทักแชทร้าน" value="${current}" style="margin-bottom:14px;">`;
+  } else {
+    wrap.innerHTML = `<div class="fb-name-chip"><span>👤 สั่งในนาม: <strong>${customerFbName}</strong></span><button type="button" class="fb-name-edit" onclick="renderFbNameDisplay(true)">แก้ไข</button></div>`;
+  }
+}
+
 function showOrderSummary(message, subtotal){
   currentOrderMessage = message;
   currentOrderSubtotal = subtotal || 0;
   document.getElementById('orderSummaryText').textContent = message;
-  document.getElementById('fbNameInput').value = '';
+  renderFbNameDisplay(false);
   document.getElementById('orderNoteInput').value = '';
   document.getElementById('messengerLink').href = PAGE_LINK;
   document.getElementById('orderReviewView').style.display = 'block';
@@ -1383,17 +1419,16 @@ function closeOrderSummary(){
   document.getElementById('orderSummaryModal').classList.remove('open');
   document.getElementById('summaryOverlay').classList.remove('show');
 }
-function copyOrderMessage(){
-  copyToClipboard(currentOrderMessage);
-  showToast('คัดลอกข้อความแล้ว 📋');
-}
 async function confirmOrderSubmit(){
-  const fbName = document.getElementById('fbNameInput').value.trim();
+  const editInput = document.getElementById('fbNameEditInput');
+  const fbName = editInput ? editInput.value.trim() : customerFbName;
   if(!fbName){
     showToast('กรุณากรอกชื่อ Facebook ที่ทักแชทร้านก่อนนะคะ');
-    document.getElementById('fbNameInput').focus();
+    if(editInput) editInput.focus();
     return;
   }
+  customerFbName = fbName;
+  try { localStorage.setItem('sfb_fbName', fbName); } catch(e) { /* localStorage blocked, ignore */ }
   const note = document.getElementById('orderNoteInput').value.trim();
   const orderTextWithNote = note ? `${currentOrderMessage}\n\n📝 หมายเหตุจากลูกค้า: ${note}` : currentOrderMessage;
   const btn = document.getElementById('confirmOrderBtn');
@@ -1524,6 +1559,7 @@ renderNav();
 renderPriceFilter();
 renderCatalog();
 updateCartUI();
+initNameGate();
 
 /* ---------- Chat button ---------- */
 function closeChatBubble(){
