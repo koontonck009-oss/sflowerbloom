@@ -549,6 +549,33 @@
   .form-input:focus{outline:none; border-color:var(--sage);}
   .checkbox-label{display:flex; align-items:center; gap:8px; font-size:13.5px; font-weight:600; cursor:pointer; color:var(--plum);}
   .checkbox-label input{width:18px; height:18px; cursor:pointer; accent-color:var(--sage);}
+  .field-hint{font-size:12px; color:#8a7680; margin:6px 0 0; line-height:1.5;}
+  .field-hint strong{color:var(--rose-dark);}
+  .radio-group{display:flex; flex-direction:column; gap:8px;}
+  .radio-option{
+    display:flex; align-items:center; gap:10px;
+    border:1.5px solid var(--line); border-radius:12px;
+    padding:10px 14px; cursor:pointer; font-size:13.5px; font-weight:600;
+    color:var(--plum);
+    transition:border-color .15s ease, background .15s ease;
+  }
+  .radio-option:hover{border-color:var(--rose);}
+  .radio-option:has(input:checked){border-color:var(--rose); background:rgba(255,143,203,0.10);}
+  .radio-option input{width:16px; height:16px; cursor:pointer; accent-color:var(--sage); flex-shrink:0;}
+  .order-total-box{
+    background:var(--cream); border:1.5px solid var(--line); border-radius:14px;
+    padding:14px 16px; margin:4px 0 16px;
+  }
+  .total-line{
+    display:flex; justify-content:space-between; align-items:baseline;
+    font-size:13.5px; color:var(--plum); padding:3px 0;
+  }
+  .total-line.grand{
+    margin-top:6px; padding-top:10px; border-top:1.5px dashed var(--line);
+    font-family:'Chonburi'; font-size:17px; color:var(--rose-dark);
+  }
+  .total-line.grand span:first-child{font-family:'Sarabun'; font-weight:700; font-size:14px; color:var(--plum);}
+  .total-line .approx-note{font-family:'Sarabun'; font-weight:400; font-size:11px; color:#8a7680;}
 
   footer{
     text-align:center; padding:26px 6vw 40px; font-size:13px; color:#8a7680;
@@ -620,18 +647,15 @@
   </div>
   <div class="drawer-items" id="drawerItems"></div>
   <div class="drawer-foot">
-    <label class="checkbox-label card-addon-toggle">
-      <input type="checkbox" id="addCardCart" onchange="onCardToggleCart()"> 🎀 เพิ่มการ์ดอวยพร (ฟรี)
-    </label>
-    <textarea id="cardMessageCart" class="form-input" rows="2" placeholder="ข้อความในการ์ด (ถ้ามี)" style="display:none; margin:8px 0 14px;"></textarea>
     <div class="total-row">
-      <span>ยอดรวมทั้งหมด</span>
+      <span>รวมค่าสินค้า</span>
       <span class="total-amt" id="totalAmt">฿0</span>
     </div>
+    <p class="field-hint" style="margin:-6px 0 12px;">ยังไม่รวมค่าจัดส่ง — นัดรับไม่มีค่าใช้จ่าย / ส่งพัสดุต่างจังหวัด ฿100 ต่อออเดอร์</p>
     <button class="checkout-btn" id="checkoutBtn" onclick="startCheckout(buildCartOrderLines)">
       🌸 ยืนยันสั่งซื้อ
     </button>
-    <p class="checkout-hint">กดแล้วกรอกชื่อ Facebook ที่ทักแชทไว้ แอดมินจะทักกลับไปยืนยันอีกครั้ง</p>
+    <p class="checkout-hint">กดแล้วกรอกวันรับสินค้า/วิธีรับ/ชื่อ Facebook แอดมินจะทักกลับไปยืนยันอีกครั้ง</p>
   </div>
 </aside>
 
@@ -685,6 +709,55 @@
     <h4 class="order-summary-heading">🛍️ ออเดอร์ของคุณ</h4>
     <pre id="orderSummaryText" class="order-summary-text"></pre>
     <div id="fbNameDisplay"></div>
+
+    <div class="form-group">
+      <label for="pickupDateInput">📅 วันที่ต้องการรับสินค้า</label>
+      <input type="date" id="pickupDateInput" class="form-input">
+      <p class="field-hint">💡 ช่อพร้อมส่งหรืองานเร่งเลือกวันใกล้ๆ ได้เลย แต่ถ้าเป็นช่อที่ต้องเตรียมพิเศษ แนะนำสั่งล่วงหน้า <strong>3-5 วัน</strong> — แอดมินจะทักแจ้งอีกครั้งหากทำไม่ทันวันที่เลือกไว้</p>
+    </div>
+
+    <div class="form-group">
+      <label>🚚 วิธีรับสินค้า</label>
+      <div class="radio-group">
+        <label class="radio-option"><input type="radio" name="deliveryMethod" value="pickup" onchange="onDeliveryMethodChange()"> 🚗 นัดรับสินค้า (พยุหะ–ตัวเมืองนครสวรรค์และใกล้เคียง)</label>
+        <label class="radio-option"><input type="radio" name="deliveryMethod" value="parcel" onchange="onDeliveryMethodChange()"> 📦 ส่งพัสดุ (ต่างจังหวัด)</label>
+        <label class="radio-option"><input type="radio" name="deliveryMethod" value="unsure" onchange="onDeliveryMethodChange()"> ยังไม่แน่ใจ</label>
+      </div>
+      <p class="field-hint" id="deliveryMethodHint"></p>
+    </div>
+
+    <div class="form-group" id="pickupInfoGroup" style="display:none;">
+      <label for="pickupLocationInput">📍 สถานที่นัดรับ <span style="font-weight:400;">(ไม่บังคับ)</span></label>
+      <input type="text" id="pickupLocationInput" class="form-input" placeholder="เช่น เซเว่นหน้าตลาดพยุหะ, ปั๊มน้ำมัน..." style="margin-bottom:10px;">
+      <label for="pickupPhoneInput">📞 เบอร์โทรติดต่อวันนัดรับ <span style="font-weight:400;">(ไม่บังคับ)</span></label>
+      <input type="tel" id="pickupPhoneInput" class="form-input" placeholder="เบอร์โทรที่ติดต่อได้ในวันนัดรับ">
+    </div>
+
+    <div class="form-group" id="deliveryAddressGroup" style="display:none;">
+      <label for="deliveryAddressInput">📍 ที่อยู่จัดส่ง</label>
+      <textarea id="deliveryAddressInput" class="form-input" rows="2" placeholder="ที่อยู่สำหรับจัดส่ง พร้อมเบอร์โทรผู้รับ"></textarea>
+    </div>
+
+    <div class="form-group">
+      <label>💳 การชำระเงิน</label>
+      <div class="radio-group">
+        <label class="radio-option"><input type="radio" name="paymentMethod" value="full" onchange="renderOrderTotalSummary()"> โอนเต็มยอด</label>
+        <label class="radio-option" id="depositPaymentOption"><input type="radio" name="paymentMethod" value="deposit" onchange="renderOrderTotalSummary()"> มัดจำ 50% ส่วนที่เหลือชำระวันทำช่อดอกไม้เสร็จ</label>
+        <label class="radio-option" id="codPaymentOption" style="display:none;"><input type="radio" name="paymentMethod" value="cod" onchange="renderOrderTotalSummary()"> เก็บเงินปลายทาง (COD) — เฉพาะช่อพร้อมส่ง</label>
+      </div>
+    </div>
+
+    <div class="order-total-box" id="orderTotalBox">
+      <div class="total-line"><span>รวมค่าสินค้า</span><span id="totalBoxSubtotal">฿0</span></div>
+      <div class="total-line" id="totalBoxShippingLine"><span>ค่าจัดส่ง</span><span id="totalBoxShipping">–</span></div>
+      <div class="total-line grand"><span>ยอดรวม<span id="totalBoxApproxNote"></span></span><span id="totalBoxGrand">฿0</span></div>
+    </div>
+
+
+    <label class="checkbox-label card-addon-toggle">
+      <input type="checkbox" id="addCardCart" onchange="onCardToggleCart()"> 🎀 เพิ่มการ์ดอวยพร (ฟรี)
+    </label>
+    <textarea id="cardMessageCart" class="form-input" rows="2" placeholder="ข้อความในการ์ด (ถ้ามี)" style="display:none; margin:8px 0 10px;"></textarea>
     <textarea id="orderNoteInput" class="form-input" rows="2" placeholder="หมายเหตุ (เช่น อยากเปลี่ยน/เพิ่มสีช่อดอกไม้ หรือข้อความอื่นๆ ถึงร้าน)" style="margin-bottom:14px;"></textarea>
     <div class="modal-actions">
       <button class="checkout-btn" id="confirmOrderBtn" onclick="confirmOrderSubmit()">✅ ยืนยันสั่งซื้อ</button>
@@ -1116,6 +1189,25 @@ function productHasAnyReady(p){
   if(p.colors) return p.colors.some(c => c.ready);
   return false;
 }
+// Readiness of a specific order line (used to decide whether the deposit
+// payment option should be offered): falls back to the product's own
+// ready flag, but uses the picked color's ready flag when the line has one.
+function orderItemIsReady(item){
+  const p = PRODUCTS.find(x=>x.id===item.id);
+  if(!p) return false;
+  if(p.colors && item.label){
+    const colorName = item.label.split(',')[0].trim();
+    const c = p.colors.find(cc=>cc.name===colorName);
+    if(c && typeof c.ready !== 'undefined') return !!c.ready;
+  }
+  return !!p.ready;
+}
+// The deposit option only makes sense when the order needs to be made to
+// order — if every line is already พร้อมส่ง (ready to ship), full payment
+// or COD covers it and there's nothing to "finish making" later.
+function orderNeedsDeposit(items){
+  return !!items && items.length > 0 && !items.every(orderItemIsReady);
+}
 
 function renderNav(){
   const nav = document.getElementById('catNav');
@@ -1374,14 +1466,10 @@ function onCardToggleCart(){
 }
 function finalizeOrder(result){
   let lines = ['สินค้า', ...result.lines];
-  const cardEl = document.getElementById('addCardCart');
-  if(cardEl && cardEl.checked){
-    const cardMsg = document.getElementById('cardMessageCart').value.trim();
-    lines.push(`🎀 การ์ดอวยพร (ฟรี)${cardMsg ? `: "${cardMsg}"` : ''}`);
-  }
   lines.push('');
-  lines.push(`ยอดรวมสินค้า: ${fmt(result.subtotal)}`);
-  lines.push('กดสั่งซื้อแล้ว รอแอดมินตอบกลับ เพื่อสรุปยอดและรายละเอียดการจัดส่ง');
+  lines.push(`รวมค่าสินค้า: ${fmt(result.subtotal)}`);
+  lines.push('(ยังไม่รวมค่าจัดส่ง ถ้ามี — แอดมินจะแจ้งยอดสุทธิให้อีกครั้ง)');
+  lines.push('กดสั่งซื้อแล้ว รอแอดมินตอบกลับ เพื่อสรุปยอดสุทธิและรายละเอียดการจัดส่ง');
   closeCart();
   showOrderSummary(lines.join('\n'), result.subtotal, result.items);
 }
@@ -1408,13 +1496,104 @@ function renderFbNameDisplay(editing){
   }
 }
 
+function minPickupDateStr(){
+  const d = new Date();
+  return d.toISOString().slice(0,10); // อนุญาตเลือกวันนี้ได้ (ช่อพร้อมส่ง/งานเร่ง) แอดมินจะแจ้งอีกครั้งถ้าทำไม่ทัน
+}
+const DELIVERY_HINTS = {
+  pickup: '📍 นัดรับได้ตั้งแต่พยุหะ ถึงตัวเมืองนครสวรรค์และใกล้เคียง มีบริการเก็บเงินปลายทาง (COD) สำหรับช่อพร้อมส่ง',
+  parcel: '📦 ค่าส่งพัสดุ ฿100 ต่อออเดอร์ (สำหรับต่างจังหวัด/นอกพื้นที่จัดส่ง)',
+  unsure: 'แอดมินจะช่วยแนะนำวิธีรับสินค้าและแจ้งค่าจัดส่ง (ถ้ามี) ให้อีกครั้งค่ะ'
+};
+function calcShippingFee(deliveryMethod, subtotal){
+  // คืนค่าตัวเลข = ยอดที่ทราบแน่นอน, null = ยังไม่ทราบ (รอแอดมินแจ้ง)
+  if(deliveryMethod === 'parcel') return 100;
+  if(deliveryMethod === 'pickup') return 0;
+  return null; // unsure หรือยังไม่เลือก
+}
+function onDeliveryMethodChange(){
+  const selected = document.querySelector('input[name="deliveryMethod"]:checked');
+  const value = selected ? selected.value : '';
+  document.getElementById('pickupInfoGroup').style.display = value === 'pickup' ? 'block' : 'none';
+  document.getElementById('deliveryAddressGroup').style.display = value === 'parcel' ? 'block' : 'none';
+
+  const codOption = document.getElementById('codPaymentOption');
+  codOption.style.display = value === 'pickup' ? 'flex' : 'none';
+  if(value !== 'pickup'){
+    const codInput = codOption.querySelector('input');
+    if(codInput.checked) codInput.checked = false;
+  }
+
+  const hintEl = document.getElementById('deliveryMethodHint');
+  hintEl.textContent = DELIVERY_HINTS[value] || '';
+
+  renderOrderTotalSummary();
+}
+function renderOrderTotalSummary(){
+  const subtotal = currentOrderSubtotal || 0;
+  const selected = document.querySelector('input[name="deliveryMethod"]:checked');
+  const method = selected ? selected.value : '';
+  const fee = calcShippingFee(method, subtotal);
+
+  document.getElementById('totalBoxSubtotal').textContent = fmt(subtotal);
+
+  const shippingEl = document.getElementById('totalBoxShipping');
+  const grandEl = document.getElementById('totalBoxGrand');
+  const approxEl = document.getElementById('totalBoxApproxNote');
+
+  if(fee === null){
+    shippingEl.textContent = method === 'parcel' ? fmt(100) : 'รอแจ้งยอด';
+    grandEl.textContent = fmt(subtotal) + '+';
+    approxEl.textContent = ' (โดยประมาณ)';
+  } else if(fee === 0){
+    shippingEl.textContent = method === 'pickup' ? 'ไม่มีค่าจัดส่ง' : 'ฟรี 🎉';
+    grandEl.textContent = fmt(subtotal);
+    approxEl.textContent = '';
+  } else {
+    shippingEl.textContent = fmt(fee);
+    grandEl.textContent = fmt(subtotal + fee);
+    approxEl.textContent = '';
+  }
+}
+function resetOrderDetailFields(){
+  const dateInput = document.getElementById('pickupDateInput');
+  const minDate = minPickupDateStr();
+  dateInput.min = minDate;
+  dateInput.value = '';
+  document.querySelectorAll('input[name="deliveryMethod"]').forEach(r => r.checked = false);
+  document.querySelectorAll('input[name="paymentMethod"]').forEach(r => r.checked = false);
+  document.getElementById('deliveryAddressInput').value = '';
+  document.getElementById('deliveryAddressGroup').style.display = 'none';
+  document.getElementById('pickupLocationInput').value = '';
+  document.getElementById('pickupPhoneInput').value = '';
+  document.getElementById('pickupInfoGroup').style.display = 'none';
+  document.getElementById('codPaymentOption').style.display = 'none';
+  document.getElementById('deliveryMethodHint').textContent = '';
+
+  const depositOption = document.getElementById('depositPaymentOption');
+  if(depositOption){
+    const showDeposit = orderNeedsDeposit(currentOrderItems);
+    depositOption.style.display = showDeposit ? 'flex' : 'none';
+    if(!showDeposit){
+      const depositInput = depositOption.querySelector('input');
+      if(depositInput.checked) depositInput.checked = false;
+    }
+  }
+
+  renderOrderTotalSummary();
+}
 function showOrderSummary(message, subtotal, items){
   currentOrderMessage = message;
   currentOrderSubtotal = subtotal || 0;
   currentOrderItems = items || [];
   document.getElementById('orderSummaryText').textContent = message;
   renderFbNameDisplay(false);
+  resetOrderDetailFields();
   document.getElementById('orderNoteInput').value = '';
+  const cardEl = document.getElementById('addCardCart');
+  if(cardEl) cardEl.checked = false;
+  const cardMsgEl = document.getElementById('cardMessageCart');
+  if(cardMsgEl){ cardMsgEl.value = ''; cardMsgEl.style.display = 'none'; }
   document.getElementById('messengerLink').href = PAGE_LINK;
   document.getElementById('orderReviewView').style.display = 'block';
   document.getElementById('orderSuccessView').style.display = 'none';
@@ -1464,6 +1643,13 @@ function generateOrderNumber(){
   const rand = String(Math.floor(1000 + Math.random()*9000)); // 4 หลักสุ่ม กันเลขซ้ำในวันเดียวกัน
   return `SFB${yy}${mm}${dd}-${rand}`;
 }
+function formatDateThai(dateStr){
+  if(!dateStr) return '';
+  const d = new Date(dateStr + 'T00:00:00');
+  return d.toLocaleDateString('th-TH', { day:'numeric', month:'short', year:'numeric' });
+}
+const DELIVERY_LABELS = { pickup:'นัดรับสินค้า (พยุหะ–ตัวเมืองนครสวรรค์และใกล้เคียง)', parcel:'ส่งพัสดุ (ต่างจังหวัด)', unsure:'ยังไม่แน่ใจ' };
+const PAYMENT_LABELS = { full:'โอนเต็มยอด', deposit:'มัดจำ 50% ส่วนที่เหลือชำระวันทำช่อดอกไม้เสร็จ', cod:'เก็บเงินปลายทาง (COD)' };
 async function confirmOrderSubmit(){
   const editInput = document.getElementById('fbNameEditInput');
   const fbName = editInput ? editInput.value.trim() : customerFbName;
@@ -1472,10 +1658,77 @@ async function confirmOrderSubmit(){
     if(editInput) editInput.focus();
     return;
   }
+
+  const pickupDateInput = document.getElementById('pickupDateInput');
+  const pickupDate = pickupDateInput.value;
+  if(!pickupDate){
+    showToast('กรุณาเลือกวันที่ต้องการรับสินค้า');
+    pickupDateInput.focus();
+    return;
+  }
+  if(pickupDate < pickupDateInput.min){
+    showToast('ไม่สามารถเลือกวันที่ผ่านมาแล้วได้ กรุณาเลือกวันที่ใหม่');
+    pickupDateInput.focus();
+    return;
+  }
+
+  const deliveryMethodEl = document.querySelector('input[name="deliveryMethod"]:checked');
+  if(!deliveryMethodEl){
+    showToast('กรุณาเลือกวิธีรับสินค้า');
+    return;
+  }
+  const deliveryMethod = deliveryMethodEl.value;
+  const needsAddress = deliveryMethod === 'parcel';
+
+  const pickupLocation = document.getElementById('pickupLocationInput').value.trim();
+  const pickupPhone = document.getElementById('pickupPhoneInput').value.trim();
+
+  const deliveryAddressInput = document.getElementById('deliveryAddressInput');
+  const deliveryAddress = deliveryAddressInput.value.trim();
+  if(needsAddress && !deliveryAddress){
+    showToast('กรุณากรอกที่อยู่จัดส่ง');
+    deliveryAddressInput.focus();
+    return;
+  }
+
+  const paymentMethodEl = document.querySelector('input[name="paymentMethod"]:checked');
+  if(!paymentMethodEl){
+    showToast('กรุณาเลือกวิธีชำระเงิน');
+    return;
+  }
+  const paymentMethod = paymentMethodEl.value;
+
   customerFbName = fbName;
   try { localStorage.setItem('sfb_fbName', fbName); } catch(e) { /* localStorage blocked, ignore */ }
+
+  const shippingFee = calcShippingFee(deliveryMethod, currentOrderSubtotal);
+  let detailLines = [
+    `📅 วันที่ต้องการรับสินค้า: ${formatDateThai(pickupDate)}`,
+    `🚚 วิธีรับสินค้า: ${DELIVERY_LABELS[deliveryMethod]}`
+  ];
+  if(deliveryMethod === 'pickup' && (pickupLocation || pickupPhone)){
+    if(pickupLocation) detailLines.push(`📍 สถานที่นัดรับ: ${pickupLocation}`);
+    if(pickupPhone) detailLines.push(`📞 เบอร์โทรวันนัดรับ: ${pickupPhone}`);
+  }
+  if(needsAddress){
+    detailLines.push(`📍 ที่อยู่จัดส่ง: ${deliveryAddress}`);
+  }
+  if(shippingFee !== null){
+    detailLines.push(`🚛 ค่าจัดส่ง: ${shippingFee === 0 ? 'ฟรี' : fmt(shippingFee)}`);
+    detailLines.push(`💰 ยอดรวมสุทธิ: ${fmt(currentOrderSubtotal + shippingFee)}`);
+  } else {
+    detailLines.push('🚛 ค่าจัดส่ง: คิดตามจริง (แอดมินจะแจ้งยอดสุทธิให้อีกครั้ง)');
+  }
+  detailLines.push(`💳 การชำระเงิน: ${PAYMENT_LABELS[paymentMethod]}`);
+
+  const cardEl = document.getElementById('addCardCart');
+  const addCard = !!(cardEl && cardEl.checked);
+  const cardMessage = addCard ? document.getElementById('cardMessageCart').value.trim() : '';
   const note = document.getElementById('orderNoteInput').value.trim();
-  const orderTextWithNote = note ? `${currentOrderMessage}\n\n📝 หมายเหตุจากลูกค้า: ${note}` : currentOrderMessage;
+  let orderTextWithNote = `${currentOrderMessage}\n\n${detailLines.join('\n')}`;
+  if(addCard){ orderTextWithNote += `\n\n🎀 การ์ดอวยพร (ฟรี)${cardMessage ? `: "${cardMessage}"` : ''}`; }
+  if(note){ orderTextWithNote += `\n\n📝 หมายเหตุจากลูกค้า: ${note}`; }
+
   const orderNo = generateOrderNumber();
   const btn = document.getElementById('confirmOrderBtn');
   btn.disabled = true;
@@ -1490,7 +1743,17 @@ async function confirmOrderSubmit(){
         fbName,
         orderText: orderTextWithNote,
         subtotal: currentOrderSubtotal,
+        shippingFee: shippingFee,
+        grandTotal: shippingFee !== null ? currentOrderSubtotal + shippingFee : null,
         items: currentOrderItems,
+        pickupDate,
+        deliveryMethod,
+        pickupLocation: deliveryMethod === 'pickup' ? pickupLocation : '',
+        pickupPhone: deliveryMethod === 'pickup' ? pickupPhone : '',
+        deliveryAddress: needsAddress ? deliveryAddress : '',
+        paymentMethod,
+        addCard,
+        cardMessage,
         note,
         timestamp: new Date().toISOString()
       })
