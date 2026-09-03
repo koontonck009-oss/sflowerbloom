@@ -755,10 +755,9 @@
 
 
     <label class="checkbox-label card-addon-toggle">
-      <input type="checkbox" id="addCardCart" onchange="onCardToggleCart()"> 🎀 เพิ่มการ์ดอวยพร (ฟรี)
+      <input type="checkbox" id="addCardCart"> 🎀 เพิ่มการ์ดอวยพร (ฟรี)
     </label>
-    <textarea id="cardMessageCart" class="form-input" rows="2" placeholder="ข้อความในการ์ด (ถ้ามี)" style="display:none; margin:8px 0 10px;"></textarea>
-    <textarea id="orderNoteInput" class="form-input" rows="2" placeholder="หมายเหตุ (เช่น อยากเปลี่ยน/เพิ่มสีช่อดอกไม้ หรือข้อความอื่นๆ ถึงร้าน)" style="margin-bottom:14px;"></textarea>
+    <textarea id="orderNoteInput" class="form-input" rows="2" placeholder="หมายเหตุ (เช่น อยากเปลี่ยน/เพิ่มสีช่อดอกไม้ ข้อความในการ์ด หรือข้อความอื่นๆ ถึงร้าน)" style="margin-bottom:14px;"></textarea>
     <div class="modal-actions">
       <button class="checkout-btn" id="confirmOrderBtn" onclick="confirmOrderSubmit()">✅ ยืนยันสั่งซื้อ</button>
     </div>
@@ -1460,10 +1459,6 @@ function startCheckout(builderFn){
   finalizeOrder(result);
 }
 const CARD_PRICE = 0; // การ์ดอวยพรฟรี
-function onCardToggleCart(){
-  const checked = document.getElementById('addCardCart').checked;
-  document.getElementById('cardMessageCart').style.display = checked ? 'block' : 'none';
-}
 function finalizeOrder(result){
   let lines = ['สินค้า', ...result.lines];
   lines.push('');
@@ -1501,14 +1496,14 @@ function minPickupDateStr(){
   return d.toISOString().slice(0,10); // อนุญาตเลือกวันนี้ได้ (ช่อพร้อมส่ง/งานเร่ง) แอดมินจะแจ้งอีกครั้งถ้าทำไม่ทัน
 }
 const DELIVERY_HINTS = {
-  pickup: '📍 นัดรับได้ตั้งแต่พยุหะ ถึงตัวเมืองนครสวรรค์และใกล้เคียง มีบริการเก็บเงินปลายทาง (COD) สำหรับช่อพร้อมส่ง',
+  pickup: '📍 นัดรับได้ตั้งแต่พยุหะ ถึงตัวเมืองนครสวรรค์และใกล้เคียง สั่งครบ 299 บาทขึ้นไปนัดรับฟรี ต่ำกว่านั้นคิดค่าส่งตามระยะทางจริง มีบริการเก็บเงินปลายทาง (COD) สำหรับช่อพร้อมส่ง',
   parcel: '📦 ค่าส่งพัสดุ ฿100 ต่อออเดอร์ (สำหรับต่างจังหวัด/นอกพื้นที่จัดส่ง)',
   unsure: 'แอดมินจะช่วยแนะนำวิธีรับสินค้าและแจ้งค่าจัดส่ง (ถ้ามี) ให้อีกครั้งค่ะ'
 };
 function calcShippingFee(deliveryMethod, subtotal){
   // คืนค่าตัวเลข = ยอดที่ทราบแน่นอน, null = ยังไม่ทราบ (รอแอดมินแจ้ง)
   if(deliveryMethod === 'parcel') return 100;
-  if(deliveryMethod === 'pickup') return 0;
+  if(deliveryMethod === 'pickup') return subtotal >= 299 ? 0 : null; // นัดรับ: ครบ 299 ส่งฟรี ต่ำกว่านั้นคิดตามระยะทางจริง (แอดมินแจ้ง)
   return null; // unsure หรือยังไม่เลือก
 }
 function onDeliveryMethodChange(){
@@ -1592,8 +1587,6 @@ function showOrderSummary(message, subtotal, items){
   document.getElementById('orderNoteInput').value = '';
   const cardEl = document.getElementById('addCardCart');
   if(cardEl) cardEl.checked = false;
-  const cardMsgEl = document.getElementById('cardMessageCart');
-  if(cardMsgEl){ cardMsgEl.value = ''; cardMsgEl.style.display = 'none'; }
   document.getElementById('messengerLink').href = PAGE_LINK;
   document.getElementById('orderReviewView').style.display = 'block';
   document.getElementById('orderSuccessView').style.display = 'none';
@@ -1723,10 +1716,9 @@ async function confirmOrderSubmit(){
 
   const cardEl = document.getElementById('addCardCart');
   const addCard = !!(cardEl && cardEl.checked);
-  const cardMessage = addCard ? document.getElementById('cardMessageCart').value.trim() : '';
   const note = document.getElementById('orderNoteInput').value.trim();
   let orderTextWithNote = `${currentOrderMessage}\n\n${detailLines.join('\n')}`;
-  if(addCard){ orderTextWithNote += `\n\n🎀 การ์ดอวยพร (ฟรี)${cardMessage ? `: "${cardMessage}"` : ''}`; }
+  if(addCard){ orderTextWithNote += `\n\n🎀 การ์ดอวยพร (ฟรี)`; }
   if(note){ orderTextWithNote += `\n\n📝 หมายเหตุจากลูกค้า: ${note}`; }
 
   const orderNo = generateOrderNumber();
