@@ -508,6 +508,14 @@
     background:var(--sage); color:#fff; font-weight:700; font-size:16px;
     text-align:center; border-radius:14px; padding:14px 12px; margin-bottom:14px;
   }
+  .order-no-chip{
+    text-align:center; font-size:14px; color:var(--plum); margin-bottom:16px;
+  }
+  .order-no-chip strong{
+    display:inline-block; font-family:'Chonburi'; font-size:19px; color:var(--rose-dark);
+    background:var(--cream); border:1.5px dashed var(--rose); border-radius:12px;
+    padding:6px 16px; margin-top:6px;
+  }
   .paste-instruction{font-size:14.5px; line-height:1.6; color:var(--plum); text-align:center; margin:0 0 18px;}
   .paste-instruction strong{font-weight:700; color:var(--rose-dark);}
 
@@ -667,6 +675,7 @@
 
   <div class="modal-body" id="orderSuccessView" style="display:none;">
     <div class="copied-banner">✅ รับออเดอร์ของคุณแล้ว</div>
+    <div class="order-no-chip" id="orderNoChip"></div>
     <p class="paste-instruction">ทีมงานได้รับรายการสั่งซื้อของคุณเรียบร้อยแล้ว แอดมินจะทักแชท Facebook Messenger กลับไปยืนยันออเดอร์ พร้อมแจ้งยอด/วิธีรับ-จัดส่งอีกครั้งเร็วๆ นี้ค่ะ 🌸</p>
     <div class="modal-actions">
       <button class="checkout-btn" onclick="closeOrderSummary()">ปิดหน้าต่าง</button>
@@ -1308,12 +1317,16 @@ function buildCartOrderLines(){
   const entries = Object.entries(cart);
   if(!entries.length) return null;
   let lines = [];
+  let items = [];
   entries.forEach(([key,entry])=>{
     const { id } = parseCartKey(key);
     const p = PRODUCTS.find(x=>x.id===id);
-    if(p) lines.push(`• ${p.name}${entry.label ? ` (${entry.label})` : ''} x${entry.qty} = ${fmt(entry.unitPrice*entry.qty)}`);
+    if(p){
+      lines.push(`• ${p.name}${entry.label ? ` (${entry.label})` : ''} x${entry.qty} = ${fmt(entry.unitPrice*entry.qty)}`);
+      items.push({ id, name:p.name, label:entry.label||'', qty:entry.qty, unitPrice:entry.unitPrice, lineTotal:entry.unitPrice*entry.qty });
+    }
   });
-  return { lines, subtotal: cartTotal() };
+  return { lines, items, subtotal: cartTotal() };
 }
 function buildModalOrderLines(){
   const p = PRODUCTS.find(x=>x.id===modalProductId);
@@ -1321,7 +1334,8 @@ function buildModalOrderLines(){
   const { label, unitPrice } = currentModalVariant(p);
   const lineTotal = unitPrice * modalQty;
   const lines = [`• ${p.name}${label ? ` (${label})` : ''} x${modalQty} = ${fmt(lineTotal)}`];
-  const result = { lines, subtotal: lineTotal };
+  const items = [{ id:p.id, name:p.name, label:label||'', qty:modalQty, unitPrice, lineTotal }];
+  const result = { lines, items, subtotal: lineTotal };
   closeProductModal();
   return result;
 }
@@ -1336,7 +1350,8 @@ function buildSingleProductLines(id){
     price = sv.price;
   }
   const lines = [`• ${p.name}${label ? ` (${label})` : ''} x1 = ${fmt(price)}`];
-  return { lines, subtotal: price };
+  const items = [{ id:p.id, name:p.name, label:label||'', qty:1, unitPrice:price, lineTotal:price }];
+  return { lines, items, subtotal: price };
 }
 function quickOrder(id){
   startCheckout(() => buildSingleProductLines(id));
@@ -1362,12 +1377,13 @@ function finalizeOrder(result){
   lines.push(`ยอดรวมสินค้า: ${fmt(result.subtotal)}`);
   lines.push('กดสั่งซื้อแล้ว รอแอดมินตอบกลับ เพื่อสรุปยอดและรายละเอียดการจัดส่ง');
   closeCart();
-  showOrderSummary(lines.join('\n'), result.subtotal);
+  showOrderSummary(lines.join('\n'), result.subtotal, result.items);
 }
 
 /* ---------- Order summary: capture FB name, submit to backend, show success ---------- */
 let currentOrderMessage = '';
 let currentOrderSubtotal = 0;
+let currentOrderItems = [];
 let customerFbName = '';
 
 /* ---------- Name gate: ask for FB name once, before browsing ---------- */
@@ -1407,9 +1423,10 @@ function renderFbNameDisplay(editing){
   }
 }
 
-function showOrderSummary(message, subtotal){
+function showOrderSummary(message, subtotal, items){
   currentOrderMessage = message;
   currentOrderSubtotal = subtotal || 0;
+  currentOrderItems = items || [];
   document.getElementById('orderSummaryText').textContent = message;
   renderFbNameDisplay(false);
   document.getElementById('orderNoteInput').value = '';
@@ -1429,6 +1446,14 @@ function closeOrderSummary(){
   document.getElementById('summaryOverlay').classList.remove('show');
   updateChatFabVisibility();
 }
+function generateOrderNumber(){
+  const d = new Date();
+  const yy = String(d.getFullYear()).slice(-2);
+  const mm = String(d.getMonth()+1).padStart(2,'0');
+  const dd = String(d.getDate()).padStart(2,'0');
+  const rand = String(Math.floor(1000 + Math.random()*9000)); // 4 หลักสุ่ม กันเลขซ้ำในวันเดียวกัน
+  return `SFB${yy}${mm}${dd}-${rand}`;
+}
 async function confirmOrderSubmit(){
   const editInput = document.getElementById('fbNameEditInput');
   const fbName = editInput ? editInput.value.trim() : customerFbName;
@@ -1441,6 +1466,7 @@ async function confirmOrderSubmit(){
   try { localStorage.setItem('sfb_fbName', fbName); } catch(e) { /* localStorage blocked, ignore */ }
   const note = document.getElementById('orderNoteInput').value.trim();
   const orderTextWithNote = note ? `${currentOrderMessage}\n\n📝 หมายเหตุจากลูกค้า: ${note}` : currentOrderMessage;
+  const orderNo = generateOrderNumber();
   const btn = document.getElementById('confirmOrderBtn');
   btn.disabled = true;
   btn.textContent = 'กำลังส่งออเดอร์...';
@@ -1450,13 +1476,17 @@ async function confirmOrderSubmit(){
       mode: 'no-cors', // Apps Script ไม่ตอบ CORS header ให้ตรงๆ จึงต้องยิงแบบ no-cors (อ่าน response ไม่ได้ แต่ฝั่ง Apps Script ได้รับข้อมูลปกติ)
       headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // ใช้ text/plain เพื่อเลี่ยง CORS preflight
       body: JSON.stringify({
+        orderNo,
         fbName,
         orderText: orderTextWithNote,
         subtotal: currentOrderSubtotal,
+        items: currentOrderItems,
+        note,
         timestamp: new Date().toISOString()
       })
     });
     clearCart();
+    document.getElementById('orderNoChip').innerHTML = `เลขที่ออเดอร์ของคุณ<br><strong>${orderNo}</strong>`;
     document.getElementById('orderReviewView').style.display = 'none';
     document.getElementById('orderSuccessView').style.display = 'block';
   } catch(err){
