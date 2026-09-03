@@ -683,20 +683,6 @@
   </div>
 </div>
 
-<div class="overlay" id="nameGateOverlay"></div>
-<div class="order-modal" id="nameGateModal">
-  <div class="modal-body" style="text-align:center;">
-    <div style="font-size:40px; margin-bottom:6px;">🌸</div>
-    <h3 style="margin-top:0;">ยินดีต้อนรับสู่ S.Flower Bloom</h3>
-    <p class="paste-instruction">ก่อนเริ่มเลือกสินค้า ขอชื่อ Facebook ที่ใช้ทักแชทร้านไว้ก่อนนะคะ จะได้ไม่ต้องกรอกซ้ำตอนสั่งซื้อ</p>
-    <input type="text" id="gateNameInput" class="form-input" placeholder="ชื่อ Facebook ของคุณ" style="margin:14px 0;">
-    <div class="modal-actions">
-      <button class="checkout-btn" onclick="confirmGateName()">เริ่มเลือกสินค้า 🌸</button>
-      <button class="add-btn secondary" onclick="skipGateName()">ข้ามไปก่อน</button>
-    </div>
-  </div>
-</div>
-
 <script>
 /* ---------------- แก้ไขสินค้าตรงนี้ได้เลย ---------------- */
 const PRODUCTS = [
@@ -1386,32 +1372,11 @@ let currentOrderSubtotal = 0;
 let currentOrderItems = [];
 let customerFbName = '';
 
-/* ---------- Name gate: ask for FB name once, before browsing ---------- */
-function initNameGate(){
+/* ---------- FB name: silently reuse a previously saved name (asked at checkout instead) ---------- */
+function loadSavedFbName(){
   let saved = '';
   try { saved = localStorage.getItem('sfb_fbName') || ''; } catch(e) { /* localStorage blocked, ignore */ }
-  if(saved){
-    customerFbName = saved;
-  } else {
-    document.getElementById('nameGateModal').classList.add('open');
-    document.getElementById('nameGateOverlay').classList.add('show');
-  }
-  updateChatFabVisibility();
-}
-function confirmGateName(){
-  const name = document.getElementById('gateNameInput').value.trim();
-  if(!name){ showToast('กรุณากรอกชื่อ Facebook ก่อนนะคะ'); return; }
-  customerFbName = name;
-  try { localStorage.setItem('sfb_fbName', name); } catch(e) { /* localStorage blocked, ignore */ }
-  closeNameGate();
-}
-function skipGateName(){
-  closeNameGate();
-}
-function closeNameGate(){
-  document.getElementById('nameGateModal').classList.remove('open');
-  document.getElementById('nameGateOverlay').classList.remove('show');
-  updateChatFabVisibility();
+  if(saved){ customerFbName = saved; }
 }
 function renderFbNameDisplay(editing){
   const wrap = document.getElementById('fbNameDisplay');
@@ -1601,7 +1566,7 @@ renderNav();
 renderPriceFilter();
 renderCatalog();
 updateCartUI();
-initNameGate();
+loadSavedFbName();
 
 /* ---------- Chat button ---------- */
 function closeChatBubble(){
@@ -1615,8 +1580,7 @@ function updateChatFabVisibility(){
   const anyOpen =
     document.getElementById('drawer').classList.contains('open') ||
     document.getElementById('productModal').classList.contains('open') ||
-    document.getElementById('orderSummaryModal').classList.contains('open') ||
-    document.getElementById('nameGateModal').classList.contains('open');
+    document.getElementById('orderSummaryModal').classList.contains('open');
   wrap.style.display = anyOpen ? 'none' : '';
 }
 </script>
