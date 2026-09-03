@@ -512,12 +512,31 @@
     text-align:center; font-size:14px; color:var(--plum); margin-bottom:16px;
   }
   .order-no-chip strong{
-    display:inline-block; font-family:'Chonburi'; font-size:19px; color:var(--rose-dark);
+    display:inline-flex; align-items:center; gap:10px;
+    font-family:'Chonburi'; font-size:19px; color:var(--rose-dark);
     background:var(--cream); border:1.5px dashed var(--rose); border-radius:12px;
-    padding:6px 16px; margin-top:6px;
+    padding:6px 10px 6px 16px; margin-top:6px;
   }
+  .order-no-copy-btn{
+    font-family:'Sarabun'; font-weight:700; font-size:12px; color:#fff;
+    background:var(--rose); border:none; border-radius:8px;
+    padding:6px 10px; cursor:pointer; flex-shrink:0;
+    transition:background .15s ease;
+  }
+  .order-no-copy-btn:hover{background:var(--rose-dark);}
   .paste-instruction{font-size:14.5px; line-height:1.6; color:var(--plum); text-align:center; margin:0 0 18px;}
   .paste-instruction strong{font-weight:700; color:var(--rose-dark);}
+  .success-actions{display:flex; flex-direction:column; gap:10px;}
+  .chat-order-btn{
+    display:block; text-align:center; text-decoration:none;
+    background:var(--sage); color:#fff; font-weight:700; font-size:15px;
+    border-radius:999px; padding:13px 20px; box-shadow:var(--shadow);
+  }
+  .close-secondary-btn{
+    background:none; border:1.5px solid var(--line); color:var(--plum);
+    font-family:'Sarabun'; font-weight:600; font-size:14px;
+    border-radius:999px; padding:11px 20px; cursor:pointer;
+  }
 
   /* ---------- Order details form (date / delivery method / address) ---------- */
   .form-group{margin-bottom:16px;}
@@ -676,9 +695,10 @@
   <div class="modal-body" id="orderSuccessView" style="display:none;">
     <div class="copied-banner">✅ รับออเดอร์ของคุณแล้ว</div>
     <div class="order-no-chip" id="orderNoChip"></div>
-    <p class="paste-instruction">ทีมงานได้รับรายการสั่งซื้อของคุณเรียบร้อยแล้ว แอดมินจะทักแชท Facebook Messenger กลับไปยืนยันออเดอร์ พร้อมแจ้งยอด/วิธีรับ-จัดส่งอีกครั้งเร็วๆ นี้ค่ะ 🌸</p>
-    <div class="modal-actions">
-      <button class="checkout-btn" onclick="closeOrderSummary()">ปิดหน้าต่าง</button>
+    <p class="paste-instruction">📌 <strong>ขั้นตอนต่อไป:</strong> กดปุ่ม "ทักแชทแจ้งเลขออเดอร์" ด้านล่าง ระบบจะคัดลอกเลขที่ออเดอร์ให้อัตโนมัติ แล้วเปิดแชท Facebook Messenger ของร้าน — เมื่อแชทเปิดขึ้นมา แค่วางข้อความที่คัดลอกไว้แล้วส่งได้เลย แอดมินจะได้เห็นเลขออเดอร์และยืนยันรายการ พร้อมแจ้งยอด/วิธีรับ-จัดส่งให้ค่ะ 🌸</p>
+    <div class="modal-actions success-actions">
+      <a href="#" id="chatOrderBtn" class="chat-order-btn" onclick="chatWithOrderNo(event)">💬 ทักแชทแจ้งเลขออเดอร์</a>
+      <button class="close-secondary-btn" onclick="closeOrderSummary()">ปิดหน้าต่าง</button>
     </div>
   </div>
 </div>
@@ -1411,6 +1431,31 @@ function closeOrderSummary(){
   document.getElementById('summaryOverlay').classList.remove('show');
   updateChatFabVisibility();
 }
+let lastOrderNo = '';
+function copyOrderNo(){
+  if(!lastOrderNo) return;
+  const text = `เลขที่ออเดอร์ของฉันคือ ${lastOrderNo}`;
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(()=>showToast('คัดลอกเลขออเดอร์แล้ว 📋')).catch(()=>fallbackCopy(text));
+  } else {
+    fallbackCopy(text);
+  }
+}
+function fallbackCopy(text){
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.select();
+  try{ document.execCommand('copy'); showToast('คัดลอกเลขออเดอร์แล้ว 📋'); }catch(e){ /* ignore */ }
+  document.body.removeChild(ta);
+}
+function chatWithOrderNo(e){
+  if(e) e.preventDefault();
+  copyOrderNo();
+  window.open(PAGE_LINK, '_blank', 'noopener');
+}
 function generateOrderNumber(){
   const d = new Date();
   const yy = String(d.getFullYear()).slice(-2);
@@ -1451,7 +1496,9 @@ async function confirmOrderSubmit(){
       })
     });
     clearCart();
-    document.getElementById('orderNoChip').innerHTML = `เลขที่ออเดอร์ของคุณ<br><strong>${orderNo}</strong>`;
+    lastOrderNo = orderNo;
+    document.getElementById('orderNoChip').innerHTML =
+      `เลขที่ออเดอร์ของคุณ<br><strong>${orderNo} <button type="button" class="order-no-copy-btn" onclick="copyOrderNo()">คัดลอก</button></strong>`;
     document.getElementById('orderReviewView').style.display = 'none';
     document.getElementById('orderSuccessView').style.display = 'block';
   } catch(err){
