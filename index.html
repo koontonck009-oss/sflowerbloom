@@ -634,7 +634,9 @@
   <select id="priceFilterSelect" class="filter-select" onchange="setPriceRange(this.selectedIndex)"></select>
 </div>
 
-<main id="catalog"></main>
+<main id="catalog">
+  <div style="text-align:center; padding:60px 20px; color:var(--rose-dark);">กำลังโหลดสินค้า...</div>
+</main>
 
 <div class="overlay" id="overlay" onclick="closeCart()"></div>
 <aside class="drawer" id="drawer">
@@ -777,326 +779,7 @@
 
 <script>
 /* ---------------- แก้ไขสินค้าตรงนี้ได้เลย ---------------- */
-const PRODUCTS = [
-  { id:'r01', cat:'ช่อดอกไม้', flowerType:'กุหลาบ', size:'เล็ก', name:'ช่อดอกกุหลาบ - R01', price:99, desc:'ช่อขนาดเล็ก ดอกกุหลาบแดง 1 ดอก เลือกสีช่อได้',
-    colors:[
-      { name:'ขาว', image:'images/bouquet/กุหลาบ-99฿-แดง-ขาว.jpg' },
-      { name:'ดำ',  image:'images/bouquet/กุหลาบ-99฿-แดง-ดำ.jpg' },
-      { name:'น้ำตาล',  image:'images/bouquet/กุหลาบ-99฿-แดง-น้ำตาล.jpg' },
-    ]
-  },
-  { id:'r02', cat:'ช่อดอกไม้', flowerType:'กุหลาบ', size:'กลาง', name:'ช่อดอกกุหลาบ - R02', price:299, desc:'ช่อขนาดกลาง ดอกกุหลาบแดง 1 ดอก', image:'images/bouquet/กุหลาบ-299฿-แดง-ขาว.jpg' },
-  { id:'r03', cat:'ช่อดอกไม้', flowerType:'กุหลาบ', size:'กลาง', name:'ช่อดอกกุหลาบ - R03', price:349, desc:'ช่อขนาดกลาง ดอกกุหลาบแดง 4 ดอก', image:'images/bouquet/กุหลาบ-349฿-แดง-ขาว.jpg' },
-  { id:'r04', cat:'ช่อดอกไม้', flowerType:'กุหลาบ', size:'กลาง', name:'ช่อดอกกุหลาบ - R04', price:399, desc:'ช่อขนาดกลาง ดอกกุหลาบแดง 5 ดอก', image:'images/bouquet/กุหลาบ-399฿-แดง-ขาว.jpg' },
-  { id:'r05', cat:'ช่อดอกไม้', flowerType:'กุหลาบ', size:'ใหญ่', name:'ช่อดอกกุหลาบ - R05', price:599, desc:'ช่อขนาดใหญ่ ดอกกุหลาบแดง 8 ดอก', image:'images/bouquet/กุหลาบ-599฿-แดง-ขาว.jpg' },
-  { id:'r06', cat:'ช่อดอกไม้', flowerType:'กุหลาบ', size:'ใหญ่', name:'ช่อดอกกุหลาบ - R06', price:649, desc:'ช่อขนาดใหญ่ ดอกกุหลาบ 9 ดอก เลือกสีได้',
-    colors:[
-      { name:'ดอกชมพูช่อขาว', image:'images/bouquet/กุหลาบ-649฿-ชมพู-ขาว.jpg' },
-      { name:'ดอกแดงช่อดำ',  image:'images/bouquet/กุหลาบ-649฿-แดง-ดำ.jpg' },
-        ]
-  },
-  { id:'r07', cat:'ช่อดอกไม้', flowerType:'กุหลาบ', size:'ใหญ่', name:'ช่อดอกกุหลาบ - R07', price:749, desc:'ช่อขนาดใหญ่ ดอกกุหลาบแดง 9 ดอก', image:'images/bouquet/กุหลาบ-749฿-แดง-ดำ.jpg' },
-  { id:'r08', cat:'ช่อดอกไม้', flowerType:'กุหลาบ', size:'ใหญ่', name:'ช่อดอกกุหลาบ - R08', price:1200, desc:'ช่อขนาดใหญ่ ดอกกุหลาบแดง 15 ดอก', image:'images/bouquet/กุหลาบ-1200฿-แดง-ดำ.jpg' },
-  { id:'rm01', cat:'ช่อดอกไม้', flowerType:'กุหลาบ', size:'ใส่เงิน', name:'ช่อดอกกุหลาบ เงิน 5 ใบ - RM01', price:324, desc:'ดอกกุหลาบแดง 3 ดอก+ซองใส่เงิน 5 ใบ', image:'images/bouquet/กุหลาบเงิน5ใบ-324฿-แดง-น้ำเงิน.jpg' },
-  { id:'rm02', cat:'ช่อดอกไม้', flowerType:'กุหลาบ', size:'ใส่เงิน', name:'ช่อดอกกุหลาบ เงิน 10 ใบ - RM02', price:349, desc:'ดอกกุหลาบแดง 3 ดอก+ซองใส่เงิน 10 ใบ เลือกสีช่อได้',
-    colors:[
-      { name:'เขียว', image:'images/bouquet/กุหลาบเงิน10ใบ-349฿-แดง-เขียว.jpg' },
-      { name:'กะปิ',  image:'images/bouquet/กุหลาบเงิน10ใบ-349฿-แดง-ชมพู.jpg' },
-        ]
-  },
-  { id:'d01', cat:'ช่อดอกไม้', flowerType:'เดซี่', size:'เล็ก', name:'ช่อดอกเดซี่ - D01', price:129, desc:'ช่อขนาดเล็ก ดอกเดซี่ชมพู 9 ดอก', image:'images/bouquet/เดซี่-129฿-ชมพู-ขาว.jpg' },
-  { id:'d02', cat:'ช่อดอกไม้', flowerType:'เดซี่', size:'เล็ก', name:'ช่อดอกเดซี่ - D02', price:199, desc:'ช่อขนาดเล็ก ดอกเดซี่ชมพู 12 ดอก', image:'images/bouquet/เดซี่-199฿-ชมพู-ครีม.jpg' },
-  { id:'d03', cat:'ช่อดอกไม้', flowerType:'เดซี่', size:'กลาง', name:'ช่อดอกเดซี่ - D03', price:349, desc:'ช่อขนาดกลาง ดอกเดซี่คละสี เลือกสีช่อได้',
-    colors:[
-      { name:'ขาว',  image:'images/bouquet/เดซี่-349฿-รวม-ขาว.jpg' },
-      { name:'น้ำตาล',  image:'images/bouquet/เดซี่-349฿-รวม-น้ำตาลครีม.jpg' },
-      { name:'ม่วง',  image:'images/bouquet/เดซี่-349฿-รวม-ม่วง.jpg' },
-        ]
-  },
-  { id:'d04', cat:'ช่อดอกไม้', flowerType:'เดซี่', size:'กลาง', name:'ช่อดอกเดซี่ - D04', price:449, desc:'ช่อขนาดกลาง ช่อดอกเดซี่ชมพูขาว', image:'images/bouquet/เดซี่-449฿-ชมพูขาว-ขาว.jpg' },
-  { id:'s01', cat:'ช่อดอกไม้', flowerType:'ทานตะวัน', size:'เล็ก', name:'ดอกทานตะวัน - S01', price:69, desc:'ดอกทานตะวัน 1 ดอก เลือกสีดอกได้',
-    colors:[
-      { name:'ส้ม', image:'images/bouquet/ทานตะวัน-69฿-ส้ม-ใส.jpg' },
-      { name:'เหลือง',  image:'images/bouquet/ทานตะวัน-69฿-เหลือง-ใส.jpg' },
-        ]
-  },
-  { id:'s02', cat:'ช่อดอกไม้', flowerType:'ทานตะวัน', size:'เล็ก', name:'ช่อดอกทานตะวัน - S02', price:99, desc:'ช่อขนาดเล็ก ดอกทานตะวัน 1 ดอก เลือกสีได้',
-    colors:[
-      { name:'ดอกส้มช่อขาว', image:'images/bouquet/ทานตะวัน-99฿-ส้ม-ขาว.jpg' },
-      { name:'ดอกเหลืองช่อครีม',  image:'images/bouquet/ทานตะวัน-99฿-เหลือง-ขาว.jpg' },
-        ]
-  },
-  { id:'s03', cat:'ช่อดอกไม้', flowerType:'ทานตะวัน', size:'เล็ก', name:'ช่อดอกทานตะวัน - S03', price:149, desc:'ช่อขนาดเล็ก ดอกทานตะวัน 1 ดอก เลือกสีได้',
-    colors:[
-      { name:'ดอกส้มช่อขาว', image:'images/bouquet/ทานตะวัน-149฿-ส้ม-ขาว.jpg' },
-      { name:'ดอกส้มช่อครีม',  image:'images/bouquet/ทานตะวัน-149฿-ส้ม-ครีม.jpg' },
-      { name:'ดอกเหลืองช่อครีม',  image:'images/bouquet/ทานตะวัน-149฿-เหลือง-ครีม.jpg' },
-      { name:'ดอกเหลืองทานตะวันช่อครีม',  image:'images/bouquet/ทานตะวัน-149฿-เหลืองทานตะวัน-ครีม.jpg' },
-        ]
-  },
-  { id:'s04', cat:'ช่อดอกไม้', flowerType:'ทานตะวัน', size:'เล็ก', name:'ช่อดอกทานตะวัน - S04', price:199, desc:'ช่อขนาดเล็ก ดอกทานตะวัน 3 ดอก เลือกสีได้',
-    colors:[
-      { name:'ดอกส้มช่อขาว', image:'images/bouquet/ทานตะวัน-199฿-ส้ม-ขาว.jpg' },
-      { name:'ดอกส้มช่อน้ำตาล',  image:'images/bouquet/ทานตะวัน-199฿-ส้ม-น้ำตาล.jpg' },
-      { name:'ดอกเหลืองทานตะวันช่อขาว',  image:'images/bouquet/ทานตะวัน-199฿-เหลือง-ขาว.jpg' },
-        ]
-  },
-  { id:'s05', cat:'ช่อดอกไม้', flowerType:'ทานตะวัน', size:'กลาง', name:'ช่อดอกทานตะวัน - S05', price:249, desc:'ช่อขนาดกลาง ดอกทานตะวัน 2 ดอก เลือกสีได้',
-    colors:[
-      { name:'ดอกส้มช่อขาว', image:'images/bouquet/ทานตะวัน-249฿-ส้ม-ขาว.jpg' },
-      { name:'ดอกเหลืองช่อขาว',  image:'images/bouquet/ทานตะวัน-249฿-เหลือง-ขาว.jpg' },
-      { name:'ดอกเหลืองช่อแดง',  image:'images/bouquet/ทานตะวัน-249฿-เหลือง-แดง.jpg' },
-      { name:'ดอกเหลืองทานตะวันช่อขาว',  image:'images/bouquet/ทานตะวัน-249฿-เหลืองทานตะวัน-ขาว.jpg' },
-      { name:'ดอกเหลืองทานตะวันช่อแดง',  image:'images/bouquet/ทานตะวัน-249฿-เหลืองทานตะวัน-แดง.jpg' },
-        ]
-  },
-  { id:'s06', cat:'ช่อดอกไม้', flowerType:'ทานตะวัน', size:'กลาง', name:'ช่อดอกทานตะวัน - S06', price:299, desc:'ช่อขนาดกลาง ดอกทานตะวัน 5 ดอก เลือกสีได้',
-    colors:[
-      { name:'ดอกส้มช่อขาว', image:'images/bouquet/ทานตะวัน-299฿-แบบที่1-ส้ม-ขาว.jpg' },
-      { name:'ดอกส้มช่อน้ำเงิน',  image:'images/bouquet/ทานตะวัน-299฿-แบบที่1-ส้ม-น้ำเงิน.jpg' },
-      { name:'ดอกเหลืองช่อขาว',  image:'images/bouquet/ทานตะวัน-299฿-แบบที่1-เหลือง-ขาว.jpg' },
-      { name:'ดอกเหลืองทานตะวันช่อขาว',  image:'images/bouquet/ทานตะวัน-299฿-แบบที่1-เหลืองทานตะวัน-ขาว.jpg' },
-        ]
-  },
-  { id:'s07', cat:'ช่อดอกไม้', flowerType:'ดอกไม้คละชนิด', size:'กลาง', name:'ช่อดอกทานตะวัน - S07', price:299, desc:'ช่อขนาดกลาง ดอกทานตะวันเหลือง 1 ดอก ตกแต่งด้วยดอกทิวลิป', image:'images/bouquet/ทานตะวัน-299฿-แบบที่2-เหลือง-ขาว.jpg' },
-  { id:'s08', cat:'ช่อดอกไม้', flowerType:'ทานตะวัน', size:'กลาง', name:'ช่อดอกทานตะวัน - S08', price:319, desc:'ช่อขนาดกลาง ดอกทานตะวันส้ม 5 ดอก+ผึ้งน้อย 1 ตัว', image:'images/bouquet/ทานตะวัน-319฿-ส้ม-น้ำเงิน.jpg' },
-  { id:'s09', cat:'ช่อดอกไม้', flowerType:'ดอกไม้คละชนิด', size:'กลาง', name:'ช่อดอกทานตะวัน - S09', price:349, desc:'ช่อขนาดกลาง ดอกทานตะวันเหลือง 1 ดอก ตกแต่งด้วยดอกทิวลิป', image:'images/bouquet/ทานตะวัน-349฿-เหลือง-ขาว.jpg' },
-  { id:'s10', cat:'ช่อดอกไม้', flowerType:'ทานตะวัน', size:'กลาง', name:'ช่อดอกทานตะวัน - S10', price:399, desc:'ช่อขนาดกลาง ดอกทานตะวันเหลือง 1 ดอก', image:'images/bouquet/ทานตะวัน-399฿-เหลือง-ครีม.jpg', ready:true, },
-  { id:'s11', cat:'ช่อดอกไม้', flowerType:'ทานตะวัน', size:'กลาง', name:'ช่อดอกทานตะวัน - S11', price:449, desc:'ช่อขนาดกลาง ดอกทานตะวัน 7 ดอก เลือกสีดอกได้',
-    colors:[
-      { name:'ส้ม', image:'images/bouquet/ทานตะวัน-449฿-แบบที่1-ส้ม-ขาว.jpg' },
-      { name:'เหลือง',  image:'images/bouquet/ทานตะวัน-449฿-แบบที่1-เหลือง-ขาว.jpg' },
-        ]
-  },
-  { id:'s12', cat:'ช่อดอกไม้', flowerType:'ทานตะวัน', size:'ใหญ่', name:'ช่อดอกทานตะวัน - S12', price:499, desc:'ช่อขนาดใหญ่ ดอกทานตะวัน 9 ดอก เลือกสีได้',
-    colors:[
-      { name:'ดอกส้มช่อขาว', image:'images/bouquet/ทานตะวัน-499฿-ส้ม-ขาว.jpg' },
-      { name:'ดอกส้มช่อครีม',  image:'images/bouquet/ทานตะวัน-499฿-ส้ม-ครีม.jpg' },
-      { name:'ดอกเหลืองช่อขาว',  image:'images/bouquet/ทานตะวัน-499฿-เหลือง-ขาว.jpg' },
-        ]
-  },
-  { id:'s13', cat:'ช่อดอกไม้', flowerType:'ทานตะวัน', size:'ใหญ่', name:'ช่อดอกทานตะวัน - S13', price:599, desc:'ช่อขนาดใหญ่ ดอกทานตะวันส้ม 2 ดอก', image:'images/bouquet/ทานตะวัน-599฿-ส้ม-ขาว.jpg' },
-  { id:'s14', cat:'ช่อดอกไม้', flowerType:'ทานตะวัน', size:'ใหญ่', name:'ช่อดอกทานตะวัน - S14', price:599, desc:'ช่อขนาดใหญ่ ดอกทานตะวันจิ๋วเหลือง', image:'images/bouquet/ทานตะวันกลม-599฿-แบบที่2-เหลือง-ขาว.jpg' },
-  { id:'s15', cat:'ช่อดอกไม้', flowerType:'ดอกไม้คละชนิด', size:'ใหญ่', name:'ช่อดอกทานตะวัน - S15', price:699, desc:'ช่อขนาดใหญ่ ดอกทานตะวันเหลือง 5 ดอก ตกแต่งด้วยดอกลิลลี่ฟ้า', image:'images/bouquet/ทานตะวัน-699฿-เหลือง-ขาว.jpg' },
-  { id:'s16', cat:'ช่อดอกไม้', flowerType:'ทานตะวัน', size:'ใหญ่', name:'ช่อดอกทานตะวัน - S16', price:1200, desc:'ช่อขนาดใหญ่ ดอกทานตะวัน 6 ดอก เลือกสีดอกได้',
-    colors:[
-      { name:'ส้ม', image:'images/bouquet/ทานตะวัน-1200฿-ส้ม-ขาว.jpg' },
-      { name:'เหลือง',  image:'images/bouquet/ทานตะวัน-1200฿-เหลือง-ขาว.jpg' },
-        ]
-  },
-  
-  { id:'s17', cat:'ช่อดอกไม้', flowerType:'ทานตะวัน', size:'ใหญ่', name:'ช่อดอกทานตะวัน - S17', price:1200, desc:'ช่อขนาดใหญ่ ดอกทานตะวันส้ม เลือกสีช่อได้',
-    colors:[
-      { name:'ครีม', image:'images/bouquet/ทานตะวันกลม-1200฿-ส้ม-ครีม.jpg' },
-      { name:'ชมพู',  image:'images/bouquet/ทานตะวันกลม-1200฿-ส้ม-ชมพู.jpg' },
-        ]
-  },
-  { id:'s18', cat:'ช่อดอกไม้', flowerType:'ทานตะวัน', size:'ใหญ่', name:'ช่อดอกทานตะวัน - S18', price:3000, desc:'ช่อขนาดใหญ่ ดอกทานตะวันส้ม', image:'images/bouquet/ทานตะวันกลม-3000฿-ส้ม-แดง.jpg' },
-  { id:'sm01', cat:'ช่อดอกไม้', flowerType:'ทานตะวัน', size:'ใส่เงิน', name:'ช่อดอกทานตะวัน เงิน 1 ใบ - SM01', price:254, desc:'ดอกทานตะวันส้ม 2 ดอก+ซองใส่เงิน 1 ใบ', image:'images/bouquet/ทานตะวันเงิน1ใบ-254฿-ส้ม-ขาว.jpg' },
-  { id:'sm02', cat:'ช่อดอกไม้', flowerType:'ทานตะวัน', size:'ใส่เงิน', name:'ช่อดอกทานตะวัน เงิน 4 ใบ - SM02', price:269, desc:'ดอกทานตะวันส้ม 2 ดอก+ซองใส่เงิน 4 ใบ', image:'images/bouquet/ทานตะวันเงิน4ใบ-269฿-ส้ม-ขาว.jpg' },
-  { id:'sm03', cat:'ช่อดอกไม้', flowerType:'ทานตะวัน', size:'ใส่เงิน', name:'ช่อดอกทานตะวัน เงิน 5 ใบ - SM03', price:274, desc:'ดอกทานตะวัน 2 ดอก+ซองใส่เงิน 5 ใบ เลือกสีดอกได้',
-  colors:[
-      { name:'ส้ม', image:'images/bouquet/ทานตะวันเงิน5ใบ-274฿-ส้ม-ขาว.jpg' },
-      { name:'เหลือง',  image:'images/bouquet/ทานตะวันเงิน5ใบ-274฿-เหลือง-ขาว.jpg' },
-        ]
-  },
-  { id:'sm04', cat:'ช่อดอกไม้', flowerType:'ทานตะวัน', size:'ใส่เงิน', name:'ช่อดอกทานตะวัน เงิน 10 ใบ - SM04', price:199, desc:'ดอกทานตะวันส้ม 1 ดอก+ซองใส่เงิน 10 ใบ', image:'images/bouquet/ทานตะวันเงิน10ใบ-199฿-ส้ม-ครีม.jpg' },
-  { id:'sm05', cat:'ช่อดอกไม้', flowerType:'ทานตะวัน', size:'ใส่เงิน', name:'ช่อดอกทานตะวัน เงิน 10 ใบ - SM05', price:299, desc:'ดอกทานตะวัน 3 ดอก+ซองใส่เงิน 10 ใบ เลือกสีได้',
-  colors:[
-      { name:'ดอกส้มช่อน้ำเงิน',  image:'images/bouquet/ทานตะวันเงิน10ใบ-299฿-แบบที่1-ส้ม-น้ำเงิน.jpg' },
-      { name:'ดอกเหลืองช่อแดง',  image:'images/bouquet/ทานตะวันเงิน10ใบ-299฿-แบบที่1-เหลือง-แดง.jpg' },
-      { name:'ดอกเหลืองทานตะวันช่อแดง',  image:'images/bouquet/ทานตะวันเงิน10ใบ-299฿-แบบที่1-เหลืองทานตะวัน-แดง.jpg' },
-        ]
-  },
-  { id:'sm06', cat:'ช่อดอกไม้', flowerType:'ทานตะวัน', size:'ใส่เงิน', name:'ช่อดอกทานตะวัน เงิน 10 ใบ - SM06', price:299, desc:'ดอกทานตะวันส้ม 2 ดอก+ซองใส่เงิน 10 ใบ', image:'images/bouquet/ทานตะวันเงิน10ใบ-299฿-แบบที่2-ส้ม-ขาว.jpg' },
-  { id:'sm07', cat:'ช่อดอกไม้', flowerType:'ทานตะวัน', size:'ใส่เงิน', name:'ช่อดอกทานตะวัน เงิน 10 ใบ - SM07', price:349, desc:'ดอกทานตะวันส้ม 5 ดอก+ซองใส่เงิน 10 ใบ', image:'images/bouquet/ทานตะวันเงิน10ใบ-349฿-ส้ม-ขาว.jpg' },
-  { id:'sm08', cat:'ช่อดอกไม้', flowerType:'ทานตะวัน', size:'ใส่เงิน', name:'ช่อดอกทานตะวัน เงิน 10 ใบ - SM08', price:449, desc:'ดอกทานตะวันส้ม 5 ดอก+ซองใส่เงิน 10 ใบ เลือกสีช่อได้',
-  colors:[
-      { name:'น้ำเงิน',  image:'images/bouquet/ทานตะวันเงิน10ใบ-449฿-ส้ม-น้ำเงิน.jpg' },
-      { name:'น้ำตาล',  image:'images/bouquet/ทานตะวันเงิน10ใบ-449฿-ส้ม-น้ำตาล.jpg' },
-        ]
-  },
-  { id:'sm09', cat:'ช่อดอกไม้', flowerType:'ทานตะวัน', size:'ใส่เงิน', name:'ช่อดอกทานตะวัน เงิน 15 ใบ - SM09', price:274, desc:'ดอกทานตะวันส้ม 3 ดอก+ซองใส่เงิน 15 ใบ', image:'images/bouquet/ทานตะวันเงิน15ใบ-274฿-ส้ม-แดง.jpg' },
-  { id:'sm10', cat:'ช่อดอกไม้', flowerType:'ทานตะวัน', size:'ใส่เงิน', name:'ช่อดอกทานตะวัน เงิน 15 ใบ - SM10', price:324, desc:'ดอกทานตะวันเหลือง 2 ดอก+ซองใส่เงิน 15 ใบ', image:'images/bouquet/ทานตะวันเงิน15ใบ-324฿-เหลือง-ขาว.jpg' },
-  { id:'sm11', cat:'ช่อดอกไม้', flowerType:'ทานตะวัน', size:'ใส่เงิน', name:'ช่อดอกทานตะวัน เงิน 15 ใบ - SM11', price:499, desc:'ดอกทานตะวันเหลืองจิ๋ว+ซองใส่เงิน 15 ใบ', image:'images/bouquet/ทานตะวันเงิน15ใบกลม-499฿-เหลือง-ขาว.jpg' },
-  { id:'sm12', cat:'ช่อดอกไม้', flowerType:'ทานตะวัน', size:'ใส่เงิน', name:'ช่อดอกทานตะวัน เงิน 20 ใบ - SM12', price:399, desc:'ดอกทานตะวันเหลือง 3 ดอก+ซองใส่เงิน 20 ใบ', image:'images/bouquet/ทานตะวันเงิน20ใบ-399฿-เหลือง-ขาว.jpg' },
-  { id:'sm13', cat:'ช่อดอกไม้', flowerType:'ทานตะวัน', size:'ใส่เงิน', name:'ช่อดอกทานตะวัน เงิน 20 ใบ - SM13', price:699, desc:'ดอกทานตะวันเหลืองจิ๋ว+ซองใส่เงิน 20 ใบ', image:'images/bouquet/ทานตะวันเงิน20ใบกลม-699฿-เหลือง-ขาว.jpg' },
-  { id:'sm14', cat:'ช่อดอกไม้', flowerType:'ทานตะวัน', size:'ใส่เงิน', name:'ช่อดอกทานตะวัน เงิน 20 ใบ - SM14', price:1300, desc:'ดอกทานตะวันส้ม+ซองใส่เงิน 20 ใบ', image:'images/bouquet/ทานตะวันเงิน20ใบกลม-1300฿-ส้ม-ครีม.jpg' },
-  { id:'sm15', cat:'ช่อดอกไม้', flowerType:'ทานตะวัน', size:'ใส่เงิน', name:'ช่อดอกทานตะวัน เงิน 30 ใบ - SM15', price:499, desc:'ดอกทานตะวันส้ม 5 ดอก+ซองใส่เงิน 30 ใบ เลือกสีช่อได้',
-  colors:[
-      { name:'ชมพูขาว',  image:'images/bouquet/ทานตะวันเงิน30ใบ-499฿-ส้ม-ชมพูขาว.jpg' },
-      { name:'น้ำเงินขาว',  image:'images/bouquet/ทานตะวันเงิน30ใบ-499฿-ส้ม-น้ำเงินขาว.jpg' },
-      { name:'ฟ้าขาว',  image:'images/bouquet/ทานตะวันเงิน30ใบ-499฿-ส้ม-ฟ้าขาว.jpg' },
-        ]
-  },
-  { id:'t01', cat:'ช่อดอกไม้', flowerType:'ทิวลิป', size:'เล็ก', name:'ดอกทิวลิป - T01', price:69, desc:'ดอกทิวลิป 1 ดอก เลือกสีได้',
-    colors:[
-      { name:'ขาว', image:'images/bouquet/ทิวลิป-69฿-ขาว-ใส.jpg' },
-      { name:'ชมพู',  image:'images/bouquet/ทิวลิป-69฿-ชมพู-ใส.jpg' },
-      { name:'แดง',  image:'images/bouquet/ทิวลิป-69฿-แดง-ใส.jpg' },
-      { name:'ม่วง',  image:'images/bouquet/ทิวลิป-69฿-ม่วง-ใส.jpg' },
-      { name:'เหลือง',  image:'images/bouquet/ทิวลิป-69฿-เหลือง-ใส.jpg' },
-        ]
-  },
-  { id:'t02', cat:'ช่อดอกไม้', flowerType:'ทิวลิป', size:'เล็ก', name:'ช่อดอกทิวลิป - T02', price:99, desc:'ช่อขนาดเล็ก ดอกทิวลิป 1 ดอก เลือกสีได้',
-    colors:[
-      { name:'ดอกชมพูช่อขาว', image:'images/bouquet/ทิวลิป-99฿-ชมพู-ขาว.jpg' },
-      { name:'แดง',  image:'images/bouquet/ทิวลิป-99฿-แดง.jpg' },
-      { name:'ดอกแดงช่อขาว',  image:'images/bouquet/ทิวลิป-99฿-แดง-ขาว.jpg' },
-      { name:'ดอกแดงช่อดำ',  image:'images/bouquet/ทิวลิป-99฿-แดง-ดำ.jpg' },
-      { name:'ดอกแดงช่อน้ำตาล',  image:'images/bouquet/ทิวลิป-99฿-แดง-น้ำตาล.jpg' },
-        ]
-  },
-  { id:'t03', cat:'ช่อดอกไม้', flowerType:'ทิวลิป', size:'กลาง', name:'ช่อดอกทิวลิป - T03', price:249, desc:'ช่อขนาดกลาง ดอกทิวลิป 4 ดอก เลือกสีได้',
-    colors:[
-      { name:'ฟ้า', image:'images/bouquet/ทิวลิป-249฿-ฟ้า.jpg' },
-      { name:'ม่วง',  image:'images/bouquet/ทิวลิป-249฿-ม่วง.jpg' },
-        ]
-  },
-  { id:'t04', cat:'ช่อดอกไม้', flowerType:'ทิวลิป', size:'กลาง', name:'ช่อดอกทิวลิป - T04', price:299, desc:'ช่อขนาดกลาง ดอกทิวลิป 5 ดอก เลือกสีได้',
-    colors:[
-      { name:'แดง', image:'images/bouquet/ทิวลิป-299฿-แดง.jpg' },
-      { name:'ดอกแดงช่อขาว',  image:'images/bouquet/ทิวลิป-299฿-แดง-ขาว.jpg' },
-      { name:'ดอกเหลืองช่อเขียว',  image:'images/bouquet/ทิวลิป-299฿-เหลือง-เขียว.jpg' },
-      { name:'ดอกเหลืองช่อครีม',  image:'images/bouquet/ทิวลิป-299฿-เหลือง-ครีม.jpg' },
-        ]
-  },
-  { id:'t05', cat:'ช่อดอกไม้', flowerType:'ทิวลิป', size:'กลาง', name:'ช่อดอกทิวลิป - T05', price:299, desc:'ช่อขนาดกลาง ดอกทิวลิป 6 ดอก เลือกสีได้',
-    colors:[
-      { name:'ชมพู', image:'images/bouquet/ทิวลิปเกาหลี-399฿-ชมพู-ขาว.jpg' },
-      { name:'ฟ้า',  image:'images/bouquet/ทิวลิปเกาหลี-399฿-ฟ้า-น้ำเงิน.jpg' },
-        ]
-  },
-  { id:'t06', cat:'ช่อดอกไม้', flowerType:'ทิวลิป', size:'กลาง', name:'ช่อดอกทิวลิป - T06', price:349, desc:'ช่อขนาดกลาง ดอกทิวลิป 6 ดอก เลือกสีได้',
-    colors:[
-      { name:'แดง', image:'images/bouquet/ทิวลิป-349฿-แบบที่1-แดง.jpg' },
-      { name:'ฟ้า',  image:'images/bouquet/ทิวลิป-349฿-แบบที่1-ฟ้า.jpg' },
-      { name:'ม่วง(1)',  image:'images/bouquet/ทิวลิป-349฿-แบบที่1-ม่วง (1).jpg' },
-      { name:'ม่วง(2)',  image:'images/bouquet/ทิวลิป-349฿-แบบที่1-ม่วง (2).jpg' },
-      { name:'ดอกม่วงช่อชมพู',  image:'images/bouquet/ทิวลิป-349฿-แบบที่1-ม่วง (3).jpg' },
-      { name:'เหลือง',  image:'images/bouquet/ทิวลิป-349฿-แบบที่1-เหลือง.jpg' },
-        ]
-  },
-  { id:'t07', cat:'ช่อดอกไม้', flowerType:'ทิวลิป', size:'กลาง', name:'ช่อดอกทิวลิป - T07', price:349, desc:'ช่อขนาดกลาง ดอกทิวลิปชมพู ตกแต่งด้วยดอกลิลลี่ชมพู', image:'images/bouquet/ทิวลิป-349฿-แบบที่2-ชมพู-ใส.jpg' },
-  { id:'t08', cat:'ช่อดอกไม้', flowerType:'ทิวลิป', size:'กลาง', name:'ช่อดอกทิวลิป - T08', price:399, desc:'ช่อขนาดกลาง ดอกทิวลิป 5 ดอก ทำสี เลือกสีได้',
-    colors:[
-      { name:'ชมพู', image:'images/bouquet/ทิวลิป-399฿-ชมพู.jpg' },
-      { name:'ม่วง',  image:'images/bouquet/ทิวลิป-399฿-ม่วง.jpg' },
-        ]
-  },
-  
-  { id:'t09', cat:'ช่อดอกไม้', flowerType:'ทิวลิป', size:'กลาง', name:'ช่อดอกทิวลิป - T09', price:449, desc:'ช่อขนาดกลาง ดอกทิวลิปชมพู 7 ดอก', image:'images/bouquet/ทิวลิป-449฿-ชมพู-ขาว.jpg' },
-  
-  { id:'t10', cat:'ช่อดอกไม้', flowerType:'ทิวลิป', size:'ใหญ่', name:'ช่อดอกทิวลิป - T10', price:499, desc:'ช่อขนาดใหญ่ ดอกทิวลิปขาว 8 ดอก', image:'images/bouquet/ทิวลิป-499฿-ขาว.jpg' },
-  { id:'t11', cat:'ช่อดอกไม้', flowerType:'ทิวลิป', size:'ใหญ่', name:'ช่อดอกทิวลิป - T11', price:499, desc:'ช่อขนาดใหญ่ ดอกทิวลิปชมพูขาว ตกแต่งด้วยดอกเดซี่ เลือกสีได้',
-    colors:[
-      { name:'ชมพู', image:'images/bouquet/ทิวลิปเกาหลี-499฿-ชมพูขาว-ขาว.jpg' },
-      { name:'เหลือง',  image:'images/bouquet/ทิวลิปเกาหลี-499฿-เหลืองขาว-ขาว.jpg' },
-        ]
-  },
-  { id:'t12', cat:'ช่อดอกไม้', flowerType:'ทิวลิป', size:'ใหญ่', name:'ช่อดอกทิวลิป - T12', price:549, desc:'ช่อขนาดใหญ่ ดอกทิวลิปเหลือง 10 ดอก', image:'images/bouquet/ทิวลิป-549฿-เหลือง.jpg' },
-  { id:'t13', cat:'ช่อดอกไม้', flowerType:'ทิวลิป', size:'ใหญ่', name:'ช่อดอกทิวลิป - T13', price:549, desc:'ช่อขนาดใหญ่ ดอกทิวลิปชมพู 7 ดอก ม่วง 6 ดอก', image:'images/bouquet/ทิวลิป-649฿-ชมพูม่วง-ครีมขาว.jpg' },
-  
-  { id:'tm01', cat:'ช่อดอกไม้', flowerType:'ทิวลิป', size:'ใส่เงิน', name:'ช่อดอกทิวลิป เงิน 3 ใบ - TM01', price:114, desc:'ดอกทิวลิปแดง 1 ดอก+ซองใส่เงิน 3 ใบ', image:'images/bouquet/ทิวลิปเงิน3ใบ-114฿-แดง-ขาว.jpg' },
-  { id:'tm02', cat:'ช่อดอกไม้', flowerType:'ทิวลิป', size:'ใส่เงิน', name:'ช่อดอกทิวลิป เงิน 5 ใบ - TM02', price:224, desc:'ดอกทิวลิปม่วง 3 ดอก+ซองใส่เงิน 5 ใบ', image:'images/bouquet/ทิวลิปเงิน5ใบ-224฿-ม่วง-ขาว.jpg' },
-  { id:'tm03', cat:'ช่อดอกไม้', flowerType:'ทิวลิป', size:'ใส่เงิน', name:'ช่อดอกทิวลิป เงิน 6 ใบ - TM03', price:229, desc:'ดอกทิวลิป 3 ดอก+ซองใส่เงิน 6 ใบ เลือกสีดอกได้',
-  colors:[
-      { name:'ม่วง',  image:'images/bouquet/ทิวลิปเงิน6ใบ-229฿-ม่วง-ขาว.jpg' },
-      { name:'เหลือง',  image:'images/bouquet/ทิวลิปเงิน6ใบ-229฿-เหลือง-ขาว.jpg' },
-        ]
-  },
-  { id:'tm04', cat:'ช่อดอกไม้', flowerType:'ทิวลิป', size:'ใส่เงิน', name:'ช่อดอกทิวลิป เงิน 10 ใบ - TM04', price:249, desc:'ดอกทิวลิป 3 ดอก+ซองใส่เงิน 10 ใบ เลือกสีได้', 
-  colors:[
-      { name:'ดอกแดงช่อขาว',  image:'images/bouquet/ทิวลิปเงิน10ใบ-249฿-แดง-ขาว.jpg', ready:true, }, 
-      { name:'ฟ้า',  image:'images/bouquet/ทิวลิปเงิน10ใบ-249฿-ฟ้า.jpg' },
-      { name:'ดอกฟ้าช่อน้ำเงิน',  image:'images/bouquet/ทิวลิปเงิน10ใบ-249฿-ฟ้า-น้ำเงิน.jpg' },
-      { name:'ม่วง',  image:'images/bouquet/ทิวลิปเงิน10ใบ-249฿-ม่วง.jpg' },
-        ]
-  },
-  { id:'tm05', cat:'ช่อดอกไม้', flowerType:'ทิวลิป', size:'ใส่เงิน', name:'ช่อดอกทิวลิป เงิน 10 ใบ - TM05', price:349, desc:'ดอกทิวลิปฟ้า 5 ดอก+ซองใส่เงิน 10 ใบ', image:'images/bouquet/ทิวลิปเงิน10ใบ-349฿-ฟ้า.jpg', ready:true, },
-  { id:'tm06', cat:'ช่อดอกไม้', flowerType:'ทิวลิป', size:'ใส่เงิน', name:'ช่อดอกทิวลิป เงิน 10 ใบ - TM06', price:399, desc:'ดอกทิวลิปเหลือง 6 ดอก+ซองใส่เงิน 10 ใบ', image:'images/bouquet/ทิวลิปเงิน10ใบ-399฿-เหลือง.jpg' },
-  { id:'tm07', cat:'ช่อดอกไม้', flowerType:'ทิวลิป', size:'ใส่เงิน', name:'ช่อดอกทิวลิป เงิน 10 ใบ - TM07', price:449, desc:'ดอกทิวลิปชมพู 5 ดอก+ซองใส่เงิน 10 ใบ', image:'images/bouquet/ทิวลิปเงิน10ใบ-449฿-ชมพู.jpg' },
-  { id:'tm08', cat:'ช่อดอกไม้', flowerType:'ทิวลิป', size:'ใส่เงิน', name:'ช่อดอกทิวลิป เงิน 15 ใบ - TM08', price:524, desc:'ดอกทิวลิปแดงหรู 3 ดอก ตกแต่งด้วยดอกลิลลี่แดงหรู+ซองใส่เงิน 15 ใบ', image:'images/bouquet/ทิวลิปเงิน15ใบ-524฿-ชมพู-ครีม.jpg' },
-  { id:'tm09', cat:'ช่อดอกไม้', flowerType:'ทิวลิป', size:'ใส่เงิน', name:'ช่อดอกทิวลิป เงิน 16 ใบ - TM09', price:479, desc:'ดอกทิวลิปม่วง 5 ดอก+ซองใส่เงิน 16 ใบ', image:'images/bouquet/ทิวลิปเงิน16ใบ-479฿-ม่วง.jpg' },
-  { id:'g01', cat:'ช่อดอกไม้', flowerType:'เยอบีร่า', size:'เล็ก', name:'ช่อดอกเยอบีร่า - G01', price:89, desc:'ช่อขนาดเล็ก ดอกเยอบีร่าม่วง 1 ดอก', image:'images/bouquet/เยอบีร่า-89฿-ม่วง-ขาว.jpg' },
-  { id:'g02', cat:'ช่อดอกไม้', flowerType:'เยอบีร่า', size:'กลาง', name:'ช่อดอกเยอบีร่า - G02', price:449, desc:'ช่อขนาดกลาง ดอกเยอบีร่าเหลือง 7 ดอก', image:'images/bouquet/เยอบีร่า-449฿-เหลือง.jpg' },
-  { id:'gm01', cat:'ช่อดอกไม้', flowerType:'เยอบีร่า', size:'ใส่เงิน', name:'ช่อดอกเยอบีร่า เงิน 2 ใบ - GM01', price:99, desc:'ดอกเยอบีร่าม่วง 1 ดอก+ซองใส่เงิน 2 ใบ', image:'images/bouquet/เยอบีร่าเงิน2ใบ-99฿-ม่วง-ขาว.jpg' },
-  { id:'gm02', cat:'ช่อดอกไม้', flowerType:'เยอบีร่า', size:'ใส่เงิน', name:'ช่อดอกเยอบีร่า เงิน 5 ใบ - GM02', price:474, desc:'ดอกเยอบีร่าเหลือง 7 ดอก+ซองใส่เงิน 5 ใบ', image:'images/bouquet/เยอบีร่าเงิน5ใบ-474฿-เหลือง.jpg' },
-  { id:'m01', cat:'ช่อดอกไม้', flowerType:'ดอกไม้คละชนิด', size:'ใหญ่', name:'ช่อดอกไม้คละชนิด - M01', price:499, desc:'ช่อขนาดใหญ่ โทนสีพาสเทล', image:'images/bouquet/รวม-499฿-แบบที่1-ขาว.jpg' },
-  { id:'m02', cat:'ช่อดอกไม้', flowerType:'ดอกไม้คละชนิด', size:'ใหญ่', name:'ช่อดอกไม้คละชนิด - M02', price:499, desc:'ช่อขนาดใหญ่ โทนสีชมพู', image:'images/bouquet/รวม-499฿-แบบที่2-ชมพู.jpg' },
-  { id:'m03', cat:'ช่อดอกไม้', flowerType:'ดอกไม้คละชนิด', size:'ใหญ่', name:'ช่อดอกไม้คละชนิด - M03', price:899, desc:'ช่อขนาดใหญ่ โทนสีชมพู', image:'images/bouquet/รวม-899฿-ชมพู-ขาว.jpg', ready:true },
-  { id:'m04', cat:'ช่อดอกไม้', flowerType:'ดอกไม้คละชนิด', size:'ใหญ่', name:'ช่อดอกไม้คละชนิด - M04', price:1200, desc:'ช่อขนาดใหญ่ โทนสีชมพูเขียว', image:'images/bouquet/รวม-1200฿-แบบที่1-เขียว.jpg' },
-  { id:'m05', cat:'ช่อดอกไม้', flowerType:'ดอกไม้คละชนิด', size:'ใหญ่', name:'ช่อดอกไม้คละชนิด - M05', price:1200, desc:'ช่อขนาดใหญ่ โทนสีชมพูขาว', image:'images/bouquet/รวมกลม-1200฿-แบบที่2-ขาว.jpg' },
-  { id:'m06', cat:'ช่อดอกไม้', flowerType:'ดอกไม้คละชนิด', size:'ใหญ่', name:'ช่อดอกไม้คละชนิด - M06', price:2000, desc:'ช่อขนาดใหญ่ โทนสีชมพู', image:'images/bouquet/รวมกลม-2000฿-ชมพู.jpg' },
-  { id:'l01', cat:'ช่อดอกไม้', flowerType:'ลิลลี่', size:'ใหญ่', name:'ช่อดอกลิลลี่ - L01', price:599, desc:'ช่อขนาดใหญ่ ดอกลิลลี่ชมพู', image:'images/bouquet/ลิลลี่-599฿-ชมพู.jpg', ready:true, },
-  { id:'l02', cat:'ช่อดอกไม้', flowerType:'ลิลลี่', size:'ใหญ่', name:'ช่อดอกลิลลี่ - L02', price:699, desc:'ช่อขนาดใหญ่ ดอกลิลลี่ฟ้า', image:'images/bouquet/ลิลลี่-699฿-ฟ้า.jpg' },
-  { id:'l03', cat:'ช่อดอกไม้', flowerType:'ลิลลี่', size:'ใหญ่', name:'ช่อดอกลิลลี่ - L03', price:899, desc:'ช่อขนาดใหญ่ ดอกลิลลี่ชมพูฟ้า', image:'images/bouquet/ลิลลี่-899฿-ชมพูฟ้า.jpg' },
-  { id:'lm01', cat:'ช่อดอกไม้', flowerType:'ลิลลี่', size:'ใส่เงิน', name:'ช่อดอกลิลลี่ เงิน 10 ใบ - LM01', price:599, desc:'ดอกลิลลี่ฟ้า-ซองใส่เงิน 10 บ', image:'images/bouquet/ลิลลี่เงิน10ใบ-599฿-ฟ้า.jpg' },
-  { id:'h01', cat:'ช่อดอกไม้', flowerType:'ไฮเดรนเยีย', size:'กลาง', name:'ช่อดอกไฮเดรนเยีย - H01', price:299, desc:'ช่อขนาดกลาง ดอกไฮเดรนเยียชมพู 100 ดอก', image:'images/bouquet/ไฮเดรนเยีย-299฿-ชมพู-ขาว.jpg', ready:true, },
-  { id:'f01', cat:'กรอบรูป', size:'A4', name:'กรอบรูปดอกกุหลาบ A4 แนวตั้ง - F01', price:599, desc:'ดอกุหลาบแดง 3 ดอก ใส่รูป 3 ใบ ขนาดA4 แนวตั้ง ', image:'images/frame/กุหลาบ-A4-ตั้ง-599฿.jpg' },
-  { id:'f02', cat:'กรอบรูป', size:'A4', name:'กรอบรูปดอกเดซี่ A4 แนวตั้ง - F02', price:499, desc:'ดอกเดซี่คละสี 16 ดอก ขนาดA4 แนวตั้ง ', image:'images/frame/เดซี่-A4-ตั้ง-499฿.jpg' },
-  { id:'f03', cat:'กรอบรูป', size:'A4', name:'กรอบรูปดอกเดซี่ A4 แนวตั้ง - F03', price:549, desc:'ดอกเดซี่คละสี ใส่รูป 1 ใบ ขนาดA4 แนวตั้ง ', image:'images/frame/เดซี่-A4-ตั้ง-549฿.jpg' },
-  { id:'f04', cat:'กรอบรูป', size:'A4', name:'กรอบรูปดอกเดซี่ A4 แนวนอน - F04', price:499, desc:'ดอกเดซี่คละสี 10 ดอก ขนาดA4 แนวนอน',
-    colors:[
-      { name:'แบบที่ 1', image:'images/frame/เดซี่-A4-นอน-499฿-แบบที่1.jpg' },
-      { name:'แบบที่ 2',  image:'images/frame/เดซี่-A4-นอน-499฿-แบบที่2.jpg' },
-        ]
-  },
-  { id:'f05', cat:'กรอบรูป', size:'A4', name:'กรอบรูปดอกทานตะวัน A4 แนวนอน - F05', price:499, desc:'ดอกทานตะวันเหลืองจิ๋ว 10 ดอก ขนาดA4 แนวนอน',
-    colors:[
-      { name:'แบบที่ 1', image:'images/frame/ทานตะวัน-A4-นอน-499฿-แบบที่1.jpg' },
-      { name:'แบบที่ 2',  image:'images/frame/ทานตะวัน-A4-นอน-499฿-แบบที่2.jpg' },
-        ]
-  },
-  { id:'f06', cat:'กรอบรูป', size:'A4', name:'กรอบรูปดอกทานตะวัน A4 แนวนอน - F06', price:599, desc:'ดอกทานตะวัน 1 ดอก ตกแต่งด้วยดอกไม้คละชนิด ใส่รูป 1 ใบ ขนาดA4 แนวนอน', image:'images/frame/ทานตะวัน-A4-นอน-599฿.jpg' },
-  { id:'f07', cat:'กรอบรูป', size:'A5', name:'กรอบรูปดอกทานตะวัน A5 แนวตั้ง - F07', price:299, desc:'ดอกทานตะวันเหลืองจิ๋ว 7 ดอก ขนาดA5 แนวตั้ง', image:'images/frame/ทานตะวัน-A5-ตั้ง-299฿.jpg' },
-  { id:'f08', cat:'กรอบรูป', size:'A5', name:'กรอบรูปดอกทานตะวัน A5 แนวนอน - F08', price:299, desc:'ดอกทานตะวันเหลืองจิ๋ว 7 ดอก ใส่รูป 1 ใบ ขนาดA5 แนวนอน', image:'images/frame/ทานตะวัน-A5-นอน-299฿.jpg' },
-  { id:'f09', cat:'กรอบรูป', size:'A5', name:'กรอบรูปดอกทิวลิป A5 แนวตั้ง - F09', price:249, desc:'ดอกทิวลิปชมพูจิ๋ว 14 ดอก ขนาดA5 แนวตั้ง', image:'images/frame/ทิวลิป-A5-ตั้ง-249฿.jpg' },
-  { id:'f10', cat:'กรอบรูป', size:'A5', name:'กรอบรูปดอกทิวลิป A5 แนวนอน - F10', price:249, desc:'ดอกทิวลิปฟ้าจิ๋ว 10 ดอก ใส่รูป 1 ใบ ขนาดA5 แนวนอน', image:'images/frame/ทิวลิป-A5-นอน-249฿.jpg' },
-  { id:'f11', cat:'กรอบรูป', size:'A5', name:'กรอบรูปดอกไม้คละชนิด A5 แนวนอน - F11', price:249, desc:'ดอกไม้คละชนิดโทนม่วง ใส่รูป 1 ใบ ขนาดA5 แนวนอน', image:'images/frame/รวม-A5-นอน-249฿.jpg' },
-  { id:'p01', cat:'กระถาง', size:'3 นิ้ว', name:'กระถางดอกทานตะวัน 3 นิ้ว - P01', price:99, desc:'ดอกทานตะวัน 1 ดอก ขนาด 3 นิ้ว', image:'images/pot/ทานตะวัน-3นิ้ว-99฿.jpg' },
-  { id:'p02', cat:'กระถาง', size:'5 นิ้ว', name:'กระถางดอกทานตะวัน 5 นิ้ว - P02', price:349, desc:'ดอกทานตะวัน 3 ดอก ขนาด 5 นิ้ว', image:'images/pot/ทานตะวัน-5นิ้ว-349฿.jpg' },
-  { id:'p03', cat:'กระถาง', size:'5 นิ้ว', name:'กระถางดอกทานตะวัน 5 นิ้ว - P03', price:599, desc:'ดอกทานตะวัน 6 ดอก ขนาด 5 นิ้ว', image:'images/pot/ทานตะวัน-5นิ้ว-599฿.jpg' },
-  { id:'p04', cat:'กระถาง', size:'9 นิ้ว', name:'กระถางดอกทานตะวัน 9 นิ้ว - P04', price:1200, desc:'ดอกทานตะวัน 10 ดอก ขนาด 9 นิ้ว', image:'images/pot/ทานตะวัน-9นิ้ว-1200฿.jpg' },
-  { id:'p05', cat:'กระถาง', size:'3 นิ้ว', name:'กระถางดอกทิวลิป 3 นิ้ว - P05', price:89, desc:'ดอกทิวลิปจิ๋ว ขนาด 3 นิ้ว มีสีฟ้า,ชมพู,เหลือง', image:'images/pot/ทิวลิป-3นิ้ว-89฿.jpg' },
-  { id:'p06', cat:'กระถาง', size:'3 นิ้ว', name:'กระถางดอกทิวลิป 3 นิ้ว - P06', price:99, desc:'ดอกทิวลิปชมพูเหลืองจิ๋ว ขนาด 3 นิ้ว', image:'images/pot/ทิวลิป-3นิ้ว-99฿.jpg' },
-  { id:'p07', cat:'กระถาง', size:'5 นิ้ว', name:'กระถางดอกทิวลิป 5 นิ้ว - P07', price:299, desc:'ดอกทิวลิปจิ๋ว ขนาด 5 นิ้ว เลือกสีดอกได้',
-  colors:[
-      { name:'ม่วง', image:'images/pot/ทิวลิป-5นิ้ว-299฿-ม่วง.jpg' },
-      { name:'ม่วงฟ้า', image:'images/pot/ทิวลิป-5นิ้ว-299฿-ม่วงฟ้า.jpg' },
-        ]
-  },
-  { id:'p08', cat:'กระถาง', size:'5 นิ้ว', name:'กระถางดอกไม้คละชนิด 5 นิ้ว - P08', price:399, desc:'ดอกไม้คละชนิด โทนชมพูม่วง ขนาด 5 นิ้ว', image:'images/pot/รวม-5นิ้ว-399฿.jpg' },
-  { id:'p09', cat:'กระถาง', size:'5 นิ้ว', name:'กระถางดอกไม้คละชนิด 5 นิ้ว - P09', price:599, desc:'ดอกไม้คละชนิด โทนชมพูม่วง ขนาด 5 นิ้ว', image:'images/pot/รวม-5นิ้ว-599฿-แบบที่1.jpg' },
-  { id:'p10', cat:'กระถาง', size:'5 นิ้ว', name:'กระถางดอกไม้คละชนิด 5 นิ้ว - P10', price:599, desc:'ดอกไม้คละชนิด โทนพาสเทล ขนาด 5 นิ้ว', image:'images/pot/รวม-5นิ้ว-599฿-แบบที่2.jpg' },
-  { id:'p11', cat:'กระถาง', size:'5 นิ้ว', name:'กระถางดอกไม้คละชนิด 5 นิ้ว - P11', price:1200, desc:'ดอกไม้คละชนิด โทนพาสเทล ขนาด 5 นิ้ว', image:'images/pot/รวม-5นิ้ว-1200฿.jpg' },
-  { id:'p12', cat:'กระถาง', size:'9 นิ้ว', name:'กระถางดอกไม้คละชนิด 9 นิ้ว - P12', price:1200, desc:'ดอกไม้คละชนิด โทนชมพูม่วง ขนาด 9 นิ้ว', image:'images/pot/รวม-9นิ้ว-1200฿.jpg' },
-  { id:'rg01', cat:'อื่นๆ', size:'กลิตเตอร์', name:'ช่อดอกกุหลาบกลิตเตอร์ - RG01', price:299,  desc:'ดอกกุหลาบกลิตเตอร์ เลือกสีได้',
-    colors:[
-      { name:'ดอกชมพูช่อขาว', image:'images/other/กุหลาบ-กลิตเตอร์-299฿-ชมพู-ขาว.jpg' },
-      { name:'ดอกแดงช่อดำ',  image:'images/other/กุหลาบ-กลิตเตอร์-299฿-แดง-ดำ.jpg' },
-      { name:'ดอกชมพูแดงช่อขาว',  image:'images/other/กุหลาบกลิตเตอร์-299฿-ชมพูแดง-ขาว.jpg' },
-        ]
-  },
-  { id:'rg02', cat:'อื่นๆ', size:'กลิตเตอร์', name:'ช่อดอกกุหลาบกลิตเตอร์ - RG02', price:399,  desc:'ช่อดอกกุหลาบกลิตเตอร์ เลือกสีได้',
-    colors:[
-      { name:'ชมพู', image:'images/other/กุหลาบกลิตเตอร์-399฿-ชมพู.jpg' },
-      { name:'แดง',  image:'images/other/กุหลาบกลิตเตอร์-399฿-แดง.jpg' },
-      { name:'ม่วง',  image:'images/other/กุหลาบกลิตเตอร์-399฿-ม่วง.jpg' },
-        ]
-  },
-  { id:'rg03', cat:'อื่นๆ', size:'กลิตเตอร์', name:'ช่อดอกกุหลาบกลิตเตอร์ - RG03', price:899, desc:'ช่อกลิตเตอร์น้ำเงินสุดหรู 30 ดอก', image:'images/other/กุหลาบกลิตเตอร์-899฿-น้ำเงิน-ดำ.jpg' },
-  { id:'o01', cat:'อื่นๆ', size:'กล่องดอกไม้', name:'กล่องดอกทานตะวัน - O01', price:1200,  desc:'ดอกทานตะวัน 5 ดอก', image:'images/other/กล่อง-ทานตะวัน-1200฿.jpg' },
-  { id:'o02', cat:'อื่นๆ', size:'ดอกไม้เจ้าสาว', name:'ดอกไม้เจ้าสาว - O02', price:399,  desc:'ดอกไม้เจ้าสาวโทนสีขาว', image:'images/other/เจ้าสาว-399฿.jpg' },
-  { id:'o03', cat:'อื่นๆ', size:'ตุ๊กตา', name:'ช่อตุ๊กตา(ตุ๊กตาของลูกค้าเอง) - O03', price:100,  desc:'ตุ๊กตาลูกค้าต้องนำมาเอง ทางร้านมีบริการจัดช่อ', image:'images/other/ตุ๊กตา-100฿-รวม.jpg' },
-  { id:'o04', cat:'อื่นๆ', size:'มงกุฎ', name:'มงกุฎดอกไม้ - O04', price:149,  desc:'มงกุฎดอกไม้ เลือกชนิดดอกไม้ได้',
-    colors:[
-      { name:'ทานตะวัน', image:'images/other/มงกุฎ-ทานตะวัน-149฿-แบบที่1.jpg' },
-      { name:'ทานตะวันเดซี่',  image:'images/other/มงกุฎ-ทานตะวัน-149฿-แบบที่2.jpg' },
-      { name:'ไฮเดรนเยีย',  image:'images/other/มงกุฎ-ไฮเดรนเยีย-149฿.jpg' },
-        ]
-  },
-];
+let PRODUCTS = []; // โหลดจาก products.json ตอนเปิดหน้าเว็บ (ดูฟังก์ชัน loadProducts ด้านล่าง)
 const PAGE_LINK = 'https://m.me/167894813076816';
 // วาง URL ของ Google Apps Script Web App (หลัง Deploy แล้ว) แทนที่ค่าด้านล่างนี้
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwfNGO22TxU0kBqbNbn7eaSIo4W4qlXiqTVPcSo5wyLMWedZmOWLYDKiKzJcfHEW-TdnA/exec';
@@ -1746,7 +1429,6 @@ async function confirmOrderSubmit(){
         deliveryAddress: needsAddress ? deliveryAddress : '',
         paymentMethod,
         addCard,
-        cardMessage,
         note,
         timestamp: new Date().toISOString()
       })
@@ -1865,11 +1547,32 @@ function addModalToCart(){
   closeProductModal();
 }
 
-renderNav();
-renderPriceFilter();
-renderCatalog();
-updateCartUI();
-loadSavedFbName();
+/* ---------- โหลดข้อมูลสินค้าจาก products.json ----------
+   แก้ไข/เพิ่ม/ลบสินค้าได้ที่ไฟล์ products.json โดยตรง ไม่ต้องแก้ไฟล์นี้เลย
+   ต้องเปิดเว็บผ่านลิงก์จริง (เช่น Netlify) เท่านั้น ถ้าดับเบิลคลิกเปิดไฟล์ตรงๆ
+   (file://) เบราว์เซอร์จะบล็อกการโหลดไฟล์ json แล้วจะเห็นข้อความแจ้ง error สีแดงแทน */
+async function loadProducts(){
+  const catalogEl = document.getElementById('catalog');
+  try{
+    const res = await fetch('products.json');
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    PRODUCTS = await res.json();
+  } catch(err){
+    catalogEl.innerHTML = `
+      <div style="text-align:center; padding:60px 20px; color:var(--rose-dark);">
+        <p style="font-size:16px; font-weight:700; margin-bottom:8px;">⚠️ โหลดข้อมูลสินค้าไม่สำเร็จ</p>
+        <p style="font-size:13.5px; color:var(--plum);">กรุณาตรวจสอบว่าไฟล์ products.json อยู่ในโฟลเดอร์เดียวกับเว็บไซต์<br>และเปิดเว็บผ่านลิงก์จริง ไม่ใช่การดับเบิลคลิกเปิดไฟล์โดยตรง</p>
+      </div>`;
+    console.error('โหลด products.json ไม่สำเร็จ:', err);
+    return;
+  }
+  renderNav();
+  renderPriceFilter();
+  renderCatalog();
+  updateCartUI();
+  loadSavedFbName();
+}
+loadProducts();
 
 /* ---------- Chat button ---------- */
 function closeChatBubble(){
