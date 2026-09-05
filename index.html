@@ -36,45 +36,76 @@
 
   /* ---------- Header ---------- */
   header.top{
-    padding:28px 6vw 22px;
+    padding:18px 6vw 14px;
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+  }
+  .topbar-row{
     display:flex;
     align-items:center;
-    justify-content:space-between;
-    gap:16px;
-    flex-wrap:wrap;
+    gap:10px;
   }
-  .brand{display:flex; align-items:center; gap:14px;}
   .brand-mark{
-    width:52px;height:52px;border-radius:50%;
+    width:42px;height:42px;border-radius:50%;
     background:var(--sage);
     display:flex;align-items:center;justify-content:center;
     box-shadow:var(--shadow);
     flex-shrink:0;
     overflow:hidden;
   }
-  .brand-mark svg{width:30px;height:30px;}
+  .brand-mark svg{width:24px;height:24px;}
   .brand-mark img{width:100%;height:100%;object-fit:cover;}
-  .brand h1{margin:0;font-size:26px;color:var(--sage-dark);line-height:1.1;}
-  .brand p{margin:2px 0 0;font-size:13px;color:var(--rose-dark);letter-spacing:.5px;}
 
-  .cart-pill{
-    display:flex;align-items:center;gap:10px;
+  .search-wrap{
+    flex:1;
+    min-width:0;
+    display:flex;
+    align-items:center;
+    gap:8px;
     background:var(--paper);
     border:1.5px solid var(--line);
-    padding:10px 18px 10px 14px;
     border-radius:999px;
-    cursor:pointer;
+    padding:0 14px;
+    box-shadow:var(--shadow);
+  }
+  .search-wrap:focus-within{border-color:var(--sage);}
+  .search-wrap svg{width:18px;height:18px;color:var(--rose-dark);flex-shrink:0;}
+  .search-input{
+    flex:1; min-width:0; border:none; outline:none; background:transparent;
+    font-family:'Sarabun'; font-size:14.5px; color:var(--plum);
+    padding:11px 0;
+  }
+  .search-input::placeholder{color:#b09aa3;}
+  .search-clear{
+    flex-shrink:0; border:none; background:var(--cream); color:var(--rose-dark);
+    width:22px;height:22px;border-radius:50%; cursor:pointer;
+    font-size:12px; display:flex; align-items:center; justify-content:center;
+  }
+
+  .cart-btn-top{
+    position:relative;
+    flex-shrink:0;
+    width:46px;height:46px;border-radius:50%;
+    border:1.5px solid var(--line); background:var(--paper);
+    display:flex; align-items:center; justify-content:center;
+    font-size:19px; cursor:pointer;
     box-shadow:var(--shadow);
     transition:transform .15s ease;
-    font-weight:600;
   }
-  .cart-pill:hover{transform:translateY(-2px);}
-  .cart-pill .badge{
-    background:var(--rose);color:#fff;font-size:12px;
-    min-width:22px;height:22px;border-radius:50%;
+  .cart-btn-top:hover{transform:translateY(-2px);}
+  .cart-btn-top .badge{
+    position:absolute; top:-4px; right:-4px;
+    background:var(--rose); color:#fff; font-size:11px;
+    min-width:20px;height:20px;border-radius:50%;
     display:flex;align-items:center;justify-content:center;
     font-family:'Sarabun'; font-weight:700;
+    border:2px solid var(--cream);
   }
+
+  .brand-row{display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; padding-left:2px;}
+  .brand-row h1{margin:0;font-size:21px;color:var(--sage-dark);line-height:1.1;}
+  .brand-row p{margin:0;font-size:12.5px;color:var(--rose-dark);letter-spacing:.3px;}
 
   /* ---------- Hero ---------- */
   .hero{
@@ -587,8 +618,15 @@
   }
 
   @media (max-width:520px){
+    header.top{padding:14px 5vw 10px; gap:10px;}
+    .brand-mark{width:36px;height:36px;}
+    .brand-mark svg{width:20px;height:20px;}
+    .search-input{padding:9px 0; font-size:13.5px;}
+    .cart-btn-top{width:40px;height:40px;font-size:17px;}
+    .brand-row h1{font-size:18px;}
+    .brand-row p{font-size:11px;}
     .hero{padding:34px 24px; border-radius:22px;}
-    .cat-nav{position:static; background:none;}
+    .cat-nav{padding:14px 5vw 4px;}
 
     /* 2 columns of products on mobile instead of 1 */
     .grid{grid-template-columns:1fr 1fr; gap:12px;}
@@ -610,18 +648,23 @@
 <body>
 
 <header class="top">
-  <div class="brand">
+  <div class="topbar-row">
     <div class="brand-mark">
       <img src="images/logo.png" alt="โลโก้ร้าน" onerror="this.parentElement.innerHTML='<svg viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot;><path d=&quot;M12 2c1.5 2 1.5 4 0 6-1.5-2-1.5-4 0-6z&quot; fill=&quot;#FBF6EF&quot;/><path d=&quot;M12 22c-3-3-6-6-6-10a6 6 0 0112 0c0 4-3 7-6 10z&quot; fill=&quot;#FBF6EF&quot; opacity=&quot;0.9&quot;/></svg>'">
     </div>
-    <div>
-      <h1>S.Flower Bloom</h1>
-      <p>เลือกสินค้า แล้วสั่งซื้อผ่านแชทได้เลย</p>
+    <div class="search-wrap">
+      <svg viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <input type="text" id="searchInput" class="search-input" placeholder="ค้นหาสินค้า เช่น กุหลาบ, กรอบรูป..." oninput="handleSearch(this.value)">
+      <button type="button" class="search-clear" id="searchClearBtn" style="display:none;" onclick="clearSearch()" aria-label="ล้างคำค้นหา">✕</button>
     </div>
+    <button class="cart-btn-top" onclick="openCart()" aria-label="ตะกร้าสินค้า">
+      🧺
+      <span class="badge" id="cartBadge">0</span>
+    </button>
   </div>
-  <div class="cart-pill" onclick="openCart()">
-    🧺 ตะกร้าของฉัน
-    <span class="badge" id="cartBadge">0</span>
+  <div class="brand-row">
+    <h1>S.Flower Bloom</h1>
+    <p>เลือกสินค้า แล้วสั่งซื้อผ่านแชทได้เลย</p>
   </div>
 </header>
 
@@ -836,10 +879,34 @@ const CATEGORY_SIZES = {
   'กระถาง': ['ทั้งหมด','3 นิ้ว','5 นิ้ว','9 นิ้ว'],
   'อื่นๆ': ['ทั้งหมด','กลิตเตอร์','กล่องดอกไม้','ดอกไม้เจ้าสาว','ตุ๊กตา','มงกุฎ'],
 };
-let activeCat = 'ทั้งหมด';
+let activeCat = 'ทั้งหมด'; // now only drives which nav tab is highlighted (scrollspy), not filtering
 let activeSizes = {}; // cat -> selected size for that category (independent per category)
 let showReadyOnly = false;
+let searchQuery = '';
+let scrollSpyObserver = null;
 let cart = {}; // key -> { qty, unitPrice, label }
+
+function catSectionId(cat){ return 'cat-sec-' + CATS.indexOf(cat); }
+
+function handleSearch(v){
+  searchQuery = v.trim();
+  const clearBtn = document.getElementById('searchClearBtn');
+  if(clearBtn) clearBtn.style.display = searchQuery ? 'flex' : 'none';
+  renderCatalog();
+}
+function clearSearch(){
+  searchQuery = '';
+  const input = document.getElementById('searchInput');
+  if(input) input.value = '';
+  const clearBtn = document.getElementById('searchClearBtn');
+  if(clearBtn) clearBtn.style.display = 'none';
+  renderCatalog();
+}
+function matchesSearch(p){
+  if(!searchQuery) return true;
+  const q = searchQuery.toLowerCase();
+  return (p.name && p.name.toLowerCase().includes(q)) || (p.desc && p.desc.toLowerCase().includes(q));
+}
 
 function toggleReadyOnly(){
   showReadyOnly = document.getElementById('readyToggle').checked;
@@ -900,10 +967,41 @@ function orderNeedsDeposit(items){
 function renderNav(){
   const nav = document.getElementById('catNav');
   nav.innerHTML = CATS.map(c =>
-    `<button class="cat-btn ${c===activeCat?'active':''}" onclick="setCat('${c}')">${c}</button>`
+    `<button class="cat-btn ${c===activeCat?'active':''}" onclick="scrollToCat('${c}')">${c}</button>`
   ).join('');
 }
-function setCat(c){ activeCat = c; renderNav(); renderCatalog(); }
+// เมื่อกดแท็บหมวดหมู่ ให้เลื่อนหน้าจอไปยังหมวดนั้นแบบนุ่มนวล (แทนที่จะกรองสินค้า)
+// ส่วนสถานะ active ระหว่างเลื่อนดูเองจะถูกอัปเดตโดย setupScrollSpy()
+function scrollToCat(c){
+  activeCat = c;
+  renderNav();
+  const el = document.getElementById(catSectionId(c));
+  if(!el) return;
+  const nav = document.getElementById('catNav');
+  const offset = (nav ? nav.offsetHeight : 0) + 10;
+  const top = el.getBoundingClientRect().top + window.pageYOffset - offset;
+  window.scrollTo({ top, behavior: 'smooth' });
+}
+// Scrollspy: ไล่ดูว่าตอนนี้หมวดไหนอยู่ใต้แถบเมนูพอดี แล้วไฮไลต์แท็บนั้นให้อัตโนมัติ
+function setupScrollSpy(){
+  if(scrollSpyObserver) scrollSpyObserver.disconnect();
+  const nav = document.getElementById('catNav');
+  const navHeight = nav ? nav.offsetHeight : 60;
+  const sections = document.querySelectorAll('#catalog .cat-section');
+  if(!sections.length) return;
+  scrollSpyObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if(entry.isIntersecting){
+        const cat = entry.target.getAttribute('data-cat');
+        if(cat && cat !== activeCat){
+          activeCat = cat;
+          renderNav();
+        }
+      }
+    });
+  }, { rootMargin: `-${navHeight + 4}px 0px -65% 0px`, threshold: 0 });
+  sections.forEach(s => scrollSpyObserver.observe(s));
+}
 function setSize(cat, s){ activeSizes[cat] = s; renderCatalog(); }
 
 const FLOWER_TYPES = ['ทั้งหมด','ดอกไม้คละชนิด','กุหลาบ','ทานตะวัน','ทิวลิป','ไฮเดรนเยีย','เดซี่','ลิลลี่','เยอบีร่า'];
@@ -964,51 +1062,63 @@ function renderProductCard(p){
 }
 function renderCatalog(){
   const main = document.getElementById('catalog');
-  const cats = activeCat === 'ทั้งหมด' ? CATS.slice(1) : [activeCat];
+  const cats = CATS.slice(1);
   const range = PRICE_RANGES[activePriceRange];
+  let totalMatches = 0;
 
-  // สินค้าแนะนำ (พร้อมส่ง) — โชว์ก่อนเป็นลำดับแรกสุด เฉพาะตอนดูมุมมอง "ทั้งหมด"
-  let recommendedHtml = '';
-  if(activeCat === 'ทั้งหมด'){
-    const recommended = PRODUCTS.filter(p =>
-      productHasAnyReady(p)
-      && (displayPrice(p) >= range.min && displayPrice(p) <= range.max)
-    );
-    if(recommended.length){
-      recommendedHtml = `
-        <div class="section-title featured"><h3>🌟 สินค้าแนะนำ (พร้อมส่ง)</h3><span>${recommended.length} รายการ</span></div>
-        <div class="grid">
-          ${recommended.map(p => renderProductCard(p)).join('')}
-        </div>
-      `;
-    }
-  }
+  // สินค้าแนะนำ (พร้อมส่ง) — โชว์ก่อนเป็นลำดับแรกสุดเสมอ ใต้แท็บ "ทั้งหมด"
+  const recommended = PRODUCTS.filter(p =>
+    productHasAnyReady(p)
+    && matchesSearch(p)
+    && (displayPrice(p) >= range.min && displayPrice(p) <= range.max)
+  );
+  totalMatches += recommended.length;
+  const recommendedHtml = recommended.length ? `
+    <div class="section-title featured"><h3>🌟 สินค้าแนะนำ (พร้อมส่ง)</h3><span>${recommended.length} รายการ</span></div>
+    <div class="grid">
+      ${recommended.map(p => renderProductCard(p)).join('')}
+    </div>
+  ` : '';
+  const allSectionHtml = `<div class="cat-section" id="${catSectionId('ทั้งหมด')}" data-cat="ทั้งหมด">${recommendedHtml}</div>`;
 
-  main.innerHTML = recommendedHtml + cats.map(cat => {
+  const catsHtml = cats.map(cat => {
     const sizeList = CATEGORY_SIZES[cat];
     const currentSize = activeSizes[cat] || 'ทั้งหมด';
     const items = PRODUCTS.filter(p =>
       p.cat === cat
+      && matchesSearch(p)
       && (!sizeList || currentSize === 'ทั้งหมด' || p.size === currentSize)
       && (cat !== 'ช่อดอกไม้' || activeFlowerType === 'ทั้งหมด' || p.flowerType === activeFlowerType)
       && (!showReadyOnly || productHasAnyReady(p))
       && (displayPrice(p) >= range.min && displayPrice(p) <= range.max)
     );
+    totalMatches += items.length;
     const filterRows = (sizeList || cat === 'ช่อดอกไม้')
       ? `<div class="section-filters">${sizeList ? renderSizeRow(cat, sizeList) : ''}${cat === 'ช่อดอกไม้' ? renderFlowerTypeRow() : ''}</div>`
       : '';
-    if(!items.length) return `
+    const body = !items.length ? `
       <div class="section-title"><h3>${cat}</h3><span>0 รายการ</span></div>
       ${filterRows}
-    `;
-    return `
+    ` : `
       <div class="section-title"><h3>${cat}</h3><span>${items.length} รายการ</span></div>
       ${filterRows}
       <div class="grid">
         ${items.map(p => renderProductCard(p)).join('')}
       </div>
     `;
+    return `<div class="cat-section" id="${catSectionId(cat)}" data-cat="${cat}">${body}</div>`;
   }).join('');
+
+  if(searchQuery && totalMatches === 0){
+    main.innerHTML = `
+      <div style="text-align:center; padding:60px 20px; color:var(--rose-dark);">
+        <p style="font-size:16px; font-weight:700; margin-bottom:6px;">ไม่พบสินค้าที่ตรงกับ "${searchQuery}"</p>
+        <p style="font-size:13.5px; color:var(--plum);">ลองค้นหาด้วยคำอื่น หรือกดล้างคำค้นหาเพื่อดูสินค้าทั้งหมด</p>
+      </div>`;
+  } else {
+    main.innerHTML = allSectionHtml + catsHtml;
+  }
+  setupScrollSpy();
 }
 function renderSizeRow(cat, sizeList){
   const current = activeSizes[cat] || 'ทั้งหมด';
