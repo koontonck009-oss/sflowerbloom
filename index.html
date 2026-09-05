@@ -220,6 +220,11 @@
   }
   .section-title h3{font-size:24px;color:var(--sage-dark);margin:0;}
   .section-title span{font-size:13px;color:var(--rose-dark);font-weight:600;}
+  .section-title.featured{margin-top:6px;}
+  .section-title.featured h3{
+    background:linear-gradient(135deg, var(--sage), var(--rose-dark));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
 
   .grid{
     display:grid;
@@ -920,11 +925,66 @@ function renderPriceFilter(){
   sel.innerHTML = PRICE_RANGES.map((r,i) => `<option value="${i}" ${i===activePriceRange?'selected':''}>💰 ${r.label}</option>`).join('');
 }
 
+function renderProductCard(p){
+  return `
+    <div class="card">
+      <div class="thumb-wrap">
+        <div class="thumb" onclick="openProductModal('${p.id}')">${renderThumb(p)}</div>
+        ${currentReadyState(p) ? '<span class="badge-ready">พร้อมส่ง</span>' : ''}
+        ${p.isNew ? '<span class="badge-new">ใหม่</span>' : ''}
+      </div>
+      ${p.colors ? `
+        <div class="color-row">
+          ${p.colors.map((c,i) => `
+            <button class="color-chip ${((selectedColor[p.id]||0)===i)?'active':''}" onclick="selectColor('${p.id}',${i})">${c.name}</button>
+          `).join('')}
+        </div>
+      ` : ''}
+      ${p.sizes ? `
+        <div class="color-row">
+          ${p.sizes.map((s,i) => `
+            <button class="color-chip ${((selectedSizeVariant[p.id]||0)===i)?'active':''}" onclick="selectSizeVariant('${p.id}',${i})">${s.name}</button>
+          `).join('')}
+        </div>
+      ` : ''}
+      <h4>${p.name}</h4>
+      <p class="desc">${p.desc}</p>
+      <div class="price-row">
+        <span class="price">${p.billSelector ? `เริ่มต้น ${fmt(displayPrice(p))}` : fmt(displayPrice(p))}</span>
+      </div>
+      ${p.billSelector
+        ? `<button class="add-btn" style="width:100%; justify-content:center;" onclick="openProductModal('${p.id}')">เลือกจำนวน</button>`
+        : `<div class="card-actions">
+            <button class="buy-now-btn" onclick="quickOrder('${p.id}')">🌸 สั่งเลย</button>
+            <button class="cart-icon-btn" id="add-${p.id}" onclick="addToCart('${p.id}')" title="ใส่ตะกร้า" aria-label="ใส่ตะกร้า">🧺</button>
+          </div>`
+      }
+    </div>
+  `;
+}
 function renderCatalog(){
   const main = document.getElementById('catalog');
   const cats = activeCat === 'ทั้งหมด' ? CATS.slice(1) : [activeCat];
   const range = PRICE_RANGES[activePriceRange];
-  main.innerHTML = cats.map(cat => {
+
+  // สินค้าแนะนำ (พร้อมส่ง) — โชว์ก่อนเป็นลำดับแรกสุด เฉพาะตอนดูมุมมอง "ทั้งหมด"
+  let recommendedHtml = '';
+  if(activeCat === 'ทั้งหมด'){
+    const recommended = PRODUCTS.filter(p =>
+      productHasAnyReady(p)
+      && (displayPrice(p) >= range.min && displayPrice(p) <= range.max)
+    );
+    if(recommended.length){
+      recommendedHtml = `
+        <div class="section-title featured"><h3>🌟 สินค้าแนะนำ (พร้อมส่ง)</h3><span>${recommended.length} รายการ</span></div>
+        <div class="grid">
+          ${recommended.map(p => renderProductCard(p)).join('')}
+        </div>
+      `;
+    }
+  }
+
+  main.innerHTML = recommendedHtml + cats.map(cat => {
     const sizeList = CATEGORY_SIZES[cat];
     const currentSize = activeSizes[cat] || 'ทั้งหมด';
     const items = PRODUCTS.filter(p =>
@@ -945,41 +1005,7 @@ function renderCatalog(){
       <div class="section-title"><h3>${cat}</h3><span>${items.length} รายการ</span></div>
       ${filterRows}
       <div class="grid">
-        ${items.map(p => `
-          <div class="card">
-            <div class="thumb-wrap">
-              <div class="thumb" onclick="openProductModal('${p.id}')">${renderThumb(p)}</div>
-              ${currentReadyState(p) ? '<span class="badge-ready">พร้อมส่ง</span>' : ''}
-              ${p.isNew ? '<span class="badge-new">ใหม่</span>' : ''}
-            </div>
-            ${p.colors ? `
-              <div class="color-row">
-                ${p.colors.map((c,i) => `
-                  <button class="color-chip ${((selectedColor[p.id]||0)===i)?'active':''}" onclick="selectColor('${p.id}',${i})">${c.name}</button>
-                `).join('')}
-              </div>
-            ` : ''}
-            ${p.sizes ? `
-              <div class="color-row">
-                ${p.sizes.map((s,i) => `
-                  <button class="color-chip ${((selectedSizeVariant[p.id]||0)===i)?'active':''}" onclick="selectSizeVariant('${p.id}',${i})">${s.name}</button>
-                `).join('')}
-              </div>
-            ` : ''}
-            <h4>${p.name}</h4>
-            <p class="desc">${p.desc}</p>
-            <div class="price-row">
-              <span class="price">${p.billSelector ? `เริ่มต้น ${fmt(displayPrice(p))}` : fmt(displayPrice(p))}</span>
-            </div>
-            ${p.billSelector
-              ? `<button class="add-btn" style="width:100%; justify-content:center;" onclick="openProductModal('${p.id}')">เลือกจำนวน</button>`
-              : `<div class="card-actions">
-                  <button class="buy-now-btn" onclick="quickOrder('${p.id}')">🌸 สั่งเลย</button>
-                  <button class="cart-icon-btn" id="add-${p.id}" onclick="addToCart('${p.id}')" title="ใส่ตะกร้า" aria-label="ใส่ตะกร้า">🧺</button>
-                </div>`
-            }
-          </div>
-        `).join('')}
+        ${items.map(p => renderProductCard(p)).join('')}
       </div>
     `;
   }).join('');
