@@ -170,6 +170,11 @@
     font-size:13px; font-weight:600; line-height:1.5;
     cursor:pointer;
     animation:bubbleIn .35s ease;
+    transition:opacity .35s ease, transform .35s ease;
+  }
+  .chat-bubble.chat-bubble-hide{
+    opacity:0; transform:translateY(8px) scale(.95);
+    pointer-events:none;
   }
   .chat-bubble b{display:block; color:var(--sage-dark); margin-bottom:2px;}
   .chat-bubble-close{
@@ -1743,8 +1748,13 @@ loadProducts();
 /* ---------- Chat button ---------- */
 function closeChatBubble(){
   const b = document.getElementById('chatBubble');
-  if(b) b.style.display = 'none';
+  if(!b || b.style.display === 'none') return;
+  b.classList.add('chat-bubble-hide');
+  setTimeout(()=>{ b.style.display = 'none'; }, 350);
 }
+// เด้งข้อความชวนแชทขึ้นมาสักพัก แล้วหายไปเองอัตโนมัติหลังจาก 5 วินาที
+// (ถ้าลูกค้ากดปิดเองก่อนหน้านั้น closeChatBubble ด้านบนจะจัดการให้ ไม่ซ้ำซ้อนกัน)
+setTimeout(closeChatBubble, 5000);
 /* ซ่อนปุ่มแชทลอยทุกครั้งที่มีป็อปอัพ/ตะกร้าเปิดอยู่ ป้องกันไปบังปุ่มหรือช่องกรอกข้อมูล */
 function updateChatFabVisibility(){
   const wrap = document.getElementById('chatFabWrap');
