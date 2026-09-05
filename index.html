@@ -35,16 +35,15 @@
   h1,h2,h3,.display{font-family:'Chonburi',cursive; font-weight:400;}
 
   /* ---------- Header ---------- */
-  header.top{
-    padding:18px 6vw 14px;
-    display:flex;
-    flex-direction:column;
-    gap:12px;
-  }
-  .topbar-row{
+  .search-cart-bar{
+    position:sticky;
+    top:0;
+    z-index:1000;
     display:flex;
     align-items:center;
     gap:10px;
+    padding:14px 6vw;
+    background:var(--cream);
   }
   .brand-mark{
     width:42px;height:42px;border-radius:50%;
@@ -103,7 +102,7 @@
     border:2px solid var(--cream);
   }
 
-  .brand-row{display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; padding-left:2px;}
+  .brand-row{display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; padding:0 6vw 14px;}
   .brand-row h1{margin:0;font-size:21px;color:var(--sage-dark);line-height:1.1;}
   .brand-row p{margin:0;font-size:12.5px;color:var(--rose-dark);letter-spacing:.3px;}
 
@@ -156,7 +155,7 @@
   .chat-fab-wrap{
     position:fixed;
     right:22px; bottom:92px;
-    z-index:70;
+    z-index:1070;
     display:flex; flex-direction:column; align-items:flex-end; gap:10px;
   }
   .chat-bubble{
@@ -205,25 +204,39 @@
 
   /* ---------- Category nav ---------- */
   .cat-nav{
-    display:flex; gap:10px; flex-wrap:wrap;
-    padding:26px 6vw 4px;
-    position:sticky; top:0; z-index:20;
-    background:linear-gradient(var(--cream) 78%, transparent);
-    padding-top:14px;
+    display:flex; gap:2px; flex-wrap:nowrap;
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+    padding:0 6vw;
+    position:sticky; top:0; z-index:999;
+    background:var(--cream);
+    border-bottom:1px solid var(--line);
   }
+  .cat-nav::-webkit-scrollbar{display:none;}
   .cat-btn{
-    border:1.5px solid var(--line);
-    background:var(--paper);
-    padding:9px 18px;
-    border-radius:999px;
+    border:none;
+    background:transparent;
+    padding:14px 16px 12px;
+    border-radius:0;
     font-family:'Sarabun'; font-weight:600; font-size:14.5px;
-    color:var(--plum);
+    color:#8a7680;
     cursor:pointer;
-    display:flex; align-items:center; gap:8px;
-    transition:all .15s ease;
+    white-space:nowrap;
+    flex-shrink:0;
+    position:relative;
+    transition:color .15s ease;
   }
-  .cat-btn:hover{border-color:var(--rose);}
-  .cat-btn.active{background:var(--rose); border-color:var(--rose); color:#fff;}
+  .cat-btn::after{
+    content:"";
+    position:absolute; left:14px; right:14px; bottom:-1px;
+    height:3px; border-radius:3px 3px 0 0;
+    background:transparent;
+    transition:background .15s ease;
+  }
+  .cat-btn:hover{color:var(--plum);}
+  .cat-btn.active{color:var(--sage-dark); font-weight:700;}
+  .cat-btn.active::after{background:var(--rose);}
 
   .filters-bar{
     display:flex; align-items:center; gap:12px; flex-wrap:wrap;
@@ -350,7 +363,7 @@
   .overlay{
     position:fixed; inset:0; background:rgba(59,42,51,0.35);
     opacity:0; pointer-events:none; transition:opacity .25s ease;
-    z-index:29;
+    z-index:1029;
   }
   .overlay.show{opacity:1; pointer-events:auto;}
 
@@ -361,7 +374,7 @@
     box-shadow:-14px 0 40px rgba(0,0,0,0.15);
     transform:translateX(100%);
     transition:transform .3s ease;
-    z-index:30;
+    z-index:1030;
     display:flex; flex-direction:column;
   }
   .drawer.open{transform:translateX(0);}
@@ -431,7 +444,7 @@
     position:fixed; bottom:26px; left:50%; transform:translateX(-50%) translateY(20px);
     background:var(--plum); color:#fff; padding:12px 22px; border-radius:999px;
     font-size:14px; font-weight:600; opacity:0; pointer-events:none;
-    transition:all .25s ease; z-index:40; box-shadow:var(--shadow);
+    transition:all .25s ease; z-index:1040; box-shadow:var(--shadow);
   }
   .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
 
@@ -442,7 +455,7 @@
   }
 
   .fab-cart{
-    position:fixed; right:20px; bottom:24px; z-index:25;
+    position:fixed; right:20px; bottom:24px; z-index:1025;
     background:var(--sage); color:#fff; border:none; border-radius:999px;
     padding:14px 22px; font-weight:700; font-size:14.5px;
     box-shadow:0 10px 26px rgba(246,33,136,0.4);
@@ -463,7 +476,7 @@
     background:var(--paper);
     border-radius:24px;
     box-shadow:0 20px 60px rgba(59,18,48,0.25);
-    z-index:41;
+    z-index:1041;
     display:none;
     grid-template-columns:1fr 1fr;
     overflow:hidden;
@@ -506,7 +519,7 @@
     background:var(--paper);
     border-radius:24px;
     box-shadow:0 20px 60px rgba(59,18,48,0.25);
-    z-index:41;
+    z-index:1041;
     display:none;
     flex-direction:column;
     overflow:hidden;
@@ -618,15 +631,17 @@
   }
 
   @media (max-width:520px){
-    header.top{padding:14px 5vw 10px; gap:10px;}
+    .search-cart-bar{padding:12px 5vw;}
     .brand-mark{width:36px;height:36px;}
     .brand-mark svg{width:20px;height:20px;}
     .search-input{padding:9px 0; font-size:13.5px;}
     .cart-btn-top{width:40px;height:40px;font-size:17px;}
+    .brand-row{padding:0 5vw 10px;}
     .brand-row h1{font-size:18px;}
     .brand-row p{font-size:11px;}
     .hero{padding:34px 24px; border-radius:22px;}
-    .cat-nav{padding:14px 5vw 4px;}
+    .cat-nav{padding:0 5vw;}
+    .cat-btn{padding:12px 12px 10px; font-size:13.5px;}
 
     /* 2 columns of products on mobile instead of 1 */
     .grid{grid-template-columns:1fr 1fr; gap:12px;}
@@ -647,21 +662,21 @@
 </head>
 <body>
 
-<header class="top">
-  <div class="topbar-row">
-    <div class="brand-mark">
-      <img src="images/logo.png" alt="โลโก้ร้าน" onerror="this.parentElement.innerHTML='<svg viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot;><path d=&quot;M12 2c1.5 2 1.5 4 0 6-1.5-2-1.5-4 0-6z&quot; fill=&quot;#FBF6EF&quot;/><path d=&quot;M12 22c-3-3-6-6-6-10a6 6 0 0112 0c0 4-3 7-6 10z&quot; fill=&quot;#FBF6EF&quot; opacity=&quot;0.9&quot;/></svg>'">
-    </div>
-    <div class="search-wrap">
-      <svg viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-      <input type="text" id="searchInput" class="search-input" placeholder="ค้นหาสินค้า เช่น กุหลาบ, กรอบรูป..." oninput="handleSearch(this.value)">
-      <button type="button" class="search-clear" id="searchClearBtn" style="display:none;" onclick="clearSearch()" aria-label="ล้างคำค้นหา">✕</button>
-    </div>
-    <button class="cart-btn-top" onclick="openCart()" aria-label="ตะกร้าสินค้า">
-      🧺
-      <span class="badge" id="cartBadge">0</span>
-    </button>
+<div class="search-cart-bar" id="searchCartBar">
+  <div class="brand-mark">
+    <img src="images/logo.png" alt="โลโก้ร้าน" onerror="this.parentElement.innerHTML='<svg viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot;><path d=&quot;M12 2c1.5 2 1.5 4 0 6-1.5-2-1.5-4 0-6z&quot; fill=&quot;#FBF6EF&quot;/><path d=&quot;M12 22c-3-3-6-6-6-10a6 6 0 0112 0c0 4-3 7-6 10z&quot; fill=&quot;#FBF6EF&quot; opacity=&quot;0.9&quot;/></svg>'">
   </div>
+  <div class="search-wrap">
+    <svg viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    <input type="text" id="searchInput" class="search-input" placeholder="ค้นหาสินค้า เช่น กุหลาบ, กรอบรูป..." oninput="handleSearch(this.value)">
+    <button type="button" class="search-clear" id="searchClearBtn" style="display:none;" onclick="clearSearch()" aria-label="ล้างคำค้นหา">✕</button>
+  </div>
+  <button class="cart-btn-top" onclick="openCart()" aria-label="ตะกร้าสินค้า">
+    🧺
+    <span class="badge" id="cartBadge">0</span>
+  </button>
+</div>
+<header class="top">
   <div class="brand-row">
     <h1>S.Flower Bloom</h1>
     <p>เลือกสินค้า แล้วสั่งซื้อผ่านแชทได้เลย</p>
@@ -969,7 +984,23 @@ function renderNav(){
   nav.innerHTML = CATS.map(c =>
     `<button class="cat-btn ${c===activeCat?'active':''}" onclick="scrollToCat('${c}')">${c}</button>`
   ).join('');
+  // เลื่อนแถบแท็บแนวนอนให้ปุ่มที่ active อยู่ในมุมมองเสมอ (เผื่อชื่อหมวดยาวจนล้นจอ)
+  const activeBtn = nav.querySelector('.cat-btn.active');
+  if(activeBtn) activeBtn.scrollIntoView({ behavior:'smooth', inline:'center', block:'nearest' });
 }
+// ความสูงรวมของแถบ sticky ด้านบน (แถบค้นหา+ตะกร้า และแถบหมวดหมู่) ใช้คำนวณระยะเลื่อน/scrollspy
+function stickyOffset(){
+  const bar = document.getElementById('searchCartBar');
+  const nav = document.getElementById('catNav');
+  return (bar ? bar.offsetHeight : 0) + (nav ? nav.offsetHeight : 0);
+}
+// ทำให้แถบหมวดหมู่ sticky ต่อท้ายแถบค้นหา (แทนที่จะซ้อนทับกันที่ top:0 เหมือนกัน)
+function updateStickyOffsets(){
+  const bar = document.getElementById('searchCartBar');
+  const nav = document.getElementById('catNav');
+  if(bar && nav) nav.style.top = bar.offsetHeight + 'px';
+}
+window.addEventListener('resize', updateStickyOffsets);
 // เมื่อกดแท็บหมวดหมู่ ให้เลื่อนหน้าจอไปยังหมวดนั้นแบบนุ่มนวล (แทนที่จะกรองสินค้า)
 // ส่วนสถานะ active ระหว่างเลื่อนดูเองจะถูกอัปเดตโดย setupScrollSpy()
 function scrollToCat(c){
@@ -977,16 +1008,15 @@ function scrollToCat(c){
   renderNav();
   const el = document.getElementById(catSectionId(c));
   if(!el) return;
-  const nav = document.getElementById('catNav');
-  const offset = (nav ? nav.offsetHeight : 0) + 10;
+  const offset = stickyOffset() + 8;
   const top = el.getBoundingClientRect().top + window.pageYOffset - offset;
   window.scrollTo({ top, behavior: 'smooth' });
 }
 // Scrollspy: ไล่ดูว่าตอนนี้หมวดไหนอยู่ใต้แถบเมนูพอดี แล้วไฮไลต์แท็บนั้นให้อัตโนมัติ
 function setupScrollSpy(){
   if(scrollSpyObserver) scrollSpyObserver.disconnect();
-  const nav = document.getElementById('catNav');
-  const navHeight = nav ? nav.offsetHeight : 60;
+  updateStickyOffsets();
+  const totalSticky = stickyOffset();
   const sections = document.querySelectorAll('#catalog .cat-section');
   if(!sections.length) return;
   scrollSpyObserver = new IntersectionObserver((entries) => {
@@ -999,7 +1029,7 @@ function setupScrollSpy(){
         }
       }
     });
-  }, { rootMargin: `-${navHeight + 4}px 0px -65% 0px`, threshold: 0 });
+  }, { rootMargin: `-${totalSticky + 4}px 0px -65% 0px`, threshold: 0 });
   sections.forEach(s => scrollSpyObserver.observe(s));
 }
 function setSize(cat, s){ activeSizes[cat] = s; renderCatalog(); }
