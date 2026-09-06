@@ -478,6 +478,7 @@
     transition:opacity .2s ease, transform .2s ease;
   }
   .product-modal.open{display:flex; opacity:1; transform:translate(-50%,-50%) scale(1);}
+  .modal-handle{display:none;}
   .modal-close{
     position:absolute; top:14px; right:14px; z-index:3;
     width:34px; height:34px; border-radius:50%; border:none;
@@ -540,10 +541,23 @@
       flex-direction:column; border-radius:0;
     }
     .product-modal.open{transform:translateY(0);}
-    .modal-img{flex:0 0 auto; height:38vh; min-height:180px;}
+    /* แถบขีดเล็กบนสุด บอกใบ้ว่านี่คือแผ่นเนื้อหาแบบเลื่อน/ปิดได้ */
+    .modal-handle{
+      display:block; flex:0 0 auto;
+      width:36px; height:4px; border-radius:999px;
+      background:var(--line);
+      margin:10px auto 0;
+    }
+    .modal-img{flex:0 0 auto; height:40vh; min-height:190px;}
     .modal-panel{flex:1 1 auto; min-height:0;}
-    .modal-scroll{padding:20px 20px 10px;}
-    .modal-actions{padding:12px 20px 18px;}
+    .modal-scroll{padding:18px 20px 8px;}
+    .modal-scroll h3{font-size:19px;}
+    .modal-desc{font-size:13px; margin:0 0 16px;}
+    .modal-field{margin-bottom:16px;}
+    .modal-price{font-size:22px; margin:0 0 14px;}
+    .modal-qty{margin-bottom:14px;}
+    .color-chip{padding:7px 14px; font-size:12.5px;}
+    .modal-actions{padding:12px 20px calc(18px + env(safe-area-inset-bottom, 0px));}
   }
 
   /* ---------- Order summary modal (copy + open) ---------- */
@@ -765,6 +779,7 @@
 
 <div class="overlay" id="modalOverlay" onclick="closeProductModal()"></div>
 <div class="product-modal" id="productModal">
+  <div class="modal-handle" onclick="closeProductModal()"></div>
   <button class="modal-close" onclick="closeProductModal()">✕</button>
   <div class="modal-img" id="modalImg"></div>
   <div class="modal-panel">
