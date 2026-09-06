@@ -486,70 +486,59 @@
     .fab-cart{right:16px; bottom:16px; padding:12px 18px; font-size:13.5px;}
   }
 
-  /* ---------- Product zoom modal ---------- */
-  .product-modal{
-    position:fixed; top:50%; left:50%;
-    transform:translate(-50%,-50%) scale(.96);
-    width:min(720px,92vw);
-    max-height:88vh;
+  /* ---------- Product detail page (full-page, Shopee/Lazada style — replaces the old centered pop-up) ---------- */
+  .product-page{
+    position:fixed; inset:0;
     background:var(--paper);
-    border-radius:24px;
-    box-shadow:0 20px 60px rgba(59,18,48,0.25);
     z-index:1041;
-    display:none;
-    flex-direction:column;
-    overflow:hidden;
-    opacity:0;
-    transition:opacity .2s ease, transform .2s ease;
+    display:flex; flex-direction:column;
+    transform:translateX(100%);
+    transition:transform .28s ease;
+    pointer-events:none;
   }
-  .product-modal.open{display:flex; opacity:1; transform:translate(-50%,-50%) scale(1);}
-  .modal-close{
-    position:absolute; top:14px; right:14px; z-index:2;
-    width:34px; height:34px; border-radius:50%; border:none;
-    background:rgba(59,18,48,0.55); color:#fff; font-size:16px; cursor:pointer;
+  .product-page.open{transform:translateX(0); pointer-events:auto;}
+  .page-back-btn{
+    position:absolute; top:14px; left:14px; z-index:2;
+    width:38px; height:38px; border-radius:50%; border:none;
+    background:rgba(59,18,48,0.55); color:#fff; font-size:19px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
   }
-  /* Scrollable area: everything above the buy buttons (image + details) scrolls together,
-     while the modal itself stays capped to the screen height. */
-  .modal-scroll{
+  /* Everything above the buy buttons (image + details) scrolls as one page;
+     only the bottom action bar stays fixed on screen. */
+  .product-page-scroll{
     flex:1;
     min-height:0;
     overflow-y:auto;
     -webkit-overflow-scrolling:touch;
-    display:grid;
-    grid-template-columns:1fr 1fr;
   }
-  .modal-img{
+  /* Full-width square photo at the top of the page — object-fit:contain so the
+     whole flower photo always shows, never cropped top/bottom. */
+  .page-img{
+    width:100%; aspect-ratio:1/1;
     background:var(--cream);
     display:flex; align-items:center; justify-content:center;
-    min-height:260px; overflow:hidden;
+    overflow:hidden;
     padding:18px;
   }
-  /* contain (not cover): show the whole photo, never crop top/bottom to fill the box */
-  .modal-img img{max-width:100%; max-height:100%; width:auto; height:auto; object-fit:contain; display:block;}
-  .modal-img svg{width:55%; height:55%;}
-  .modal-body{padding:26px 26px 24px;}
-  .modal-body h3{margin:0 0 8px; font-size:21px; color:var(--sage-dark);}
+  .page-img img{max-width:100%; max-height:100%; width:auto; height:auto; object-fit:contain; display:block;}
+  .page-img svg{width:45%; height:45%;}
+  .page-body{padding:22px 20px 28px;}
+  .page-body h3{margin:0 0 8px; font-size:22px; color:var(--sage-dark);}
   .modal-desc{font-size:13.5px; color:#6b5b62; line-height:1.5; margin:0 0 14px;}
   .modal-price{font-family:'Chonburi'; font-size:24px; color:var(--rose-dark); margin-bottom:16px;}
   .modal-qty{display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; font-size:14px; font-weight:600;}
-  /* Fixed/sticky bottom bar: sits outside the scroll area, so the buy buttons
-     are always visible no matter how far the customer has scrolled inside the pop-up. */
+  /* Fixed bottom bar: sits outside the scroll area, so the buy buttons
+     are always visible no matter how far the customer has scrolled down the page. */
   .modal-actions{
     display:flex; flex-direction:column; gap:10px;
     flex-shrink:0;
-    padding:14px 26px calc(14px + env(safe-area-inset-bottom, 0px));
+    padding:14px 20px calc(14px + env(safe-area-inset-bottom, 0px));
     background:var(--paper);
     border-top:1px solid var(--line);
     box-shadow:0 -6px 16px rgba(59,18,48,0.06);
   }
   .add-btn.secondary{background:#fff; color:var(--sage); border:1.5px solid var(--sage); justify-content:center; padding:12px;}
   .add-btn.secondary:hover{background:var(--cream);}
-
-  @media (max-width:640px){
-    .product-modal{max-height:92vh;}
-    .modal-scroll{grid-template-columns:1fr;}
-    .modal-img{min-height:200px;}
-  }
 
   /* ---------- Order summary modal (copy + open) ---------- */
   .order-modal{
@@ -766,12 +755,11 @@
   🧺 <span id="fabCount">0</span> ชิ้น · <span id="fabTotal">฿0</span>
 </button>
 
-<div class="overlay" id="modalOverlay" onclick="closeProductModal()"></div>
-<div class="product-modal" id="productModal">
-  <button class="modal-close" onclick="closeProductModal()">✕</button>
-  <div class="modal-scroll">
-    <div class="modal-img" id="modalImg"></div>
-    <div class="modal-body">
+<div class="product-page" id="productModal">
+  <button class="page-back-btn" onclick="closeProductModal()" aria-label="กลับ">←</button>
+  <div class="product-page-scroll" id="productPageScroll">
+    <div class="page-img" id="modalImg"></div>
+    <div class="page-body">
       <div id="modalBadges" style="margin-bottom:8px;"></div>
       <h3 id="modalName"></h3>
       <p class="modal-desc" id="modalDesc"></p>
@@ -798,7 +786,7 @@
   </div>
   <div class="modal-actions">
     <button class="add-btn secondary" onclick="addModalToCart()">🧺 ใส่ตะกร้า</button>
-    <button class="checkout-btn" onclick="startCheckout(buildModalOrderLines)">🌸 สั่งซื้อทันที</button>
+    <button class="checkout-btn" onclick="startCheckout(buildModalOrderLines)">🌸 ซื้อเลย</button>
   </div>
 </div>
 
@@ -1649,22 +1637,38 @@ let modalProductId = null;
 let modalQty = 1;
 let modalBills = 1;
 
+// Full-page product view (not a floating pop-up) — behaves like a real "page" so the
+// device/browser back button closes it and returns to the catalog, like a native app.
 function openProductModal(id){
   modalProductId = id;
   modalQty = 1;
   const p = PRODUCTS.find(x=>x.id===id);
   modalBills = p && p.billSelector ? (p.minBills||1) : 1;
   renderModal();
-  document.getElementById('productModal').classList.add('open');
-  document.getElementById('modalOverlay').classList.add('show');
+  const page = document.getElementById('productModal');
+  page.classList.add('open');
+  const scrollArea = document.getElementById('productPageScroll');
+  if(scrollArea) scrollArea.scrollTop = 0;
+  document.body.style.overflow = 'hidden';
+  history.pushState({ productPage:true }, '', '#product');
   updateChatFabVisibility();
 }
-function closeProductModal(){
-  document.getElementById('productModal').classList.remove('open');
-  document.getElementById('modalOverlay').classList.remove('show');
+function closeProductModal(fromPopState){
+  const page = document.getElementById('productModal');
+  if(!page.classList.contains('open')) return;
+  page.classList.remove('open');
+  document.body.style.overflow = '';
   modalProductId = null;
   updateChatFabVisibility();
+  if(!fromPopState && history.state && history.state.productPage){
+    history.back();
+  }
 }
+window.addEventListener('popstate', function(){
+  if(document.getElementById('productModal').classList.contains('open')){
+    closeProductModal(true);
+  }
+});
 function changeModalQty(delta){
   modalQty = Math.max(1, modalQty + delta);
   document.getElementById('modalQty').textContent = modalQty;
