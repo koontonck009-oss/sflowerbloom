@@ -283,24 +283,36 @@
   .card{
     background:var(--paper);
     border-radius:20px;
-    padding:16px;
     box-shadow:var(--shadow);
     display:flex; flex-direction:column;
+    overflow:hidden;
     transition:transform .18s ease, box-shadow .18s ease;
     border:1px solid transparent;
+    cursor:pointer;
   }
   .card:hover{transform:translateY(-4px); border-color:var(--line);}
-  .thumb-wrap{position:relative; margin-bottom:14px;}
+  .card-body{
+    padding:14px 16px 16px;
+    flex:1;
+    display:flex; flex-direction:column;
+  }
+  .option-badge{
+    display:inline-block; align-self:flex-start;
+    font-size:11px; font-weight:700; color:var(--sage-dark);
+    background:rgba(246,33,136,0.10);
+    padding:3px 9px; border-radius:999px;
+    margin:8px 0 0;
+  }
+  .thumb-wrap{position:relative;}
   .thumb{
     width:100%; aspect-ratio:1/1;
-    border-radius:14px;
     background:var(--cream);
     display:flex; align-items:center; justify-content:center;
     overflow:hidden;
+    cursor:pointer;
   }
   .thumb svg{width:70%;height:70%;}
   .thumb img{width:100%; height:100%; object-fit:cover; display:block;}
-  .thumb{cursor:pointer; margin-bottom:0;}
   .thumb:hover{opacity:0.92;}
   .badge-ready{
     position:absolute; top:8px; left:8px; z-index:2;
@@ -329,7 +341,9 @@
     transition:all .15s ease;
   }
   .color-chip.active{background:var(--sage); border-color:var(--sage); color:#fff;}
-  .card .desc{font-size:13px; color:#6b5b62; margin:0 0 10px; min-height:34px; line-height:1.4;}
+  /* Short description: only shown in the catalog card on wider (desktop) screens — see mobile override below */
+  .card .desc{font-size:13px; color:#6b5b62; margin:0 0 10px; line-height:1.4;
+    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;}
   .card .price-row{
     display:flex; align-items:center; justify-content:space-between;
     margin-top:auto;
@@ -483,16 +497,26 @@
     box-shadow:0 20px 60px rgba(59,18,48,0.25);
     z-index:1041;
     display:none;
-    grid-template-columns:1fr 1fr;
+    flex-direction:column;
     overflow:hidden;
     opacity:0;
     transition:opacity .2s ease, transform .2s ease;
   }
-  .product-modal.open{display:grid; opacity:1; transform:translate(-50%,-50%) scale(1);}
+  .product-modal.open{display:flex; opacity:1; transform:translate(-50%,-50%) scale(1);}
   .modal-close{
     position:absolute; top:14px; right:14px; z-index:2;
     width:34px; height:34px; border-radius:50%; border:none;
     background:rgba(59,18,48,0.55); color:#fff; font-size:16px; cursor:pointer;
+  }
+  /* Scrollable area: everything above the buy buttons (image + details) scrolls together,
+     while the modal itself stays capped to the screen height. */
+  .modal-scroll{
+    flex:1;
+    min-height:0;
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    display:grid;
+    grid-template-columns:1fr 1fr;
   }
   .modal-img{
     background:var(--cream);
@@ -501,17 +525,27 @@
   }
   .modal-img img{width:100%; height:100%; object-fit:cover; display:block;}
   .modal-img svg{width:55%; height:55%;}
-  .modal-body{padding:26px 26px 24px; overflow-y:auto;}
+  .modal-body{padding:26px 26px 24px;}
   .modal-body h3{margin:0 0 8px; font-size:21px; color:var(--sage-dark);}
   .modal-desc{font-size:13.5px; color:#6b5b62; line-height:1.5; margin:0 0 14px;}
   .modal-price{font-family:'Chonburi'; font-size:24px; color:var(--rose-dark); margin-bottom:16px;}
   .modal-qty{display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; font-size:14px; font-weight:600;}
-  .modal-actions{display:flex; flex-direction:column; gap:10px;}
+  /* Fixed/sticky bottom bar: sits outside the scroll area, so the buy buttons
+     are always visible no matter how far the customer has scrolled inside the pop-up. */
+  .modal-actions{
+    display:flex; flex-direction:column; gap:10px;
+    flex-shrink:0;
+    padding:14px 26px calc(14px + env(safe-area-inset-bottom, 0px));
+    background:var(--paper);
+    border-top:1px solid var(--line);
+    box-shadow:0 -6px 16px rgba(59,18,48,0.06);
+  }
   .add-btn.secondary{background:#fff; color:var(--sage); border:1.5px solid var(--sage); justify-content:center; padding:12px;}
   .add-btn.secondary:hover{background:var(--cream);}
 
   @media (max-width:640px){
-    .product-modal{grid-template-columns:1fr; max-height:92vh;}
+    .product-modal{max-height:92vh;}
+    .modal-scroll{grid-template-columns:1fr;}
     .modal-img{min-height:200px;}
   }
 
@@ -650,18 +684,13 @@
 
     /* 2 columns of products on mobile instead of 1 */
     .grid{grid-template-columns:1fr 1fr; gap:12px;}
-    .card{padding:10px; border-radius:16px;}
-    .thumb{border-radius:10px;}
+    .card{border-radius:16px;}
+    .card-body{padding:10px 10px 12px;}
     .badge-ready, .badge-new{font-size:9.5px; padding:3px 8px; top:6px;}
     .card h4{font-size:13.5px; margin:0 0 3px; line-height:1.3;}
-    .card .desc{font-size:11.5px; min-height:0; margin:0 0 8px; line-height:1.35;
-      display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;}
-    .color-row{gap:4px; margin:-2px 0 8px;}
-    .color-chip{font-size:10px; padding:4px 8px;}
+    .card .desc{display:none;}
+    .option-badge{font-size:10px; padding:3px 8px; margin:6px 0 0;}
     .price{font-size:15px;}
-    .card-actions{gap:6px; margin-top:8px;}
-    .buy-now-btn{font-size:11.5px; padding:9px 4px;}
-    .cart-icon-btn{width:32px; height:32px; font-size:13px;}
   }
 </style>
 </head>
@@ -738,34 +767,36 @@
 <div class="overlay" id="modalOverlay" onclick="closeProductModal()"></div>
 <div class="product-modal" id="productModal">
   <button class="modal-close" onclick="closeProductModal()">✕</button>
-  <div class="modal-img" id="modalImg"></div>
-  <div class="modal-body">
-    <div id="modalBadges" style="margin-bottom:8px;"></div>
-    <h3 id="modalName"></h3>
-    <p class="modal-desc" id="modalDesc"></p>
-    <div class="color-row" id="modalColors"></div>
-    <div class="color-row" id="modalSizes"></div>
-    <div class="modal-qty" id="modalBillsRow" style="display:none;">
-      <span>จำนวนธนบัตร (ใบ)</span>
-      <div class="qty-ctrl">
-        <button onclick="changeModalBills(-1)">−</button>
-        <span id="modalBills">1</span>
-        <button onclick="changeModalBills(1)">+</button>
+  <div class="modal-scroll">
+    <div class="modal-img" id="modalImg"></div>
+    <div class="modal-body">
+      <div id="modalBadges" style="margin-bottom:8px;"></div>
+      <h3 id="modalName"></h3>
+      <p class="modal-desc" id="modalDesc"></p>
+      <div class="color-row" id="modalColors"></div>
+      <div class="color-row" id="modalSizes"></div>
+      <div class="modal-qty" id="modalBillsRow" style="display:none;">
+        <span>จำนวนธนบัตร (ใบ)</span>
+        <div class="qty-ctrl">
+          <button onclick="changeModalBills(-1)">−</button>
+          <span id="modalBills">1</span>
+          <button onclick="changeModalBills(1)">+</button>
+        </div>
+      </div>
+      <div class="modal-price" id="modalPrice"></div>
+      <div class="modal-qty">
+        <span>จำนวนช่อ</span>
+        <div class="qty-ctrl">
+          <button onclick="changeModalQty(-1)">−</button>
+          <span id="modalQty">1</span>
+          <button onclick="changeModalQty(1)">+</button>
+        </div>
       </div>
     </div>
-    <div class="modal-price" id="modalPrice"></div>
-    <div class="modal-qty">
-      <span>จำนวนช่อ</span>
-      <div class="qty-ctrl">
-        <button onclick="changeModalQty(-1)">−</button>
-        <span id="modalQty">1</span>
-        <button onclick="changeModalQty(1)">+</button>
-      </div>
-    </div>
-    <div class="modal-actions">
-      <button class="add-btn secondary" onclick="addModalToCart()">🧺 ใส่ตะกร้า</button>
-      <button class="checkout-btn" onclick="startCheckout(buildModalOrderLines)">🌸 สั่งซื้อทันที</button>
-    </div>
+  </div>
+  <div class="modal-actions">
+    <button class="add-btn secondary" onclick="addModalToCart()">🧺 ใส่ตะกร้า</button>
+    <button class="checkout-btn" onclick="startCheckout(buildModalOrderLines)">🌸 สั่งซื้อทันที</button>
   </div>
 </div>
 
@@ -1058,40 +1089,27 @@ function renderPriceFilter(){
   sel.innerHTML = PRICE_RANGES.map((r,i) => `<option value="${i}" ${i===activePriceRange?'selected':''}>💰 ${r.label}</option>`).join('');
 }
 
+// A product "มีตัวเลือกสินค้า" if the customer has to pick between colors,
+// sizes, or a bill count before the price/line item is final.
+function hasProductOptions(p){
+  return !!(p.colors || p.sizes || p.billSelector);
+}
 function renderProductCard(p){
   return `
-    <div class="card">
+    <div class="card" onclick="openProductModal('${p.id}')">
       <div class="thumb-wrap">
-        <div class="thumb" onclick="openProductModal('${p.id}')">${renderThumb(p)}</div>
+        <div class="thumb">${renderThumb(p)}</div>
         ${currentReadyState(p) ? '<span class="badge-ready">พร้อมส่ง</span>' : ''}
         ${p.isNew ? '<span class="badge-new">ใหม่</span>' : ''}
       </div>
-      ${p.colors ? `
-        <div class="color-row">
-          ${p.colors.map((c,i) => `
-            <button class="color-chip ${((selectedColor[p.id]||0)===i)?'active':''}" onclick="selectColor('${p.id}',${i})">${c.name}</button>
-          `).join('')}
+      <div class="card-body">
+        <h4>${p.name}</h4>
+        <p class="desc">${p.desc || ''}</p>
+        <div class="price-row">
+          <span class="price">${p.billSelector ? `เริ่มต้น ${fmt(displayPrice(p))}` : fmt(displayPrice(p))}</span>
         </div>
-      ` : ''}
-      ${p.sizes ? `
-        <div class="color-row">
-          ${p.sizes.map((s,i) => `
-            <button class="color-chip ${((selectedSizeVariant[p.id]||0)===i)?'active':''}" onclick="selectSizeVariant('${p.id}',${i})">${s.name}</button>
-          `).join('')}
-        </div>
-      ` : ''}
-      <h4>${p.name}</h4>
-      <p class="desc">${p.desc}</p>
-      <div class="price-row">
-        <span class="price">${p.billSelector ? `เริ่มต้น ${fmt(displayPrice(p))}` : fmt(displayPrice(p))}</span>
+        ${hasProductOptions(p) ? '<span class="option-badge">เลือกแบบ/สีได้</span>' : ''}
       </div>
-      ${p.billSelector
-        ? `<button class="add-btn" style="width:100%; justify-content:center;" onclick="openProductModal('${p.id}')">เลือกจำนวน</button>`
-        : `<div class="card-actions">
-            <button class="buy-now-btn" onclick="quickOrder('${p.id}')">🌸 สั่งเลย</button>
-            <button class="cart-icon-btn" id="add-${p.id}" onclick="addToCart('${p.id}')" title="ใส่ตะกร้า" aria-label="ใส่ตะกร้า">🧺</button>
-          </div>`
-      }
     </div>
   `;
 }
