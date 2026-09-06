@@ -467,7 +467,7 @@
   }
   .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
 
-  .card-addon-toggle{display:flex; margin-bottom:4px;}
+  .card-addon-toggle{display:flex; margin:2px 0 12px;}
   .clear-cart-btn{
     background:none; border:none; color:var(--rose-dark); font-size:12.5px;
     text-decoration:underline; cursor:pointer; padding:0; font-family:'Sarabun';
@@ -629,39 +629,86 @@
     }
   }
 
-  /* ---------- Order summary modal (copy + open) ---------- */
+  /* ---------- Order summary: mobile bottom sheet, desktop centered modal ---------- */
   .order-modal{
-    position:fixed; top:50%; left:50%;
-    transform:translate(-50%,-50%) scale(.96);
-    width:min(460px,92vw);
-    max-height:88vh;
+    position:fixed; left:0; right:0; bottom:0; top:auto;
+    width:100%;
+    max-height:92vh;
     background:var(--paper);
-    border-radius:24px;
-    box-shadow:0 20px 60px rgba(59,18,48,0.25);
+    border-radius:22px 22px 0 0;
+    box-shadow:0 -10px 40px rgba(59,18,48,0.22);
     z-index:1041;
-    display:none;
+    display:flex;
     flex-direction:column;
     overflow:hidden;
-    opacity:0;
-    transition:opacity .2s ease, transform .2s ease;
+    transform:translateY(100%);
+    visibility:hidden;
+    pointer-events:none;
+    transition:transform .3s ease, visibility .3s ease;
   }
-  .order-modal.open{display:flex; opacity:1; transform:translate(-50%,-50%) scale(1);}
+  .order-modal.open{transform:translateY(0); visibility:visible; pointer-events:auto;}
+  .sheet-handle{
+    width:38px; height:4px; border-radius:999px;
+    background:var(--line); margin:12px auto 0; flex-shrink:0;
+  }
+  .modal-close{
+    position:absolute; top:14px; right:14px; z-index:2;
+    width:32px; height:32px; border-radius:50%; border:none;
+    background:var(--cream); color:var(--plum);
+    font-size:14px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    transition:background .15s ease, transform .15s ease;
+  }
+  .modal-close:hover{background:var(--line); transform:translateY(-1px);}
   .order-modal .modal-body{
-    padding:28px 24px 24px;
-    overflow-y:auto;
-    flex:1;
-    min-height:0;
+    flex:1; min-height:0;
+    display:flex; flex-direction:column;
+    overflow:hidden;
+  }
+  .order-modal-head{
+    flex-shrink:0;
+    padding:14px 52px 12px 22px;
+    border-bottom:1px solid var(--line);
   }
   .order-summary-heading{
-    margin:0 0 8px; font-size:16px; color:var(--sage-dark); font-family:'Sarabun'; font-weight:700;
+    margin:0; font-size:16.5px; color:var(--sage-dark); font-family:'Sarabun'; font-weight:700;
   }
-  .order-summary-text{
-    white-space:pre-wrap; word-break:break-word;
-    background:var(--cream); border:1.5px solid var(--line); border-radius:14px; padding:14px;
-    font-family:'Sarabun'; font-size:13.5px; line-height:1.65;
-    max-height:260px; overflow-y:auto; margin:0 0 18px; color:var(--plum);
+  .order-modal-scroll{
+    flex:1; min-height:0; overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    padding:18px 22px 6px;
   }
-  .app-tip{font-size:11.5px; color:#8a7680; text-align:center; margin-top:10px; line-height:1.5;}
+  .order-modal-footer{
+    flex-shrink:0;
+    padding:14px 22px calc(14px + env(safe-area-inset-bottom, 0px));
+    border-top:1px solid var(--line);
+    background:var(--paper);
+    box-shadow:0 -6px 16px rgba(59,18,48,0.05);
+  }
+  #orderSuccessView{
+    padding:30px 24px calc(24px + env(safe-area-inset-bottom, 0px));
+    overflow-y:auto; justify-content:center;
+  }
+
+  /* Itemized order list, replacing the old plain-text summary dump */
+  .order-items-list{
+    background:var(--cream); border:1.5px solid var(--line); border-radius:16px;
+    padding:2px 14px; margin:0 0 18px;
+  }
+  .order-item-row{
+    display:flex; justify-content:space-between; align-items:flex-start; gap:12px;
+    padding:12px 0; border-bottom:1px solid var(--line);
+  }
+  .order-item-row:last-child{border-bottom:none;}
+  .order-item-info{display:flex; flex-direction:column; gap:3px; min-width:0;}
+  .order-item-name{font-size:14px; font-weight:700; color:var(--plum); line-height:1.35;}
+  .order-item-meta{font-size:12px; color:#8a7680;}
+  .order-item-price{
+    font-family:'Chonburi'; font-size:15px; color:var(--rose-dark);
+    flex-shrink:0; white-space:nowrap; padding-top:1px;
+  }
+
+  .app-tip{font-size:11.5px; color:#8a7680; text-align:center; margin:14px 0 4px; line-height:1.5;}
   .fb-name-chip{
     display:flex; align-items:center; justify-content:space-between; gap:10px;
     background:var(--cream); border-radius:12px; padding:10px 14px; margin-bottom:14px;
@@ -706,15 +753,29 @@
     border-radius:999px; padding:11px 20px; cursor:pointer;
   }
 
-  /* ---------- Order details form (date / delivery method / address) ---------- */
-  .form-group{margin-bottom:16px;}
-  .form-group label{display:block; font-size:13.5px; font-weight:700; margin-bottom:6px; color:var(--plum);}
-  .form-input{
-    width:100%; padding:10px 12px; border-radius:12px; border:1.5px solid var(--line);
-    font-family:'Sarabun'; font-size:14px; color:var(--plum); background:#fff;
-    resize:vertical;
+  /* Desktop: centered floating card instead of a bottom sheet */
+  @media (min-width:860px){
+    .sheet-handle{display:none;}
+    .order-modal{
+      left:50%; right:auto; bottom:auto; top:50%;
+      width:min(480px, 92vw);
+      max-height:85vh;
+      border-radius:24px;
+      box-shadow:0 20px 60px rgba(59,18,48,0.25);
+      transform:translate(-50%,-50%) translateY(14px);
+    }
+    .order-modal.open{transform:translate(-50%,-50%) translateY(0);}
   }
-  .form-input:focus{outline:none; border-color:var(--sage);}
+
+  /* ---------- Order details form (date / delivery method / address) ---------- */
+  .form-group{margin-bottom:18px;}
+  .form-group label{display:block; font-size:13.5px; font-weight:700; margin-bottom:7px; color:var(--plum);}
+  .form-input{
+    width:100%; padding:11px 13px; border-radius:13px; border:1.5px solid var(--line);
+    font-family:'Sarabun'; font-size:14px; color:var(--plum); background:var(--cream);
+    resize:vertical; transition:border-color .15s ease, background .15s ease;
+  }
+  .form-input:focus{outline:none; border-color:var(--sage); background:#fff;}
   .checkbox-label{display:flex; align-items:center; gap:8px; font-size:13.5px; font-weight:600; cursor:pointer; color:var(--plum);}
   .checkbox-label input{width:18px; height:18px; cursor:pointer; accent-color:var(--sage);}
   .field-hint{font-size:12px; color:#8a7680; margin:6px 0 0; line-height:1.5;}
@@ -887,68 +948,73 @@
 
 <div class="overlay" id="summaryOverlay" onclick="closeOrderSummary()"></div>
 <div class="order-modal" id="orderSummaryModal">
-  <button class="modal-close" onclick="closeOrderSummary()">✕</button>
+  <span class="sheet-handle" aria-hidden="true"></span>
+  <button class="modal-close" onclick="closeOrderSummary()" aria-label="ปิด">✕</button>
 
   <div class="modal-body" id="orderReviewView">
-    <h4 class="order-summary-heading">🛍️ ออเดอร์ของคุณ</h4>
-    <pre id="orderSummaryText" class="order-summary-text"></pre>
-    <div id="fbNameDisplay"></div>
-
-    <div class="form-group">
-      <label for="pickupDateInput">📅 วันที่ต้องการรับสินค้า</label>
-      <input type="date" id="pickupDateInput" class="form-input">
-      <p class="field-hint">💡 ช่อพร้อมส่งหรืองานเร่งเลือกวันใกล้ๆ ได้เลย แต่ถ้าเป็นช่อที่ต้องเตรียมพิเศษ แนะนำสั่งล่วงหน้า <strong>3-5 วัน</strong> — แอดมินจะทักแจ้งอีกครั้งหากทำไม่ทันวันที่เลือกไว้</p>
+    <div class="order-modal-head">
+      <h4 class="order-summary-heading">สรุปคำสั่งซื้อ</h4>
     </div>
 
-    <div class="form-group">
-      <label>🚚 วิธีรับสินค้า</label>
-      <div class="radio-group">
-        <label class="radio-option"><input type="radio" name="deliveryMethod" value="pickup" onchange="onDeliveryMethodChange()"> 🚗 นัดรับสินค้า (พยุหะ–ตัวเมืองนครสวรรค์และใกล้เคียง)</label>
-        <label class="radio-option"><input type="radio" name="deliveryMethod" value="parcel" onchange="onDeliveryMethodChange()"> 📦 ส่งพัสดุ (ต่างจังหวัด)</label>
-        <label class="radio-option"><input type="radio" name="deliveryMethod" value="unsure" onchange="onDeliveryMethodChange()"> ยังไม่แน่ใจ</label>
+    <div class="order-modal-scroll">
+      <div class="order-items-list" id="orderItemsList"></div>
+      <div id="fbNameDisplay"></div>
+
+      <div class="form-group">
+        <label for="pickupDateInput">📅 วันที่ต้องการรับสินค้า</label>
+        <input type="date" id="pickupDateInput" class="form-input">
+        <p class="field-hint">💡 ช่อพร้อมส่งหรืองานเร่งเลือกวันใกล้ๆ ได้เลย แต่ถ้าเป็นช่อที่ต้องเตรียมพิเศษ แนะนำสั่งล่วงหน้า <strong>3-5 วัน</strong> — แอดมินจะทักแจ้งอีกครั้งหากทำไม่ทันวันที่เลือกไว้</p>
       </div>
-      <p class="field-hint" id="deliveryMethodHint"></p>
-    </div>
 
-    <div class="form-group" id="pickupInfoGroup" style="display:none;">
-      <label for="pickupLocationInput">📍 สถานที่นัดรับ <span style="font-weight:400;">(ไม่บังคับ)</span></label>
-      <input type="text" id="pickupLocationInput" class="form-input" placeholder="เช่น เซเว่นหน้าตลาดพยุหะ, ปั๊มน้ำมัน..." style="margin-bottom:10px;">
-      <label for="pickupPhoneInput">📞 เบอร์โทรติดต่อวันนัดรับ <span style="font-weight:400;">(ไม่บังคับ)</span></label>
-      <input type="tel" id="pickupPhoneInput" class="form-input" placeholder="เบอร์โทรที่ติดต่อได้ในวันนัดรับ">
-    </div>
-
-    <div class="form-group" id="deliveryAddressGroup" style="display:none;">
-      <label for="deliveryAddressInput">📍 ที่อยู่จัดส่ง</label>
-      <textarea id="deliveryAddressInput" class="form-input" rows="2" placeholder="ที่อยู่สำหรับจัดส่ง พร้อมเบอร์โทรผู้รับ"></textarea>
-    </div>
-
-    <div class="form-group">
-      <label>💳 การชำระเงิน</label>
-      <div class="radio-group">
-        <label class="radio-option"><input type="radio" name="paymentMethod" value="full" onchange="renderOrderTotalSummary()"> โอนเต็มยอด</label>
-        <label class="radio-option" id="depositPaymentOption"><input type="radio" name="paymentMethod" value="deposit" onchange="renderOrderTotalSummary()"> มัดจำ 50% ส่วนที่เหลือชำระวันทำช่อดอกไม้เสร็จ</label>
-        <label class="radio-option" id="codPaymentOption" style="display:none;"><input type="radio" name="paymentMethod" value="cod" onchange="renderOrderTotalSummary()"> เก็บเงินปลายทาง (COD) — เฉพาะช่อพร้อมส่ง</label>
+      <div class="form-group">
+        <label>🚚 วิธีรับสินค้า</label>
+        <div class="radio-group">
+          <label class="radio-option"><input type="radio" name="deliveryMethod" value="pickup" onchange="onDeliveryMethodChange()"> 🚗 นัดรับสินค้า (พยุหะ–ตัวเมืองนครสวรรค์และใกล้เคียง)</label>
+          <label class="radio-option"><input type="radio" name="deliveryMethod" value="parcel" onchange="onDeliveryMethodChange()"> 📦 ส่งพัสดุ (ต่างจังหวัด)</label>
+          <label class="radio-option"><input type="radio" name="deliveryMethod" value="unsure" onchange="onDeliveryMethodChange()"> ยังไม่แน่ใจ</label>
+        </div>
+        <p class="field-hint" id="deliveryMethodHint"></p>
       </div>
+
+      <div class="form-group" id="pickupInfoGroup" style="display:none;">
+        <label for="pickupLocationInput">📍 สถานที่นัดรับ <span style="font-weight:400;">(ไม่บังคับ)</span></label>
+        <input type="text" id="pickupLocationInput" class="form-input" placeholder="เช่น เซเว่นหน้าตลาดพยุหะ, ปั๊มน้ำมัน..." style="margin-bottom:10px;">
+        <label for="pickupPhoneInput">📞 เบอร์โทรติดต่อวันนัดรับ <span style="font-weight:400;">(ไม่บังคับ)</span></label>
+        <input type="tel" id="pickupPhoneInput" class="form-input" placeholder="เบอร์โทรที่ติดต่อได้ในวันนัดรับ">
+      </div>
+
+      <div class="form-group" id="deliveryAddressGroup" style="display:none;">
+        <label for="deliveryAddressInput">📍 ที่อยู่จัดส่ง</label>
+        <textarea id="deliveryAddressInput" class="form-input" rows="2" placeholder="ที่อยู่สำหรับจัดส่ง พร้อมเบอร์โทรผู้รับ"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>💳 การชำระเงิน</label>
+        <div class="radio-group">
+          <label class="radio-option"><input type="radio" name="paymentMethod" value="full" onchange="renderOrderTotalSummary()"> โอนเต็มยอด</label>
+          <label class="radio-option" id="depositPaymentOption"><input type="radio" name="paymentMethod" value="deposit" onchange="renderOrderTotalSummary()"> มัดจำ 50% ส่วนที่เหลือชำระวันทำช่อดอกไม้เสร็จ</label>
+          <label class="radio-option" id="codPaymentOption" style="display:none;"><input type="radio" name="paymentMethod" value="cod" onchange="renderOrderTotalSummary()"> เก็บเงินปลายทาง (COD) — เฉพาะช่อพร้อมส่ง</label>
+        </div>
+      </div>
+
+      <label class="checkbox-label card-addon-toggle">
+        <input type="checkbox" id="addCardCart"> 🎀 เพิ่มการ์ดอวยพร (ฟรี)
+      </label>
+      <textarea id="orderNoteInput" class="form-input" rows="2" placeholder="หมายเหตุ (เช่น อยากเปลี่ยน/เพิ่มสีช่อดอกไม้ ข้อความในการ์ด หรือข้อความอื่นๆ ถึงร้าน)"></textarea>
+      <p class="app-tip">💡 ยังไม่เคยทักแชทเพจใช่ไหม <a href="#" id="messengerLink" target="_blank" rel="noopener">เปิดแชท Facebook Messenger ที่นี่</a> เพื่อทักหาแอดมินไว้ก่อนได้เลยค่ะ (ใช้ชื่อเดียวกับที่แจ้งไว้)</p>
     </div>
 
-    <div class="order-total-box" id="orderTotalBox">
-      <div class="total-line"><span>รวมค่าสินค้า</span><span id="totalBoxSubtotal">฿0</span></div>
-      <div class="total-line" id="totalBoxShippingLine"><span>ค่าจัดส่ง</span><span id="totalBoxShipping">–</span></div>
-      <div class="total-line grand"><span>ยอดรวม<span id="totalBoxApproxNote"></span></span><span id="totalBoxGrand">฿0</span></div>
+    <div class="order-modal-footer">
+      <div class="order-total-box" id="orderTotalBox">
+        <div class="total-line"><span>รวมค่าสินค้า</span><span id="totalBoxSubtotal">฿0</span></div>
+        <div class="total-line" id="totalBoxShippingLine"><span>ค่าจัดส่ง</span><span id="totalBoxShipping">–</span></div>
+        <div class="total-line grand"><span>ยอดรวม<span id="totalBoxApproxNote"></span></span><span id="totalBoxGrand">฿0</span></div>
+      </div>
+      <button class="checkout-btn" id="confirmOrderBtn" onclick="confirmOrderSubmit()">ยืนยันสั่งซื้อ</button>
     </div>
-
-
-    <label class="checkbox-label card-addon-toggle">
-      <input type="checkbox" id="addCardCart"> 🎀 เพิ่มการ์ดอวยพร (ฟรี)
-    </label>
-    <textarea id="orderNoteInput" class="form-input" rows="2" placeholder="หมายเหตุ (เช่น อยากเปลี่ยน/เพิ่มสีช่อดอกไม้ ข้อความในการ์ด หรือข้อความอื่นๆ ถึงร้าน)" style="margin-bottom:14px;"></textarea>
-    <div class="modal-actions">
-      <button class="checkout-btn" id="confirmOrderBtn" onclick="confirmOrderSubmit()">✅ ยืนยันสั่งซื้อ</button>
-    </div>
-    <p class="app-tip">💡 ยังไม่เคยทักแชทเพจใช่ไหม <a href="#" id="messengerLink" target="_blank" rel="noopener">เปิดแชท Facebook Messenger ที่นี่</a> เพื่อทักหาแอดมินไว้ก่อนได้เลยค่ะ (ใช้ชื่อเดียวกับที่แจ้งไว้)</p>
   </div>
 
-  <div class="modal-body" id="orderSuccessView" style="display:none;">
+  <div class="modal-body" id="orderSuccessView" style="display:none; overflow-y:auto;">
     <div class="copied-banner">✅ รับออเดอร์ของคุณแล้ว</div>
     <div class="order-no-chip" id="orderNoChip"></div>
     <p class="paste-instruction">📌 <strong>ขั้นตอนต่อไป:</strong> กดปุ่ม "ทักแชทแจ้งเลขออเดอร์" ด้านล่าง ระบบจะคัดลอกเลขที่ออเดอร์ให้อัตโนมัติ แล้วเปิดแชท Facebook Messenger ของร้าน — เมื่อแชทเปิดขึ้นมา แค่วางข้อความที่คัดลอกไว้แล้วส่งได้เลย แอดมินจะได้เห็นเลขออเดอร์และยืนยันรายการ พร้อมแจ้งยอด/วิธีรับ-จัดส่งให้ค่ะ 🌸</p>
@@ -1533,22 +1599,34 @@ function resetOrderDetailFields(){
 
   renderOrderTotalSummary();
 }
+function renderOrderItemsList(items){
+  const wrap = document.getElementById('orderItemsList');
+  wrap.innerHTML = (items||[]).map(it => `
+    <div class="order-item-row">
+      <div class="order-item-info">
+        <span class="order-item-name">${it.name}</span>
+        <span class="order-item-meta">${it.label ? it.label + ' · ' : ''}x${it.qty}</span>
+      </div>
+      <span class="order-item-price">${fmt(it.lineTotal)}</span>
+    </div>
+  `).join('');
+}
 function showOrderSummary(message, subtotal, items){
   currentOrderMessage = message;
   currentOrderSubtotal = subtotal || 0;
   currentOrderItems = items || [];
-  document.getElementById('orderSummaryText').textContent = message;
+  renderOrderItemsList(currentOrderItems);
   renderFbNameDisplay(false);
   resetOrderDetailFields();
   document.getElementById('orderNoteInput').value = '';
   const cardEl = document.getElementById('addCardCart');
   if(cardEl) cardEl.checked = false;
   document.getElementById('messengerLink').href = PAGE_LINK;
-  document.getElementById('orderReviewView').style.display = 'block';
+  document.getElementById('orderReviewView').style.display = 'flex';
   document.getElementById('orderSuccessView').style.display = 'none';
   const btn = document.getElementById('confirmOrderBtn');
   btn.disabled = false;
-  btn.textContent = '✅ ยืนยันสั่งซื้อ';
+  btn.textContent = 'ยืนยันสั่งซื้อ';
   document.getElementById('orderSummaryModal').classList.add('open');
   document.getElementById('summaryOverlay').classList.add('show');
   closeCart();
@@ -1710,10 +1788,10 @@ async function confirmOrderSubmit(){
     document.getElementById('orderNoChip').innerHTML =
       `เลขที่ออเดอร์ของคุณ<br><strong>${orderNo} <button type="button" class="order-no-copy-btn" onclick="copyOrderNo()">คัดลอก</button></strong>`;
     document.getElementById('orderReviewView').style.display = 'none';
-    document.getElementById('orderSuccessView').style.display = 'block';
+    document.getElementById('orderSuccessView').style.display = 'flex';
   } catch(err){
     btn.disabled = false;
-    btn.textContent = '✅ ยืนยันสั่งซื้อ';
+    btn.textContent = 'ยืนยันสั่งซื้อ';
     showToast('ส่งออเดอร์ไม่สำเร็จ กรุณาลองใหม่ หรือทักแชทเพจโดยตรง');
   }
 }
