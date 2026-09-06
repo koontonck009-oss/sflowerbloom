@@ -547,25 +547,86 @@
   .add-btn.secondary{background:#fff; color:var(--sage); border:1.5px solid var(--sage); justify-content:center; padding:12px;}
   .add-btn.secondary:hover{background:var(--cream);}
 
-  /* Desktop / wide screens: two-column layout like Shopee/Lazada — photo on the left
-     at a comfortable capped size, details + buy buttons on the right. */
+  /* Mobile product-page buttons: cart (icon only) + buy now, side by side in one row.
+     Desktop keeps the original stacked buttons with full labels (see min-width:860px below). */
+  .modal-actions-desktop{display:none;}
+  .modal-actions-mobile{flex-direction:row; align-items:stretch;}
+  .modal-actions-mobile .add-btn.icon-only{
+    flex:0 0 auto; width:50px; padding:0; gap:0;
+    display:flex; align-items:center; justify-content:center;
+    font-size:21px;
+  }
+  .modal-actions-mobile .checkout-btn{flex:1;}
+
+  /* Desktop / wide screens: floating modal (Shopee/Lazada "quick view" style) — a
+     dim overlay backdrop with the catalog still visible behind, and a centered
+     card capped to 900px / 85vh so everything fits with no scrollbar. */
   @media (min-width:860px){
+    .product-page{
+      --card-w: min(900px, 92vw);
+      --card-h: min(85vh, 620px);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:rgba(59,18,48,0.5);
+      -webkit-backdrop-filter:blur(2px);
+      backdrop-filter:blur(2px);
+      transform:none;
+      opacity:0;
+      visibility:hidden;
+      pointer-events:none;
+      transition:opacity .25s ease, visibility .25s ease;
+    }
+    .product-page.open{
+      opacity:1;
+      visibility:visible;
+      pointer-events:auto;
+    }
+    /* Track the modal card's actual top-right corner (card is centered, not full-screen) */
+    .page-back-btn{
+      top:calc(50% - (var(--card-h) / 2) + 16px);
+      left:auto;
+      right:calc(50% - (var(--card-w) / 2) + 16px);
+    }
     .product-page-scroll{
       display:grid;
-      grid-template-columns:minmax(0,460px) 1fr;
-      align-items:start;
-      gap:0 48px;
-      max-width:1040px;
-      margin:0 auto;
-      padding:40px 32px 0;
+      grid-template-columns:minmax(0,380px) 1fr;
+      align-items:stretch;
+      gap:0 36px;
+      width:var(--card-w);
+      height:var(--card-h);
+      margin:0;
+      padding:32px 36px;
+      background:var(--paper);
+      border-radius:24px;
+      box-shadow:0 24px 70px rgba(59,18,48,0.35);
+      overflow:hidden;
     }
     .page-img{
-      border-radius:20px;
-      position:sticky;
-      top:32px;
+      width:100%; height:100%; aspect-ratio:auto;
+      border-radius:18px;
+      position:static;
     }
-    .page-body{padding:0 0 40px;}
-    .modal-actions{margin:20px 0 0; padding:14px 0; border-radius:0;}
+    .page-body{
+      height:100%;
+      padding:0;
+      display:flex;
+      flex-direction:column;
+      overflow-y:auto;
+      scrollbar-width:none;
+    }
+    .page-body::-webkit-scrollbar{display:none;}
+    .modal-desc{
+      display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical;
+      overflow:hidden;
+    }
+    .modal-actions-mobile{display:none;}
+    .modal-actions-desktop{
+      display:flex; flex-direction:column; margin-top:auto;
+      margin-left:0; margin-right:0; margin-bottom:0;
+      padding:14px 0 0; border-radius:0;
+      position:static; box-shadow:none; background:transparent;
+    }
   }
 
   /* ---------- Order summary modal (copy + open) ---------- */
@@ -810,7 +871,11 @@
           <button onclick="changeModalQty(1)">+</button>
         </div>
       </div>
-      <div class="modal-actions">
+      <div class="modal-actions modal-actions-mobile">
+        <button class="add-btn secondary icon-only" onclick="addModalToCart()" aria-label="ใส่ตะกร้า">🧺</button>
+        <button class="checkout-btn" onclick="startCheckout(buildModalOrderLines)">ซื้อเลย</button>
+      </div>
+      <div class="modal-actions modal-actions-desktop">
         <button class="add-btn secondary" onclick="addModalToCart()">🧺 ใส่ตะกร้า</button>
         <button class="checkout-btn" onclick="startCheckout(buildModalOrderLines)">🌸 ซื้อเลย</button>
       </div>
