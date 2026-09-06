@@ -282,26 +282,27 @@
   }
   .card{
     background:var(--paper);
-    border-radius:20px;
-    padding:14px;
+    border-radius:0;
+    padding:0;
     box-shadow:var(--shadow);
     display:flex; flex-direction:column;
     transition:transform .18s ease, box-shadow .18s ease;
     border:1px solid transparent;
     cursor:pointer;
+    overflow:hidden;
   }
   .card:hover{transform:translateY(-4px); border-color:var(--line);}
-  .thumb-wrap{position:relative; margin-bottom:12px;}
+  .thumb-wrap{position:relative; margin-bottom:0;}
   .thumb{
     width:100%; aspect-ratio:1/1;
-    border-radius:14px;
+    border-radius:0;
     background:var(--cream);
     display:flex; align-items:center; justify-content:center;
     overflow:hidden;
   }
   .thumb svg{width:70%;height:70%;}
   .thumb img{width:100%; height:100%; object-fit:cover; display:block;}
-  .thumb{margin-bottom:0;}
+  .card-info{padding:10px 2px 2px; display:flex; flex-direction:column; flex:1 1 auto;}
   .badge-ready{
     position:absolute; top:8px; left:8px; z-index:2;
     background:var(--sage); color:#fff; font-size:11px; font-weight:700;
@@ -424,12 +425,12 @@
   .total-row .total-amt{font-family:'Chonburi'; font-size:24px; color:var(--sage-dark);}
   .checkout-btn{
     width:100%; padding:14px; border:none; border-radius:14px;
-    background:var(--rose); color:#fff; font-weight:700; font-size:16px;
+    background:var(--sage); color:#fff; font-weight:700; font-size:16px;
     display:flex; align-items:center; justify-content:center; gap:10px;
     cursor:pointer; transition:background .15s ease;
     text-decoration:none; box-sizing:border-box;
   }
-  .checkout-btn:hover{background:var(--rose-dark);}
+  .checkout-btn:hover{background:var(--sage-dark);}
   .checkout-btn:disabled{background:#d8cfd2; cursor:not-allowed;}
   .checkout-hint{font-size:11.5px; color:#8a7680; text-align:center; margin-top:10px;}
 
@@ -467,7 +468,7 @@
     width:min(780px,94vw);
     max-height:88vh;
     background:var(--paper);
-    border-radius:24px;
+    border-radius:0;
     box-shadow:0 20px 60px rgba(59,18,48,0.25);
     z-index:1041;
     display:none;
@@ -530,9 +531,17 @@
   .add-btn.secondary:hover{background:var(--cream);}
 
   @media (max-width:640px){
-    .product-modal{flex-direction:column; width:94vw; max-height:92vh; border-radius:20px;}
-    .modal-img{flex:0 0 auto; max-height:36vh; min-height:180px;}
-    .modal-panel{flex:1 1 auto;}
+    /* มือถือ: เต็มจอแบบ full-screen sheet แทนกล่องลอยกลางจอ */
+    .product-modal{
+      top:0; left:0; right:0; bottom:0;
+      width:100%; height:100%;
+      max-height:none;
+      transform:translateY(16px);
+      flex-direction:column; border-radius:0;
+    }
+    .product-modal.open{transform:translateY(0);}
+    .modal-img{flex:0 0 auto; height:38vh; min-height:180px;}
+    .modal-panel{flex:1 1 auto; min-height:0;}
     .modal-scroll{padding:20px 20px 10px;}
     .modal-actions{padding:12px 20px 18px;}
   }
@@ -672,8 +681,9 @@
 
     /* 2 columns of products on mobile instead of 1 */
     .grid{grid-template-columns:1fr 1fr; gap:12px;}
-    .card{padding:10px; border-radius:16px;}
-    .thumb{border-radius:10px;}
+    .card{padding:0; border-radius:0;}
+    .card-info{padding:8px 2px 2px;}
+    .thumb{border-radius:0;}
     .badge-ready, .badge-new{font-size:9.5px; padding:3px 8px; top:6px;}
     .card h4{font-size:13px; margin:0 0 3px; line-height:1.3;}
     .option-badge{font-size:9.5px; padding:2px 8px; margin:0 0 6px;}
@@ -741,7 +751,7 @@
     </div>
     <p class="field-hint" style="margin:-6px 0 12px;">ยังไม่รวมค่าจัดส่ง — นัดรับไม่มีค่าใช้จ่าย / ส่งพัสดุต่างจังหวัด ฿100 ต่อออเดอร์</p>
     <button class="checkout-btn" id="checkoutBtn" onclick="startCheckout(buildCartOrderLines)">
-      🌸 ยืนยันสั่งซื้อ
+      🌸 ยืนยันสั่งทำ
     </button>
     <p class="checkout-hint">กดแล้วกรอกวันรับสินค้า/วิธีรับ/ชื่อ Facebook แอดมินจะทักกลับไปยืนยันอีกครั้ง</p>
   </div>
@@ -790,7 +800,7 @@
     </div>
     <div class="modal-actions">
       <button class="add-btn secondary" onclick="addModalToCart()">🧺 ใส่ตะกร้า</button>
-      <button class="checkout-btn" onclick="startCheckout(buildModalOrderLines)">🌸 สั่งซื้อทันที</button>
+      <button class="checkout-btn" onclick="startCheckout(buildModalOrderLines)">🌸 สั่งทำสินค้า</button>
     </div>
   </div>
 </div>
@@ -855,7 +865,7 @@
     </label>
     <textarea id="orderNoteInput" class="form-input" rows="2" placeholder="หมายเหตุ (เช่น อยากเปลี่ยน/เพิ่มสีช่อดอกไม้ ข้อความในการ์ด หรือข้อความอื่นๆ ถึงร้าน)" style="margin-bottom:14px;"></textarea>
     <div class="modal-actions">
-      <button class="checkout-btn" id="confirmOrderBtn" onclick="confirmOrderSubmit()">✅ ยืนยันสั่งซื้อ</button>
+      <button class="checkout-btn" id="confirmOrderBtn" onclick="confirmOrderSubmit()">✅ ยืนยันสั่งทำ</button>
     </div>
     <p class="app-tip">💡 ยังไม่เคยทักแชทเพจใช่ไหม <a href="#" id="messengerLink" target="_blank" rel="noopener">เปิดแชท Facebook Messenger ที่นี่</a> เพื่อทักหาแอดมินไว้ก่อนได้เลยค่ะ (ใช้ชื่อเดียวกับที่แจ้งไว้)</p>
   </div>
@@ -1094,10 +1104,12 @@ function renderProductCard(p){
         ${currentReadyState(p) ? '<span class="badge-ready">พร้อมส่ง</span>' : ''}
         ${p.isNew ? '<span class="badge-new">ใหม่</span>' : ''}
       </div>
-      <h4>${p.name}</h4>
-      ${hasOptions ? '<span class="option-badge">เลือกแบบ/สีได้</span>' : ''}
-      <div class="price-row">
-        <span class="price">${p.billSelector ? `เริ่มต้น ${fmt(displayPrice(p))}` : fmt(displayPrice(p))}</span>
+      <div class="card-info">
+        <h4>${p.name}</h4>
+        ${hasOptions ? '<span class="option-badge">เลือกแบบ/สีได้</span>' : ''}
+        <div class="price-row">
+          <span class="price">${p.billSelector ? `เริ่มต้น ${fmt(displayPrice(p))}` : fmt(displayPrice(p))}</span>
+        </div>
       </div>
     </div>
   `;
@@ -1454,7 +1466,7 @@ function showOrderSummary(message, subtotal, items){
   document.getElementById('orderSuccessView').style.display = 'none';
   const btn = document.getElementById('confirmOrderBtn');
   btn.disabled = false;
-  btn.textContent = '✅ ยืนยันสั่งซื้อ';
+  btn.textContent = '✅ ยืนยันสั่งทำ';
   document.getElementById('orderSummaryModal').classList.add('open');
   document.getElementById('summaryOverlay').classList.add('show');
   closeCart();
@@ -1619,7 +1631,7 @@ async function confirmOrderSubmit(){
     document.getElementById('orderSuccessView').style.display = 'block';
   } catch(err){
     btn.disabled = false;
-    btn.textContent = '✅ ยืนยันสั่งซื้อ';
+    btn.textContent = '✅ ยืนยันสั่งทำ';
     showToast('ส่งออเดอร์ไม่สำเร็จ กรุณาลองใหม่ หรือทักแชทเพจโดยตรง');
   }
 }
