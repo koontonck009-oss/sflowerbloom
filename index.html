@@ -893,7 +893,7 @@
     </div>
     <p class="field-hint" style="margin:-6px 0 12px;">ยังไม่รวมค่าจัดส่ง — นัดรับไม่มีค่าใช้จ่าย / ส่งพัสดุต่างจังหวัด ฿100 ต่อออเดอร์</p>
     <button class="checkout-btn" id="checkoutBtn" onclick="startCheckout(buildCartOrderLines)">
-      🌸 ยืนยันสั่งซื้อ
+      🌸 ยืนยันสั่งทำสินค้า
     </button>
     <p class="checkout-hint">กดแล้วกรอกวันรับสินค้า/วิธีรับ/ชื่อ Facebook แอดมินจะทักกลับไปยืนยันอีกครั้ง</p>
   </div>
@@ -1010,7 +1010,7 @@
         <div class="total-line" id="totalBoxShippingLine"><span>ค่าจัดส่ง</span><span id="totalBoxShipping">–</span></div>
         <div class="total-line grand"><span>ยอดรวม<span id="totalBoxApproxNote"></span></span><span id="totalBoxGrand">฿0</span></div>
       </div>
-      <button class="checkout-btn" id="confirmOrderBtn" onclick="confirmOrderSubmit()">ยืนยันสั่งซื้อ</button>
+      <button class="checkout-btn" id="confirmOrderBtn" onclick="confirmOrderSubmit()">ยืนยันสั่งทำสินค้า</button>
     </div>
   </div>
 
@@ -1626,7 +1626,7 @@ function showOrderSummary(message, subtotal, items){
   document.getElementById('orderSuccessView').style.display = 'none';
   const btn = document.getElementById('confirmOrderBtn');
   btn.disabled = false;
-  btn.textContent = 'ยืนยันสั่งซื้อ';
+  btn.textContent = 'ยืนยันสั่งทำสินค้า';
   document.getElementById('orderSummaryModal').classList.add('open');
   document.getElementById('summaryOverlay').classList.add('show');
   closeCart();
@@ -1791,7 +1791,7 @@ async function confirmOrderSubmit(){
     document.getElementById('orderSuccessView').style.display = 'flex';
   } catch(err){
     btn.disabled = false;
-    btn.textContent = 'ยืนยันสั่งซื้อ';
+    btn.textContent = 'ยืนยันสั่งทำสินค้า';
     showToast('ส่งออเดอร์ไม่สำเร็จ กรุณาลองใหม่ หรือทักแชทเพจโดยตรง');
   }
 }
