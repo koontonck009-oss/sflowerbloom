@@ -497,41 +497,48 @@
     pointer-events:none;
   }
   .product-page.open{transform:translateX(0); pointer-events:auto;}
+  /* Floating back button: a translucent circle that sits on top of the photo's
+     corner (blurred backdrop + soft shadow so it stays readable over any image). */
   .page-back-btn{
     position:absolute; top:14px; left:14px; z-index:2;
-    width:38px; height:38px; border-radius:50%; border:none;
-    background:rgba(59,18,48,0.55); color:#fff; font-size:19px; cursor:pointer;
+    width:40px; height:40px; border-radius:50%; border:none;
+    background:rgba(59,18,48,0.42);
+    -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);
+    box-shadow:0 6px 16px rgba(59,18,48,0.30);
+    color:#fff; font-size:19px; cursor:pointer;
     display:flex; align-items:center; justify-content:center;
+    transition:background .15s ease, transform .15s ease;
   }
-  /* Everything above the buy buttons (image + details) scrolls as one page;
-     only the bottom action bar stays fixed on screen. */
+  .page-back-btn:hover{background:rgba(59,18,48,0.6); transform:translateY(-1px);}
+  /* Mobile (default): everything scrolls as one page (photo + details together). */
   .product-page-scroll{
     flex:1;
     min-height:0;
     overflow-y:auto;
     -webkit-overflow-scrolling:touch;
   }
-  /* Full-width square photo at the top of the page — object-fit:contain so the
+  /* Full-width photo, flush with the screen edges on mobile — object-fit:contain so the
      whole flower photo always shows, never cropped top/bottom. */
   .page-img{
     width:100%; aspect-ratio:1/1;
     background:var(--cream);
     display:flex; align-items:center; justify-content:center;
     overflow:hidden;
-    padding:18px;
   }
   .page-img img{max-width:100%; max-height:100%; width:auto; height:auto; object-fit:contain; display:block;}
   .page-img svg{width:45%; height:45%;}
-  .page-body{padding:22px 20px 28px;}
+  .page-body{padding:22px 20px 12px;}
   .page-body h3{margin:0 0 8px; font-size:22px; color:var(--sage-dark);}
   .modal-desc{font-size:13.5px; color:#6b5b62; line-height:1.5; margin:0 0 14px;}
   .modal-price{font-family:'Chonburi'; font-size:24px; color:var(--rose-dark); margin-bottom:16px;}
   .modal-qty{display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; font-size:14px; font-weight:600;}
-  /* Fixed bottom bar: sits outside the scroll area, so the buy buttons
-     are always visible no matter how far the customer has scrolled down the page. */
+  /* Buy buttons live inside the scrolling content but stick to the bottom of the
+     screen once reached (position:sticky) — reads as a fixed bottom bar on mobile,
+     and simply settles inline under the options on desktop where there's room to spare. */
   .modal-actions{
     display:flex; flex-direction:column; gap:10px;
-    flex-shrink:0;
+    position:sticky; bottom:0;
+    margin:16px -20px 0;
     padding:14px 20px calc(14px + env(safe-area-inset-bottom, 0px));
     background:var(--paper);
     border-top:1px solid var(--line);
@@ -539,6 +546,27 @@
   }
   .add-btn.secondary{background:#fff; color:var(--sage); border:1.5px solid var(--sage); justify-content:center; padding:12px;}
   .add-btn.secondary:hover{background:var(--cream);}
+
+  /* Desktop / wide screens: two-column layout like Shopee/Lazada — photo on the left
+     at a comfortable capped size, details + buy buttons on the right. */
+  @media (min-width:860px){
+    .product-page-scroll{
+      display:grid;
+      grid-template-columns:minmax(0,460px) 1fr;
+      align-items:start;
+      gap:0 48px;
+      max-width:1040px;
+      margin:0 auto;
+      padding:40px 32px 0;
+    }
+    .page-img{
+      border-radius:20px;
+      position:sticky;
+      top:32px;
+    }
+    .page-body{padding:0 0 40px;}
+    .modal-actions{margin:20px 0 0; padding:14px 0; border-radius:0;}
+  }
 
   /* ---------- Order summary modal (copy + open) ---------- */
   .order-modal{
@@ -782,11 +810,11 @@
           <button onclick="changeModalQty(1)">+</button>
         </div>
       </div>
+      <div class="modal-actions">
+        <button class="add-btn secondary" onclick="addModalToCart()">🧺 ใส่ตะกร้า</button>
+        <button class="checkout-btn" onclick="startCheckout(buildModalOrderLines)">🌸 ซื้อเลย</button>
+      </div>
     </div>
-  </div>
-  <div class="modal-actions">
-    <button class="add-btn secondary" onclick="addModalToCart()">🧺 ใส่ตะกร้า</button>
-    <button class="checkout-btn" onclick="startCheckout(buildModalOrderLines)">🌸 ซื้อเลย</button>
   </div>
 </div>
 
