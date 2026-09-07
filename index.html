@@ -520,6 +520,27 @@
   }
   /* Full-width photo, flush with the screen edges on mobile — object-fit:contain so the
      whole flower photo always shows, never cropped top/bottom. */
+  /* ---------- Product photo gallery: thumbnails + swipeable main image ----------
+     Mobile (default): main photo on top, thumbnail strip scrolls horizontally
+     underneath. Desktop overrides this to put thumbnails in a column beside the
+     photo (see min-width:860px block below). */
+  .page-gallery{display:flex; flex-direction:column;}
+  .page-media{order:1;}
+  .gallery-thumbs{
+    order:2;
+    display:flex; flex-direction:row; gap:8px;
+    padding:10px 20px 2px;
+    overflow-x:auto; -webkit-overflow-scrolling:touch;
+  }
+  .gallery-thumbs:empty{display:none;}
+  .gallery-thumb{
+    flex:0 0 auto; width:54px; height:54px; padding:0;
+    border-radius:10px; overflow:hidden; cursor:pointer;
+    border:2px solid transparent; background:var(--cream);
+    transition:border-color .15s ease;
+  }
+  .gallery-thumb img{width:100%; height:100%; object-fit:cover; display:block;}
+  .gallery-thumb.active{border-color:var(--sage);}
   .page-media{position:relative;}
   .page-img{
     width:100%; aspect-ratio:1/1;
@@ -565,7 +586,7 @@
      card capped to 900px / 85vh so everything fits with no scrollbar. */
   @media (min-width:860px){
     .product-page{
-      --card-w: min(760px, 92vw);
+      --card-w: min(840px, 92vw);
       display:flex;
       align-items:center;
       justify-content:center;
@@ -589,7 +610,7 @@
       flex:none; /* undo mobile's flex:1 — otherwise the card stretches to fill the
                     whole viewport height instead of hugging its own content */
       display:grid;
-      grid-template-columns:minmax(0,340px) 1fr;
+      grid-template-columns:minmax(0,420px) 1fr;
       align-items:center;
       gap:0 36px;
       width:var(--card-w);
@@ -601,6 +622,23 @@
       box-shadow:0 24px 70px rgba(59,18,48,0.35);
       overflow:hidden;
     }
+    /* Desktop gallery: thumbnail column to the left of the main photo instead of
+       a horizontal strip underneath. */
+    .page-gallery{
+      flex-direction:row;
+      align-items:flex-start;
+      gap:12px;
+    }
+    .gallery-thumbs{
+      order:0;
+      flex-direction:column;
+      width:64px;
+      max-height:400px;
+      padding:0;
+      overflow-y:auto; overflow-x:hidden;
+    }
+    .gallery-thumb{width:64px; height:64px;}
+    .page-media{order:1; flex:1; min-width:0;}
     .page-img{
       width:100%; height:auto; aspect-ratio:1/1;
       border-radius:18px;
@@ -910,9 +948,12 @@
 
 <div class="product-page" id="productModal">
   <div class="product-page-scroll" id="productPageScroll">
-    <div class="page-media">
-      <button class="page-back-btn" onclick="closeProductModal()" aria-label="กลับ">←</button>
-      <div class="page-img" id="modalImg"></div>
+    <div class="page-gallery" id="pageGallery">
+      <div class="gallery-thumbs" id="galleryThumbs"></div>
+      <div class="page-media">
+        <button class="page-back-btn" onclick="closeProductModal()" aria-label="กลับ">←</button>
+        <div class="page-img" id="modalImg"></div>
+      </div>
     </div>
     <div class="page-body">
       <div id="modalBadges" style="margin-bottom:8px;"></div>
@@ -1812,12 +1853,85 @@ function startCustomOrder(){
 let modalProductId = null;
 let modalQty = 1;
 let modalBills = 1;
+let modalImgIndex = 0; // which photo in the gallery is currently shown
+
+// Returns the list of photo URLs to show for the product's current selection.
+// A color variant can carry its own "images" (multi-angle) array, falling back
+// to its single "image"; otherwise falls back to the product-level "images"
+// array or single "image". Existing products with just one "image" keep working
+// unchanged — the gallery/thumbnails simply don't appear when there's only one photo.
+function currentGalleryImages(p){
+  if(p.colors && p.colors.length){
+    const c = p.colors[selectedColor[p.id] || 0];
+    if(c){
+      if(c.images && c.images.length) return c.images;
+      if(c.image) return [c.image];
+    }
+  }
+  if(p.images && p.images.length) return p.images;
+  if(p.image) return [p.image];
+  return [];
+}
+function renderModalMainImage(p){
+  const imgs = currentGalleryImages(p);
+  const src = imgs[modalImgIndex];
+  if(src){
+    return `<img src="${src}" alt="${p.name}" onerror="this.parentElement.innerHTML=window.ICON_FALLBACK">`;
+  }
+  return ICONS[p.icon] || ICONS.other;
+}
+function renderModalThumbs(p){
+  const wrap = document.getElementById('galleryThumbs');
+  if(!wrap) return;
+  const imgs = currentGalleryImages(p);
+  if(imgs.length < 2){
+    wrap.innerHTML = '';
+    return;
+  }
+  wrap.innerHTML = imgs.map((src, i) => `
+    <button type="button" class="gallery-thumb ${i===modalImgIndex?'active':''}" onclick="setModalImgIndex(${i})" aria-label="ดูรูปที่ ${i+1}">
+      <img src="${src}" alt="${p.name} มุมที่ ${i+1}" onerror="this.closest('.gallery-thumb').style.display='none'">
+    </button>
+  `).join('');
+}
+function setModalImgIndex(i){
+  modalImgIndex = i;
+  renderModal();
+}
+function changeModalImg(delta){
+  const p = PRODUCTS.find(x=>x.id===modalProductId);
+  if(!p) return;
+  const imgs = currentGalleryImages(p);
+  if(imgs.length < 2) return;
+  modalImgIndex = (modalImgIndex + delta + imgs.length) % imgs.length;
+  renderModal();
+}
+// Swipe left/right on the main photo to move through the gallery on touch devices.
+// Attached once to the persistent #modalImg element (its innerHTML is swapped on
+// every render, but the element itself — and this listener — stays put).
+(function(){
+  let startX = 0, startY = 0;
+  const el = document.getElementById('modalImg');
+  if(!el) return;
+  el.addEventListener('touchstart', function(e){
+    const t = e.changedTouches[0];
+    startX = t.clientX; startY = t.clientY;
+  }, {passive:true});
+  el.addEventListener('touchend', function(e){
+    const t = e.changedTouches[0];
+    const dx = t.clientX - startX, dy = t.clientY - startY;
+    if(Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.5){
+      changeModalImg(dx < 0 ? 1 : -1);
+    }
+  }, {passive:true});
+})();
 
 // Full-page product view (not a floating pop-up) — behaves like a real "page" so the
 // device/browser back button closes it and returns to the catalog, like a native app.
 function openProductModal(id){
   modalProductId = id;
   modalQty = 1;
+  modalImgIndex = 0;
   const p = PRODUCTS.find(x=>x.id===id);
   modalBills = p && p.billSelector ? (p.minBills||1) : 1;
   renderModal();
@@ -1859,7 +1973,10 @@ function changeModalBills(delta){
 function renderModal(){
   const p = PRODUCTS.find(x=>x.id===modalProductId);
   if(!p) return;
-  document.getElementById('modalImg').innerHTML = renderThumb(p);
+  const imgs = currentGalleryImages(p);
+  if(modalImgIndex >= imgs.length) modalImgIndex = 0;
+  document.getElementById('modalImg').innerHTML = renderModalMainImage(p);
+  renderModalThumbs(p);
   document.getElementById('modalName').textContent = p.name;
   document.getElementById('modalDesc').textContent = p.desc;
   document.getElementById('modalQty').textContent = modalQty;
@@ -1870,7 +1987,7 @@ function renderModal(){
   const colorsWrap = document.getElementById('modalColors');
   if(p.colors){
     colorsWrap.innerHTML = p.colors.map((c,i)=>`
-      <button class="color-chip ${((selectedColor[p.id]||0)===i)?'active':''}" onclick="selectColor('${p.id}',${i}); renderModal();">${c.name}</button>
+      <button class="color-chip ${((selectedColor[p.id]||0)===i)?'active':''}" onclick="modalImgIndex=0; selectColor('${p.id}',${i}); renderModal();">${c.name}</button>
     `).join('');
   } else {
     colorsWrap.innerHTML = '';
@@ -1879,7 +1996,7 @@ function renderModal(){
   const sizesWrap = document.getElementById('modalSizes');
   if(p.sizes){
     sizesWrap.innerHTML = p.sizes.map((s,i)=>`
-      <button class="color-chip ${((selectedSizeVariant[p.id]||0)===i)?'active':''}" onclick="selectSizeVariant('${p.id}',${i}); renderModal();">${s.name}</button>
+      <button class="color-chip ${((selectedSizeVariant[p.id]||0)===i)?'active':''}" onclick="modalImgIndex=0; selectSizeVariant('${p.id}',${i}); renderModal();">${s.name}</button>
     `).join('');
   } else {
     sizesWrap.innerHTML = '';

@@ -1253,7 +1253,12 @@
     "name": "ช่อดอกไฮเดรนเยีย - H01",
     "price": 299,
     "desc": "ช่อขนาดกลาง ดอกไฮเดรนเยียชมพู 100 ดอก",
-    "image": "images/bouquet/ไฮเดรนเยีย-299฿-ชมพู-ขาว.jpg",
+    "image": "images/bouquet/ช่อดอกไฮเดรนเยีย-H01 299฿ (1).jpg",
+    "images": [
+    "images/bouquet/ช่อดอกไฮเดรนเยีย-H01 299฿ (1).jpg",
+    "images/bouquet/ช่อดอกไฮเดรนเยีย-H01 299฿ (2).jpg",
+    "images/bouquet/ช่อดอกไฮเดรนเยีย-H01 299฿ (3).jpg"
+    ],
     "ready": true
   },
   {
