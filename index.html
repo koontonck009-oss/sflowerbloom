@@ -450,12 +450,13 @@
   .total-row .total-amt{font-family:'Chonburi'; font-size:24px; color:var(--sage-dark);}
   .checkout-btn{
     width:100%; padding:14px; border:none; border-radius:14px;
-    background:var(--rose); color:#fff; font-weight:700; font-size:16px;
+    background:var(--sage); color:#fff; font-weight:700; font-size:16px;
     display:flex; align-items:center; justify-content:center; gap:10px;
     cursor:pointer; transition:background .15s ease;
     text-decoration:none; box-sizing:border-box;
+    box-shadow:0 6px 16px rgba(246,33,136,0.35);
   }
-  .checkout-btn:hover{background:var(--rose-dark);}
+  .checkout-btn:hover{background:var(--sage-dark);}
   .checkout-btn:disabled{background:#d8cfd2; cursor:not-allowed;}
   .checkout-hint{font-size:11.5px; color:#8a7680; text-align:center; margin-top:10px;}
 
@@ -519,6 +520,7 @@
   }
   /* Full-width photo, flush with the screen edges on mobile — object-fit:contain so the
      whole flower photo always shows, never cropped top/bottom. */
+  .page-media{position:relative;}
   .page-img{
     width:100%; aspect-ratio:1/1;
     background:var(--cream);
@@ -563,8 +565,7 @@
      card capped to 900px / 85vh so everything fits with no scrollbar. */
   @media (min-width:860px){
     .product-page{
-      --card-w: min(900px, 92vw);
-      --card-h: min(85vh, 620px);
+      --card-w: min(760px, 92vw);
       display:flex;
       align-items:center;
       justify-content:center;
@@ -582,49 +583,51 @@
       visibility:visible;
       pointer-events:auto;
     }
-    /* Track the modal card's actual top-right corner (card is centered, not full-screen) */
-    .page-back-btn{
-      top:calc(50% - (var(--card-h) / 2) + 16px);
-      left:auto;
-      right:calc(50% - (var(--card-w) / 2) + 16px);
-    }
+    /* Card now sizes to its content (image + info), so it stays compact instead of
+       stretching a fixed tall box and leaving empty space around a smaller photo. */
     .product-page-scroll{
+      flex:none; /* undo mobile's flex:1 — otherwise the card stretches to fill the
+                    whole viewport height instead of hugging its own content */
       display:grid;
-      grid-template-columns:minmax(0,380px) 1fr;
-      align-items:stretch;
+      grid-template-columns:minmax(0,340px) 1fr;
+      align-items:center;
       gap:0 36px;
       width:var(--card-w);
-      height:var(--card-h);
+      max-height:85vh;
       margin:0;
-      padding:32px 36px;
+      padding:36px;
       background:var(--paper);
       border-radius:24px;
       box-shadow:0 24px 70px rgba(59,18,48,0.35);
       overflow:hidden;
     }
     .page-img{
-      width:100%; height:100%; aspect-ratio:auto;
+      width:100%; height:auto; aspect-ratio:1/1;
       border-radius:18px;
       position:static;
     }
+    .page-back-btn{
+      top:16px; left:16px;
+      width:36px; height:36px; font-size:17px;
+    }
     .page-body{
-      height:100%;
       padding:0;
       display:flex;
       flex-direction:column;
+      max-height:calc(85vh - 72px);
       overflow-y:auto;
       scrollbar-width:none;
     }
     .page-body::-webkit-scrollbar{display:none;}
     .modal-desc{
-      display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical;
+      display:-webkit-box; -webkit-line-clamp:4; -webkit-box-orient:vertical;
       overflow:hidden;
     }
     .modal-actions-mobile{display:none;}
     .modal-actions-desktop{
-      display:flex; flex-direction:column; margin-top:auto;
+      display:flex; flex-direction:column; margin-top:22px;
       margin-left:0; margin-right:0; margin-bottom:0;
-      padding:14px 0 0; border-radius:0;
+      padding:0; border-radius:0;
       position:static; box-shadow:none; background:transparent;
     }
   }
@@ -906,9 +909,11 @@
 </button>
 
 <div class="product-page" id="productModal">
-  <button class="page-back-btn" onclick="closeProductModal()" aria-label="กลับ">←</button>
   <div class="product-page-scroll" id="productPageScroll">
-    <div class="page-img" id="modalImg"></div>
+    <div class="page-media">
+      <button class="page-back-btn" onclick="closeProductModal()" aria-label="กลับ">←</button>
+      <div class="page-img" id="modalImg"></div>
+    </div>
     <div class="page-body">
       <div id="modalBadges" style="margin-bottom:8px;"></div>
       <h3 id="modalName"></h3>
