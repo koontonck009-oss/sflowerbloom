@@ -394,7 +394,13 @@
     "name": "ช่อดอกทานตะวัน - S11",
     "price": 399,
     "desc": "ช่อขนาดกลาง ดอกทานตะวันเหลือง 1 ดอก",
-    "image": "images/bouquet/ทานตะวัน-399฿-เหลือง-ครีม.jpg",
+    "image": "images/bouquet/ช่อดอกทานตะวัน-S11 399฿ (1).jpg",
+    "images": [
+    "images/bouquet/ช่อดอกทานตะวัน-S11 399฿ (1).jpg",
+    "images/bouquet/ช่อดอกทานตะวัน-S11 399฿ (2).jpg",
+    "images/bouquet/ช่อดอกทานตะวัน-S11 399฿ (3).jpg",
+    "images/bouquet/ช่อดอกทานตะวัน-S11 399฿ (4).jpg"
+    ],
     "ready": true
   },
   {
