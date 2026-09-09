@@ -230,7 +230,16 @@
   .reviews-section{margin:26px 6vw 22px;}
   .reviews-head{display:flex; align-items:baseline; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:14px;}
   .reviews-head h3{margin:0; font-size:20px; color:var(--sage-dark);}
-  .reviews-stat{font-size:12.5px; font-weight:700; color:var(--rose-dark); background:rgba(246,33,136,0.08); padding:5px 12px; border-radius:999px;}
+  .reviews-stat{
+    font-size:12.5px; font-weight:700; color:var(--rose-dark); background:rgba(246,33,136,0.08);
+    padding:5px 12px; border-radius:999px;
+    border:none; font-family:'Kanit'; cursor:pointer;
+    display:inline-flex; align-items:center; gap:4px;
+    transition:background .15s ease, transform .1s ease;
+  }
+  .reviews-stat:hover{background:rgba(246,33,136,0.16);}
+  .reviews-stat:active{transform:scale(.97);}
+  .reviews-stat::after{content:"›"; font-size:14px; font-weight:700; line-height:1;}
   .reviews-scroll{
     display:flex; gap:14px; overflow-x:auto; -webkit-overflow-scrolling:touch;
     scroll-snap-type:x proximity; padding-bottom:4px;
@@ -268,6 +277,84 @@
     position:absolute; top:18px; right:18px; width:40px; height:40px; border-radius:50%;
     border:none; background:rgba(255,255,255,0.15); color:#fff; font-size:19px; cursor:pointer;
     display:flex; align-items:center; justify-content:center; backdrop-filter:blur(6px);
+  }
+  /* Prev/next through the review set without closing the lightbox */
+  .review-lightbox-nav{
+    position:absolute; top:50%; transform:translateY(-50%); z-index:1;
+    width:44px; height:44px; border-radius:50%;
+    border:none; background:rgba(255,255,255,0.15); color:#fff; font-size:26px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; backdrop-filter:blur(6px);
+    transition:background .15s ease;
+  }
+  .review-lightbox-nav:hover{background:rgba(255,255,255,0.28);}
+  .review-lightbox-nav.prev{left:16px;}
+  .review-lightbox-nav.next{right:16px;}
+  .review-lightbox-counter{
+    position:absolute; bottom:20px; left:50%; transform:translateX(-50%);
+    background:rgba(0,0,0,0.4); color:#fff; font-size:12.5px; font-weight:600;
+    padding:5px 14px; border-radius:999px; backdrop-filter:blur(4px);
+  }
+  @media (max-width:520px){
+    .review-lightbox-nav{width:38px; height:38px; font-size:21px;}
+    .review-lightbox-nav.prev{left:6px;}
+    .review-lightbox-nav.next{right:6px;}
+  }
+
+  /* ---------- Reviews: "view all" grid modal (bottom sheet on mobile, centered card on desktop — same pattern as the order summary modal) ---------- */
+  .reviews-all-modal{
+    position:fixed; left:0; right:0; bottom:0; top:auto;
+    width:100%;
+    max-height:88vh;
+    background:var(--paper);
+    border-radius:22px 22px 0 0;
+    box-shadow:0 -10px 40px rgba(59,18,48,0.22);
+    z-index:1041;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+    transform:translateY(100%);
+    visibility:hidden;
+    pointer-events:none;
+    transition:transform .3s ease, visibility .3s ease;
+  }
+  .reviews-all-modal.open{transform:translateY(0); visibility:visible; pointer-events:auto;}
+  .reviews-all-head{
+    flex-shrink:0;
+    padding:16px 52px 12px 22px;
+    border-bottom:1px solid var(--line);
+    display:flex; align-items:baseline; gap:10px; flex-wrap:wrap;
+  }
+  .reviews-all-head h4{margin:0; font-size:16.5px; color:var(--sage-dark); font-family:'Kanit'; font-weight:700;}
+  .reviews-all-head span{font-size:12.5px; color:#8a7680; font-weight:600;}
+  .reviews-all-body{
+    flex:1; min-height:0; overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    padding:16px 22px calc(16px + env(safe-area-inset-bottom, 0px));
+  }
+  .reviews-all-grid{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:10px;
+  }
+  .review-grid-photo{
+    aspect-ratio:1/1; border-radius:12px; overflow:hidden;
+    background:var(--cream); cursor:pointer;
+  }
+  .review-grid-photo img{width:100%; height:100%; object-fit:cover; display:block;}
+  @media (max-width:420px){
+    .reviews-all-grid{grid-template-columns:repeat(2,1fr); gap:8px;}
+  }
+  @media (min-width:860px){
+    .reviews-all-modal{
+      left:50%; right:auto; bottom:auto; top:50%;
+      width:min(760px, 92vw);
+      max-height:85vh;
+      border-radius:24px;
+      box-shadow:0 20px 60px rgba(59,18,48,0.25);
+      transform:translate(-50%,-50%) translateY(14px);
+    }
+    .reviews-all-modal.open{transform:translate(-50%,-50%) translateY(0);}
+    .reviews-all-grid{grid-template-columns:repeat(4,1fr);}
   }
 
   /* ---------- Category nav ---------- */
@@ -1075,13 +1162,28 @@
 <section class="reviews-section" id="reviewsSection" hidden>
   <div class="reviews-head">
     <h3>รีวิวจากลูกค้า</h3>
-    <span class="reviews-stat" id="reviewsStat"></span>
+    <button type="button" class="reviews-stat" id="reviewsStat" onclick="openReviewsAll()"></button>
   </div>
   <div class="reviews-scroll" id="reviewsScroll"></div>
 </section>
+<div class="overlay" id="reviewsAllOverlay" onclick="closeReviewsAll()"></div>
+<div class="reviews-all-modal" id="reviewsAllModal">
+  <span class="sheet-handle" aria-hidden="true"></span>
+  <button class="modal-close" onclick="closeReviewsAll()" aria-label="ปิด">✕</button>
+  <div class="reviews-all-head">
+    <h4>รีวิวจากลูกค้าทั้งหมด</h4>
+    <span id="reviewsAllCount"></span>
+  </div>
+  <div class="reviews-all-body">
+    <div class="reviews-all-grid" id="reviewsAllGrid"></div>
+  </div>
+</div>
 <div class="review-lightbox" id="reviewLightbox" onclick="closeReviewLightbox()">
   <button class="review-lightbox-close" onclick="event.stopPropagation(); closeReviewLightbox();" aria-label="ปิด">✕</button>
-  <img id="reviewLightboxImg" src="" alt="รีวิวลูกค้า">
+  <button class="review-lightbox-nav prev" onclick="event.stopPropagation(); navReviewLightbox(-1);" aria-label="รูปก่อนหน้า">‹</button>
+  <img id="reviewLightboxImg" src="" alt="รีวิวลูกค้า" onclick="event.stopPropagation();">
+  <button class="review-lightbox-nav next" onclick="event.stopPropagation(); navReviewLightbox(1);" aria-label="รูปถัดไป">›</button>
+  <div class="review-lightbox-counter" id="reviewLightboxCounter"></div>
 </div>
 
 <nav class="cat-nav" id="catNav"></nav>
@@ -1284,15 +1386,42 @@ const ICONS = {
   other: `<svg viewBox="0 0 64 64"><rect x="12" y="14" width="40" height="36" rx="4" fill="#FFC6FF"/><path d="M12 22 H52" stroke="#E0399B" stroke-width="3"/><circle cx="32" cy="14" r="6" fill="#F62188"/></svg>`
 };
 
-function renderThumb(p, colorName){
+function renderThumb(p, variantLabel){
   let src = null, alt = p.name;
-  if(p.colors && p.colors.length){
-    const c = p.colors.find(x => x.name === colorName) || p.colors[selectedColor[p.id] || 0];
+  // variantLabel มาจากตะกร้า — ข้อความรวมที่บันทึกไว้ตอนกดเพิ่ม เช่น "ดอกส้มช่อขาว, ใส่ซองเงิน 5 ใบ"
+  // (ถ้าสินค้ามีทั้งสีและตัวเลือกราคา) ต้องแยกส่วนสีกับส่วนตัวเลือกราคาออกจากกันก่อน
+  // เพื่อหารูปที่ตรงกับตอนที่ลูกค้าเลือกไว้จริง ไม่ใช่ตัวเลือกปัจจุบันบนหน้าเว็บ
+  let colorName = null, sizeName = null;
+  if(variantLabel != null){
+    if(p.colors && p.sizes){
+      const idx = variantLabel.lastIndexOf(', ');
+      colorName = idx === -1 ? variantLabel : variantLabel.slice(0, idx);
+      sizeName = idx === -1 ? null : variantLabel.slice(idx + 2);
+    } else if(p.sizes){
+      sizeName = variantLabel;
+    } else if(p.colors){
+      colorName = variantLabel;
+    }
+  }
+  // ตัวเลือกราคา (sizes) มีรูปของตัวเองไหม — ถ้ามี ให้ใช้รูปนี้ก่อนเสมอ (เช่น ใส่ซองเงินแล้วรูปต้องโชว์ซองเงิน
+  // ไม่ใช่รูปช่อธรรมดา ไม่ว่าจะเลือกสีอะไรไว้ก็ตาม)
+  if(p.sizes && p.sizes.length){
+    const sv = sizeName != null
+      ? (p.sizes.find(x => x.name === sizeName) || p.sizes[selectedSizeVariant[p.id] || 0])
+      : p.sizes[selectedSizeVariant[p.id] || 0];
+    if(sv && (sv.image || (sv.images && sv.images.length))){
+      src = sv.image || sv.images[0];
+      alt = p.name + ' ' + sv.name;
+    }
+  }
+  if(!src && p.colors && p.colors.length){
+    const c = (colorName != null && p.colors.find(x => x.name === colorName)) || p.colors[selectedColor[p.id] || 0];
     src = c.image || (c.images && c.images[0]);
     alt = p.name + ' ' + c.name;
-  } else if(p.image){
+  }
+  if(!src && p.image){
     src = p.image;
-  } else if(p.images && p.images.length){
+  } else if(!src && p.images && p.images.length){
     src = p.images[0];
   }
   if(src){
@@ -1876,7 +2005,7 @@ function updateCartUI(){
       const { qty, unitPrice, label } = entry;
       return `
         <div class="cart-item">
-          <div class="mini-thumb">${renderThumb(p, p.colors ? label : undefined)}</div>
+          <div class="mini-thumb">${renderThumb(p, (p.colors || p.sizes) ? label : undefined)}</div>
           <div class="info">
             <h5>${p.name}${label ? ` <span class="variant">(${label})</span>` : ''}</h5>
             <div class="unit">${fmt(unitPrice)} / ชิ้น</div>
@@ -2304,11 +2433,20 @@ let modalBills = 1;
 let modalImgIndex = 0; // which photo in the gallery is currently shown
 
 // Returns the list of photo URLs to show for the product's current selection.
-// A color variant can carry its own "images" (multi-angle) array, falling back
-// to its single "image"; otherwise falls back to the product-level "images"
-// array or single "image". Existing products with just one "image" keep working
-// unchanged — the gallery/thumbnails simply don't appear when there's only one photo.
+// A "sizes" variant (e.g. ปกติ vs ใส่ซองเงิน, which also changes the price) can carry
+// its own "image"/"images" too — checked FIRST, since a size choice like "ใส่ซองเงิน"
+// should always show the money-envelope photo regardless of which color is selected.
+// Falls back to the selected color's own image, then the product-level images/image.
+// Existing products with just one "image" keep working unchanged — the
+// gallery/thumbnails simply don't appear when there's only one photo.
 function currentGalleryImages(p){
+  if(p.sizes && p.sizes.length){
+    const sv = p.sizes[selectedSizeVariant[p.id] || 0];
+    if(sv){
+      if(sv.images && sv.images.length) return sv.images;
+      if(sv.image) return [sv.image];
+    }
+  }
   if(p.colors && p.colors.length){
     const c = p.colors[selectedColor[p.id] || 0];
     if(c){
@@ -2528,6 +2666,7 @@ loadProducts();
    (เว็บสถิตแบบนี้ดึงรายชื่อไฟล์ทั้งโฟลเดอร์ตรงๆ ไม่ได้ จึงต้องพึ่งชื่อไฟล์เรียงเลขแทน)
    ถ้าวันไหนมีรีวิวเกิน 60 รูป ให้เพิ่มเลข MAX_REVIEWS ด้านล่างนี้ */
 const MAX_REVIEWS = 200;
+const REVIEW_BATCH_SIZE = 20; // เช็คทีละ 20 ไฟล์ ไม่ยิงพร้อมกันทั้ง 200 ไฟล์ตั้งแต่แรก
 function checkImageExists(src){
   return new Promise(resolve => {
     const img = new Image();
@@ -2537,16 +2676,26 @@ function checkImageExists(src){
   });
 }
 async function loadReviews(){
-  const checks = [];
-  for(let i = 1; i <= MAX_REVIEWS; i++){
-    checks.push(checkImageExists(`images/reviews/review${i}.jpg`));
+  // เช็คทีละ batch (เรียงเลขไฟล์น้อยไปมาก) แล้วหยุดทันทีที่เจอ batch ที่ไม่มีไฟล์เลยสักไฟล์เดียว —
+  // เพราะไฟล์รีวิวตั้งชื่อเรียงเลขต่อเนื่องไม่มีช่องว่าง (ดูคอมเมนต์ด้านบน) ถ้ามีรีวิวแค่ 15 รูป
+  // ก็จะเช็คแค่ batch แรก (20 ไฟล์) แล้วหยุด แทนที่จะยิง 200 request ทุกครั้ง
+  const found = [];
+  for(let start = 1; start <= MAX_REVIEWS; start += REVIEW_BATCH_SIZE){
+    const end = Math.min(start + REVIEW_BATCH_SIZE - 1, MAX_REVIEWS);
+    const checks = [];
+    for(let i = start; i <= end; i++){
+      checks.push(checkImageExists(`images/reviews/review${i}.jpg`));
+    }
+    const results = await Promise.all(checks);
+    const batchFound = results.filter(Boolean);
+    found.push(...batchFound);
+    if(batchFound.length === 0) break;
   }
-  const results = await Promise.all(checks); // ยิงเช็คทุกไฟล์พร้อมกัน ไม่ต้องรอทีละไฟล์
-  const found = results.filter(Boolean);
   if(found.length === 0) return;
   renderReviews(found);
 }
-let REVIEWS = [];
+let REVIEWS = []; // ลำดับสุ่ม — ใช้กับแถบพรีวิวหน้าแรก
+let REVIEWS_ALL_SORTED = []; // เรียงจากรูปล่าสุด (เลขไฟล์มากสุด) ไปเก่าสุด — ใช้กับหน้าดูรีวิวทั้งหมด
 function shuffle(arr){
   const a = arr.slice();
   for(let i = a.length - 1; i > 0; i--){
@@ -2556,29 +2705,104 @@ function shuffle(arr){
   return a;
 }
 function renderReviews(imagesIn){
-  const images = shuffle(imagesIn); // random order each page load
-  REVIEWS = images;
+  REVIEWS = shuffle(imagesIn); // random order each page load, for the homepage strip
+  REVIEWS_ALL_SORTED = imagesIn.slice().reverse(); // newest first, for the "view all" grid
   const scrollEl = document.getElementById('reviewsScroll');
   const statEl = document.getElementById('reviewsStat');
   const section = document.getElementById('reviewsSection');
-  scrollEl.innerHTML = images.map((src, i) => `
-    <div class="review-card" onclick="openReviewLightbox(${i})">
+  scrollEl.innerHTML = REVIEWS.map((src, i) => `
+    <div class="review-card" onclick="openReviewLightbox(REVIEWS, ${i})">
       <div class="review-photo">
         <img src="${src}" alt="รีวิวจากลูกค้า" loading="lazy" decoding="async" onerror="this.closest('.review-card').style.display='none'">
       </div>
     </div>`).join('');
-  if(statEl) statEl.textContent = `${images.length}+ รีวิวจากลูกค้าจริง`;
+  if(statEl) statEl.textContent = `${REVIEWS.length}+ รีวิวจากลูกค้าจริง`;
   section.hidden = false;
 }
-function openReviewLightbox(i){
-  const src = REVIEWS[i];
+
+/* ---------- "ดูรีวิวทั้งหมด": กดที่ตัวเลขจำนวนรีวิว เปิด grid เต็มจอ ---------- */
+function renderReviewsAllGrid(){
+  const grid = document.getElementById('reviewsAllGrid');
+  const countEl = document.getElementById('reviewsAllCount');
+  if(countEl) countEl.textContent = `${REVIEWS_ALL_SORTED.length} รูป`;
+  grid.innerHTML = REVIEWS_ALL_SORTED.map((src, i) => `
+    <div class="review-grid-photo" onclick="openReviewLightbox(REVIEWS_ALL_SORTED, ${i})">
+      <img src="${src}" alt="รีวิวจากลูกค้า" loading="lazy" decoding="async" onerror="this.closest('.review-grid-photo').style.display='none'">
+    </div>`).join('');
+}
+function openReviewsAll(){
+  if(!REVIEWS_ALL_SORTED.length) return;
+  renderReviewsAllGrid();
+  document.getElementById('reviewsAllOverlay').classList.add('show');
+  document.getElementById('reviewsAllModal').classList.add('open');
+  updateChatFabVisibility();
+}
+function closeReviewsAll(){
+  document.getElementById('reviewsAllOverlay').classList.remove('show');
+  document.getElementById('reviewsAllModal').classList.remove('open');
+  updateChatFabVisibility();
+}
+
+/* ---------- Lightbox: ดูรูปเต็มจอ เลื่อนซ้าย-ขวาดูรูปถัดไปได้โดยไม่ต้องปิด ----------
+   เปิดได้จากทั้งแถบพรีวิวหน้าแรก (REVIEWS) และ grid ดูทั้งหมด (REVIEWS_ALL_SORTED)
+   จึงรับ list ที่กำลังดูอยู่เข้ามาด้วย เพื่อให้ปุ่ม/ปัดถัดไปวิ่งอยู่ใน list เดียวกับที่เปิดมา */
+let currentLightboxList = [];
+let currentLightboxIndex = 0;
+function showLightboxImage(){
+  const src = currentLightboxList[currentLightboxIndex];
   if(!src) return;
   document.getElementById('reviewLightboxImg').src = src;
+  const counter = document.getElementById('reviewLightboxCounter');
+  if(counter) counter.textContent = `${currentLightboxIndex + 1} / ${currentLightboxList.length}`;
+  const showNav = currentLightboxList.length > 1;
+  document.querySelectorAll('.review-lightbox-nav').forEach(btn => btn.style.display = showNav ? 'flex' : 'none');
+}
+function openReviewLightbox(list, i){
+  if(!list || !list[i]) return;
+  currentLightboxList = list;
+  currentLightboxIndex = i;
+  showLightboxImage();
   document.getElementById('reviewLightbox').classList.add('open');
+  updateChatFabVisibility();
+}
+function navReviewLightbox(delta){
+  if(!currentLightboxList.length) return;
+  currentLightboxIndex = (currentLightboxIndex + delta + currentLightboxList.length) % currentLightboxList.length;
+  showLightboxImage();
 }
 function closeReviewLightbox(){
   document.getElementById('reviewLightbox').classList.remove('open');
+  updateChatFabVisibility();
 }
+// ปัดซ้าย-ขวาบนรูปเพื่อเลื่อนดูรูปถัดไป (รูปแบบเดียวกับที่ใช้ในแกลเลอรีสินค้า)
+(function(){
+  let startX = 0, startY = 0;
+  const el = document.getElementById('reviewLightboxImg');
+  if(!el) return;
+  el.addEventListener('touchstart', function(e){
+    const t = e.changedTouches[0];
+    startX = t.clientX; startY = t.clientY;
+  }, {passive:true});
+  el.addEventListener('touchend', function(e){
+    const t = e.changedTouches[0];
+    const dx = t.clientX - startX, dy = t.clientY - startY;
+    if(Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.5){
+      navReviewLightbox(dx < 0 ? 1 : -1);
+    }
+  }, {passive:true});
+})();
+// คีย์บอร์ด: Esc ปิด, ลูกศรซ้าย-ขวาเลื่อนรูป (เฉพาะตอน lightbox เปิดอยู่)
+document.addEventListener('keydown', function(e){
+  const lightboxOpen = document.getElementById('reviewLightbox').classList.contains('open');
+  if(e.key === 'Escape'){
+    if(lightboxOpen){ closeReviewLightbox(); return; }
+    if(document.getElementById('reviewsAllModal').classList.contains('open')){ closeReviewsAll(); return; }
+  }
+  if(lightboxOpen){
+    if(e.key === 'ArrowLeft') navReviewLightbox(-1);
+    if(e.key === 'ArrowRight') navReviewLightbox(1);
+  }
+});
 loadReviews();
 
 /* ---------- Chat button ---------- */
@@ -2598,7 +2822,9 @@ function updateChatFabVisibility(){
   const anyOpen =
     document.getElementById('drawer').classList.contains('open') ||
     document.getElementById('productModal').classList.contains('open') ||
-    document.getElementById('orderSummaryModal').classList.contains('open');
+    document.getElementById('orderSummaryModal').classList.contains('open') ||
+    document.getElementById('reviewsAllModal').classList.contains('open') ||
+    document.getElementById('reviewLightbox').classList.contains('open');
   wrap.style.display = anyOpen ? 'none' : '';
 }
 </script>
