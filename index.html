@@ -1415,7 +1415,7 @@ function renderThumb(p, variantLabel){
     }
   }
   if(!src && p.colors && p.colors.length){
-    const c = (colorName != null && p.colors.find(x => x.name === colorName)) || p.colors[selectedColor[p.id] || 0];
+    const c = (colorName != null && p.colors.find(x => x.name === colorName)) || p.colors[resolvedColorIndex(p)];
     src = c.image || (c.images && c.images[0]);
     alt = p.name + ' ' + c.name;
   }
@@ -1435,6 +1435,20 @@ let selectedColor = {}; // productId -> chosen color index
 function selectColor(id, idx){
   selectedColor[id] = idx;
   renderCatalog();
+}
+// Default color index to show before the customer picks one: prefer the first
+// พร้อมส่ง (ready) color so the badge/thumbnail/label the customer sees by
+// default are never out of sync with a product that has some ready colors.
+// Falls back to index 0 if no color is marked ready.
+function defaultColorIndex(p){
+  if(!p.colors) return 0;
+  const idx = p.colors.findIndex(c => c.ready);
+  return idx === -1 ? 0 : idx;
+}
+// Resolves which color index is "currently shown" for a product: the
+// customer's explicit pick if they made one, otherwise defaultColorIndex(p).
+function resolvedColorIndex(p){
+  return (selectedColor[p.id] !== undefined) ? selectedColor[p.id] : defaultColorIndex(p);
 }
 let selectedSizeVariant = {}; // productId -> chosen size index (for products with own per-size price, e.g. frames/pots)
 function selectSizeVariant(id, idx){
@@ -1595,7 +1609,7 @@ function displayPrice(p){
 // If the selected color defines its own ready flag, that wins; otherwise fall back to p.ready.
 function currentReadyState(p){
   if(p.colors){
-    const c = p.colors[selectedColor[p.id]||0];
+    const c = p.colors[resolvedColorIndex(p)];
     if(c && typeof c.ready !== 'undefined') return !!c.ready;
   }
   return !!p.ready;
@@ -1957,7 +1971,7 @@ function addToCart(id){
   if(!p) return;
   if(p.billSelector){ openProductModal(id); return; }
   let label = null, price = p.price;
-  if(p.colors){ label = p.colors[selectedColor[id]||0].name; }
+  if(p.colors){ label = p.colors[resolvedColorIndex(p)].name; }
   if(p.sizes){
     const sv = p.sizes[selectedSizeVariant[id]||0];
     label = label ? `${label}, ${sv.name}` : sv.name;
@@ -2085,7 +2099,7 @@ function buildSingleProductLines(id){
   const p = PRODUCTS.find(x=>x.id===id);
   if(!p) return null;
   let label = null, price = p.price;
-  if(p.colors){ label = p.colors[selectedColor[id]||0].name; }
+  if(p.colors){ label = p.colors[resolvedColorIndex(p)].name; }
   if(p.sizes){
     const sv = p.sizes[selectedSizeVariant[id]||0];
     label = label ? `${label}, ${sv.name}` : sv.name;
@@ -2448,7 +2462,7 @@ function currentGalleryImages(p){
     }
   }
   if(p.colors && p.colors.length){
-    const c = p.colors[selectedColor[p.id] || 0];
+    const c = p.colors[resolvedColorIndex(p)];
     if(c){
       if(c.images && c.images.length) return c.images;
       if(c.image) return [c.image];
@@ -2580,7 +2594,7 @@ function renderModal(){
   const colorsWrap = document.getElementById('modalColors');
   if(p.colors){
     colorsWrap.innerHTML = p.colors.map((c,i)=>`
-      <button class="color-chip ${((selectedColor[p.id]||0)===i)?'active':''}" onclick="modalImgIndex=0; selectColor('${p.id}',${i}); renderModal();">${c.name}</button>
+      <button class="color-chip ${(resolvedColorIndex(p)===i)?'active':''}" onclick="modalImgIndex=0; selectColor('${p.id}',${i}); renderModal();">${c.name}</button>
     `).join('');
   } else {
     colorsWrap.innerHTML = '';
@@ -2608,7 +2622,7 @@ function renderModal(){
 function currentModalVariant(p){
   if(p.billSelector) return { label:`ใส่ธนบัตร ${modalBills} ใบ`, unitPrice: unitPriceFor(p, modalBills) };
   let label = null, unitPrice = p.price;
-  if(p.colors){ label = p.colors[selectedColor[p.id]||0].name; }
+  if(p.colors){ label = p.colors[resolvedColorIndex(p)].name; }
   if(p.sizes){
     const sv = p.sizes[selectedSizeVariant[p.id]||0];
     label = label ? `${label}, ${sv.name}` : sv.name;
