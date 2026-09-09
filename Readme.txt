@@ -31,3 +31,5 @@ json
   { "name": "ชมพู", "images": ["images/s11-pink-1.jpg", "images/s11-pink-2.jpg"] },
   { "name": "เหลือง", "image": "images/s11-yellow.jpg" }
 ]
+
+ถ้ารีวิวไหนยังไม่มีรูป ใส่ "text" แทน "image" ใน reviews.json ได้ ระบบจะโชว์เป็นการ์ดข้อความสำรองแทนอัตโนมัติ (ไม่หายไปเฉยๆ)

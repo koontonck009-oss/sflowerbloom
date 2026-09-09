@@ -4,6 +4,26 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>S.Flower Bloom — แคตตาล็อกสินค้า</title>
+<meta name="description" content="S.Flower Bloom ร้านดอกไม้ออนไลน์ เลือกช่อดอกไม้ กรอบรูป กระถาง และของขวัญสำหรับโอกาสพิเศษ เลือกสินค้าแล้วสั่งซื้อง่ายๆ ผ่านแชท นัดรับหรือจัดส่งได้">
+<!-- TODO: แก้ https://your-domain.com/ ในทุกบรรทัดด้านล่างนี้ให้เป็นโดเมนจริงของเว็บ -->
+<link rel="canonical" href="https://your-domain.com/">
+
+<!-- Open Graph: ทำให้ลิงก์ที่แชร์ใน Facebook / LINE / Messenger มีรูปและคำอธิบายสวยๆ -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="S.Flower Bloom">
+<meta property="og:title" content="S.Flower Bloom — แคตตาล็อกสินค้า">
+<meta property="og:description" content="เลือกช่อดอกไม้ กรอบรูป กระถาง และของขวัญสำหรับโอกาสพิเศษ สั่งซื้อง่ายผ่านแชท">
+<!-- TODO: เปลี่ยนเป็นรูปแนวนอนขนาดประมาณ 1200x630px (โลโก้วงกลมรูปนี้จะถูกครอบตัดไม่สวยตอนแชร์) -->
+<meta property="og:image" content="https://your-domain.com/images/logo.png">
+<meta property="og:url" content="https://your-domain.com/">
+<meta property="og:locale" content="th_TH">
+
+<!-- Twitter/X Card — บาง messenger ก็อ่าน tag ชุดนี้ด้วย -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="S.Flower Bloom — แคตตาล็อกสินค้า">
+<meta name="twitter:description" content="เลือกช่อดอกไม้ กรอบรูป กระถาง และของขวัญสำหรับโอกาสพิเศษ สั่งซื้อง่ายผ่านแชท">
+<meta name="twitter:image" content="https://your-domain.com/images/logo.png">
+
 <link rel="icon" type="image/jpeg" href="images/logo.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -207,6 +227,50 @@
     .chat-bubble{max-width:170px; font-size:12.5px;}
   }
 
+  /* ---------- Reviews / social proof ---------- */
+  .reviews-section{margin:26px 6vw 22px;}
+  .reviews-head{display:flex; align-items:baseline; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:14px;}
+  .reviews-head h3{margin:0; font-size:20px; color:var(--sage-dark);}
+  .reviews-stat{font-size:12.5px; font-weight:700; color:var(--rose-dark); background:rgba(246,33,136,0.08); padding:5px 12px; border-radius:999px;}
+  .reviews-scroll{
+    display:flex; gap:14px; overflow-x:auto; -webkit-overflow-scrolling:touch;
+    scroll-snap-type:x proximity; padding-bottom:4px;
+  }
+  .reviews-scroll::-webkit-scrollbar{height:6px;}
+  .reviews-scroll::-webkit-scrollbar-thumb{background:var(--line); border-radius:999px;}
+  /* Photo-first review card: the screenshot/photo IS the proof, so it fills the
+     card. Name/stars sit in a small strip under the photo — optional, kept short. */
+  .review-card{
+    flex:0 0 auto; width:170px; scroll-snap-align:start;
+    background:var(--paper); border:1px solid var(--line); border-radius:16px;
+    box-shadow:var(--shadow); overflow:hidden; cursor:pointer;
+    display:flex; flex-direction:column;
+    transition:transform .15s ease;
+  }
+  .review-card:hover{transform:translateY(-3px);}
+  .review-photo{
+    width:100%; aspect-ratio:3/4; background:var(--cream);
+    display:flex; align-items:center; justify-content:center; overflow:hidden;
+  }
+  .review-photo img{width:100%; height:100%; object-fit:cover; display:block;}
+  .reviews-section:empty, .reviews-section[hidden]{display:none;}
+
+  /* Lightbox for tapping a review photo to see it full-size */
+  .review-lightbox{
+    position:fixed; inset:0; z-index:1300;
+    background:rgba(20,6,15,0.88);
+    display:flex; align-items:center; justify-content:center;
+    opacity:0; visibility:hidden; transition:opacity .2s ease, visibility .2s ease;
+    padding:24px;
+  }
+  .review-lightbox.open{opacity:1; visibility:visible;}
+  .review-lightbox img{max-width:100%; max-height:85vh; border-radius:14px; box-shadow:0 20px 60px rgba(0,0,0,0.5);}
+  .review-lightbox-close{
+    position:absolute; top:18px; right:18px; width:40px; height:40px; border-radius:50%;
+    border:none; background:rgba(255,255,255,0.15); color:#fff; font-size:19px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; backdrop-filter:blur(6px);
+  }
+
   /* ---------- Category nav ---------- */
   .cat-nav{
     display:flex; gap:2px; flex-wrap:nowrap;
@@ -247,22 +311,95 @@
     display:flex; align-items:center; gap:12px; flex-wrap:wrap;
     padding:10px 6vw 4px;
   }
-  .ready-check{
-    display:inline-flex; align-items:center; gap:7px;
-    font-family:'Kanit'; font-weight:700; font-size:13px; color:var(--sage-dark);
-    cursor:pointer; user-select:none;
-  }
-  .ready-check input{width:16px; height:16px; accent-color:var(--sage); cursor:pointer;}
-  .filter-select{
+  .filter-open-btn{
+    display:inline-flex; align-items:center; gap:8px;
     border:1.5px solid var(--line); background:#fff; color:var(--plum);
-    padding:8px 12px; border-radius:999px; font-family:'Kanit'; font-weight:600; font-size:13px;
-    cursor:pointer; max-width:100%;
+    padding:9px 16px; border-radius:999px; font-family:'Kanit'; font-weight:600; font-size:13.5px;
+    cursor:pointer; position:relative;
   }
-  .filter-select:focus{outline:none; border-color:var(--sage);}
-  .section-filters{display:flex; gap:10px; flex-wrap:wrap; margin:-4px 0 18px;}
+  .filter-open-btn:active{transform:scale(.97);}
+  .filter-badge-dot{
+    width:8px; height:8px; border-radius:50%; background:var(--sage);
+    display:none;
+  }
+  .filter-badge-dot.show{display:inline-block;}
 
   /* ---------- Product grid ---------- */
   main{padding:18px 6vw 80px;}
+
+  /* ---------- Unified filter panel (shared building blocks: sidebar + bottom sheet) ---------- */
+  .filter-group{margin-bottom:20px;}
+  .filter-group:last-of-type{margin-bottom:0;}
+  .filter-group-title{
+    font-family:'Kanit'; font-weight:700; font-size:13.5px; color:var(--plum); margin-bottom:10px;
+  }
+  .filter-pills{display:flex; gap:8px; flex-wrap:wrap;}
+  .filter-pill{
+    border:1.5px solid var(--line); background:#fff; color:var(--plum);
+    padding:7px 14px; border-radius:999px; font-family:'Kanit'; font-weight:600; font-size:13px;
+    cursor:pointer; white-space:nowrap;
+  }
+  .filter-pill.active{background:var(--sage); border-color:var(--sage); color:#fff;}
+  .filter-ready-toggle{
+    display:inline-flex; align-items:center; gap:8px;
+    font-family:'Kanit'; font-weight:700; font-size:13.5px; color:var(--sage-dark);
+    cursor:pointer; user-select:none; margin-top:4px;
+  }
+  .filter-ready-toggle input{width:16px; height:16px; accent-color:var(--sage); cursor:pointer;}
+
+  /* ---------- Mobile: bottom sheet ---------- */
+  .filter-overlay{
+    position:fixed; inset:0; background:rgba(59,18,48,0.45);
+    opacity:0; visibility:hidden; transition:opacity .2s ease, visibility .2s ease;
+    z-index:1200;
+  }
+  .filter-overlay.open{opacity:1; visibility:visible;}
+  .filter-sheet{
+    position:fixed; left:0; right:0; bottom:0; z-index:1201;
+    background:var(--paper); border-radius:20px 20px 0 0;
+    max-height:80vh; display:flex; flex-direction:column;
+    transform:translateY(100%); transition:transform .25s ease;
+    box-shadow:0 -8px 30px rgba(59,18,48,0.2);
+  }
+  .filter-sheet.open{transform:translateY(0);}
+  .filter-sheet-header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 20px; border-bottom:1px solid var(--line); flex-shrink:0;
+  }
+  .filter-sheet-header h3{margin:0; font-size:16px; color:var(--plum);}
+  .filter-sheet-close{
+    border:none; background:var(--cream); color:var(--plum); width:30px; height:30px;
+    border-radius:50%; font-size:15px; cursor:pointer; display:flex; align-items:center; justify-content:center;
+  }
+  .filter-sheet-body{padding:18px 20px; overflow-y:auto; flex:1;}
+  .filter-sheet-footer{
+    display:flex; gap:10px; padding:14px 20px; border-top:1px solid var(--line); flex-shrink:0;
+    padding-bottom:calc(14px + env(safe-area-inset-bottom));
+  }
+  .filter-clear-btn{
+    flex:1; padding:13px; border-radius:14px; border:1.5px solid var(--line); background:#fff;
+    color:var(--plum); font-family:'Kanit'; font-weight:700; font-size:14.5px; cursor:pointer;
+  }
+  .filter-apply-btn{
+    flex:2; padding:13px; border-radius:14px; border:none; background:var(--sage);
+    color:#fff; font-family:'Kanit'; font-weight:700; font-size:14.5px; cursor:pointer;
+    box-shadow:0 6px 16px rgba(246,33,136,0.35);
+  }
+
+  /* ---------- Desktop: persistent left sidebar ---------- */
+  .catalog-layout{display:block;}
+  .filter-sidebar{display:none;}
+  @media (min-width:860px){
+    .catalog-layout{display:flex; align-items:flex-start; gap:28px; padding:0 6vw;}
+    main{padding:18px 0 80px; flex:1; min-width:0;}
+    .filter-sidebar{
+      display:block; width:230px; flex-shrink:0;
+      background:#fff; border:1px solid var(--line); border-radius:16px;
+      padding:20px; position:sticky;
+    }
+    .filter-sidebar-title{font-size:16px; color:var(--plum); margin:0 0 16px;}
+    .filters-bar{display:none;}
+  }
   .section-title{
     margin:34px 0 18px;
     display:flex; align-items:baseline; gap:12px;
@@ -332,6 +469,25 @@
   }
   .badge-inline.ready{background:var(--sage);}
   .badge-inline.new{background:var(--rose);}
+  .fav-heart{
+    position:absolute; bottom:8px; right:8px; z-index:2;
+    width:32px; height:32px; border-radius:50%; border:none;
+    background:rgba(255,255,255,0.88); -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px);
+    display:flex; align-items:center; justify-content:center;
+    font-size:17px; line-height:1; cursor:pointer;
+    box-shadow:0 4px 10px rgba(0,0,0,0.15);
+    color:#b09aa3; transition:transform .15s ease, color .15s ease;
+  }
+  .fav-heart:hover{transform:scale(1.08);}
+  .fav-heart.active{color:var(--rose-dark);}
+  .fav-heart-inline{
+    border:1.5px solid var(--line); background:#fff; border-radius:999px;
+    width:40px; height:40px; flex-shrink:0; font-size:19px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    color:#b09aa3; transition:transform .15s ease, color .15s ease;
+  }
+  .fav-heart-inline:hover{transform:scale(1.06);}
+  .fav-heart-inline.active{color:var(--rose-dark); border-color:var(--rose);}
   .card h4{margin:0 0 4px; font-size:16.5px; font-weight:700;}
   .color-row{display:flex; gap:6px; flex-wrap:wrap; margin:-2px 0 10px;}
   .color-chip{
@@ -875,6 +1031,18 @@
     .price{font-size:15px;}
   }
 </style>
+<!-- JSON-LD: ช่วยให้ Google เข้าใจว่านี่คือหน้าร้านค้า -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Store",
+  "name": "S.Flower Bloom",
+  "description": "ร้านดอกไม้ออนไลน์ เลือกช่อดอกไม้ กรอบรูป กระถาง และของขวัญสำหรับโอกาสพิเศษ สั่งซื้อผ่านแชท",
+  "image": "https://your-domain.com/images/logo.png",
+  "url": "https://your-domain.com/",
+  "priceRange": "฿฿"
+}
+</script>
 </head>
 <body>
 
@@ -905,17 +1073,45 @@
   <a href="#catalog" class="cta">เลือกดูสินค้า ↓</a>
 </section>
 
-<nav class="cat-nav" id="catNav"></nav>
-<div class="filters-bar">
-  <label class="ready-check">
-    <input type="checkbox" id="readyToggle" onchange="toggleReadyOnly()"> ⚡ พร้อมส่งเท่านั้น
-  </label>
-  <select id="priceFilterSelect" class="filter-select" onchange="setPriceRange(this.selectedIndex)"></select>
+<section class="reviews-section" id="reviewsSection" hidden>
+  <div class="reviews-head">
+    <h3>รีวิวจากลูกค้า</h3>
+    <span class="reviews-stat" id="reviewsStat"></span>
+  </div>
+  <div class="reviews-scroll" id="reviewsScroll"></div>
+</section>
+<div class="review-lightbox" id="reviewLightbox" onclick="closeReviewLightbox()">
+  <button class="review-lightbox-close" onclick="event.stopPropagation(); closeReviewLightbox();" aria-label="ปิด">✕</button>
+  <img id="reviewLightboxImg" src="" alt="รีวิวลูกค้า">
 </div>
 
-<main id="catalog">
-  <div style="text-align:center; padding:60px 20px; color:var(--rose-dark);">กำลังโหลดสินค้า...</div>
-</main>
+<nav class="cat-nav" id="catNav"></nav>
+<div class="filters-bar">
+  <button class="filter-open-btn" onclick="openFilterSheet()">
+    <span>🔍 ตัวกรอง</span>
+    <span class="filter-badge-dot" id="filterBadgeDot"></span>
+  </button>
+</div>
+
+<div class="catalog-layout">
+  <aside class="filter-sidebar" id="filterSidebar"></aside>
+  <main id="catalog">
+    <div style="text-align:center; padding:60px 20px; color:var(--rose-dark);">กำลังโหลดสินค้า...</div>
+  </main>
+</div>
+
+<div class="filter-overlay" id="filterOverlay" onclick="closeFilterSheet()"></div>
+<div class="filter-sheet" id="filterSheet">
+  <div class="filter-sheet-header">
+    <h3>ตัวกรองสินค้า</h3>
+    <button class="filter-sheet-close" onclick="closeFilterSheet()" aria-label="ปิด">✕</button>
+  </div>
+  <div class="filter-sheet-body" id="filterSheetBody"></div>
+  <div class="filter-sheet-footer">
+    <button class="filter-clear-btn" onclick="clearFilterDraft()">ล้าง</button>
+    <button class="filter-apply-btn" onclick="applyFilterDraft()">แสดงผลลัพธ์</button>
+  </div>
+</div>
 
 <div class="overlay" id="overlay" onclick="closeCart()"></div>
 <aside class="drawer" id="drawer">
@@ -957,7 +1153,10 @@
     </div>
     <div class="page-body">
       <div id="modalBadges" style="margin-bottom:8px;"></div>
-      <h3 id="modalName"></h3>
+      <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:10px;">
+        <h3 id="modalName" style="margin:0 0 8px;"></h3>
+        <button type="button" class="fav-heart-inline" id="modalFavHeart" onclick="toggleFavorite(modalProductId)" aria-label="บันทึกไว้ในรายการโปรด">♡</button>
+      </div>
       <p class="modal-desc" id="modalDesc"></p>
       <div class="color-row" id="modalColors"></div>
       <div class="color-row" id="modalSizes"></div>
@@ -1098,7 +1297,7 @@ function renderThumb(p, colorName){
     src = p.images[0];
   }
   if(src){
-    return `<img src="${src}" alt="${alt}" onerror="this.parentElement.innerHTML=window.ICON_FALLBACK">`;
+    return `<img src="${src}" alt="${alt}" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML=window.ICON_FALLBACK">`;
   }
   return ICONS[p.icon] || ICONS.other;
 }
@@ -1131,9 +1330,88 @@ const CATEGORY_SIZES = {
 let activeCat = 'ทั้งหมด'; // now only drives which nav tab is highlighted (scrollspy), not filtering
 let activeSizes = {}; // cat -> selected size for that category (independent per category)
 let showReadyOnly = false;
+let showFavoritesOnly = false;
+
+/* ---------- รายการโปรด (บันทึกในเบราว์เซอร์ของลูกค้า เหมือนตะกร้า) ---------- */
+const FAVORITES_STORAGE_KEY = 'sfb_favorites_v1';
+function loadFavoritesFromStorage(){
+  try{
+    const raw = localStorage.getItem(FAVORITES_STORAGE_KEY);
+    if(!raw) return new Set();
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? new Set(parsed) : new Set();
+  } catch(err){
+    console.error('โหลดรายการโปรดที่บันทึกไว้ไม่สำเร็จ:', err);
+    return new Set();
+  }
+}
+function saveFavorites(){
+  try{
+    localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify([...favorites]));
+  } catch(err){
+    console.error('บันทึกรายการโปรดไม่สำเร็จ:', err);
+  }
+}
+let favorites = loadFavoritesFromStorage(); // Set ของ product id
+function isFavorite(id){ return favorites.has(id); }
+function toggleFavorite(id){
+  if(favorites.has(id)) favorites.delete(id);
+  else favorites.add(id);
+  saveFavorites();
+  renderCatalog();
+  // อัปเดตหัวใจในหน้ารายละเอียดสินค้าด้วย ถ้าเปิดอยู่พอดี
+  const modalHeart = document.getElementById('modalFavHeart');
+  if(modalHeart && modalProductId === id){
+    const fav = favorites.has(id);
+    modalHeart.classList.toggle('active', fav);
+    modalHeart.textContent = fav ? '♥' : '♡';
+    modalHeart.setAttribute('aria-label', fav ? 'เอาออกจากรายการโปรด' : 'บันทึกไว้ในรายการโปรด');
+  }
+}
+// สินค้าบางชิ้นอาจถูกลบออกจาก products.json ไปแล้ว — ตัดรายการโปรดที่ค้างอยู่ทิ้งไปด้วย
+function pruneFavoritesAgainstProducts(){
+  let changed = false;
+  [...favorites].forEach(id => {
+    if(!PRODUCTS.find(p => p.id === id)){ favorites.delete(id); changed = true; }
+  });
+  if(changed) saveFavorites();
+}
 let searchQuery = '';
 let scrollSpyObserver = null;
-let cart = {}; // key -> { qty, unitPrice, label }
+let cart = loadCartFromStorage(); // key -> { qty, unitPrice, label } — restored from the browser if the customer visited before
+
+/* ---------- เก็บตะกร้าไว้ในเบราว์เซอร์ของลูกค้า ----------
+   ถ้าลูกค้าเผลอปิดแท็บ/รีเฟรชหน้าเว็บระหว่างเลือกซื้อ ตะกร้าจะยังอยู่ครบเมื่อเปิดเว็บใหม่
+   (เก็บเฉพาะในเบราว์เซอร์เครื่องนั้นๆ ของลูกค้าเอง ไม่ได้ส่งข้อมูลไปที่ไหน) */
+const CART_STORAGE_KEY = 'sfb_cart_v1';
+function loadCartFromStorage(){
+  try{
+    const raw = localStorage.getItem(CART_STORAGE_KEY);
+    if(!raw) return {};
+    const parsed = JSON.parse(raw);
+    return (parsed && typeof parsed === 'object') ? parsed : {};
+  } catch(err){
+    console.error('โหลดตะกร้าที่บันทึกไว้ไม่สำเร็จ:', err);
+    return {};
+  }
+}
+function saveCart(){
+  try{
+    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
+  } catch(err){
+    console.error('บันทึกตะกร้าไม่สำเร็จ:', err);
+  }
+}
+// สินค้าบางชิ้นอาจถูกลบออกจาก products.json ไปแล้วตั้งแต่ลูกค้าแวะมาครั้งก่อน —
+// ตัดรายการเหล่านั้นออกจากตะกร้าที่กู้คืนมา กันไม่ให้ค้างเป็นรายการผี
+function pruneCartAgainstProducts(){
+  let changed = false;
+  Object.keys(cart).forEach(key => {
+    const { id } = parseCartKey(key);
+    if(!PRODUCTS.find(p => p.id === id)){ delete cart[key]; changed = true; }
+  });
+  if(changed) saveCart();
+}
 
 function catSectionId(cat){ return 'cat-sec-' + CATS.indexOf(cat); }
 
@@ -1157,9 +1435,17 @@ function matchesSearch(p){
   return (p.name && p.name.toLowerCase().includes(q)) || (p.desc && p.desc.toLowerCase().includes(q));
 }
 
-function toggleReadyOnly(){
-  showReadyOnly = document.getElementById('readyToggle').checked;
+function toggleReadyOnly(checked){
+  showReadyOnly = checked;
   renderCatalog();
+  renderFilterSidebar();
+  updateFilterBadge();
+}
+function toggleFavoritesOnly(checked){
+  showFavoritesOnly = checked;
+  renderCatalog();
+  renderFilterSidebar();
+  updateFilterBadge();
 }
 
 function fmt(n){ return '฿' + n.toLocaleString('th-TH'); }
@@ -1216,7 +1502,7 @@ function orderNeedsDeposit(items){
 function renderNav(){
   const nav = document.getElementById('catNav');
   nav.innerHTML = CATS.map(c =>
-    `<button class="cat-btn ${c===activeCat?'active':''}" onclick="scrollToCat('${c}')">${c}</button>`
+    `<button class="cat-btn ${c===activeCat?'active':''}" onclick="selectCategory('${c}')">${c}</button>`
   ).join('');
   // เลื่อนแถบแท็บแนวนอนให้ปุ่มที่ active อยู่ในมุมมองเสมอ (เผื่อชื่อหมวดยาวจนล้นจอ)
   const activeBtn = nav.querySelector('.cat-btn.active');
@@ -1235,16 +1521,19 @@ function updateStickyOffsets(){
   if(bar && nav) nav.style.top = bar.offsetHeight + 'px';
 }
 window.addEventListener('resize', updateStickyOffsets);
-// เมื่อกดแท็บหมวดหมู่ ให้เลื่อนหน้าจอไปยังหมวดนั้นแบบนุ่มนวล (แทนที่จะกรองสินค้า)
-// ส่วนสถานะ active ระหว่างเลื่อนดูเองจะถูกอัปเดตโดย setupScrollSpy()
-function scrollToCat(c){
+// เมื่อกดแท็บหมวดหมู่ (หรือเลือกในแผงตัวกรอง) ให้กรองสินค้าจริง (ซ่อนหมวดอื่น) แล้วเลื่อนไปบนสุดของรายการ
+function selectCategory(c){
   activeCat = c;
   renderNav();
-  const el = document.getElementById(catSectionId(c));
-  if(!el) return;
-  const offset = stickyOffset() + 8;
-  const top = el.getBoundingClientRect().top + window.pageYOffset - offset;
-  window.scrollTo({ top, behavior: 'smooth' });
+  renderCatalog();
+  renderFilterSidebar();
+  updateFilterBadge();
+  const el = document.getElementById('catalog');
+  if(el){
+    const offset = stickyOffset() + 8;
+    const top = el.getBoundingClientRect().top + window.pageYOffset - offset;
+    window.scrollTo({ top, behavior: 'smooth' });
+  }
 }
 // Scrollspy: ไล่ดูว่าตอนนี้หมวดไหนอยู่ใต้แถบเมนูพอดี แล้วไฮไลต์แท็บนั้นให้อัตโนมัติ
 function setupScrollSpy(){
@@ -1266,11 +1555,21 @@ function setupScrollSpy(){
   }, { rootMargin: `-${totalSticky + 4}px 0px -65% 0px`, threshold: 0 });
   sections.forEach(s => scrollSpyObserver.observe(s));
 }
-function setSize(cat, s){ activeSizes[cat] = s; renderCatalog(); }
+function setSize(cat, s){
+  activeSizes[cat] = s;
+  renderCatalog();
+  renderFilterSidebar();
+  updateFilterBadge();
+}
 
 const FLOWER_TYPES = ['ทั้งหมด','ดอกไม้คละชนิด','กุหลาบ','ทานตะวัน','ทิวลิป','ไฮเดรนเยีย','เดซี่','ลิลลี่','เยอบีร่า'];
 let activeFlowerType = 'ทั้งหมด';
-function setFlowerType(t){ activeFlowerType = t; renderCatalog(); }
+function setFlowerType(t){
+  activeFlowerType = t;
+  renderCatalog();
+  renderFilterSidebar();
+  updateFilterBadge();
+}
 
 const PRICE_RANGES = [
   { label:'ทุกราคา', min:0, max:Infinity },
@@ -1280,17 +1579,162 @@ const PRICE_RANGES = [
   { label:'มากกว่า 1,000', min:1001, max:Infinity },
 ];
 let activePriceRange = 0;
-function setPriceRange(i){ activePriceRange = i; renderPriceFilter(); renderCatalog(); }
-function renderPriceFilter(){
-  const sel = document.getElementById('priceFilterSelect');
-  if(!sel) return;
-  sel.innerHTML = PRICE_RANGES.map((r,i) => `<option value="${i}" ${i===activePriceRange?'selected':''}>💰 ${r.label}</option>`).join('');
+function setPriceRange(i){
+  activePriceRange = i;
+  renderCatalog();
+  renderFilterSidebar();
+  updateFilterBadge();
+}
+
+/* ---------- Unified filter panel: shared HTML builder for both the desktop
+   sidebar (applies changes live) and the mobile bottom sheet (stages changes
+   in a draft, only committed when the customer taps "แสดงผลลัพธ์") ---------- */
+let filterDraft = null;
+
+function buildFilterPanelHtml(state, mode){
+  // mode: 'sidebar' (live — pill click applies immediately) or 'sheet' (draft)
+  const setCatFn = mode === 'sidebar' ? 'selectCategory' : 'setDraftCat';
+  const setPriceFn = mode === 'sidebar' ? 'setPriceRange' : 'setDraftPrice';
+  const setReadyFn = mode === 'sidebar' ? 'toggleReadyOnly' : 'setDraftReady';
+  const setFavFn = mode === 'sidebar' ? 'toggleFavoritesOnly' : 'setDraftFavorites';
+  const setFlowerFn = mode === 'sidebar' ? 'setFlowerType' : 'setDraftFlowerType';
+
+  const catHtml = CATS.map(c =>
+    `<button class="filter-pill ${c===state.cat?'active':''}" onclick="${setCatFn}('${c}')">${c}</button>`
+  ).join('');
+  const priceHtml = PRICE_RANGES.map((r,i) =>
+    `<button class="filter-pill ${i===state.priceRange?'active':''}" onclick="${setPriceFn}(${i})">${r.label}</button>`
+  ).join('');
+
+  const sizeList = CATEGORY_SIZES[state.cat];
+  const sizeHtml = (state.cat !== 'ทั้งหมด' && sizeList) ? `
+    <div class="filter-group">
+      <div class="filter-group-title">📏 ขนาด</div>
+      <div class="filter-pills">${sizeList.map(s =>
+        `<button class="filter-pill ${((state.size||'ทั้งหมด')===s)?'active':''}" onclick="${mode==='sidebar' ? `setSize('${state.cat}','${s}')` : `setDraftSize('${s}')`}">${s}</button>`
+      ).join('')}</div>
+    </div>` : '';
+
+  const flowerHtml = state.cat === 'ช่อดอกไม้' ? `
+    <div class="filter-group">
+      <div class="filter-group-title">🌸 ชนิดดอกไม้</div>
+      <div class="filter-pills">${FLOWER_TYPES.map(t =>
+        `<button class="filter-pill ${t===state.flowerType?'active':''}" onclick="${setFlowerFn}('${t}')">${t}</button>`
+      ).join('')}</div>
+    </div>` : '';
+
+  return `
+    <div class="filter-group">
+      <div class="filter-group-title">หมวดหมู่</div>
+      <div class="filter-pills">${catHtml}</div>
+    </div>
+    <div class="filter-group">
+      <div class="filter-group-title">ช่วงราคา</div>
+      <div class="filter-pills">${priceHtml}</div>
+    </div>
+    ${sizeHtml}
+    ${flowerHtml}
+    <div class="filter-group">
+      <label class="filter-ready-toggle">
+        <input type="checkbox" ${state.ready?'checked':''} onchange="${setReadyFn}(this.checked)"> ⚡ พร้อมส่งเท่านั้น
+      </label>
+      <label class="filter-ready-toggle" style="margin-top:8px;">
+        <input type="checkbox" ${state.favorites?'checked':''} onchange="${setFavFn}(this.checked)"> ❤️ รายการโปรดเท่านั้น
+      </label>
+    </div>
+  `;
+}
+
+// Desktop sidebar — always visible, applies every change immediately (no apply button needed)
+function renderFilterSidebar(){
+  const el = document.getElementById('filterSidebar');
+  if(!el) return;
+  const state = {
+    cat: activeCat,
+    priceRange: activePriceRange,
+    ready: showReadyOnly,
+    favorites: showFavoritesOnly,
+    size: activeSizes[activeCat] || 'ทั้งหมด',
+    flowerType: activeFlowerType
+  };
+  el.innerHTML = `<h4 class="filter-sidebar-title">ตัวกรองสินค้า</h4>` + buildFilterPanelHtml(state, 'sidebar');
+}
+
+// Mobile bottom sheet — stages changes in filterDraft until "แสดงผลลัพธ์" is tapped
+function renderFilterSheetBody(){
+  const body = document.getElementById('filterSheetBody');
+  if(body) body.innerHTML = buildFilterPanelHtml(filterDraft, 'sheet');
+}
+function openFilterSheet(){
+  filterDraft = {
+    cat: activeCat,
+    priceRange: activePriceRange,
+    ready: showReadyOnly,
+    favorites: showFavoritesOnly,
+    size: activeSizes[activeCat] || 'ทั้งหมด',
+    flowerType: activeFlowerType
+  };
+  renderFilterSheetBody();
+  document.getElementById('filterOverlay').classList.add('open');
+  document.getElementById('filterSheet').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeFilterSheet(){
+  document.getElementById('filterOverlay').classList.remove('open');
+  document.getElementById('filterSheet').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function setDraftCat(c){
+  filterDraft.cat = c;
+  filterDraft.size = CATEGORY_SIZES[c] ? (activeSizes[c] || 'ทั้งหมด') : 'ทั้งหมด';
+  if(c !== 'ช่อดอกไม้') filterDraft.flowerType = 'ทั้งหมด';
+  renderFilterSheetBody();
+}
+function setDraftPrice(i){ filterDraft.priceRange = i; renderFilterSheetBody(); }
+function setDraftReady(checked){ filterDraft.ready = checked; renderFilterSheetBody(); }
+function setDraftFavorites(checked){ filterDraft.favorites = checked; renderFilterSheetBody(); }
+function setDraftSize(s){ filterDraft.size = s; renderFilterSheetBody(); }
+function setDraftFlowerType(t){ filterDraft.flowerType = t; renderFilterSheetBody(); }
+function clearFilterDraft(){
+  filterDraft = { cat:'ทั้งหมด', priceRange:0, ready:false, favorites:false, size:'ทั้งหมด', flowerType:'ทั้งหมด' };
+  renderFilterSheetBody();
+}
+function applyFilterDraft(){
+  activeCat = filterDraft.cat;
+  activePriceRange = filterDraft.priceRange;
+  showReadyOnly = filterDraft.ready;
+  showFavoritesOnly = filterDraft.favorites;
+  if(filterDraft.cat !== 'ทั้งหมด') activeSizes[filterDraft.cat] = filterDraft.size;
+  activeFlowerType = filterDraft.flowerType;
+  renderNav();
+  renderCatalog();
+  renderFilterSidebar();
+  updateFilterBadge();
+  closeFilterSheet();
+  const el = document.getElementById('catalog');
+  if(el){
+    const offset = stickyOffset() + 8;
+    const top = el.getBoundingClientRect().top + window.pageYOffset - offset;
+    window.scrollTo({ top, behavior: 'smooth' });
+  }
+}
+// จุดสีบนปุ่ม "ตัวกรอง" (มือถือ) โชว์เมื่อมีตัวกรองใดๆ ต่างไปจากค่าเริ่มต้น
+function updateFilterBadge(){
+  const dot = document.getElementById('filterBadgeDot');
+  if(!dot) return;
+  const sizeActive = Object.keys(activeSizes).some(cat => activeSizes[cat] && activeSizes[cat] !== 'ทั้งหมด');
+  const isActive = activeCat !== 'ทั้งหมด' || activePriceRange !== 0 || showReadyOnly || showFavoritesOnly || activeFlowerType !== 'ทั้งหมด' || sizeActive;
+  dot.classList.toggle('show', isActive);
 }
 
 // A product "มีตัวเลือกสินค้า" if the customer has to pick between colors,
 // sizes, or a bill count before the price/line item is final.
 function hasProductOptions(p){
   return !!(p.colors || p.sizes || p.billSelector);
+}
+function favHeartHtml(id){
+  const active = isFavorite(id);
+  return `<button type="button" class="fav-heart ${active?'active':''}" onclick="event.stopPropagation(); toggleFavorite('${id}')" aria-label="${active?'เอาออกจากรายการโปรด':'บันทึกไว้ในรายการโปรด'}">${active?'♥':'♡'}</button>`;
 }
 function renderProductCard(p){
   return `
@@ -1299,6 +1743,7 @@ function renderProductCard(p){
         <div class="thumb">${renderThumb(p)}</div>
         ${currentReadyState(p) ? '<span class="badge-ready">พร้อมส่ง</span>' : ''}
         ${p.isNew ? '<span class="badge-new">ใหม่</span>' : ''}
+        ${favHeartHtml(p.id)}
       </div>
       <div class="card-body">
         <h4>${p.name}</h4>
@@ -1313,26 +1758,31 @@ function renderProductCard(p){
 }
 function renderCatalog(){
   const main = document.getElementById('catalog');
-  const cats = CATS.slice(1);
   const range = PRICE_RANGES[activePriceRange];
   let totalMatches = 0;
+  let html = '';
 
-  // สินค้าแนะนำ (พร้อมส่ง) — โชว์ก่อนเป็นลำดับแรกสุดเสมอ ใต้แท็บ "ทั้งหมด"
-  const recommended = PRODUCTS.filter(p =>
-    productHasAnyReady(p)
-    && matchesSearch(p)
-    && (displayPrice(p) >= range.min && displayPrice(p) <= range.max)
-  );
-  totalMatches += recommended.length;
-  const recommendedHtml = recommended.length ? `
-    <div class="section-title featured"><h3>🌟 สินค้าแนะนำ (พร้อมส่ง)</h3><span>${recommended.length} รายการ</span></div>
-    <div class="grid">
-      ${recommended.map(p => renderProductCard(p)).join('')}
-    </div>
-  ` : '';
-  const allSectionHtml = `<div class="cat-section" id="${catSectionId('ทั้งหมด')}" data-cat="ทั้งหมด">${recommendedHtml}</div>`;
+  // "ทั้งหมด" = เรียกดูทุกอย่างเหมือนเดิม (การ์ดแนะนำ + ทุกหมวดเรียงต่อกัน)
+  // เลือกหมวดเจาะจง = กรองจริง โชว์แค่หมวดนั้นหมวดเดียว
+  if(activeCat === 'ทั้งหมด'){
+    const recommended = PRODUCTS.filter(p =>
+      productHasAnyReady(p)
+      && matchesSearch(p)
+      && (!showFavoritesOnly || isFavorite(p.id))
+      && (displayPrice(p) >= range.min && displayPrice(p) <= range.max)
+    );
+    totalMatches += recommended.length;
+    const recommendedHtml = recommended.length ? `
+      <div class="section-title featured"><h3>🌟 สินค้าแนะนำ (พร้อมส่ง)</h3><span>${recommended.length} รายการ</span></div>
+      <div class="grid">
+        ${recommended.map(p => renderProductCard(p)).join('')}
+      </div>
+    ` : '';
+    html += `<div class="cat-section" id="${catSectionId('ทั้งหมด')}" data-cat="ทั้งหมด">${recommendedHtml}</div>`;
+  }
 
-  const catsHtml = cats.map(cat => {
+  const catsToRender = activeCat === 'ทั้งหมด' ? CATS.slice(1) : [activeCat];
+  html += catsToRender.map(cat => {
     const sizeList = CATEGORY_SIZES[cat];
     const currentSize = activeSizes[cat] || 'ทั้งหมด';
     const items = PRODUCTS.filter(p =>
@@ -1341,18 +1791,14 @@ function renderCatalog(){
       && (!sizeList || currentSize === 'ทั้งหมด' || p.size === currentSize)
       && (cat !== 'ช่อดอกไม้' || activeFlowerType === 'ทั้งหมด' || p.flowerType === activeFlowerType)
       && (!showReadyOnly || productHasAnyReady(p))
+      && (!showFavoritesOnly || isFavorite(p.id))
       && (displayPrice(p) >= range.min && displayPrice(p) <= range.max)
     );
     totalMatches += items.length;
-    const filterRows = (sizeList || cat === 'ช่อดอกไม้')
-      ? `<div class="section-filters">${sizeList ? renderSizeRow(cat, sizeList) : ''}${cat === 'ช่อดอกไม้' ? renderFlowerTypeRow() : ''}</div>`
-      : '';
     const body = !items.length ? `
       <div class="section-title"><h3>${cat}</h3><span>0 รายการ</span></div>
-      ${filterRows}
     ` : `
       <div class="section-title"><h3>${cat}</h3><span>${items.length} รายการ</span></div>
-      ${filterRows}
       <div class="grid">
         ${items.map(p => renderProductCard(p)).join('')}
       </div>
@@ -1366,17 +1812,16 @@ function renderCatalog(){
         <p style="font-size:16px; font-weight:700; margin-bottom:6px;">ไม่พบสินค้าที่ตรงกับ "${searchQuery}"</p>
         <p style="font-size:13.5px; color:var(--plum);">ลองค้นหาด้วยคำอื่น หรือกดล้างคำค้นหาเพื่อดูสินค้าทั้งหมด</p>
       </div>`;
+  } else if(totalMatches === 0){
+    main.innerHTML = `
+      <div style="text-align:center; padding:60px 20px; color:var(--rose-dark);">
+        <p style="font-size:16px; font-weight:700; margin-bottom:6px;">ไม่พบสินค้าตามตัวกรองที่เลือก</p>
+        <p style="font-size:13.5px; color:var(--plum);">ลองล้างตัวกรอง หรือเลือกเงื่อนไขอื่นดูนะ</p>
+      </div>`;
   } else {
-    main.innerHTML = allSectionHtml + catsHtml;
+    main.innerHTML = html;
   }
   setupScrollSpy();
-}
-function renderSizeRow(cat, sizeList){
-  const current = activeSizes[cat] || 'ทั้งหมด';
-  return `<select class="filter-select" onchange="setSize('${cat}', this.value)">${sizeList.map(s => `<option value="${s}" ${s===current?'selected':''}>📏 ${s}</option>`).join('')}</select>`;
-}
-function renderFlowerTypeRow(){
-  return `<select class="filter-select" onchange="setFlowerType(this.value)">${FLOWER_TYPES.map(t => `<option value="${t}" ${t===activeFlowerType?'selected':''}>🌸 ${t}</option>`).join('')}</select>`;
 }
 
 function addToCart(id){
@@ -1415,6 +1860,7 @@ function cartTotal(){
 }
 
 function updateCartUI(){
+  saveCart();
   document.getElementById('cartBadge').textContent = cartCount();
   const wrap = document.getElementById('drawerItems');
   const entries = Object.entries(cart);
@@ -1879,7 +2325,7 @@ function renderModalMainImage(p){
   const imgs = currentGalleryImages(p);
   const src = imgs[modalImgIndex];
   if(src){
-    return `<img src="${src}" alt="${p.name}" onerror="this.parentElement.innerHTML=window.ICON_FALLBACK">`;
+    return `<img src="${src}" alt="${p.name}" decoding="async" onerror="this.parentElement.innerHTML=window.ICON_FALLBACK">`;
   }
   return ICONS[p.icon] || ICONS.other;
 }
@@ -1893,7 +2339,7 @@ function renderModalThumbs(p){
   }
   wrap.innerHTML = imgs.map((src, i) => `
     <button type="button" class="gallery-thumb ${i===modalImgIndex?'active':''}" onclick="setModalImgIndex(${i})" aria-label="ดูรูปที่ ${i+1}">
-      <img src="${src}" alt="${p.name} มุมที่ ${i+1}" onerror="this.closest('.gallery-thumb').style.display='none'">
+      <img src="${src}" alt="${p.name} มุมที่ ${i+1}" loading="lazy" decoding="async" onerror="this.closest('.gallery-thumb').style.display='none'">
     </button>
   `).join('');
 }
@@ -1981,6 +2427,13 @@ function renderModal(){
   document.getElementById('modalImg').innerHTML = renderModalMainImage(p);
   renderModalThumbs(p);
   document.getElementById('modalName').textContent = p.name;
+  const modalHeart = document.getElementById('modalFavHeart');
+  if(modalHeart){
+    const fav = isFavorite(p.id);
+    modalHeart.classList.toggle('active', fav);
+    modalHeart.textContent = fav ? '♥' : '♡';
+    modalHeart.setAttribute('aria-label', fav ? 'เอาออกจากรายการโปรด' : 'บันทึกไว้ในรายการโปรด');
+  }
   document.getElementById('modalDesc').textContent = p.desc;
   document.getElementById('modalQty').textContent = modalQty;
   document.getElementById('modalBadges').innerHTML =
@@ -2057,13 +2510,84 @@ async function loadProducts(){
     console.error('โหลด products.json ไม่สำเร็จ:', err);
     return;
   }
+  pruneCartAgainstProducts();
+  pruneFavoritesAgainstProducts();
   renderNav();
-  renderPriceFilter();
   renderCatalog();
+  renderFilterSidebar();
+  updateFilterBadge();
   updateCartUI();
   loadSavedFbName();
 }
 loadProducts();
+
+/* ---------- รีวิวจากลูกค้า (รูปภาพล้วน) ----------
+   ไม่ต้องแก้โค้ดหรือแก้ไฟล์ JSON ทีละบรรทัด — แค่เอารูปรีวิว (แคปแชท/รูปที่ลูกค้าส่งมา)
+   ไปวางในโฟลเดอร์ images/reviews/ แล้วตั้งชื่อไฟล์เรียงเลข: review1.jpg, review2.jpg,
+   review3.jpg, ... (รองรับ .jpg .jpeg .png .webp ผสมกันได้) ระบบจะไล่หารูปที่มีอยู่จริง
+   เองตอนโหลดหน้าเว็บ เพิ่มรูปใหม่ก็แค่เพิ่มไฟล์เลขถัดไป ไม่ต้องแตะโค้ดเลย
+   (เว็บสถิตแบบนี้ดึงรายชื่อไฟล์ทั้งโฟลเดอร์ตรงๆ ไม่ได้ จึงต้องพึ่งชื่อไฟล์เรียงเลขแทน) */
+function checkImageExists(src){
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => resolve(true);
+    img.onerror = () => resolve(false);
+    img.src = src;
+  });
+}
+async function findReviewImage(num){
+  const exts = ['jpg', 'jpeg', 'png', 'webp'];
+  for(const ext of exts){
+    const src = `images/reviews/review${num}.${ext}`;
+    if(await checkImageExists(src)) return src;
+  }
+  return null;
+}
+async function loadReviews(){
+  const found = [];
+  let misses = 0;
+  for(let i = 1; i <= 300 && misses < 6; i++){
+    const src = await findReviewImage(i);
+    if(src){ found.push(src); misses = 0; }
+    else misses++;
+  }
+  if(found.length === 0) return;
+  renderReviews(found);
+}
+let REVIEWS = [];
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i = a.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function renderReviews(imagesIn){
+  const images = shuffle(imagesIn); // random order each page load
+  REVIEWS = images;
+  const scrollEl = document.getElementById('reviewsScroll');
+  const statEl = document.getElementById('reviewsStat');
+  const section = document.getElementById('reviewsSection');
+  scrollEl.innerHTML = images.map((src, i) => `
+    <div class="review-card" onclick="openReviewLightbox(${i})">
+      <div class="review-photo">
+        <img src="${src}" alt="รีวิวจากลูกค้า" loading="lazy" decoding="async" onerror="this.closest('.review-card').style.display='none'">
+      </div>
+    </div>`).join('');
+  if(statEl) statEl.textContent = `${images.length}+ รีวิวจากลูกค้าจริง`;
+  section.hidden = false;
+}
+function openReviewLightbox(i){
+  const src = REVIEWS[i];
+  if(!src) return;
+  document.getElementById('reviewLightboxImg').src = src;
+  document.getElementById('reviewLightbox').classList.add('open');
+}
+function closeReviewLightbox(){
+  document.getElementById('reviewLightbox').classList.remove('open');
+}
+loadReviews();
 
 /* ---------- Chat button ---------- */
 function closeChatBubble(){
