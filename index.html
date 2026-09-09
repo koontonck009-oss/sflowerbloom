@@ -5,8 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>S.Flower Bloom — แคตตาล็อกสินค้า</title>
 <meta name="description" content="S.Flower Bloom ร้านดอกไม้ออนไลน์ เลือกช่อดอกไม้ กรอบรูป กระถาง และของขวัญสำหรับโอกาสพิเศษ เลือกสินค้าแล้วสั่งซื้อง่ายๆ ผ่านแชท นัดรับหรือจัดส่งได้">
-<!-- TODO: แก้ https://your-domain.com/ ในทุกบรรทัดด้านล่างนี้ให้เป็นโดเมนจริงของเว็บ -->
-<link rel="canonical" href="https://your-domain.com/">
+<link rel="canonical" href="https://sflowerbloom.vercel.app/">
 
 <!-- Open Graph: ทำให้ลิงก์ที่แชร์ใน Facebook / LINE / Messenger มีรูปและคำอธิบายสวยๆ -->
 <meta property="og:type" content="website">
@@ -14,15 +13,15 @@
 <meta property="og:title" content="S.Flower Bloom — แคตตาล็อกสินค้า">
 <meta property="og:description" content="เลือกช่อดอกไม้ กรอบรูป กระถาง และของขวัญสำหรับโอกาสพิเศษ สั่งซื้อง่ายผ่านแชท">
 <!-- TODO: เปลี่ยนเป็นรูปแนวนอนขนาดประมาณ 1200x630px (โลโก้วงกลมรูปนี้จะถูกครอบตัดไม่สวยตอนแชร์) -->
-<meta property="og:image" content="https://your-domain.com/images/logo.png">
-<meta property="og:url" content="https://your-domain.com/">
+<meta property="og:image" content="https://sflowerbloom.vercel.app/images/logo.png">
+<meta property="og:url" content="https://sflowerbloom.vercel.app/">
 <meta property="og:locale" content="th_TH">
 
 <!-- Twitter/X Card — บาง messenger ก็อ่าน tag ชุดนี้ด้วย -->
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="S.Flower Bloom — แคตตาล็อกสินค้า">
 <meta name="twitter:description" content="เลือกช่อดอกไม้ กรอบรูป กระถาง และของขวัญสำหรับโอกาสพิเศษ สั่งซื้อง่ายผ่านแชท">
-<meta name="twitter:image" content="https://your-domain.com/images/logo.png">
+<meta name="twitter:image" content="https://sflowerbloom.vercel.app/images/logo.png">
 
 <link rel="icon" type="image/jpeg" href="images/logo.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1038,8 +1037,8 @@
   "@type": "Store",
   "name": "S.Flower Bloom",
   "description": "ร้านดอกไม้ออนไลน์ เลือกช่อดอกไม้ กรอบรูป กระถาง และของขวัญสำหรับโอกาสพิเศษ สั่งซื้อผ่านแชท",
-  "image": "https://your-domain.com/images/logo.png",
-  "url": "https://your-domain.com/",
+  "image": "https://sflowerbloom.vercel.app/images/logo.png",
+  "url": "https://sflowerbloom.vercel.app/",
   "priceRange": "฿฿"
 }
 </script>
@@ -1376,10 +1375,6 @@ function pruneFavoritesAgainstProducts(){
   });
   if(changed) saveFavorites();
 }
-let searchQuery = '';
-let scrollSpyObserver = null;
-let cart = loadCartFromStorage(); // key -> { qty, unitPrice, label } — restored from the browser if the customer visited before
-
 /* ---------- เก็บตะกร้าไว้ในเบราว์เซอร์ของลูกค้า ----------
    ถ้าลูกค้าเผลอปิดแท็บ/รีเฟรชหน้าเว็บระหว่างเลือกซื้อ ตะกร้าจะยังอยู่ครบเมื่อเปิดเว็บใหม่
    (เก็บเฉพาะในเบราว์เซอร์เครื่องนั้นๆ ของลูกค้าเอง ไม่ได้ส่งข้อมูลไปที่ไหน) */
@@ -1402,6 +1397,10 @@ function saveCart(){
     console.error('บันทึกตะกร้าไม่สำเร็จ:', err);
   }
 }
+let searchQuery = '';
+let scrollSpyObserver = null;
+let cart = loadCartFromStorage(); // key -> { qty, unitPrice, label } — restored from the browser if the customer visited before
+
 // สินค้าบางชิ้นอาจถูกลบออกจาก products.json ไปแล้วตั้งแต่ลูกค้าแวะมาครั้งก่อน —
 // ตัดรายการเหล่านั้นออกจากตะกร้าที่กู้คืนมา กันไม่ให้ค้างเป็นรายการผี
 function pruneCartAgainstProducts(){
@@ -2522,35 +2521,28 @@ async function loadProducts(){
 loadProducts();
 
 /* ---------- รีวิวจากลูกค้า (รูปภาพล้วน) ----------
-   ไม่ต้องแก้โค้ดหรือแก้ไฟล์ JSON ทีละบรรทัด — แค่เอารูปรีวิว (แคปแชท/รูปที่ลูกค้าส่งมา)
-   ไปวางในโฟลเดอร์ images/reviews/ แล้วตั้งชื่อไฟล์เรียงเลข: review1.jpg, review2.jpg,
-   review3.jpg, ... (รองรับ .jpg .jpeg .png .webp ผสมกันได้) ระบบจะไล่หารูปที่มีอยู่จริง
-   เองตอนโหลดหน้าเว็บ เพิ่มรูปใหม่ก็แค่เพิ่มไฟล์เลขถัดไป ไม่ต้องแตะโค้ดเลย
-   (เว็บสถิตแบบนี้ดึงรายชื่อไฟล์ทั้งโฟลเดอร์ตรงๆ ไม่ได้ จึงต้องพึ่งชื่อไฟล์เรียงเลขแทน) */
+   ไม่ต้องแก้โค้ดหรือแก้ไฟล์ JSON — แค่เอารูปรีวิว (แคปแชท/รูปที่ลูกค้าส่งมา) ไปวางใน
+   โฟลเดอร์ images/reviews/ แล้วตั้งชื่อไฟล์เรียงเลขเป็น .jpg เสมอ: review1.jpg, review2.jpg,
+   review3.jpg, ... ระบบจะยิงเช็คทุกเลขพร้อมกันทีเดียวตอนโหลดหน้าเว็บ (เร็วกว่าเช็คทีละไฟล์มาก)
+   เพิ่มรีวิวใหม่ก็แค่เพิ่มไฟล์เลขถัดไปเป็น .jpg ไม่ต้องแตะโค้ดเลย
+   (เว็บสถิตแบบนี้ดึงรายชื่อไฟล์ทั้งโฟลเดอร์ตรงๆ ไม่ได้ จึงต้องพึ่งชื่อไฟล์เรียงเลขแทน)
+   ถ้าวันไหนมีรีวิวเกิน 60 รูป ให้เพิ่มเลข MAX_REVIEWS ด้านล่างนี้ */
+const MAX_REVIEWS = 200;
 function checkImageExists(src){
   return new Promise(resolve => {
     const img = new Image();
-    img.onload = () => resolve(true);
-    img.onerror = () => resolve(false);
+    img.onload = () => resolve(src);
+    img.onerror = () => resolve(null);
     img.src = src;
   });
 }
-async function findReviewImage(num){
-  const exts = ['jpg', 'jpeg', 'png', 'webp'];
-  for(const ext of exts){
-    const src = `images/reviews/review${num}.${ext}`;
-    if(await checkImageExists(src)) return src;
-  }
-  return null;
-}
 async function loadReviews(){
-  const found = [];
-  let misses = 0;
-  for(let i = 1; i <= 300 && misses < 6; i++){
-    const src = await findReviewImage(i);
-    if(src){ found.push(src); misses = 0; }
-    else misses++;
+  const checks = [];
+  for(let i = 1; i <= MAX_REVIEWS; i++){
+    checks.push(checkImageExists(`images/reviews/review${i}.jpg`));
   }
+  const results = await Promise.all(checks); // ยิงเช็คทุกไฟล์พร้อมกัน ไม่ต้องรอทีละไฟล์
+  const found = results.filter(Boolean);
   if(found.length === 0) return;
   renderReviews(found);
 }
