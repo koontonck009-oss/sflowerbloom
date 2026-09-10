@@ -262,6 +262,27 @@
   .review-photo img{width:100%; height:100%; object-fit:cover; display:block;}
   .reviews-section:empty, .reviews-section[hidden]{display:none;}
 
+  /* ---------- FAQ ---------- */
+  .faq-section{margin:26px 6vw 30px;}
+  .faq-section h3{margin:0 0 14px; font-size:20px; color:var(--sage-dark);}
+  .faq-item{
+    background:var(--paper); border:1px solid var(--line); border-radius:16px;
+    margin-bottom:10px; overflow:hidden; box-shadow:var(--shadow);
+  }
+  .faq-item summary{
+    list-style:none; cursor:pointer; padding:16px 46px 16px 18px; position:relative;
+    font-weight:600; color:var(--plum); line-height:1.4;
+  }
+  .faq-item summary::-webkit-details-marker{display:none;}
+  .faq-item summary::after{
+    content:"+"; position:absolute; right:18px; top:50%; transform:translateY(-50%);
+    font-size:20px; font-weight:600; color:var(--rose-dark); transition:transform .15s ease;
+  }
+  .faq-item[open] summary::after{transform:translateY(-50%) rotate(45deg);}
+  .faq-item .faq-answer{
+    padding:0 18px 16px; margin:0; font-size:14px; line-height:1.6; color:var(--plum); opacity:.85;
+  }
+
   /* Lightbox for tapping a review photo to see it full-size */
   .review-lightbox{
     position:fixed; inset:0; z-index:1300;
@@ -1288,6 +1309,30 @@
     </div>
   </div>
 </div>
+
+<section class="faq-section" id="faqSection">
+  <h3>คำถามที่พบบ่อย (FAQ)</h3>
+
+  <details class="faq-item">
+    <summary>S.Flower Bloom มีหน้าร้านไหม</summary>
+    <p class="faq-answer">ปัจจุบันเรายังไม่มีหน้าร้าน แต่สามารถนัดรับได้ในเมืองนครสวรรค์ และอำเภอพยุหะคีรี</p>
+  </details>
+
+  <details class="faq-item">
+    <summary>บริการจัดส่งจาก S.Flower Bloom</summary>
+    <p class="faq-answer">ทางร้านของเรามีบริการนัดรับในตัวเมืองนครสวรรค์และอำเภอพยุหะคีรี เพื่อให้มั่นใจว่าสินค้าจะถูกส่งถึงมือผู้รับอย่างปลอดภัยและไม่เกิดความเสียหาย สำหรับการจัดส่งพัสดุ เรามีบริการส่ง EMS ผ่านไปรษณีย์ไทย โดยทำการแพ็กสินค้าอย่างดีรัดกุม เพื่อลดความเสี่ยงของการชำรุดหรือเสียหายในระหว่างการขนส่งจนถึงมือผู้รับ</p>
+  </details>
+
+  <details class="faq-item">
+    <summary>ดอกไม้สามารถเก็บได้นานเท่าไหร่?</summary>
+    <p class="faq-answer">ดอกไม้ลวดกำมะหยี่ของเราสามารถคงความสวยงามได้นาน 3–5 ปี หรือยาวนานกว่านั้น เนื่องจากเป็นวัสดุทนทาน ไม่เหี่ยว ไม่ต้องรดน้ำ เพื่อรักษาความงดงามของดอกไม้ แนะนำให้หลีกเลี่ยงบริเวณที่มีฝุ่นเยอะ เพราะฝุ่นอาจเกาะบนผิวกำมะหยี่ทำให้ดูหมองลงได้ค่ะ</p>
+  </details>
+
+  <details class="faq-item">
+    <summary>ใช้เวลาทำกี่วัน?</summary>
+    <p class="faq-answer">โดยทั่วไปประมาณ 3–5 วัน (สามารถแจ้งเวลาประมาณการให้ลูกค้าทราบเป็นกรณีไป)</p>
+  </details>
+</section>
 
 <footer>© S.Flower Bloom</footer>
 
