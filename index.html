@@ -284,6 +284,53 @@
   }
 
   /* Lightbox for tapping a review photo to see it full-size */
+  /* ---------- Promo popup: auto-opens on page load, image carousel + close (X) ---------- */
+  .promo-overlay{
+    position:fixed; inset:0; z-index:1400;
+    background:rgba(59,18,48,0.55);
+    display:flex; align-items:center; justify-content:center;
+    opacity:0; visibility:hidden; pointer-events:none;
+    transition:opacity .25s ease;
+    padding:20px;
+  }
+  .promo-overlay.open{opacity:1; visibility:visible; pointer-events:auto;}
+  .promo-modal{
+    position:relative; width:100%; max-width:440px;
+    background:var(--paper); border-radius:18px; overflow:hidden;
+    box-shadow:0 20px 60px rgba(0,0,0,0.35);
+    transform:scale(.94); transition:transform .25s ease;
+  }
+  .promo-overlay.open .promo-modal{transform:scale(1);}
+  .promo-close{
+    position:absolute; top:10px; right:10px; z-index:3;
+    width:34px; height:34px; border-radius:50%; border:none;
+    background:rgba(0,0,0,0.45); color:#fff; font-size:19px; line-height:1;
+    cursor:pointer; display:flex; align-items:center; justify-content:center;
+  }
+  .promo-close:hover{background:rgba(0,0,0,0.65);}
+  .promo-track-wrap{position:relative; width:100%; aspect-ratio:1/1; background:var(--paper); overflow:hidden;}
+  .promo-track{display:flex; height:100%; transition:transform .35s ease;}
+  .promo-slide{flex:0 0 100%; height:100%;}
+  .promo-slide img{width:100%; height:100%; object-fit:cover; display:block;}
+  .promo-nav{
+    position:absolute; top:50%; transform:translateY(-50%); z-index:2;
+    width:36px; height:36px; border-radius:50%; border:none;
+    background:rgba(0,0,0,0.35); color:#fff; font-size:20px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .promo-nav:hover{background:rgba(0,0,0,0.55);}
+  .promo-nav.prev{left:10px;}
+  .promo-nav.next{right:10px;}
+  .promo-dots{
+    position:absolute; left:0; right:0; bottom:10px; z-index:2;
+    display:flex; justify-content:center; gap:6px;
+  }
+  .promo-dot{width:7px; height:7px; border-radius:50%; background:rgba(255,255,255,0.55); cursor:pointer;}
+  .promo-dot.active{background:#fff; width:18px; border-radius:4px;}
+  @media (max-width:480px){
+    .promo-modal{max-width:100%;}
+    .promo-nav{width:32px; height:32px; font-size:18px;}
+  }
   .review-lightbox{
     position:fixed; inset:0; z-index:1300;
     background:rgba(20,6,15,0.88);
@@ -1198,6 +1245,20 @@
     <div class="reviews-all-grid" id="reviewsAllGrid"></div>
   </div>
 </div>
+<!-- Promo popup: opens automatically on page load -->
+<div class="promo-overlay" id="promoOverlay" onclick="closePromoPopup(event)">
+  <div class="promo-modal" onclick="event.stopPropagation()">
+    <button class="promo-close" onclick="closePromoPopup()" aria-label="ปิด">✕</button>
+    <div class="promo-track-wrap"
+         id="promoTrackWrap">
+      <div class="promo-track" id="promoTrack"></div>
+      <button class="promo-nav prev" onclick="navPromo(-1)" aria-label="รูปก่อนหน้า">‹</button>
+      <button class="promo-nav next" onclick="navPromo(1)" aria-label="รูปถัดไป">›</button>
+      <div class="promo-dots" id="promoDots"></div>
+    </div>
+  </div>
+</div>
+
 <div class="review-lightbox" id="reviewLightbox" onclick="closeReviewLightbox()">
   <button class="review-lightbox-close" onclick="event.stopPropagation(); closeReviewLightbox();" aria-label="ปิด">✕</button>
   <button class="review-lightbox-nav prev" onclick="event.stopPropagation(); navReviewLightbox(-1);" aria-label="รูปก่อนหน้า">‹</button>
@@ -2860,8 +2921,86 @@ document.addEventListener('keydown', function(e){
     if(e.key === 'ArrowLeft') navReviewLightbox(-1);
     if(e.key === 'ArrowRight') navReviewLightbox(1);
   }
+  const promoOpen = document.getElementById('promoOverlay').classList.contains('open');
+  if(promoOpen){
+    if(e.key === 'Escape') closePromoPopup();
+    if(e.key === 'ArrowLeft') navPromo(-1);
+    if(e.key === 'ArrowRight') navPromo(1);
+  }
 });
 loadReviews();
+
+/* ---------- Promo popup: auto-opens on page load ----------
+   แก้ไขรายการรูป/ลิงก์ที่ต้องการโปรโมทได้ตรงนี้ — เพิ่ม/ลบ/แก้ path ได้เลย
+   ไฟล์ "order process.jpg" อยู่ในโฟลเดอร์ images ตามที่แจ้งไว้ */
+const PROMO_SLIDES = [
+  { image: 'images/orderprocess.png', alt: 'ขั้นตอนการสั่งซื้อ' },
+  { image: 'images/promotions.png', alt: 'โปรโมชั่น' }
+  // เพิ่มรูปโปรโมชันอื่น ๆ ได้ เช่น:
+  // { image: 'images/promo2.jpg', alt: 'โปรโมชันพิเศษ', link: 'https://m.me/yourpage' }
+];
+let promoIndex = 0;
+function renderPromoSlides(){
+  const track = document.getElementById('promoTrack');
+  const dots = document.getElementById('promoDots');
+  if(!track || !dots) return;
+  track.innerHTML = PROMO_SLIDES.map(s => {
+    const img = `<img src="${s.image}" alt="${s.alt || ''}" loading="lazy">`;
+    return `<div class="promo-slide">${s.link ? `<a href="${s.link}" target="_blank" rel="noopener">${img}</a>` : img}</div>`;
+  }).join('');
+  dots.innerHTML = PROMO_SLIDES.length > 1
+    ? PROMO_SLIDES.map((_, i) => `<span class="promo-dot${i===promoIndex?' active':''}" onclick="event.stopPropagation(); goToPromo(${i});"></span>`).join('')
+    : '';
+  const nav = document.querySelectorAll('#promoTrackWrap .promo-nav');
+  nav.forEach(btn => btn.style.display = PROMO_SLIDES.length > 1 ? 'flex' : 'none');
+  updatePromoTrackPosition();
+}
+function updatePromoTrackPosition(){
+  const track = document.getElementById('promoTrack');
+  if(!track) return;
+  track.style.transform = `translateX(-${promoIndex * 100}%)`;
+  document.querySelectorAll('#promoDots .promo-dot').forEach((d,i)=> d.classList.toggle('active', i===promoIndex));
+}
+function goToPromo(i){
+  promoIndex = (i + PROMO_SLIDES.length) % PROMO_SLIDES.length;
+  updatePromoTrackPosition();
+}
+function navPromo(delta){
+  if(PROMO_SLIDES.length < 2) return;
+  goToPromo(promoIndex + delta);
+}
+function openPromoPopup(){
+  if(!PROMO_SLIDES.length) return;
+  promoIndex = 0;
+  renderPromoSlides();
+  document.getElementById('promoOverlay').classList.add('open');
+  updateChatFabVisibility();
+}
+function closePromoPopup(e){
+  // ปิดเมื่อกดปุ่ม X หรือคลิกพื้นหลังนอกกล่อง (ไม่ปิดเมื่อคลิกในรูป/การ์ด)
+  if(e && e.target !== e.currentTarget) return;
+  document.getElementById('promoOverlay').classList.remove('open');
+  updateChatFabVisibility();
+}
+// ปัดซ้าย-ขวาเพื่อเลื่อนสไลด์ (รูปแบบเดียวกับแกลเลอรีสินค้า/รีวิว)
+(function(){
+  let startX = 0, startY = 0;
+  const el = document.getElementById('promoTrackWrap');
+  if(!el) return;
+  el.addEventListener('touchstart', function(ev){
+    const t = ev.changedTouches[0];
+    startX = t.clientX; startY = t.clientY;
+  }, {passive:true});
+  el.addEventListener('touchend', function(ev){
+    const t = ev.changedTouches[0];
+    const dx = t.clientX - startX, dy = t.clientY - startY;
+    if(Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.5){
+      navPromo(dx < 0 ? 1 : -1);
+    }
+  }, {passive:true});
+})();
+// เด้งขึ้นทันทีที่เปิดหน้าเว็บ
+openPromoPopup();
 
 /* ---------- Chat button ---------- */
 function closeChatBubble(){
@@ -2882,7 +3021,8 @@ function updateChatFabVisibility(){
     document.getElementById('productModal').classList.contains('open') ||
     document.getElementById('orderSummaryModal').classList.contains('open') ||
     document.getElementById('reviewsAllModal').classList.contains('open') ||
-    document.getElementById('reviewLightbox').classList.contains('open');
+    document.getElementById('reviewLightbox').classList.contains('open') ||
+    document.getElementById('promoOverlay').classList.contains('open');
   wrap.style.display = anyOpen ? 'none' : '';
 }
 </script>
