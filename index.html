@@ -533,9 +533,24 @@
     cursor:pointer; border-width:3px;
   }
   .price-slider-labels{
-    display:flex; justify-content:space-between;
-    font-family:'Kanit'; font-weight:700; font-size:13px; color:var(--sage-dark);
-    margin-top:4px;
+    display:flex; align-items:center; gap:6px;
+    margin-top:8px;
+  }
+  .price-num-field{
+    flex:1; min-width:0;
+    border:1.5px solid var(--line); border-radius:10px; background:#fff;
+  }
+  .price-num-input{
+    width:100%; min-width:0; border:none; outline:none; background:transparent;
+    font-family:'Kanit'; font-weight:700; font-size:13.5px; color:var(--sage-dark);
+    padding:8px 8px; text-align:center;
+    -moz-appearance:textfield;
+  }
+  .price-num-input::-webkit-outer-spin-button,
+  .price-num-input::-webkit-inner-spin-button{-webkit-appearance:none; margin:0;}
+  .price-num-field:focus-within{border-color:var(--sage);}
+  .price-num-sep, .price-num-baht{
+    flex-shrink:0; font-family:'Kanit'; font-weight:600; font-size:12.5px; color:var(--rose-dark);
   }
 
   /* ---------- Mobile: bottom sheet ---------- */
@@ -1856,31 +1871,28 @@ function setFlowerType(t){
   updateFilterBadge();
 }
 
-const PRICE_RANGES = [
-  { label:'ทุกราคา', min:0, max:Infinity },
-  { label:'ต่ำกว่า 150', min:0, max:149 },
-  { label:'150-300', min:150, max:300 },
-  { label:'300-500', min:301, max:500 },
-  { label:'500-800', min:501, max:800 },
-  { label:'800-1,500', min:801, max:1500 },
-  { label:'มากกว่า 1,500', min:1501, max:Infinity },
-];
-// ช่วงราคา "กำหนดเอง" ด้วยแถบเลื่อน — activePriceRange จะเป็น 'custom' แทนตัวเลข index เมื่อเลือกโหมดนี้
+// ช่วงราคา — ใช้แถบเลื่อน + ช่องกรอกตัวเลขเป็นวิธีเดียวในการกรองราคา (ตัดปุ่มลัดออกแล้วตามคำขอ)
 const PRICE_SLIDER_MIN = 0;
 const PRICE_SLIDER_MAX = 3000;
 const PRICE_SLIDER_STEP = 50;
-let activePriceRange = 0;
 let customPriceMin = PRICE_SLIDER_MIN;
 let customPriceMax = PRICE_SLIDER_MAX;
-function setPriceRange(i){
-  activePriceRange = i;
-  if(i === 'custom' && (customPriceMin == null || customPriceMax == null)){
-    customPriceMin = PRICE_SLIDER_MIN;
-    customPriceMax = PRICE_SLIDER_MAX;
-  }
+// เรียงลำดับสินค้าตามราคา — แยกจากการกรองช่วงราคา (เรียงลำดับใหม่ ไม่ได้ซ่อนสินค้า)
+let activeSortOrder = 'none'; // 'none' | 'asc' | 'desc'
+function setSortOrder(order){
+  activeSortOrder = (activeSortOrder === order) ? 'none' : order;
   renderCatalog();
   renderFilterSidebar();
   updateFilterBadge();
+}
+function setDraftSortOrder(order){
+  filterDraft.sortOrder = (filterDraft.sortOrder === order) ? 'none' : order;
+  renderFilterSheetBody();
+}
+function applySortOrder(arr){
+  if(activeSortOrder === 'asc') return arr.slice().sort((a,b)=> displayPrice(a)-displayPrice(b));
+  if(activeSortOrder === 'desc') return arr.slice().sort((a,b)=> displayPrice(b)-displayPrice(a));
+  return arr;
 }
 // ลากแถบเลื่อนราคา (ใช้ทั้ง sidebar ที่ apply ทันที และ sheet มือถือที่ staged ไว้ก่อน)
 // อัปเดตเฉพาะ DOM ของแถบเลื่อนเอง ไม่ re-render ทั้งแผงตัวกรอง เพื่อไม่ให้การลากสะดุด
@@ -1899,32 +1911,57 @@ function onPriceSliderInput(mode, which, rawVal){
     maxVal = Math.max(val, minVal + PRICE_SLIDER_STEP);
     maxInput.value = maxVal;
   }
+  applyPriceSliderValues(mode, minVal, maxVal);
+}
+// ช่องกรอกตัวเลขราคาเอง — ตรวจสอบตอน change/blur (ไม่ตรวจทุกตัวที่พิมพ์ กันกระตุก)
+function onPriceNumberChange(mode, which, rawVal){
+  const idPrefix = mode === 'sidebar' ? 'priceSlideSidebar' : 'priceSlideSheet';
+  const minNum = document.getElementById(idPrefix + 'MinNum');
+  const maxNum = document.getElementById(idPrefix + 'MaxNum');
+  if(!minNum || !maxNum) return;
+  let minVal = parseInt(minNum.value, 10);
+  let maxVal = parseInt(maxNum.value, 10);
+  if(isNaN(minVal)) minVal = PRICE_SLIDER_MIN;
+  if(isNaN(maxVal)) maxVal = PRICE_SLIDER_MAX;
+  minVal = Math.min(Math.max(minVal, PRICE_SLIDER_MIN), PRICE_SLIDER_MAX);
+  maxVal = Math.min(Math.max(maxVal, PRICE_SLIDER_MIN), PRICE_SLIDER_MAX);
+  if(which === 'min' && minVal > maxVal - PRICE_SLIDER_STEP) minVal = maxVal - PRICE_SLIDER_STEP;
+  if(which === 'max' && maxVal < minVal + PRICE_SLIDER_STEP) maxVal = minVal + PRICE_SLIDER_STEP;
+  minVal = Math.max(minVal, PRICE_SLIDER_MIN);
+  maxVal = Math.min(maxVal, PRICE_SLIDER_MAX);
+  minNum.value = minVal;
+  maxNum.value = maxVal;
+  const minInput = document.getElementById(idPrefix + 'Min');
+  const maxInput = document.getElementById(idPrefix + 'Max');
+  if(minInput) minInput.value = minVal;
+  if(maxInput) maxInput.value = maxVal;
+  applyPriceSliderValues(mode, minVal, maxVal);
+}
+// อัปเดตแถบสี + ช่องกรอกตัวเลข + ตัวแปรสถานะ ให้ตรงกันหลังได้ค่าใหม่จากแหล่งไหนก็ตาม (ลากหรือพิมพ์)
+function applyPriceSliderValues(mode, minVal, maxVal){
+  const idPrefix = mode === 'sidebar' ? 'priceSlideSidebar' : 'priceSlideSheet';
   const span = PRICE_SLIDER_MAX - PRICE_SLIDER_MIN;
   const minPct = (minVal - PRICE_SLIDER_MIN) / span * 100;
   const maxPct = (maxVal - PRICE_SLIDER_MIN) / span * 100;
   const rangeEl = document.getElementById(idPrefix + 'Range');
   if(rangeEl){ rangeEl.style.left = minPct + '%'; rangeEl.style.right = (100 - maxPct) + '%'; }
-  const minLabel = document.getElementById(idPrefix + 'MinLabel');
-  const maxLabel = document.getElementById(idPrefix + 'MaxLabel');
-  if(minLabel) minLabel.textContent = fmt(minVal);
-  if(maxLabel) maxLabel.textContent = fmt(maxVal);
+  const minNum = document.getElementById(idPrefix + 'MinNum');
+  const maxNum = document.getElementById(idPrefix + 'MaxNum');
+  if(minNum && document.activeElement !== minNum) minNum.value = minVal;
+  if(maxNum && document.activeElement !== maxNum) maxNum.value = maxVal;
 
   if(mode === 'sidebar'){
     customPriceMin = minVal;
     customPriceMax = maxVal;
-    activePriceRange = 'custom';
     renderCatalog();
     updateFilterBadge();
   } else {
     filterDraft.customMin = minVal;
     filterDraft.customMax = maxVal;
-    filterDraft.priceRange = 'custom';
   }
 }
 function activePriceBounds(){
-  return activePriceRange === 'custom'
-    ? { min: customPriceMin, max: customPriceMax }
-    : PRICE_RANGES[activePriceRange];
+  return { min: customPriceMin, max: customPriceMax };
 }
 function renderPriceSliderHtml(state, mode){
   const min = state.customMin ?? PRICE_SLIDER_MIN;
@@ -1946,8 +1983,18 @@ function renderPriceSliderHtml(state, mode){
           oninput="onPriceSliderInput('${mode}','max', this.value)" aria-label="ราคาสูงสุด">
       </div>
       <div class="price-slider-labels">
-        <span id="${idPrefix}MinLabel">${fmt(min)}</span>
-        <span id="${idPrefix}MaxLabel">${fmt(max)}${max >= PRICE_SLIDER_MAX ? '+' : ''}</span>
+        <div class="price-num-field">
+          <input type="number" class="price-num-input" id="${idPrefix}MinNum"
+            min="${PRICE_SLIDER_MIN}" max="${PRICE_SLIDER_MAX}" step="${PRICE_SLIDER_STEP}" value="${min}"
+            onchange="onPriceNumberChange('${mode}','min', this.value)" aria-label="ราคาต่ำสุด (พิมพ์เอง)">
+        </div>
+        <span class="price-num-sep">ถึง</span>
+        <div class="price-num-field">
+          <input type="number" class="price-num-input" id="${idPrefix}MaxNum"
+            min="${PRICE_SLIDER_MIN}" max="${PRICE_SLIDER_MAX}" step="${PRICE_SLIDER_STEP}" value="${max}"
+            onchange="onPriceNumberChange('${mode}','max', this.value)" aria-label="ราคาสูงสุด (พิมพ์เอง)">
+        </div>
+        <span class="price-num-baht">บาท</span>
       </div>
     </div>
   `;
@@ -1961,18 +2008,23 @@ let filterDraft = null;
 function buildFilterPanelHtml(state, mode){
   // mode: 'sidebar' (live — pill click applies immediately) or 'sheet' (draft)
   const setCatFn = mode === 'sidebar' ? 'selectCategory' : 'setDraftCat';
-  const setPriceFn = mode === 'sidebar' ? 'setPriceRange' : 'setDraftPrice';
   const setReadyFn = mode === 'sidebar' ? 'toggleReadyOnly' : 'setDraftReady';
   const setFavFn = mode === 'sidebar' ? 'toggleFavoritesOnly' : 'setDraftFavorites';
   const setFlowerFn = mode === 'sidebar' ? 'setFlowerType' : 'setDraftFlowerType';
+  const setSortFn = mode === 'sidebar' ? 'setSortOrder' : 'setDraftSortOrder';
 
   const catHtml = CATS.map(c =>
     `<button class="filter-pill ${c===state.cat?'active':''}" onclick="${setCatFn}('${c}')">${c}</button>`
   ).join('');
-  const priceHtml = PRICE_RANGES.map((r,i) =>
-    `<button class="filter-pill ${i===state.priceRange?'active':''}" onclick="${setPriceFn}(${i})">${r.label}</button>`
-  ).join('') + `<button class="filter-pill ${state.priceRange==='custom'?'active':''}" onclick="${setPriceFn}('custom')">🎚️ กำหนดเอง</button>`;
-  const priceSliderHtml = state.priceRange === 'custom' ? renderPriceSliderHtml(state, mode) : '';
+  const priceSliderHtml = renderPriceSliderHtml(state, mode);
+  const sortHtml = `
+    <div class="filter-group">
+      <div class="filter-group-title">เรียงตาม</div>
+      <div class="filter-pills">
+        <button class="filter-pill ${state.sortOrder==='asc'?'active':''}" onclick="${setSortFn}('asc')">ราคา: น้อย → มาก</button>
+        <button class="filter-pill ${state.sortOrder==='desc'?'active':''}" onclick="${setSortFn}('desc')">ราคา: มาก → น้อย</button>
+      </div>
+    </div>`;
 
   const sizeList = CATEGORY_SIZES[state.cat];
   const sizeHtml = (state.cat !== 'ทั้งหมด' && sizeList) ? `
@@ -1998,9 +2050,9 @@ function buildFilterPanelHtml(state, mode){
     </div>
     <div class="filter-group">
       <div class="filter-group-title">ช่วงราคา</div>
-      <div class="filter-pills">${priceHtml}</div>
       ${priceSliderHtml}
     </div>
+    ${sortHtml}
     ${sizeHtml}
     ${flowerHtml}
     <div class="filter-group">
@@ -2020,9 +2072,9 @@ function renderFilterSidebar(){
   if(!el) return;
   const state = {
     cat: activeCat,
-    priceRange: activePriceRange,
     customMin: customPriceMin,
     customMax: customPriceMax,
+    sortOrder: activeSortOrder,
     ready: showReadyOnly,
     favorites: showFavoritesOnly,
     size: activeSizes[activeCat] || 'ทั้งหมด',
@@ -2039,9 +2091,9 @@ function renderFilterSheetBody(){
 function openFilterSheet(){
   filterDraft = {
     cat: activeCat,
-    priceRange: activePriceRange,
     customMin: customPriceMin,
     customMax: customPriceMax,
+    sortOrder: activeSortOrder,
     ready: showReadyOnly,
     favorites: showFavoritesOnly,
     size: activeSizes[activeCat] || 'ทั้งหมด',
@@ -2063,27 +2115,19 @@ function setDraftCat(c){
   if(c !== 'ช่อดอกไม้') filterDraft.flowerType = 'ทั้งหมด';
   renderFilterSheetBody();
 }
-function setDraftPrice(i){
-  filterDraft.priceRange = i;
-  if(i === 'custom' && (filterDraft.customMin == null || filterDraft.customMax == null)){
-    filterDraft.customMin = PRICE_SLIDER_MIN;
-    filterDraft.customMax = PRICE_SLIDER_MAX;
-  }
-  renderFilterSheetBody();
-}
 function setDraftReady(checked){ filterDraft.ready = checked; renderFilterSheetBody(); }
 function setDraftFavorites(checked){ filterDraft.favorites = checked; renderFilterSheetBody(); }
 function setDraftSize(s){ filterDraft.size = s; renderFilterSheetBody(); }
 function setDraftFlowerType(t){ filterDraft.flowerType = t; renderFilterSheetBody(); }
 function clearFilterDraft(){
-  filterDraft = { cat:'ทั้งหมด', priceRange:0, customMin:PRICE_SLIDER_MIN, customMax:PRICE_SLIDER_MAX, ready:false, favorites:false, size:'ทั้งหมด', flowerType:'ทั้งหมด' };
+  filterDraft = { cat:'ทั้งหมด', customMin:PRICE_SLIDER_MIN, customMax:PRICE_SLIDER_MAX, sortOrder:'none', ready:false, favorites:false, size:'ทั้งหมด', flowerType:'ทั้งหมด' };
   renderFilterSheetBody();
 }
 function applyFilterDraft(){
   activeCat = filterDraft.cat;
-  activePriceRange = filterDraft.priceRange;
   customPriceMin = filterDraft.customMin;
   customPriceMax = filterDraft.customMax;
+  activeSortOrder = filterDraft.sortOrder;
   showReadyOnly = filterDraft.ready;
   showFavoritesOnly = filterDraft.favorites;
   if(filterDraft.cat !== 'ทั้งหมด') activeSizes[filterDraft.cat] = filterDraft.size;
@@ -2105,7 +2149,8 @@ function updateFilterBadge(){
   const dot = document.getElementById('filterBadgeDot');
   if(!dot) return;
   const sizeActive = Object.keys(activeSizes).some(cat => activeSizes[cat] && activeSizes[cat] !== 'ทั้งหมด');
-  const isActive = activeCat !== 'ทั้งหมด' || activePriceRange !== 0 || showReadyOnly || showFavoritesOnly || activeFlowerType !== 'ทั้งหมด' || sizeActive;
+  const priceActive = customPriceMin !== PRICE_SLIDER_MIN || customPriceMax !== PRICE_SLIDER_MAX;
+  const isActive = activeCat !== 'ทั้งหมด' || priceActive || activeSortOrder !== 'none' || showReadyOnly || showFavoritesOnly || activeFlowerType !== 'ทั้งหมด' || sizeActive;
   dot.classList.toggle('show', isActive);
 }
 
@@ -2147,12 +2192,12 @@ function renderCatalog(){
   // "ทั้งหมด" = เรียกดูทุกอย่างเหมือนเดิม (การ์ดแนะนำ + ทุกหมวดเรียงต่อกัน)
   // เลือกหมวดเจาะจง = กรองจริง โชว์แค่หมวดนั้นหมวดเดียว
   if(activeCat === 'ทั้งหมด'){
-    const recommended = PRODUCTS.filter(p =>
+    const recommended = applySortOrder(PRODUCTS.filter(p =>
       productHasAnyReady(p)
       && matchesSearch(p)
       && (!showFavoritesOnly || isFavorite(p.id))
       && (displayPrice(p) >= range.min && displayPrice(p) <= range.max)
-    );
+    ));
     totalMatches += recommended.length;
     const recommendedHtml = recommended.length ? `
       <div class="section-title featured"><h3>🌟 สินค้าแนะนำ (พร้อมส่ง)</h3><span>${recommended.length} รายการ</span></div>
@@ -2167,7 +2212,7 @@ function renderCatalog(){
   html += catsToRender.map(cat => {
     const sizeList = CATEGORY_SIZES[cat];
     const currentSize = activeSizes[cat] || 'ทั้งหมด';
-    const items = PRODUCTS.filter(p =>
+    const items = applySortOrder(PRODUCTS.filter(p =>
       p.cat === cat
       && matchesSearch(p)
       && (!sizeList || currentSize === 'ทั้งหมด' || p.size === currentSize)
@@ -2175,7 +2220,7 @@ function renderCatalog(){
       && (!showReadyOnly || productHasAnyReady(p))
       && (!showFavoritesOnly || isFavorite(p.id))
       && (displayPrice(p) >= range.min && displayPrice(p) <= range.max)
-    );
+    ));
     totalMatches += items.length;
     const body = !items.length ? `
       <div class="section-title"><h3>${cat}</h3><span>0 รายการ</span></div>
