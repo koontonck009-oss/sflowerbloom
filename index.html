@@ -3057,20 +3057,104 @@ function shuffle(arr){
   }
   return a;
 }
+function reviewCardHTML(src, i, isClone){
+  const extra = isClone ? ' review-card-clone" aria-hidden="true" tabindex="-1' : '';
+  return `<div class="review-card${extra}" onclick="openReviewLightbox(REVIEWS, ${i})">
+      <div class="review-photo">
+        <img src="${src}" alt="รีวิวจากลูกค้า" loading="lazy" decoding="async" onerror="this.closest('.review-card').style.display='none'">
+      </div>
+    </div>`;
+}
 function renderReviews(imagesIn){
   REVIEWS = shuffle(imagesIn); // random order each page load, for the homepage strip
   REVIEWS_ALL_SORTED = imagesIn.slice().reverse(); // newest first, for the "view all" grid
   const scrollEl = document.getElementById('reviewsScroll');
   const statEl = document.getElementById('reviewsStat');
   const section = document.getElementById('reviewsSection');
-  scrollEl.innerHTML = REVIEWS.map((src, i) => `
-    <div class="review-card" onclick="openReviewLightbox(REVIEWS, ${i})">
-      <div class="review-photo">
-        <img src="${src}" alt="รีวิวจากลูกค้า" loading="lazy" decoding="async" onerror="this.closest('.review-card').style.display='none'">
-      </div>
-    </div>`).join('');
+  // โคลนการ์ดแรกๆ ไปต่อท้าย (มองไม่เห็นความต่าง) เพื่อให้วนกลับจุดเริ่มได้แบบไร้รอยต่อ ไม่ต้องกระตุกย้อนยาว
+  const cloneCount = Math.min(REVIEWS.length, 8);
+  scrollEl.innerHTML =
+    REVIEWS.map((src, i) => reviewCardHTML(src, i)).join('') +
+    REVIEWS.slice(0, cloneCount).map((src, i) => reviewCardHTML(src, i, true)).join('');
   if(statEl) statEl.textContent = `${REVIEWS.length}+ รีวิวจากลูกค้าจริง`;
   section.hidden = false;
+  initReviewAutoScroll();
+}
+
+/* ---------- เลื่อนรีวิวอัตโนมัติทีละการ์ด ----------
+   เลื่อนเอง ทุก REVIEW_AUTO_INTERVAL ms ด้วยแอนิเมชัน ease-in-out ของเราเอง (นุ่มกว่า native
+   scrollBy behavior:'smooth' ซึ่งแต่ละเบราว์เซอร์ทำ easing ไม่เหมือนกัน) หยุดทันทีเมื่อลูกค้า
+   แตะ/ลาก/hover เอง แล้วกลับมาเลื่อนต่ออัตโนมัติหลังไม่มีการโต้ตอบ REVIEW_RESUME_DELAY ms
+   วนกลับจุดเริ่มแบบไร้รอยต่อ โดยอาศัยการ์ดโคลนท้ายแถว (ดู renderReviews ด้านบน) */
+const REVIEW_AUTO_INTERVAL = 3500;
+const REVIEW_STEP_DURATION = 650;
+const REVIEW_RESUME_DELAY = 4000;
+let reviewAutoTimer = null;
+let reviewResumeTimer = null;
+let reviewJumpTimer = null;
+let reviewScrollRAF = null;
+let reviewAutoBound = false;
+
+function easeInOutQuad(t){ return t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2; }
+function animateScrollLeft(el, to, duration){
+  cancelAnimationFrame(reviewScrollRAF);
+  const from = el.scrollLeft;
+  const delta = to - from;
+  if(Math.abs(delta) < 1){ el.scrollLeft = to; return; }
+  const start = performance.now();
+  function tick(now){
+    const p = Math.min((now - start) / duration, 1);
+    el.scrollLeft = from + delta * easeInOutQuad(p);
+    if(p < 1) reviewScrollRAF = requestAnimationFrame(tick);
+  }
+  reviewScrollRAF = requestAnimationFrame(tick);
+}
+function startReviewAutoScroll(){
+  stopReviewAutoScroll();
+  const scrollEl = document.getElementById('reviewsScroll');
+  if(!scrollEl || !scrollEl.children.length) return;
+  reviewAutoTimer = setInterval(() => {
+    if(document.hidden) return;
+    if(document.getElementById('reviewsAllModal')?.classList.contains('open')) return;
+    if(document.getElementById('reviewLightbox')?.classList.contains('open')) return;
+    const card = scrollEl.querySelector('.review-card');
+    const firstClone = scrollEl.querySelector('.review-card-clone');
+    if(!card) return;
+    const gap = 14; // ต้องตรงกับ gap ของ .reviews-scroll ใน CSS
+    const step = card.getBoundingClientRect().width + gap;
+    const realWidth = firstClone ? firstClone.offsetLeft : scrollEl.scrollWidth; // ความกว้างรวมของการ์ดจริง (ไม่รวมโคลน)
+    const target = scrollEl.scrollLeft + step;
+    animateScrollLeft(scrollEl, target, REVIEW_STEP_DURATION);
+    if(firstClone && target >= realWidth - 2){
+      // เลื่อนเข้าไปในโซนโคลน (หน้าตาเหมือนจุดเริ่มทุกประการ) แล้วค่อยกระโดดกลับจุดเริ่มจริงแบบไม่มีใครสังเกต
+      clearTimeout(reviewJumpTimer);
+      reviewJumpTimer = setTimeout(() => { scrollEl.scrollLeft -= realWidth; }, REVIEW_STEP_DURATION + 20);
+    }
+  }, REVIEW_AUTO_INTERVAL);
+}
+function stopReviewAutoScroll(){
+  if(reviewAutoTimer){ clearInterval(reviewAutoTimer); reviewAutoTimer = null; }
+  clearTimeout(reviewJumpTimer);
+  cancelAnimationFrame(reviewScrollRAF);
+}
+function pauseReviewAutoScroll(){
+  stopReviewAutoScroll();
+  clearTimeout(reviewResumeTimer);
+  reviewResumeTimer = setTimeout(startReviewAutoScroll, REVIEW_RESUME_DELAY);
+}
+function initReviewAutoScroll(){
+  const scrollEl = document.getElementById('reviewsScroll');
+  if(!scrollEl) return;
+  if(!reviewAutoBound){
+    ['pointerdown','touchstart','wheel','mouseenter'].forEach(evt => {
+      scrollEl.addEventListener(evt, pauseReviewAutoScroll, { passive: true });
+    });
+    document.addEventListener('visibilitychange', () => {
+      if(document.hidden) stopReviewAutoScroll(); else startReviewAutoScroll();
+    });
+    reviewAutoBound = true;
+  }
+  startReviewAutoScroll();
 }
 
 /* ---------- "ดูรีวิวทั้งหมด": กดที่ตัวเลขจำนวนรีวิว เปิด grid เต็มจอ ---------- */
@@ -3085,6 +3169,7 @@ function renderReviewsAllGrid(){
 }
 function openReviewsAll(){
   if(!REVIEWS_ALL_SORTED.length) return;
+  stopReviewAutoScroll();
   renderReviewsAllGrid();
   document.getElementById('reviewsAllOverlay').classList.add('show');
   document.getElementById('reviewsAllModal').classList.add('open');
@@ -3093,6 +3178,7 @@ function openReviewsAll(){
 function closeReviewsAll(){
   document.getElementById('reviewsAllOverlay').classList.remove('show');
   document.getElementById('reviewsAllModal').classList.remove('open');
+  startReviewAutoScroll();
   updateChatFabVisibility();
 }
 
@@ -3112,6 +3198,7 @@ function showLightboxImage(){
 }
 function openReviewLightbox(list, i){
   if(!list || !list[i]) return;
+  stopReviewAutoScroll();
   currentLightboxList = list;
   currentLightboxIndex = i;
   showLightboxImage();
@@ -3125,6 +3212,11 @@ function navReviewLightbox(delta){
 }
 function closeReviewLightbox(){
   document.getElementById('reviewLightbox').classList.remove('open');
+  // ถ้าปิด lightbox แล้วยังอยู่ในหน้าต่าง "ดูรีวิวทั้งหมด" ไม่ต้องเลื่อนอัตโนมัติต่อ
+  // (openReviewsAll ได้ stopReviewAutoScroll ไว้แล้ว, closeReviewsAll จะ start ให้เองตอนปิดจริง)
+  if(!document.getElementById('reviewsAllModal').classList.contains('open')){
+    startReviewAutoScroll();
+  }
   updateChatFabVisibility();
 }
 // ปัดซ้าย-ขวาบนรูปเพื่อเลื่อนดูรูปถัดไป (รูปแบบเดียวกับที่ใช้ในแกลเลอรีสินค้า)
