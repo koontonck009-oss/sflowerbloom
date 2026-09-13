@@ -1395,6 +1395,7 @@
       <p class="modal-desc" id="modalDesc"></p>
       <div class="color-row" id="modalColors"></div>
       <div class="color-row" id="modalSizes"></div>
+      <div class="color-row" id="modalAddons" style="display:none;"></div>
       <div class="modal-qty" id="modalBillsRow" style="display:none;">
         <span>จำนวนธนบัตร (ใบ)</span>
         <div class="qty-ctrl">
@@ -1573,9 +1574,25 @@ function renderThumb(p, variantLabel){
     }
   }
   if(!src && p.colors && p.colors.length){
-    const c = (colorName != null && p.colors.find(x => x.name === colorName)) || p.colors[resolvedColorIndex(p)];
-    src = c.image || (c.images && c.images[0]);
+    // colorName ที่มาจากตะกร้าอาจมีตัวเลือกเสริมต่อท้ายอยู่ (เลือกได้หลายตัว) เช่น
+    // "ดอกส้มช่อน้ำเงิน + ผึ้งน้อย 1 ตัว" — ต้องแยกชื่อสีกับชื่อตัวเลือกเสริมออกจากกันก่อน ถึงจะหาสีที่ตรงกันเจอ
+    let addonNames = [], lookupColorName = colorName;
+    if(colorName != null && colorName.includes(' + ')){
+      const parts = colorName.split(' + ');
+      lookupColorName = parts[0];
+      addonNames = parts.slice(1);
+    }
+    const c = (lookupColorName != null && p.colors.find(x => x.name === lookupColorName)) || p.colors[resolvedColorIndex(p)];
+    const chosenAddon = (addonNames.length && c.addons) ? c.addons.find(a => addonNames.includes(a.name) && a.image) : null;
+    src = (chosenAddon && chosenAddon.image) || c.image || (c.images && c.images[0]);
     alt = p.name + ' ' + c.name;
+  }
+  // สินค้าที่ไม่มีสีเลย (เช่น กรอบรูปบางแบบ) แต่มีตัวเลือกเสริมของตัวเอง (p.addons) — label ในตะกร้า
+  // จะเป็นแค่ชื่อตัวเลือกเสริมล้วนๆ (ไม่มีชื่อสีนำหน้า) เช่น "กล่องใส่กรอบรูป"
+  if(!src && !p.colors && p.addons && p.addons.length && variantLabel != null){
+    const addonNames = variantLabel.split(' + ');
+    const chosenAddon = p.addons.find(a => addonNames.includes(a.name) && a.image);
+    if(chosenAddon) src = chosenAddon.image;
   }
   if(!src && p.image){
     src = p.image;
@@ -1784,7 +1801,25 @@ function displayPrice(p){
 // A product can be "พร้อมส่ง" at the whole-product level (p.ready) or per color
 // (each entry in p.colors can carry its own `ready` flag, e.g. only the white one is in stock).
 // If the selected color defines its own ready flag, that wins; otherwise fall back to p.ready.
+// คืนรายการตัวเลือกเสริม (addons) ที่ใช้ได้กับสถานะปัจจุบันของสินค้าชิ้นนี้:
+// ถ้าสินค้ามีสี ให้ใช้ addons ที่ผูกกับสีที่กำลังเลือกอยู่ (ถ้ามี)
+// ถ้าสินค้าไม่มีสีเลย (เช่นกรอบรูปบางแบบ) ให้ใช้ addons ที่ผูกกับตัวสินค้าโดยตรงแทน
+function currentAddonSource(p){
+  if(p.colors && p.colors.length){
+    const c = p.colors[resolvedColorIndex(p)];
+    return (c && c.addons) ? c.addons : null;
+  }
+  return p.addons || null;
+}
 function currentReadyState(p){
+  // ถ้ากำลังเปิดหน้ารายละเอียดสินค้านี้อยู่ และลูกค้าติ๊กตัวเลือกเสริม (เช่น ผึ้งน้อย) ไว้ ให้เช็คเป็นรายตัว:
+  // ต้องติด ready:true ครบทุกตัวเลือกเสริมที่เลือกไว้ ถึงจะยังถือว่าพร้อมส่งได้ (ถ้ามีตัวใดตัวหนึ่งไม่พร้อม ถือว่าไม่พร้อมทั้งช่อ)
+  // ถ้าไม่ได้ใส่ ready ไว้ในตัว addon เลย ถือว่าไม่พร้อมส่งตามค่าเดิม (ต้องรอทำเพิ่ม)
+  if(p.id === modalProductId && modalSelectedAddons.size){
+    const addons = currentAddonSource(p);
+    const chosen = addons ? addons.filter(a => modalSelectedAddons.has(a.name)) : [];
+    if(chosen.length && !chosen.every(a => a.ready)) return false;
+  }
   if(p.colors){
     const c = p.colors[resolvedColorIndex(p)];
     if(c && typeof c.ready !== 'undefined') return !!c.ready;
@@ -2770,6 +2805,7 @@ let modalProductId = null;
 let modalQty = 1;
 let modalBills = 1;
 let modalImgIndex = 0; // which photo in the gallery is currently shown
+let modalSelectedAddons = new Set(); // ชื่อตัวเลือกเสริม (addon) ที่ลูกค้าติ๊กไว้ในหน้ารายละเอียดสินค้า — เลือกได้พร้อมกันหลายตัว, รีเซ็ตทุกครั้งที่เปลี่ยนสีหรือเปิดสินค้าใหม่
 
 // Returns the list of photo URLs to show for the product's current selection.
 // A "sizes" variant (e.g. ปกติ vs ใส่ซองเงิน, which also changes the price) can carry
@@ -2789,9 +2825,20 @@ function currentGalleryImages(p){
   if(p.colors && p.colors.length){
     const c = p.colors[resolvedColorIndex(p)];
     if(c){
+      // ถ้าลูกค้าติ๊กเพิ่มตัวเลือกเสริม (เช่น ผึ้งน้อย) และตัวที่เลือกมีรูปของตัวเองอยู่ ให้ใช้รูปนั้นก่อน
+      // (ถ้าเลือกหลายตัว ใช้รูปของตัวแรกที่มีรูปแนบมา)
+      if(c.addons && c.addons.length){
+        const chosen = c.addons.find(a => modalSelectedAddons.has(a.name) && a.image);
+        if(chosen) return [chosen.image];
+      }
       if(c.images && c.images.length) return c.images;
       if(c.image) return [c.image];
     }
+  }
+  // สินค้าที่ไม่มีสีเลยแต่มีตัวเลือกเสริมของตัวเอง (เช่น กรอบรูป + กล่องใส่กรอบรูป)
+  if(!p.colors && p.addons && p.addons.length){
+    const chosen = p.addons.find(a => modalSelectedAddons.has(a.name) && a.image);
+    if(chosen) return [chosen.image];
   }
   if(p.images && p.images.length) return p.images;
   if(p.image) return [p.image];
@@ -2821,6 +2868,12 @@ function renderModalThumbs(p){
 }
 function setModalImgIndex(i){
   modalImgIndex = i;
+  renderModal();
+}
+function toggleModalAddon(name, checked){
+  if(checked) modalSelectedAddons.add(name);
+  else modalSelectedAddons.delete(name);
+  modalImgIndex = 0;
   renderModal();
 }
 function changeModalImg(delta){
@@ -2857,6 +2910,7 @@ function openProductModal(id){
   modalProductId = id;
   modalQty = 1;
   modalImgIndex = 0;
+  modalSelectedAddons = new Set();
   const p = PRODUCTS.find(x=>x.id===id);
   modalBills = p && p.billSelector ? (p.minBills||1) : 1;
   renderModal();
@@ -2920,7 +2974,7 @@ function renderModal(){
   const colorsWrap = document.getElementById('modalColors');
   if(p.colors){
     colorsWrap.innerHTML = p.colors.map((c,i)=>`
-      <button class="color-chip ${(resolvedColorIndex(p)===i)?'active':''}" onclick="modalImgIndex=0; selectColor('${p.id}',${i}); renderModal();">${c.name}</button>
+      <button class="color-chip ${(resolvedColorIndex(p)===i)?'active':''}" onclick="modalImgIndex=0; modalSelectedAddons=new Set(); selectColor('${p.id}',${i}); renderModal();">${c.name}</button>
     `).join('');
   } else {
     colorsWrap.innerHTML = '';
@@ -2933,6 +2987,23 @@ function renderModal(){
     `).join('');
   } else {
     sizesWrap.innerHTML = '';
+  }
+
+  // ตัวเลือกเสริมแบบมีราคา (เช่น "เพิ่มผึ้งน้อย +20 บาท") — โผล่เฉพาะตอนสีที่เลือกอยู่ประกาศ .addons ไว้
+  // แสดงเป็นปุ่มชิพเหมือนปุ่มเลือกสี กดติดได้หลายปุ่มพร้อมกัน (เผื่อมี addon มากกว่า 1 ตัวในอนาคต)
+  const addonWrap = document.getElementById('modalAddons');
+  if(addonWrap){
+    const addons = currentAddonSource(p);
+    if(addons && addons.length){
+      addonWrap.style.display = '';
+      addonWrap.innerHTML = addons.map(a => `
+        <button type="button" class="color-chip ${modalSelectedAddons.has(a.name)?'active':''}" onclick="toggleModalAddon('${a.name}', ${!modalSelectedAddons.has(a.name)})">➕ ${a.name} (+${a.price}฿)</button>
+      `).join('');
+    } else {
+      addonWrap.style.display = 'none';
+      addonWrap.innerHTML = '';
+      if(modalSelectedAddons.size) modalSelectedAddons = new Set();
+    }
   }
 
   const billsRow = document.getElementById('modalBillsRow');
@@ -2961,7 +3032,19 @@ function updateModalPriceDisplay(){
 function currentModalVariant(p){
   if(p.billSelector) return { label:`ใส่ธนบัตร ${modalBills} ใบ`, unitPrice: unitPriceFor(p, modalBills) };
   let label = null, unitPrice = p.price;
-  if(p.colors){ label = p.colors[resolvedColorIndex(p)].name; }
+  if(p.colors){
+    const c = p.colors[resolvedColorIndex(p)];
+    label = c.name;
+  }
+  const addons = currentAddonSource(p);
+  if(addons && addons.length){
+    const chosen = addons.filter(a => modalSelectedAddons.has(a.name));
+    if(chosen.length){
+      const names = chosen.map(a => a.name);
+      label = label ? [label, ...names].join(' + ') : names.join(' + ');
+      unitPrice += chosen.reduce((sum,a) => sum + a.price, 0);
+    }
+  }
   if(p.sizes){
     const sv = p.sizes[selectedSizeVariant[p.id]||0];
     label = label ? `${label}, ${sv.name}` : sv.name;
