@@ -1363,7 +1363,7 @@
       <span>รวมค่าสินค้า</span>
       <span class="total-amt" id="totalAmt">฿0</span>
     </div>
-    <p class="field-hint" style="margin:-6px 0 12px;">ยังไม่รวมค่าจัดส่ง — นัดรับไม่มีค่าใช้จ่าย / ส่งพัสดุต่างจังหวัด ฿100 ต่อออเดอร์</p>
+    <p class="field-hint" style="margin:-6px 0 12px;">ยังไม่รวมค่าจัดส่ง — นัดรับฟรีเมื่อสั่งครบ ฿299 ขึ้นไป (ต่ำกว่านั้นคิดค่าส่งตามระยะทางจริง) / ส่งพัสดุต่างจังหวัด ฿100 ต่อออเดอร์</p>
     <button class="checkout-btn" id="checkoutBtn" onclick="startCheckout(buildCartOrderLines)">
       🌸 ยืนยันสั่งทำสินค้า
     </button>
@@ -1583,11 +1583,19 @@ function renderThumb(p, variantLabel){
     src = p.images[0];
   }
   if(src){
-    return `<img src="${src}" alt="${alt}" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML=window.ICON_FALLBACK">`;
+    return `<img src="${src}" alt="${alt}" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML=window.iconFallbackFor('${p.id}')">`;
   }
-  return ICONS[p.icon] || ICONS.other;
+  return iconFor(p);
 }
-window.ICON_FALLBACK = ICONS.other;
+// เลือกไอคอนสำรอง (SVG) ให้ตรงกับหมวดหมู่สินค้า แทนที่จะโชว์ไอคอน "อื่นๆ" เหมือนกันหมดทุกครั้งที่รูปโหลดไม่ขึ้น
+const CAT_ICON_KEY = { 'ช่อดอกไม้':'bouquet', 'กรอบรูป':'frame', 'กระถาง':'pot', 'อื่นๆ':'other' };
+function iconFor(p){
+  return ICONS[p.icon] || ICONS[CAT_ICON_KEY[p.cat]] || ICONS.other;
+}
+window.iconFallbackFor = function(id){
+  const p = PRODUCTS.find(x => x.id === id);
+  return p ? iconFor(p) : ICONS.other;
+};
 
 let selectedColor = {}; // productId -> chosen color index
 function selectColor(id, idx){
@@ -1746,6 +1754,17 @@ function toggleFavoritesOnly(checked){
   renderCatalog();
   renderFilterSidebar();
   updateFilterBadge();
+}
+
+// หนี HTML พิเศษก่อนแทรกข้อความที่ลูกค้าพิมพ์เองลงไปใน innerHTML (เช่น ชื่อ Facebook)
+// ป้องกันไม่ให้โค้ด/แท็กที่ลูกค้าพิมพ์ไปถูกตีความเป็น HTML/JS จริงๆ ในหน้าเว็บ
+function escapeHtml(str){
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 function fmt(n){ return '฿' + n.toLocaleString('th-TH'); }
@@ -2428,16 +2447,21 @@ function loadSavedFbName(){
 function renderFbNameDisplay(editing){
   const wrap = document.getElementById('fbNameDisplay');
   if(editing || !customerFbName){
-    const current = customerFbName ? customerFbName.replace(/"/g,'&quot;') : '';
+    const current = customerFbName ? escapeHtml(customerFbName) : '';
     wrap.innerHTML = `<input type="text" id="fbNameEditInput" class="form-input" placeholder="ชื่อ Facebook ที่ทักแชทร้าน" value="${current}" style="margin-bottom:14px;">`;
   } else {
-    wrap.innerHTML = `<div class="fb-name-chip"><span>👤 สั่งในนาม: <strong>${customerFbName}</strong></span><button type="button" class="fb-name-edit" onclick="renderFbNameDisplay(true)">แก้ไข</button></div>`;
+    wrap.innerHTML = `<div class="fb-name-chip"><span>👤 สั่งในนาม: <strong>${escapeHtml(customerFbName)}</strong></span><button type="button" class="fb-name-edit" onclick="renderFbNameDisplay(true)">แก้ไข</button></div>`;
   }
 }
 
 function minPickupDateStr(){
+  // ใช้วันที่ตามเวลาเครื่องลูกค้า (local time) ไม่ใช่ toISOString() ที่คืนค่าเป็นเวลา UTC —
+  // ถ้าใช้ UTC ช่วงเที่ยงคืน-ตี 7 เวลาไทย (เวลาไทย = UTC+7) จะได้ "เมื่อวาน" แทนที่จะเป็นวันนี้จริงๆ
   const d = new Date();
-  return d.toISOString().slice(0,10); // อนุญาตเลือกวันนี้ได้ (ช่อพร้อมส่ง/งานเร่ง) แอดมินจะแจ้งอีกครั้งถ้าทำไม่ทัน
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`; // อนุญาตเลือกวันนี้ได้ (ช่อพร้อมส่ง/งานเร่ง) แอดมินจะแจ้งอีกครั้งถ้าทำไม่ทัน
 }
 const DELIVERY_HINTS = {
   pickup: '📍 นัดรับได้ตั้งแต่พยุหะ ถึงตัวเมืองนครสวรรค์และใกล้เคียง สั่งครบ 299 บาทขึ้นไปนัดรับฟรี ต่ำกว่านั้นคิดค่าส่งตามระยะทางจริง มีบริการเก็บเงินปลายทาง (COD) สำหรับช่อพร้อมส่ง',
@@ -2456,9 +2480,13 @@ function onDeliveryMethodChange(){
   document.getElementById('pickupInfoGroup').style.display = value === 'pickup' ? 'block' : 'none';
   document.getElementById('deliveryAddressGroup').style.display = value === 'parcel' ? 'block' : 'none';
 
+  // COD (เก็บเงินปลายทาง) มีไว้ "เฉพาะช่อพร้อมส่ง" ตามข้อความในตัวเลือก —
+  // ต้องเช็คทั้งวิธีรับสินค้า (ต้องนัดรับ) และสถานะสินค้าในออเดอร์ (ต้องพร้อมส่งทุกชิ้น)
+  // ไม่ใช่แค่เช็ควิธีรับสินค้าอย่างเดียว ไม่งั้นออเดอร์ที่ต้องสั่งทำ (ไม่พร้อมส่ง) จะเลือก COD ได้ทั้งที่ไม่ควร
   const codOption = document.getElementById('codPaymentOption');
-  codOption.style.display = value === 'pickup' ? 'flex' : 'none';
-  if(value !== 'pickup'){
+  const codAllowed = value === 'pickup' && !orderNeedsDeposit(currentOrderItems);
+  codOption.style.display = codAllowed ? 'flex' : 'none';
+  if(!codAllowed){
     const codInput = codOption.querySelector('input');
     if(codInput.checked) codInput.checked = false;
   }
@@ -2589,8 +2617,13 @@ function generateOrderNumber(){
   const yy = String(d.getFullYear()).slice(-2);
   const mm = String(d.getMonth()+1).padStart(2,'0');
   const dd = String(d.getDate()).padStart(2,'0');
-  const rand = String(Math.floor(1000 + Math.random()*9000)); // 4 หลักสุ่ม กันเลขซ้ำในวันเดียวกัน
-  return `SFB${yy}${mm}${dd}-${rand}`;
+  // เลขสุ่ม 4 หลักอย่างเดียวมีโอกาสชนกันได้ (1 ใน 9000) ถ้าวันนั้นออเดอร์เยอะ —
+  // ผูกเวลา ชม:นาที:วินาที เข้าไปด้วย ทำให้แทบเป็นไปไม่ได้ที่จะซ้ำกันในวันเดียวกัน
+  const hh = String(d.getHours()).padStart(2,'0');
+  const mi = String(d.getMinutes()).padStart(2,'0');
+  const ss = String(d.getSeconds()).padStart(2,'0');
+  const rand = String(Math.floor(10 + Math.random()*90)); // 2 หลักสุ่มเสริม กันชนกันตอนออเดอร์มาพร้อมกันในวินาทีเดียว
+  return `SFB${yy}${mm}${dd}-${hh}${mi}${ss}${rand}`;
 }
 function formatDateThai(dateStr){
   if(!dateStr) return '';
@@ -2761,9 +2794,9 @@ function renderModalMainImage(p){
   const imgs = currentGalleryImages(p);
   const src = imgs[modalImgIndex];
   if(src){
-    return `<img src="${src}" alt="${p.name}" decoding="async" onerror="this.parentElement.innerHTML=window.ICON_FALLBACK">`;
+    return `<img src="${src}" alt="${p.name}" decoding="async" onerror="this.parentElement.innerHTML=window.iconFallbackFor('${p.id}')">`;
   }
-  return ICONS[p.icon] || ICONS.other;
+  return iconFor(p);
 }
 function renderModalThumbs(p){
   const wrap = document.getElementById('galleryThumbs');
@@ -2847,6 +2880,7 @@ window.addEventListener('popstate', function(){
 function changeModalQty(delta){
   modalQty = Math.max(1, modalQty + delta);
   document.getElementById('modalQty').textContent = modalQty;
+  updateModalPriceDisplay();
 }
 function changeModalBills(delta){
   const p = PRODUCTS.find(x=>x.id===modalProductId);
@@ -2902,7 +2936,20 @@ function renderModal(){
     billsRow.style.display = 'none';
   }
 
-  document.getElementById('modalPrice').textContent = fmt(currentModalVariant(p).unitPrice);
+  updateModalPriceDisplay();
+}
+// ราคาต่อหน่วยอย่างเดียวไม่พอเมื่อลูกค้าเพิ่ม "จำนวนช่อ" มากกว่า 1 — ต้องโชว์ให้ชัดว่านี่คือราคา/ช่อ
+// และคำนวณยอดรวมให้เห็นด้วย ไม่งั้นตัวเลขราคาตัวใหญ่ที่โชว์อยู่จะทำให้เข้าใจผิดว่าเป็นยอดรวมทั้งหมด
+function updateModalPriceDisplay(){
+  const p = PRODUCTS.find(x=>x.id===modalProductId);
+  const priceEl = document.getElementById('modalPrice');
+  if(!p || !priceEl) return;
+  const unitPrice = currentModalVariant(p).unitPrice;
+  if(modalQty > 1){
+    priceEl.innerHTML = `${fmt(unitPrice)} <span style="font-size:13px; font-weight:500; color:var(--plum);">/ ช่อ</span> × ${modalQty} = <strong>${fmt(unitPrice * modalQty)}</strong>`;
+  } else {
+    priceEl.innerHTML = `${fmt(unitPrice)} <span style="font-size:13px; font-weight:500; color:var(--plum);">/ ช่อ</span>`;
+  }
 }
 function currentModalVariant(p){
   if(p.billSelector) return { label:`ใส่ธนบัตร ${modalBills} ใบ`, unitPrice: unitPriceFor(p, modalBills) };
