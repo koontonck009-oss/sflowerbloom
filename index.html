@@ -1833,6 +1833,21 @@ function productHasAnyReady(p){
   if(p.colors) return p.colors.some(c => c.ready);
   return false;
 }
+// สำหรับโซน "สินค้าแนะนำ (พร้อมส่ง)" เท่านั้น — แตกสินค้าที่มีหลายสีออกเป็น
+// "การ์ดย่อย" แยกต่อสีที่พร้อมส่งจริง เพื่อให้ลูกค้าเห็นแต่ละสี/แบบชัดๆ โดยไม่กระทบ
+// การแสดงผลในหน้าหมวดหมู่ปกติ (ที่ยังคงเป็น renderProductCard(p) การ์ดเดียวต่อสินค้าเหมือนเดิม)
+// คืนค่าเป็น array ของ { product, colorIndex } — colorIndex เป็น null แปลว่าไม่ต้องแตก (พร้อมส่งทั้งชิ้น/ไม่มีสี)
+function readyVariantsOf(p){
+  if(p.colors && p.colors.length){
+    const readyIdx = [];
+    p.colors.forEach((c,i) => { if(c.ready) readyIdx.push(i); });
+    if(readyIdx.length) return readyIdx.map(i => ({ product:p, colorIndex:i }));
+    // ไม่มีสีไหนติด ready เจาะจงรายสี แต่ทั้งชิ้นติด ready ไว้ (p.ready) — ถือว่าทุกสีพร้อมส่ง แตกทุกสีออกมา
+    if(p.ready) return p.colors.map((c,i) => ({ product:p, colorIndex:i }));
+    return [];
+  }
+  return p.ready ? [{ product:p, colorIndex:null }] : [];
+}
 // Readiness of a specific order line (used to decide whether the deposit
 // payment option should be offered): falls back to the product's own
 // ready flag, but uses the picked color's ready flag when the line has one.
@@ -2217,22 +2232,30 @@ function favHeartHtml(id){
   const active = isFavorite(id);
   return `<button type="button" class="fav-heart ${active?'active':''}" onclick="event.stopPropagation(); toggleFavorite('${id}')" aria-label="${active?'เอาออกจากรายการโปรด':'บันทึกไว้ในรายการโปรด'}">${active?'♥':'♡'}</button>`;
 }
-function renderProductCard(p){
+// colorIndex (optional): ใช้เมื่อการ์ดนี้เป็น "การ์ดย่อยที่แตกตามสี" ในโซนสินค้าแนะนำ —
+// จะโชว์รูป/ชื่อของสีนั้นๆ ตรงๆ (ไม่ผูกกับสีที่ลูกค้าเลือกไว้ในสถานะกลาง) และเปิดหน้าสินค้า
+// พร้อม pre-select สีนั้นให้ทันที ส่วนการ์ดปกติ (colorIndex เป็น undefined) ทำงานเหมือนเดิมทุกอย่าง
+function renderProductCard(p, colorIndex){
+  const variantColor = (colorIndex != null && p.colors) ? p.colors[colorIndex] : null;
+  const displayName = variantColor ? `${p.name} (${variantColor.name})` : p.name;
+  const thumbHtml = variantColor ? renderThumb(p, variantColor.name) : renderThumb(p);
+  const isReady = variantColor ? true : currentReadyState(p);
+  const clickHandler = colorIndex != null ? `openProductModal('${p.id}', ${colorIndex})` : `openProductModal('${p.id}')`;
   return `
-    <div class="card" onclick="openProductModal('${p.id}')">
+    <div class="card" onclick="${clickHandler}">
       <div class="thumb-wrap">
-        <div class="thumb">${renderThumb(p)}</div>
-        ${currentReadyState(p) ? '<span class="badge-ready">พร้อมส่ง</span>' : ''}
+        <div class="thumb">${thumbHtml}</div>
+        ${isReady ? '<span class="badge-ready">พร้อมส่ง</span>' : ''}
         ${p.isNew ? '<span class="badge-new">ใหม่</span>' : ''}
         ${favHeartHtml(p.id)}
       </div>
       <div class="card-body">
-        <h4>${p.name}</h4>
+        <h4>${displayName}</h4>
         <p class="desc">${p.desc || ''}</p>
         <div class="price-row">
           <span class="price">${p.billSelector ? `เริ่มต้น ${fmt(displayPrice(p))}` : fmt(displayPrice(p))}</span>
         </div>
-        ${hasProductOptions(p) ? '<span class="option-badge">เลือกแบบ/สีได้</span>' : ''}
+        ${(!variantColor && hasProductOptions(p)) ? '<span class="option-badge">เลือกแบบ/สีได้</span>' : ''}
       </div>
     </div>
   `;
@@ -2246,17 +2269,20 @@ function renderCatalog(){
   // "ทั้งหมด" = เรียกดูทุกอย่างเหมือนเดิม (การ์ดแนะนำ + ทุกหมวดเรียงต่อกัน)
   // เลือกหมวดเจาะจง = กรองจริง โชว์แค่หมวดนั้นหมวดเดียว
   if(activeCat === 'ทั้งหมด'){
-    const recommended = applySortOrder(PRODUCTS.filter(p =>
+    // เรียงลำดับ/กรองที่ระดับ "สินค้า" ก่อน (ราคาไม่ต่างกันตามสี) แล้วค่อยแตกแต่ละสินค้า
+    // เป็นการ์ดย่อยตามสีที่พร้อมส่งจริง — สินค้าที่พร้อมส่งทั้งชิ้น/ไม่มีสี ยังเป็น 1 การ์ดเหมือนเดิม
+    const readyProducts = PRODUCTS.filter(p =>
       productHasAnyReady(p)
       && matchesSearch(p)
       && (!showFavoritesOnly || isFavorite(p.id))
       && (displayPrice(p) >= range.min && displayPrice(p) <= range.max)
-    ));
+    );
+    const recommended = applySortOrder(readyProducts).flatMap(readyVariantsOf);
     totalMatches += recommended.length;
     const recommendedHtml = recommended.length ? `
       <div class="section-title featured"><h3>🌟 สินค้าแนะนำ (พร้อมส่ง)</h3><span>${recommended.length} รายการ</span></div>
       <div class="grid">
-        ${recommended.map(p => renderProductCard(p)).join('')}
+        ${recommended.map(v => renderProductCard(v.product, v.colorIndex)).join('')}
       </div>
     ` : '';
     html += `<div class="cat-section" id="${catSectionId('ทั้งหมด')}" data-cat="ทั้งหมด">${recommendedHtml}</div>`;
@@ -2906,13 +2932,18 @@ function changeModalImg(delta){
 
 // Full-page product view (not a floating pop-up) — behaves like a real "page" so the
 // device/browser back button closes it and returns to the catalog, like a native app.
-function openProductModal(id){
+// colorIndex (optional): มาจากการ์ดที่แตกตามสีในโซน "สินค้าแนะนำ" — เปิดหน้าสินค้า
+// พร้อม pre-select สีนั้นทันที ลูกค้าจะไม่เจอสีอื่นก่อนสีที่กดเข้ามาจากการ์ดนั้น
+function openProductModal(id, colorIndex){
   modalProductId = id;
   modalQty = 1;
   modalImgIndex = 0;
   modalSelectedAddons = new Set();
   const p = PRODUCTS.find(x=>x.id===id);
   modalBills = p && p.billSelector ? (p.minBills||1) : 1;
+  if(p && p.colors && colorIndex != null){
+    selectedColor[id] = colorIndex;
+  }
   renderModal();
   const page = document.getElementById('productModal');
   page.classList.add('open');
