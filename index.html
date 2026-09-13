@@ -2609,8 +2609,15 @@ function fallbackCopy(text){
 }
 function chatWithOrderNo(e){
   if(e) e.preventDefault();
+  // ต้องเปิดแท็บใหม่ (window.open) เป็นคำสั่งแรกสุด ให้ใช้ "สิทธิ์จากการคลิก" ของลูกค้าโดยตรง —
+  // ถ้าไปเรียก navigator.clipboard.writeText() (ใน copyOrderNo) ก่อน บางเบราว์เซอร์บนคอม
+  // (โดยเฉพาะ Safari/Chrome ที่ตั้งค่าเข้มงวด) จะถือว่าสิทธิ์จากการคลิกถูกใช้ไปแล้ว แล้วบล็อก
+  // window.open ที่ตามมาแบบเงียบๆ โดยไม่มี error ให้เห็น (นี่คือสาเหตุที่ปุ่มดูเหมือน "ไม่ทำงาน" บนคอม)
+  const chatWin = window.open(PAGE_LINK, '_blank', 'noopener');
   copyOrderNo();
-  window.open(PAGE_LINK, '_blank', 'noopener');
+  if(!chatWin){
+    showToast('เบราว์เซอร์บล็อกการเปิดหน้าต่างใหม่ กรุณาอนุญาต pop-up ให้เว็บนี้ แล้วลองกดใหม่ค่ะ');
+  }
 }
 function generateOrderNumber(){
   const d = new Date();
