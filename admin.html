@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>จัดการสินค้า · S.Flower Bloom</title>
+<link rel="icon" type="image/jpeg" href="images/logo.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="admin.css">
+<script src="firebase-config.js"></script>
+</head>
+<body>
+
+<!-- ───────────── กำลังตรวจสอบการล็อกอิน ───────────── -->
+<div class="boot" id="bootScreen">
+  <div class="spinner"></div>
+  <p>กำลังเชื่อมต่อ…</p>
+</div>
+
+<!-- ───────────── หน้าล็อกอิน ───────────── -->
+<div class="login-screen" id="loginScreen" hidden>
+  <div class="login-card">
+    <img src="images/logo.jpg" alt="" class="login-logo">
+    <h1>จัดการสินค้า</h1>
+    <p class="login-sub">สำหรับผู้ดูแลร้าน S.Flower Bloom</p>
+    <label class="field">
+      <span>ชื่อผู้ใช้</span>
+      <input type="text" id="loginUser" autocomplete="username" placeholder="admin">
+    </label>
+    <label class="field">
+      <span>รหัสผ่าน</span>
+      <input type="password" id="loginPass" autocomplete="current-password" placeholder="••••••">
+    </label>
+    <p class="login-error" id="loginError" hidden></p>
+    <button class="btn btn-primary btn-block" id="loginBtn">เข้าสู่ระบบ</button>
+  </div>
+</div>
+
+<!-- ───────────── หน้าจัดการสินค้า ───────────── -->
+<div class="app" id="app" hidden>
+
+  <header class="topbar">
+    <div class="topbar-left">
+      <img src="images/logo.jpg" alt="" class="topbar-logo">
+      <div>
+        <h1>จัดการสินค้า</h1>
+        <p class="save-state" id="saveState">พร้อมใช้งาน</p>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <a class="btn btn-ghost" href="index.html" target="_blank" rel="noopener">ดูหน้าร้าน</a>
+      <button class="btn btn-ghost" id="logoutBtn">ออกจากระบบ</button>
+    </div>
+  </header>
+
+  <div class="toolbar">
+    <div class="search-wrap">
+      <input type="search" id="searchBox" placeholder="ค้นหาชื่อสินค้า หรือรหัส เช่น s05">
+    </div>
+    <div class="cat-chips" id="catChips"></div>
+    <div class="toolbar-actions">
+      <button class="btn btn-primary" id="addBtn">เพิ่มสินค้า</button>
+      <button class="btn btn-ghost" id="importBtn">นำเข้าจากไฟล์</button>
+      <button class="btn btn-ghost" id="backupBtn">ดาวน์โหลดสำรอง</button>
+      <input type="file" id="importFile" accept=".json,application/json" hidden>
+    </div>
+  </div>
+
+  <p class="list-meta" id="listMeta"></p>
+
+  <div class="list" id="productList"></div>
+
+  <div class="empty" id="emptyState" hidden>
+    <p class="empty-title">ยังไม่มีสินค้าในระบบ</p>
+    <p>กด “นำเข้าจากไฟล์” แล้วเลือก products.json เพื่อย้ายสินค้าทั้งหมดขึ้น Firestore ครั้งเดียวจบ</p>
+  </div>
+</div>
+
+<!-- ───────────── ตัวแก้ไขสินค้า ───────────── -->
+<div class="drawer-scrim" id="drawerScrim" hidden></div>
+<aside class="drawer" id="editorDrawer" hidden aria-label="แก้ไขสินค้า">
+  <div class="drawer-head">
+    <div>
+      <h2 id="editorTitle">แก้ไขสินค้า</h2>
+      <p class="drawer-sub" id="editorSub"></p>
+    </div>
+    <button class="icon-btn" id="editorClose" aria-label="ปิด">✕</button>
+  </div>
+
+  <nav class="tabs" id="editorTabs">
+    <button class="tab is-active" data-tab="main">ข้อมูลสินค้า</button>
+    <button class="tab" data-tab="media">รูปภาพและสี</button>
+    <button class="tab" data-tab="price">ราคา</button>
+    <button class="tab" data-tab="addons">ของเสริม</button>
+  </nav>
+
+  <div class="drawer-body">
+    <section class="tab-panel is-active" data-panel="main" id="panelMain"></section>
+    <section class="tab-panel" data-panel="media" id="panelMedia"></section>
+    <section class="tab-panel" data-panel="price" id="panelPrice"></section>
+    <section class="tab-panel" data-panel="addons" id="panelAddons"></section>
+  </div>
+
+  <div class="drawer-foot">
+    <p class="editor-problem" id="editorProblem" hidden></p>
+    <div class="drawer-foot-btns">
+      <button class="btn btn-ghost" id="cancelBtn">ยกเลิก</button>
+      <button class="btn btn-primary" id="saveBtn">บันทึกสินค้า</button>
+    </div>
+  </div>
+</aside>
+
+<!-- ───────────── กล่องยืนยัน ───────────── -->
+<div class="confirm-scrim" id="confirmScrim" hidden>
+  <div class="confirm-card">
+    <h3 id="confirmTitle">ยืนยัน</h3>
+    <p id="confirmText"></p>
+    <div class="confirm-btns">
+      <button class="btn btn-ghost" id="confirmNo">ยกเลิก</button>
+      <button class="btn btn-danger" id="confirmYes">ยืนยัน</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+
+<script src="admin.js" defer></script>
+</body>
+</html>
