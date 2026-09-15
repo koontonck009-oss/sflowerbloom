@@ -520,6 +520,10 @@ function renderMediaPanel(){
             <span class="field" style="margin:0"><span>รูปเพิ่มเติมของสีนี้</span></span>
             ${imageListHtml(c.images, `colors.${k}.images`)}
           </div>
+          <label class="check" style="margin:12px 0 0">
+            <input type="checkbox" data-bind="colors.${k}.ready" data-type="bool"${c.ready ? ' checked' : ''}>
+            <span>สีนี้ทำไว้แล้ว พร้อมส่ง</span>
+          </label>
           <div style="margin-top:12px">
             <span class="field" style="margin:0"><span>ของเสริมเฉพาะสีนี้</span></span>
             ${addonsEditorHtml(c.addons, `colors.${k}.addons`, 'color-addon', k)}
@@ -658,6 +662,7 @@ function renderPricePanel(){
                 <th>คู่ผสม</th>
                 <th style="width:104px">ราคา</th>
                 <th style="width:170px">รูป</th>
+                <th style="width:80px">พร้อมส่ง</th>
               </tr>
             </thead>
             <tbody>
@@ -669,6 +674,7 @@ function renderPricePanel(){
                   <td class="combo-combo">${c.map(esc).join(' · ')}</td>
                   <td><input type="number" min="0" step="1" data-combo-price="${ci}" value="${v ? (num(v.price) || '') : ''}"${v ? '' : ' disabled'}></td>
                   <td><input type="text" data-combo-image="${ci}" value="${v ? esc(v.image || '') : ''}" placeholder="images/…"${v ? '' : ' disabled'}></td>
+                  <td style="text-align:center"><input type="checkbox" data-combo-ready="${ci}"${v && v.ready ? ' checked' : ''}${v ? '' : ' disabled'}></td>
                 </tr>`;
               }).join('')}
             </tbody>
@@ -775,6 +781,13 @@ function onDraftInput(e){
     const combo = comboList(draft.options)[+el.dataset.comboImage];
     const v = variantFor(combo);
     if(v) v.image = el.value;
+    return;
+  }
+
+  if(el.dataset.comboReady != null){
+    const combo = comboList(draft.options)[+el.dataset.comboReady];
+    const v = variantFor(combo);
+    if(v) v.ready = el.checked;
   }
 }
 
@@ -909,9 +922,10 @@ function onComboToggle(e){
   const tr = el.closest('tr');
   const priceInput = tr.querySelector('input[type="number"]');
   const imageInput = tr.querySelector('input[type="text"]');
+  const readyInput = tr.querySelector('[data-combo-ready]');
   tr.classList.toggle('is-off', !el.checked);
-  priceInput.disabled = imageInput.disabled = !el.checked;
-  if(!el.checked){ priceInput.value = ''; imageInput.value = ''; }
+  priceInput.disabled = imageInput.disabled = readyInput.disabled = !el.checked;
+  if(!el.checked){ priceInput.value = ''; imageInput.value = ''; readyInput.checked = false; }
   const counter = $('comboCount');
   if(counter) counter.textContent = draft.variants.length;
   if(el.checked) priceInput.focus();
@@ -985,6 +999,7 @@ function cleanProduct(p){
     if(str(c.image)) o.image = str(c.image);
     const ci = (c.images || []).map(str).filter(Boolean);
     if(ci.length) o.images = ci;
+    if(c.ready) o.ready = true;
     const ca = cleanAddons(c.addons);
     if(ca.length) o.addons = ca;
     return o;
@@ -1014,6 +1029,7 @@ function cleanProduct(p){
     out.variants = (p.variants || []).map(v => {
       const o = { match: (v.match || []).map(str), price: num(v.price) };
       if(str(v.image)) o.image = str(v.image);
+      if(v.ready) o.ready = true;
       return o;
     });
   }
