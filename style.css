@@ -404,7 +404,7 @@ h1,h2,h3,.display{font-family:'Kanit',sans-serif; font-weight:600;}
 
 /* ---------- Category nav ---------- */
 .cat-nav{
-  display:flex; gap:2px; flex-wrap:nowrap;
+  display:flex; align-items:center; gap:2px; flex-wrap:nowrap;
   overflow-x:auto;
   -webkit-overflow-scrolling:touch;
   scrollbar-width:none;
@@ -438,22 +438,25 @@ h1,h2,h3,.display{font-family:'Kanit',sans-serif; font-weight:600;}
 .cat-btn.active{color:var(--sage-dark); font-weight:700;}
 .cat-btn.active::after{background:var(--rose);}
 
-.filters-bar{
-  display:flex; align-items:center; gap:12px; flex-wrap:wrap;
-  padding:10px 6vw 4px;
+.cat-filter-btn{
+  flex-shrink:0;
+  display:inline-flex; align-items:center; justify-content:center;
+  width:36px; height:36px;
+  margin:7px 8px 7px 0;
+  border:1.5px solid var(--line); background:var(--cream); color:var(--plum);
+  border-radius:50%;
+  cursor:pointer; position:sticky; left:0; z-index:2;
 }
-.filter-open-btn{
-  display:inline-flex; align-items:center; gap:8px;
-  border:1.5px solid var(--line); background:#fff; color:var(--plum);
-  padding:9px 16px; border-radius:999px; font-family:'Kanit'; font-weight:600; font-size:13.5px;
-  cursor:pointer; position:relative;
-}
-.filter-open-btn:active{transform:scale(.97);}
+.cat-filter-btn:active{transform:scale(.95);}
+.cat-filter-btn svg{width:17px; height:17px;}
 .filter-badge-dot{
   width:8px; height:8px; border-radius:50%; background:var(--sage);
   display:none;
 }
 .filter-badge-dot.show{display:inline-block;}
+.cat-filter-btn .filter-badge-dot{
+  position:absolute; top:3px; right:3px;
+}
 
 /* ---------- Product grid ---------- */
 main{padding:18px 6vw 80px;}
@@ -581,8 +584,14 @@ main{padding:18px 6vw 80px;}
     background:#fff; border:1px solid var(--line); border-radius:16px;
     padding:20px; position:sticky;
   }
-  .filter-sidebar-title{font-size:16px; color:var(--plum); margin:0 0 16px;}
-  .filters-bar{display:none;}
+  .filter-sidebar-head{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:16px;}
+  .filter-sidebar-title{font-size:16px; color:var(--plum); margin:0;}
+  .filter-sidebar-clear{
+    border:none; background:transparent; color:var(--rose-dark);
+    font-family:'Kanit'; font-weight:600; font-size:12.5px; cursor:pointer;
+    padding:0; text-decoration:underline; text-underline-offset:2px; flex-shrink:0;
+  }
+  .filter-sidebar-clear:hover{color:var(--plum);}
 }
 .section-title{
   margin:34px 0 18px;

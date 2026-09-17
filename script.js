@@ -480,7 +480,11 @@ function orderNeedsDeposit(items){
 
 function renderNav(){
   const nav = document.getElementById('catNav');
-  nav.innerHTML = CATS.map(c =>
+  nav.innerHTML = `
+    <button class="cat-filter-btn" onclick="openFilterSheet()" aria-label="ตัวกรอง">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="4 4 20 4 14 12.5 14 19 10 21 10 12.5 4 4"></polygon></svg>
+      <span class="filter-badge-dot" id="filterBadgeDot"></span>
+    </button>` + CATS.map(c =>
     `<button class="cat-btn ${c===activeCat?'active':''}" onclick="selectCategory('${c}')">${c}</button>`
   ).join('');
   // เลื่อนแถบแท็บแนวนอนให้ปุ่มที่ active อยู่ในมุมมองเสมอ (เผื่อชื่อหมวดยาวจนล้นจอ)
@@ -759,7 +763,25 @@ function renderFilterSidebar(){
     size: activeSizes[activeCat] || 'ทั้งหมด',
     flowerType: activeFlowerType
   };
-  el.innerHTML = `<h4 class="filter-sidebar-title">ตัวกรองสินค้า</h4>` + buildFilterPanelHtml(state, 'sidebar');
+  el.innerHTML = `<div class="filter-sidebar-head">
+      <h4 class="filter-sidebar-title">ตัวกรองสินค้า</h4>
+      <button class="filter-sidebar-clear" onclick="clearSidebarFilters()">ล้างตัวกรอง</button>
+    </div>` + buildFilterPanelHtml(state, 'sidebar');
+}
+// ล้างตัวกรองทั้งหมด (ปุ่มบนแถบข้าง — เดสก์ท็อป) แล้วอัปเดตหน้าเว็บทันที
+function clearSidebarFilters(){
+  activeCat = 'ทั้งหมด';
+  customPriceMin = PRICE_SLIDER_MIN;
+  customPriceMax = PRICE_SLIDER_MAX;
+  activeSortOrder = 'none';
+  showReadyOnly = false;
+  showFavoritesOnly = false;
+  activeSizes = {};
+  activeFlowerType = 'ทั้งหมด';
+  renderNav();
+  renderCatalog();
+  renderFilterSidebar();
+  updateFilterBadge();
 }
 
 // Mobile bottom sheet — stages changes in filterDraft until "แสดงผลลัพธ์" is tapped
