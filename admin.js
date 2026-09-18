@@ -37,6 +37,14 @@ function num(v){
 
 function baht(n){ return Number(n).toLocaleString('th-TH'); }
 
+// p.size ใช้เป็นตัวกรอง "ขนาด" ในหน้าร้าน ตอนนี้รองรับได้ทั้ง string เดี่ยว (สินค้าเก่า) หรือ array
+// ของหลายค่า (สินค้าที่ติดได้มากกว่า 1 ป้าย เช่น "กลาง, ใส่เงิน") — สองฟังก์ชันนี้แปลงไปมาให้สม่ำเสมอ
+function sizeTagsOf(p){
+  if(!p || !p.size) return [];
+  return Array.isArray(p.size) ? p.size : [p.size];
+}
+function sizeTagText(p){ return sizeTagsOf(p).join(', '); }
+
 function toast(msg, isError){
   const t = $('toast');
   t.textContent = msg;
@@ -304,7 +312,7 @@ function renderList(){
         ${thumbHtml(mainImageOf(p), 'row-thumb')}
         <div class="row-main">
           <p class="row-name">${esc(p.name || '(ยังไม่ตั้งชื่อ)')}</p>
-          <p class="row-sub"><span>${esc(p.id || '—')}</span><span>${esc(p.cat || '—')}</span>${p.size ? `<span>${esc(p.size)}</span>` : ''}</p>
+          <p class="row-sub"><span>${esc(p.id || '—')}</span><span>${esc(p.cat || '—')}</span>${sizeTagText(p) ? `<span>${esc(sizeTagText(p))}</span>` : ''}</p>
           <div class="row-tags">${tags.join('')}</div>
         </div>
         <div class="row-price">${pi.text}<small>${pi.note}</small></div>
@@ -406,7 +414,7 @@ function renderAllPanels(){
 function renderMainPanel(){
   const cats = [...new Set([...catalog.map(p => p.cat), 'ช่อดอกไม้', 'กระถาง', 'กรอบรูป', 'อื่นๆ'])].filter(Boolean).sort();
   const flowerTypes = [...new Set(catalog.map(p => p.flowerType).filter(Boolean))].sort();
-  const sizes = [...new Set(catalog.map(p => p.size).filter(Boolean))].sort();
+  const sizes = [...new Set(catalog.flatMap(p => sizeTagsOf(p)))].sort();
 
   $('panelMain').innerHTML = `
     <div class="group">
@@ -437,11 +445,11 @@ function renderMainPanel(){
         </label>
         <label class="field">
           <span>ขนาด/ป้ายกำกับ</span>
-          <input type="text" data-bind="size" list="dlSize" value="${esc(draft.size || '')}" placeholder="เช่น กลาง, A4">
+          <input type="text" data-bind="size" list="dlSize" value="${esc(sizeTagText(draft))}" placeholder="เช่น กลาง, ใส่เงิน">
           <datalist id="dlSize">${sizes.map(s => `<option value="${esc(s)}">`).join('')}</datalist>
         </label>
       </div>
-      <p class="field-hint" style="margin-top:-10px">สองช่องนี้ใช้เป็นตัวกรองในหน้าร้าน เว้นว่างได้ถ้าไม่เกี่ยว</p>
+      <p class="field-hint" style="margin-top:-10px">สองช่องนี้ใช้เป็นตัวกรองในหน้าร้าน เว้นว่างได้ถ้าไม่เกี่ยว — ช่อง "ขนาด/ป้ายกำกับ" ใส่ได้มากกว่า 1 ค่า คั่นด้วยจุลภาค เช่น สินค้าที่ปกติเป็นไซซ์กลางแต่มีตัวเลือกใส่เงินด้วย ให้พิมพ์ "กลาง, ใส่เงิน" (สินค้าจะโผล่ทั้งตอนกรอง "กลาง" และ "ใส่เงิน")</p>
 
       <label class="field" style="margin-top:14px">
         <span>รายละเอียด</span>
@@ -975,7 +983,14 @@ function cleanProduct(p){
   out.id = str(p.id);
   out.cat = str(p.cat);
   if(str(p.flowerType)) out.flowerType = str(p.flowerType);
-  if(str(p.size)) out.size = str(p.size);
+  // ช่อง "ขนาด/ป้ายกำกับ" พิมพ์ได้หลายค่าคั่นด้วยจุลภาค (เช่น "กลาง, ใส่เงิน") — เก็บเป็น array ถ้ามี
+  // มากกว่า 1 ค่า หรือเก็บเป็น string เดี่ยวเหมือนเดิมถ้ามีค่าเดียว (ไม่เปลี่ยนหน้าตาไฟล์โดยไม่จำเป็น)
+  {
+    const sizeParts = sizeTagsOf(p).flatMap(v => str(v).split(',')).map(v => v.trim()).filter(Boolean);
+    const uniqueSizes = [...new Set(sizeParts)];
+    if(uniqueSizes.length === 1) out.size = uniqueSizes[0];
+    else if(uniqueSizes.length > 1) out.size = uniqueSizes;
+  }
   out.name = str(p.name);
   if(num(p.price) > 0) out.price = num(p.price);
   if(str(p.desc)) out.desc = str(p.desc);

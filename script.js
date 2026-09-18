@@ -232,10 +232,20 @@ const CATEGORY_SIZES = {
   'กระถาง': ['ทั้งหมด','3 นิ้ว','5 นิ้ว','9 นิ้ว'],
   'อื่นๆ': ['ทั้งหมด','กลิตเตอร์','กล่องดอกไม้','ดอกไม้เจ้าสาว','ตุ๊กตา','มงกุฎ'],
 };
-let activeCat = 'ทั้งหมด'; // now only drives which nav tab is highlighted (scrollspy), not filtering
-let activeSizes = {}; // cat -> selected size for that category (independent per category)
+// หมวดหมู่ที่เลือกไว้ตอนนี้ — เป็น Set เพื่อให้เลือกได้มากกว่า 1 หมวดพร้อมกัน
+// เซตว่าง = "ทั้งหมด" (ไม่กรองหมวด) ปุ่มแท็บบนสุด (quick-nav) กดแล้วจะ "กระโดดไปหมวดนั้นหมวดเดียว"
+// (แทนที่ทั้งเซต) ส่วนชิปในแผงตัวกรองสามารถกดติด/ปลดได้ทีละหมวดอิสระ (multi-select จริง)
+let activeCats = new Set();
+// ใช้แยกต่างหากจาก activeCats — เอาไว้ไฮไลต์แท็บบนสุดตาม scrollspy เฉพาะตอนอยู่ในโหมด "ทั้งหมด"
+// (activeCats ว่าง) เท่านั้น ไม่กระทบตัวกรองจริง
+let scrollSpyCat = 'ทั้งหมด';
+// ตัวกรองขนาด — ค่าเดียว (เลือกได้ทีละอัน) รายการตัวเลือกจะเป็น "ยูเนียน" ของทุกหมวดที่เลือกไว้อยู่
+let activeSizeFilter = 'ทั้งหมด';
 let showReadyOnly = false;
 let showFavoritesOnly = false;
+// โหมด "ดูสินค้าทั้งหมด" — แตกสินค้าทุกชิ้นที่มีสี/ตัวเลือก/ไซซ์ออกเป็นการ์ดย่อยรายตัว
+// เหมือนที่โซน "สินค้าแนะนำ (พร้อมส่ง)" ทำอยู่แล้ว แต่ไม่จำกัดเฉพาะที่พร้อมส่ง
+let showAllVariantsSplit = false;
 
 /* ---------- รายการโปรด (บันทึกในเบราว์เซอร์ของลูกค้า เหมือนตะกร้า) ---------- */
 const FAVORITES_STORAGE_KEY = 'sfb_favorites_v1';
@@ -352,6 +362,13 @@ function toggleFavoritesOnly(checked){
   renderFilterSidebar();
   updateFilterBadge();
 }
+function toggleAllVariantsSplit(checked){
+  showAllVariantsSplit = checked;
+  renderCatalog();
+  renderFilterSidebar();
+  updateFilterBadge();
+}
+function setDraftAllSplit(checked){ filterDraft.allSplit = checked; renderFilterSheetBody(); }
 
 // หนี HTML พิเศษก่อนแทรกข้อความที่ลูกค้าพิมพ์เองลงไปใน innerHTML (เช่น ชื่อ Facebook)
 // ป้องกันไม่ให้โค้ด/แท็กที่ลูกค้าพิมพ์ไปถูกตีความเป็น HTML/JS จริงๆ ในหน้าเว็บ
@@ -454,6 +471,22 @@ function readyVariantsOf(p){
   }
   return p.ready ? [{ product:p, colorIndex:null }] : [];
 }
+// สำหรับโหมด "ดูสินค้าทั้งหมด" (ตัวกรอง) — แตกสินค้าทุกชิ้นที่มีสี/ตัวเลือก/ไซซ์ออกเป็นการ์ดย่อย
+// รายตัวเหมือน readyVariantsOf() ด้านบน แต่ไม่กรองเฉพาะที่พร้อมส่ง (โชว์ทุกแบบที่มีขายจริง)
+// สินค้าที่ไม่มีตัวเลือกอะไรเลยจะได้การ์ดเดียวตามปกติ (isSplit จะเป็น false ใน renderProductCard)
+function allVariantsOf(p){
+  if(p.colors && p.colors.length) return p.colors.map((c,i) => ({ product:p, colorIndex:i }));
+  if(hasNewOptions(p)) return p.variants.map((v,i) => ({ product:p, optionIndex:i }));
+  if(p.sizes && p.sizes.length) return p.sizes.map((s,i) => ({ product:p, sizeIndex:i }));
+  return [{ product:p }];
+}
+// ป้ายกำกับขนาด (สำหรับตัวกรอง "ขนาด") ของสินค้าชิ้นหนึ่งอาจมีได้มากกว่า 1 ค่า เช่น สินค้าที่ปกติ
+// จัดเป็นไซซ์ "กลาง" แต่ก็มีตัวเลือก "ใส่เงิน" ให้เลือกด้วย — p.size จึงรองรับทั้ง string เดิม
+// (สินค้าที่ยังไม่ได้แก้) และ array ของหลายค่า คืนค่าเป็น array เสมอเพื่อให้เช็ค .includes() ได้ตรงๆ
+function sizeTagsOf(p){
+  if(!p.size) return [];
+  return Array.isArray(p.size) ? p.size : [p.size];
+}
 // Readiness of a specific order line (used to decide whether the deposit
 // payment option should be offered): falls back to the product's own
 // ready flag, but uses the picked color's ready flag when the line has one.
@@ -480,13 +513,17 @@ function orderNeedsDeposit(items){
 
 function renderNav(){
   const nav = document.getElementById('catNav');
+  const allMode = activeCats.size === 0;
   nav.innerHTML = `
     <button class="cat-filter-btn" onclick="openFilterSheet()" aria-label="ตัวกรอง">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="4 4 20 4 14 12.5 14 19 10 21 10 12.5 4 4"></polygon></svg>
       <span class="filter-badge-dot" id="filterBadgeDot"></span>
-    </button>` + CATS.map(c =>
-    `<button class="cat-btn ${c===activeCat?'active':''}" onclick="selectCategory('${c}')">${c}</button>`
-  ).join('');
+    </button>` + CATS.map(c => {
+    // "ทั้งหมด" ไฮไลต์เมื่อไม่ได้เลือกหมวดเจาะจงไว้เลย ส่วนหมวดอื่นไฮไลต์เมื่ออยู่ใน activeCats จริง
+    // หรือ (ตอนอยู่โหมด "ทั้งหมด") เมื่อ scrollspy กำลังเลื่อนผ่านหมวดนั้นอยู่พอดี
+    const isActive = c === 'ทั้งหมด' ? allMode : (activeCats.has(c) || (allMode && scrollSpyCat === c));
+    return `<button class="cat-btn ${isActive?'active':''}" onclick="selectCategory('${c}')">${c}</button>`;
+  }).join('');
   // เลื่อนแถบแท็บแนวนอนให้ปุ่มที่ active อยู่ในมุมมองเสมอ (เผื่อชื่อหมวดยาวจนล้นจอ)
   const activeBtn = nav.querySelector('.cat-btn.active');
   if(activeBtn) activeBtn.scrollIntoView({ behavior:'smooth', inline:'center', block:'nearest' });
@@ -504,13 +541,8 @@ function updateStickyOffsets(){
   if(bar && nav) nav.style.top = bar.offsetHeight + 'px';
 }
 window.addEventListener('resize', updateStickyOffsets);
-// เมื่อกดแท็บหมวดหมู่ (หรือเลือกในแผงตัวกรอง) ให้กรองสินค้าจริง (ซ่อนหมวดอื่น) แล้วเลื่อนไปบนสุดของรายการ
-function selectCategory(c){
-  activeCat = c;
-  renderNav();
-  renderCatalog();
-  renderFilterSidebar();
-  updateFilterBadge();
+// เลื่อนหน้าไปบนสุดของรายการสินค้า (ใช้ร่วมกันทุกจุดที่เปลี่ยนตัวกรองแล้วอยากเลื่อนให้เห็นผลลัพธ์)
+function scrollToCatalogTop(){
   const el = document.getElementById('catalog');
   if(el){
     const offset = stickyOffset() + 8;
@@ -518,7 +550,41 @@ function selectCategory(c){
     window.scrollTo({ top, behavior: 'smooth' });
   }
 }
+// กดแท็บหมวดหมู่บนแถบ quick-nav ด้านบน = "กระโดดไปหมวดนั้นหมวดเดียว" (แทนที่ตัวเลือกหมวดเดิมทั้งหมด)
+// ถ้าต้องการเลือกได้หลายหมวดพร้อมกัน ให้ใช้ชิปหมวดหมู่ในแผงตัวกรอง (toggleCategory) แทน
+function selectCategory(c){
+  activeCats = c === 'ทั้งหมด' ? new Set() : new Set([c]);
+  activeSizeFilter = 'ทั้งหมด';
+  if(c !== 'ช่อดอกไม้') activeFlowerType = 'ทั้งหมด';
+  scrollSpyCat = c;
+  renderNav();
+  renderCatalog();
+  renderFilterSidebar();
+  updateFilterBadge();
+  scrollToCatalogTop();
+}
+// ปุ่มหมวดหมู่ในแผงตัวกรอง (เดสก์ท็อป, live) — กดติด/ปลดได้ทีละหมวด เลือกพร้อมกันได้หลายหมวด
+function toggleCategory(c){
+  if(activeCats.has(c)) activeCats.delete(c); else activeCats.add(c);
+  activeSizeFilter = 'ทั้งหมด';
+  if(!activeCats.has('ช่อดอกไม้')) activeFlowerType = 'ทั้งหมด';
+  renderNav();
+  renderCatalog();
+  renderFilterSidebar();
+  updateFilterBadge();
+  scrollToCatalogTop();
+}
+function clearCategorySelection(){
+  activeCats = new Set();
+  activeSizeFilter = 'ทั้งหมด';
+  activeFlowerType = 'ทั้งหมด';
+  renderNav();
+  renderCatalog();
+  renderFilterSidebar();
+  updateFilterBadge();
+}
 // Scrollspy: ไล่ดูว่าตอนนี้หมวดไหนอยู่ใต้แถบเมนูพอดี แล้วไฮไลต์แท็บนั้นให้อัตโนมัติ
+// ทำงานเฉพาะตอนอยู่โหมด "ทั้งหมด" (ไม่ได้เลือกหมวดเจาะจงไว้) เท่านั้น — ไม่งั้นจะไปเปลี่ยนตัวกรองจริงโดยไม่ตั้งใจ
 function setupScrollSpy(){
   if(scrollSpyObserver) scrollSpyObserver.disconnect();
   updateStickyOffsets();
@@ -526,11 +592,12 @@ function setupScrollSpy(){
   const sections = document.querySelectorAll('#catalog .cat-section');
   if(!sections.length) return;
   scrollSpyObserver = new IntersectionObserver((entries) => {
+    if(activeCats.size !== 0) return;
     entries.forEach(entry => {
       if(entry.isIntersecting){
         const cat = entry.target.getAttribute('data-cat');
-        if(cat && cat !== activeCat){
-          activeCat = cat;
+        if(cat && cat !== scrollSpyCat){
+          scrollSpyCat = cat;
           renderNav();
         }
       }
@@ -538,8 +605,8 @@ function setupScrollSpy(){
   }, { rootMargin: `-${totalSticky + 4}px 0px -65% 0px`, threshold: 0 });
   sections.forEach(s => scrollSpyObserver.observe(s));
 }
-function setSize(cat, s){
-  activeSizes[cat] = s;
+function setSize(s){
+  activeSizeFilter = s;
   renderCatalog();
   renderFilterSidebar();
   updateFilterBadge();
@@ -688,17 +755,33 @@ function renderPriceSliderHtml(state, mode){
    in a draft, only committed when the customer taps "แสดงผลลัพธ์") ---------- */
 let filterDraft = null;
 
+// ยูเนียนของตัวเลือกขนาดจากทุกหมวดที่เลือกไว้อยู่ตอนนี้ (คืน null ถ้าไม่ได้เลือกหมวดไหนเลย
+// หรือทุกหมวดที่เลือกไม่มีตัวกรองขนาดกำหนดไว้ใน CATEGORY_SIZES เลย)
+function unionSizeList(catsSet){
+  if(!catsSet || catsSet.size === 0) return null;
+  const lists = [...catsSet].map(c => CATEGORY_SIZES[c]).filter(Boolean);
+  if(!lists.length) return null;
+  const values = new Set();
+  lists.forEach(list => list.slice(1).forEach(v => values.add(v)));
+  return ['ทั้งหมด', ...values];
+}
+
 function buildFilterPanelHtml(state, mode){
   // mode: 'sidebar' (live — pill click applies immediately) or 'sheet' (draft)
-  const setCatFn = mode === 'sidebar' ? 'selectCategory' : 'setDraftCat';
   const setReadyFn = mode === 'sidebar' ? 'toggleReadyOnly' : 'setDraftReady';
   const setFavFn = mode === 'sidebar' ? 'toggleFavoritesOnly' : 'setDraftFavorites';
   const setFlowerFn = mode === 'sidebar' ? 'setFlowerType' : 'setDraftFlowerType';
   const setSortFn = mode === 'sidebar' ? 'setSortOrder' : 'setDraftSortOrder';
+  const setAllSplitFn = mode === 'sidebar' ? 'toggleAllVariantsSplit' : 'setDraftAllSplit';
+  const toggleCatFn = mode === 'sidebar' ? 'toggleCategory' : 'toggleDraftCategory';
+  const clearCatFn = mode === 'sidebar' ? 'clearCategorySelection' : 'clearDraftCategorySelection';
 
-  const catHtml = CATS.map(c =>
-    `<button class="filter-pill ${c===state.cat?'active':''}" onclick="${setCatFn}('${c}')">${c}</button>`
-  ).join('');
+  // หมวดหมู่ — เลือกได้มากกว่า 1 พร้อมกัน (multi-select) "ทั้งหมด" คือ "ไม่เลือกหมวดไหนเลย"
+  const catHtml = CATS.map(c => {
+    const isActive = c === 'ทั้งหมด' ? state.cats.size === 0 : state.cats.has(c);
+    const clickFn = c === 'ทั้งหมด' ? clearCatFn + '()' : `${toggleCatFn}('${c}')`;
+    return `<button class="filter-pill ${isActive?'active':''}" onclick="${clickFn}">${c}</button>`;
+  }).join('');
   const priceSliderHtml = renderPriceSliderHtml(state, mode);
   const sortHtml = `
     <div class="filter-group">
@@ -709,16 +792,17 @@ function buildFilterPanelHtml(state, mode){
       </div>
     </div>`;
 
-  const sizeList = CATEGORY_SIZES[state.cat];
-  const sizeHtml = (state.cat !== 'ทั้งหมด' && sizeList) ? `
+  // ตัวเลือกขนาด — ถ้าเลือกหลายหมวดพร้อมกัน จะรวม (union) ตัวเลือกขนาดของทุกหมวดที่เลือกไว้
+  const sizeList = unionSizeList(state.cats);
+  const sizeHtml = sizeList ? `
     <div class="filter-group">
       <div class="filter-group-title">📏 ขนาด</div>
       <div class="filter-pills">${sizeList.map(s =>
-        `<button class="filter-pill ${((state.size||'ทั้งหมด')===s)?'active':''}" onclick="${mode==='sidebar' ? `setSize('${state.cat}','${s}')` : `setDraftSize('${s}')`}">${s}</button>`
+        `<button class="filter-pill ${((state.size||'ทั้งหมด')===s)?'active':''}" onclick="${mode==='sidebar' ? `setSize('${s}')` : `setDraftSize('${s}')`}">${s}</button>`
       ).join('')}</div>
     </div>` : '';
 
-  const flowerHtml = state.cat === 'ช่อดอกไม้' ? `
+  const flowerHtml = state.cats.has('ช่อดอกไม้') ? `
     <div class="filter-group">
       <div class="filter-group-title">🌸 ชนิดดอกไม้</div>
       <div class="filter-pills">${FLOWER_TYPES.map(t =>
@@ -745,6 +829,9 @@ function buildFilterPanelHtml(state, mode){
       <label class="filter-ready-toggle" style="margin-top:8px;">
         <input type="checkbox" ${state.favorites?'checked':''} onchange="${setFavFn}(this.checked)"> ❤️ รายการโปรดเท่านั้น
       </label>
+      <label class="filter-ready-toggle" style="margin-top:8px;">
+        <input type="checkbox" ${state.allSplit?'checked':''} onchange="${setAllSplitFn}(this.checked)"> 🧾 ดูสินค้าทั้งหมด (แยกทุกสี/แบบ)
+      </label>
     </div>
   `;
 }
@@ -754,13 +841,14 @@ function renderFilterSidebar(){
   const el = document.getElementById('filterSidebar');
   if(!el) return;
   const state = {
-    cat: activeCat,
+    cats: activeCats,
     customMin: customPriceMin,
     customMax: customPriceMax,
     sortOrder: activeSortOrder,
     ready: showReadyOnly,
     favorites: showFavoritesOnly,
-    size: activeSizes[activeCat] || 'ทั้งหมด',
+    allSplit: showAllVariantsSplit,
+    size: activeSizeFilter,
     flowerType: activeFlowerType
   };
   el.innerHTML = `<div class="filter-sidebar-head">
@@ -770,13 +858,14 @@ function renderFilterSidebar(){
 }
 // ล้างตัวกรองทั้งหมด (ปุ่มบนแถบข้าง — เดสก์ท็อป) แล้วอัปเดตหน้าเว็บทันที
 function clearSidebarFilters(){
-  activeCat = 'ทั้งหมด';
+  activeCats = new Set();
   customPriceMin = PRICE_SLIDER_MIN;
   customPriceMax = PRICE_SLIDER_MAX;
   activeSortOrder = 'none';
   showReadyOnly = false;
   showFavoritesOnly = false;
-  activeSizes = {};
+  showAllVariantsSplit = false;
+  activeSizeFilter = 'ทั้งหมด';
   activeFlowerType = 'ทั้งหมด';
   renderNav();
   renderCatalog();
@@ -791,13 +880,14 @@ function renderFilterSheetBody(){
 }
 function openFilterSheet(){
   filterDraft = {
-    cat: activeCat,
+    cats: new Set(activeCats),
     customMin: customPriceMin,
     customMax: customPriceMax,
     sortOrder: activeSortOrder,
     ready: showReadyOnly,
     favorites: showFavoritesOnly,
-    size: activeSizes[activeCat] || 'ทั้งหมด',
+    allSplit: showAllVariantsSplit,
+    size: activeSizeFilter,
     flowerType: activeFlowerType
   };
   renderFilterSheetBody();
@@ -810,10 +900,16 @@ function closeFilterSheet(){
   document.getElementById('filterSheet').classList.remove('open');
   document.body.style.overflow = '';
 }
-function setDraftCat(c){
-  filterDraft.cat = c;
-  filterDraft.size = CATEGORY_SIZES[c] ? (activeSizes[c] || 'ทั้งหมด') : 'ทั้งหมด';
-  if(c !== 'ช่อดอกไม้') filterDraft.flowerType = 'ทั้งหมด';
+function toggleDraftCategory(c){
+  if(filterDraft.cats.has(c)) filterDraft.cats.delete(c); else filterDraft.cats.add(c);
+  filterDraft.size = 'ทั้งหมด';
+  if(!filterDraft.cats.has('ช่อดอกไม้')) filterDraft.flowerType = 'ทั้งหมด';
+  renderFilterSheetBody();
+}
+function clearDraftCategorySelection(){
+  filterDraft.cats = new Set();
+  filterDraft.size = 'ทั้งหมด';
+  filterDraft.flowerType = 'ทั้งหมด';
   renderFilterSheetBody();
 }
 function setDraftReady(checked){ filterDraft.ready = checked; renderFilterSheetBody(); }
@@ -821,37 +917,33 @@ function setDraftFavorites(checked){ filterDraft.favorites = checked; renderFilt
 function setDraftSize(s){ filterDraft.size = s; renderFilterSheetBody(); }
 function setDraftFlowerType(t){ filterDraft.flowerType = t; renderFilterSheetBody(); }
 function clearFilterDraft(){
-  filterDraft = { cat:'ทั้งหมด', customMin:PRICE_SLIDER_MIN, customMax:PRICE_SLIDER_MAX, sortOrder:'none', ready:false, favorites:false, size:'ทั้งหมด', flowerType:'ทั้งหมด' };
+  filterDraft = { cats:new Set(), customMin:PRICE_SLIDER_MIN, customMax:PRICE_SLIDER_MAX, sortOrder:'none', ready:false, favorites:false, allSplit:false, size:'ทั้งหมด', flowerType:'ทั้งหมด' };
   renderFilterSheetBody();
 }
 function applyFilterDraft(){
-  activeCat = filterDraft.cat;
+  activeCats = new Set(filterDraft.cats);
   customPriceMin = filterDraft.customMin;
   customPriceMax = filterDraft.customMax;
   activeSortOrder = filterDraft.sortOrder;
   showReadyOnly = filterDraft.ready;
   showFavoritesOnly = filterDraft.favorites;
-  if(filterDraft.cat !== 'ทั้งหมด') activeSizes[filterDraft.cat] = filterDraft.size;
+  showAllVariantsSplit = filterDraft.allSplit;
+  activeSizeFilter = filterDraft.size;
   activeFlowerType = filterDraft.flowerType;
+  if(activeCats.size !== 1) scrollSpyCat = 'ทั้งหมด'; else scrollSpyCat = [...activeCats][0];
   renderNav();
   renderCatalog();
   renderFilterSidebar();
   updateFilterBadge();
   closeFilterSheet();
-  const el = document.getElementById('catalog');
-  if(el){
-    const offset = stickyOffset() + 8;
-    const top = el.getBoundingClientRect().top + window.pageYOffset - offset;
-    window.scrollTo({ top, behavior: 'smooth' });
-  }
+  scrollToCatalogTop();
 }
 // จุดสีบนปุ่ม "ตัวกรอง" (มือถือ) โชว์เมื่อมีตัวกรองใดๆ ต่างไปจากค่าเริ่มต้น
 function updateFilterBadge(){
   const dot = document.getElementById('filterBadgeDot');
   if(!dot) return;
-  const sizeActive = Object.keys(activeSizes).some(cat => activeSizes[cat] && activeSizes[cat] !== 'ทั้งหมด');
   const priceActive = customPriceMin !== PRICE_SLIDER_MIN || customPriceMax !== PRICE_SLIDER_MAX;
-  const isActive = activeCat !== 'ทั้งหมด' || priceActive || activeSortOrder !== 'none' || showReadyOnly || showFavoritesOnly || activeFlowerType !== 'ทั้งหมด' || sizeActive;
+  const isActive = activeCats.size > 0 || priceActive || activeSortOrder !== 'none' || showReadyOnly || showFavoritesOnly || showAllVariantsSplit || activeFlowerType !== 'ทั้งหมด' || activeSizeFilter !== 'ทั้งหมด';
   dot.classList.toggle('show', isActive);
 }
 
@@ -894,7 +986,14 @@ function renderProductCard(p, variant){
     thumbHtml = renderThumb(p);
     priceHtml = (p.billSelector || hasNewOptions(p)) ? `เริ่มต้น ${fmt(displayPrice(p))}` : fmt(displayPrice(p));
   }
-  const isReady = isSplit ? true : currentReadyState(p);
+  // เดิมการ์ดย่อย (isSplit) จะถือว่าพร้อมส่งเสมอ เพราะ readyVariantsOf() คัดมาแต่ตัวที่พร้อมส่งอยู่แล้ว
+  // แต่ allVariantsOf() (โหมด "ดูสินค้าทั้งหมด") ส่งมาทั้งที่พร้อมส่งและยังไม่พร้อม จึงต้องเช็คสถานะ
+  // ของ "ตัวเลือกนั้นๆ" ตรงๆ แทนที่จะเหมารวมเป็น true เสมอ
+  let isReady;
+  if(variantOption) isReady = !!variantOption.ready;
+  else if(variantSize) isReady = !!variantSize.ready;
+  else if(variantColor) isReady = typeof variantColor.ready !== 'undefined' ? !!variantColor.ready : !!p.ready;
+  else isReady = currentReadyState(p);
   const clickHandler = `openProductModal('${p.id}', ${colorIndex}, ${optionIndex}, ${sizeIndex})`;
   return `
     <div class="card" onclick="${clickHandler}">
@@ -921,9 +1020,10 @@ function renderCatalog(){
   let totalMatches = 0;
   let html = '';
 
-  // "ทั้งหมด" = เรียกดูทุกอย่างเหมือนเดิม (การ์ดแนะนำ + ทุกหมวดเรียงต่อกัน)
-  // เลือกหมวดเจาะจง = กรองจริง โชว์แค่หมวดนั้นหมวดเดียว
-  if(activeCat === 'ทั้งหมด'){
+  // "ทั้งหมด" (ไม่เลือกหมวดเจาะจง) = เรียกดูทุกอย่างเหมือนเดิม (การ์ดแนะนำ + ทุกหมวดเรียงต่อกัน)
+  // เลือกหมวดเจาะจงไว้ (หนึ่งหมวดหรือหลายหมวด) = กรองจริง โชว์เฉพาะหมวดที่เลือก
+  // โซน "สินค้าแนะนำ" จะไม่โชว์เมื่อเปิดโหมด "ดูสินค้าทั้งหมด" (การ์ดแยกครบทุกแบบอยู่ในแต่ละหมวดอยู่แล้ว)
+  if(activeCats.size === 0 && !showAllVariantsSplit){
     // เรียงลำดับ/กรองที่ระดับ "สินค้า" ก่อน (ราคาไม่ต่างกันตามสี) แล้วค่อยแตกแต่ละสินค้า
     // เป็นการ์ดย่อยตามสีที่พร้อมส่งจริง — สินค้าที่พร้อมส่งทั้งชิ้น/ไม่มีสี ยังเป็น 1 การ์ดเหมือนเดิม
     const readyProducts = PRODUCTS.filter(p =>
@@ -943,26 +1043,31 @@ function renderCatalog(){
     html += `<div class="cat-section" id="${catSectionId('ทั้งหมด')}" data-cat="ทั้งหมด">${recommendedHtml}</div>`;
   }
 
-  const catsToRender = activeCat === 'ทั้งหมด' ? CATS.slice(1) : [activeCat];
+  const catsToRender = activeCats.size ? CATS.slice(1).filter(c => activeCats.has(c)) : CATS.slice(1);
   html += catsToRender.map(cat => {
     const sizeList = CATEGORY_SIZES[cat];
-    const currentSize = activeSizes[cat] || 'ทั้งหมด';
-    const items = applySortOrder(PRODUCTS.filter(p =>
+    const currentSize = activeSizeFilter;
+    const matched = applySortOrder(PRODUCTS.filter(p =>
       p.cat === cat
       && matchesSearch(p)
-      && (!sizeList || currentSize === 'ทั้งหมด' || p.size === currentSize)
+      && (!sizeList || currentSize === 'ทั้งหมด' || sizeTagsOf(p).includes(currentSize))
       && (cat !== 'ช่อดอกไม้' || activeFlowerType === 'ทั้งหมด' || p.flowerType === activeFlowerType)
       && (!showReadyOnly || productHasAnyReady(p))
       && (!showFavoritesOnly || isFavorite(p.id))
       && (displayPrice(p) >= range.min && displayPrice(p) <= range.max)
     ));
+    // โหมด "ดูสินค้าทั้งหมด": แตกสินค้าทุกชิ้นที่มีสี/ตัวเลือก/ไซซ์ออกเป็นการ์ดย่อยรายตัว
+    // (เหมือนโซนสินค้าแนะนำ) แทนที่จะโชว์การ์ดเดียวต่อสินค้าแบบปกติ
+    const items = showAllVariantsSplit ? matched.flatMap(allVariantsOf) : matched;
     totalMatches += items.length;
     const body = !items.length ? `
       <div class="section-title"><h3>${cat}</h3><span>0 รายการ</span></div>
     ` : `
       <div class="section-title"><h3>${cat}</h3><span>${items.length} รายการ</span></div>
       <div class="grid">
-        ${items.map(p => renderProductCard(p)).join('')}
+        ${showAllVariantsSplit
+          ? items.map(v => renderProductCard(v.product, v)).join('')
+          : items.map(p => renderProductCard(p)).join('')}
       </div>
     `;
     return `<div class="cat-section" id="${catSectionId(cat)}" data-cat="${cat}">${body}</div>`;
