@@ -308,7 +308,8 @@ function renderList(){
     if(!mainImageOf(p)) tags.push('<span class="tag tag-warn">ยังไม่มีรูป</span>');
 
     return `
-      <div class="row">
+      <div class="row" data-i="${i}">
+        <span class="drag-handle${filtering ? ' is-disabled' : ''}" draggable="${filtering ? 'false' : 'true'}" data-i="${i}" title="ลากเพื่อเรียงลำดับใหม่">⠿</span>
         ${thumbHtml(mainImageOf(p), 'row-thumb')}
         <div class="row-main">
           <p class="row-name">${esc(p.name || '(ยังไม่ตั้งชื่อ)')}</p>
@@ -359,6 +360,15 @@ async function moveProduct(i, delta){
   const j = i + delta;
   if(j < 0 || j >= catalog.length) return;
   [catalog[i], catalog[j]] = [catalog[j], catalog[i]];
+  renderList();
+  await saveCatalog();
+}
+
+// ลากการ์ดสินค้าไปวางตรงตำแหน่งใหม่ (คลิกที่ไอคอน ⠿ แล้วลาก — เดสก์ท็อปเท่านั้น มือถือใช้ปุ่ม ↑/↓ แทน)
+async function reorderProduct(from, to){
+  if(from === to || from < 0 || to < 0 || from >= catalog.length || to >= catalog.length) return;
+  const [item] = catalog.splice(from, 1);
+  catalog.splice(to, 0, item);
   renderList();
   await saveCatalog();
 }
@@ -1153,6 +1163,54 @@ $('productList').addEventListener('click', e => {
   if(btn.dataset.act === 'del') deleteProduct(i);
   if(btn.dataset.act === 'up') moveProduct(i, -1);
   if(btn.dataset.act === 'down') moveProduct(i, 1);
+});
+
+/* ───────────────── ลากเพื่อเรียงลำดับ (ไอคอน ⠿) — เดสก์ท็อป ───────────────── */
+let dragFromIndex = null;
+function clearDragTargetClasses(){
+  $('productList').querySelectorAll('.row.drag-target-before, .row.drag-target-after')
+    .forEach(r => r.classList.remove('drag-target-before', 'drag-target-after'));
+}
+$('productList').addEventListener('dragstart', e => {
+  const handle = e.target.closest('.drag-handle');
+  if(!handle || handle.classList.contains('is-disabled')){ e.preventDefault(); return; }
+  dragFromIndex = +handle.dataset.i;
+  const row = handle.closest('.row');
+  row.classList.add('is-dragging');
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', String(dragFromIndex)); // จำเป็นสำหรับบางเบราว์เซอร์ (Firefox) ถึงจะยอมให้ลากได้
+  if(row) e.dataTransfer.setDragImage(row, 16, row.offsetHeight / 2);
+});
+$('productList').addEventListener('dragover', e => {
+  if(dragFromIndex == null) return;
+  const row = e.target.closest('.row');
+  if(!row) return;
+  e.preventDefault(); // จำเป็น ไม่งั้นเบราว์เซอร์จะไม่ยอมให้ drop
+  e.dataTransfer.dropEffect = 'move';
+  const rect = row.getBoundingClientRect();
+  const before = e.clientY < rect.top + rect.height / 2;
+  clearDragTargetClasses();
+  row.classList.add(before ? 'drag-target-before' : 'drag-target-after');
+});
+$('productList').addEventListener('drop', e => {
+  if(dragFromIndex == null) return;
+  const row = e.target.closest('.row');
+  e.preventDefault();
+  if(row){
+    const overIndex = +row.dataset.i;
+    const rect = row.getBoundingClientRect();
+    const before = e.clientY < rect.top + rect.height / 2;
+    let to = before ? overIndex : overIndex + 1;
+    if(to > dragFromIndex) to -= 1; // ลบตัวเดิมออกก่อนแล้วค่อยแทรก ตำแหน่งท้ายๆ เลยขยับลง 1
+    reorderProduct(dragFromIndex, to);
+  }
+  clearDragTargetClasses();
+  dragFromIndex = null;
+});
+$('productList').addEventListener('dragend', () => {
+  $('productList').querySelectorAll('.row.is-dragging').forEach(r => r.classList.remove('is-dragging'));
+  clearDragTargetClasses();
+  dragFromIndex = null;
 });
 
 $('editorTabs').addEventListener('click', e => {
