@@ -1297,7 +1297,7 @@ footer{
   .search-cart-bar{padding:12px 5vw;}
   .brand-mark{width:36px;height:36px;}
   .brand-mark svg{width:20px;height:20px;}
-  .search-input{padding:9px 0; font-size:13.5px;}
+  .search-input{padding:9px 0; font-size:16px;}
   .cart-btn-top{width:40px;height:40px;font-size:17px;}
   .brand-row{padding:0 5vw 10px;}
   .brand-row h1{font-size:18px;}
@@ -1315,4 +1315,8 @@ footer{
   .card .desc{display:none;}
   .option-badge{font-size:10px; padding:3px 8px; margin:6px 0 0;}
   .price{font-size:15px;}
+
+  /* Prevent iOS Safari auto-zoom on focus: inputs need font-size >=16px */
+  .form-input{font-size:16px; padding:10px 13px;}
+  .price-num-input{font-size:16px; padding:7px 6px;}
 }
