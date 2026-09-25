@@ -50,10 +50,12 @@
   <div class="brand-mark">
     <img src="images/logo.jpg" alt="โลโก้ร้าน" onerror="this.parentElement.innerHTML='<svg viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot;><path d=&quot;M12 2c1.5 2 1.5 4 0 6-1.5-2-1.5-4 0-6z&quot; fill=&quot;#FBF6EF&quot;/><path d=&quot;M12 22c-3-3-6-6-6-10a6 6 0 0112 0c0 4-3 7-6 10z&quot; fill=&quot;#FBF6EF&quot; opacity=&quot;0.9&quot;/></svg>'">
   </div>
+  <span class="brand-name">S.Flower Bloom</span>
   <div class="search-wrap">
     <svg viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-    <input type="text" id="searchInput" class="search-input" placeholder="ค้นหาสินค้า เช่น กุหลาบ, กรอบรูป..." oninput="handleSearch(this.value)">
+    <input type="text" id="searchInput" class="search-input" placeholder="ค้นหาสินค้า เช่น กุหลาบ, กรอบรูป..." oninput="handleSearch(this.value)" onfocus="handleSearchFocus()" onkeydown="if(event.key==='Escape') hideSearchSuggestions();" autocomplete="off">
     <button type="button" class="search-clear" id="searchClearBtn" style="display:none;" onclick="clearSearch()" aria-label="ล้างคำค้นหา">✕</button>
+    <div class="search-suggest" id="searchSuggest"></div>
   </div>
   <button class="cart-btn-top" onclick="openCart()" aria-label="ตะกร้าสินค้า">
     🧺
