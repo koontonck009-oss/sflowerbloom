@@ -335,6 +335,7 @@ function handleSearch(v){
   const clearBtn = document.getElementById('searchClearBtn');
   if(clearBtn) clearBtn.style.display = searchQuery ? 'flex' : 'none';
   renderCatalog();
+  renderSearchSuggestions();
 }
 function clearSearch(){
   searchQuery = '';
@@ -343,12 +344,86 @@ function clearSearch(){
   const clearBtn = document.getElementById('searchClearBtn');
   if(clearBtn) clearBtn.style.display = 'none';
   renderCatalog();
+  hideSearchSuggestions();
 }
+// รวมทุกฟิลด์ที่ควรค้นหาเจอไว้เป็นสตริงเดียว (ชื่อ, คำอธิบาย, หมวดหมู่, ประเภทดอก, ชื่อสี/ไซซ์/ตัวเลือกเสริม/ตัวเลือกหลายมิติ)
+// แคชไว้ที่ตัวสินค้าเอง (_searchHaystack) เพราะ PRODUCTS ไม่เปลี่ยนระหว่างพิมพ์ค้นหาแต่ละครั้ง
+function searchHaystack(p){
+  if(p._searchHaystack) return p._searchHaystack;
+  const parts = [p.name, p.desc, p.cat, p.flowerType];
+  if(p.colors) p.colors.forEach(c => {
+    parts.push(c.name);
+    if(c.addons) c.addons.forEach(a => parts.push(a.name));
+  });
+  if(p.sizes) p.sizes.forEach(s => parts.push(s.name));
+  if(p.addons) p.addons.forEach(a => parts.push(a.name));
+  if(p.options) p.options.forEach(o => {
+    parts.push(o.name);
+    if(o.values) o.values.forEach(v => parts.push(v));
+  });
+  const hay = parts.filter(Boolean).join(' ').toLowerCase();
+  p._searchHaystack = hay;
+  return hay;
+}
+// ค้นหาแบบหลายคำ ไม่สนลำดับ — ทุกคำที่พิมพ์ต้องเจอในฟิลด์ใดฟิลด์หนึ่งของสินค้า (ไม่ต้องติดกัน ไม่ต้องเรียงตามที่พิมพ์)
 function matchesSearch(p){
   if(!searchQuery) return true;
-  const q = searchQuery.toLowerCase();
-  return (p.name && p.name.toLowerCase().includes(q)) || (p.desc && p.desc.toLowerCase().includes(q));
+  const words = searchQuery.toLowerCase().split(/\s+/).filter(Boolean);
+  const hay = searchHaystack(p);
+  return words.every(w => hay.includes(w));
 }
+
+/* ---------- Search suggestions dropdown ---------- */
+let searchSuggestOpen = false;
+const SEARCH_SUGGEST_LIMIT = 6;
+function priceLabelFor(p){
+  const startsFrom = (p.sizes && p.sizes.length > 1) || hasNewOptions(p);
+  return (startsFrom ? 'เริ่มต้น ' : '') + fmt(displayPrice(p));
+}
+function handleSearchFocus(){
+  if(searchQuery) renderSearchSuggestions();
+}
+function renderSearchSuggestions(){
+  const box = document.getElementById('searchSuggest');
+  if(!box) return;
+  if(!searchQuery){
+    box.innerHTML = '';
+    box.classList.remove('open');
+    searchSuggestOpen = false;
+    return;
+  }
+  const allMatches = PRODUCTS.filter(matchesSearch);
+  const matches = allMatches.slice(0, SEARCH_SUGGEST_LIMIT);
+  if(!matches.length){
+    box.innerHTML = `<div class="search-suggest-empty">ไม่พบสินค้าที่ตรงกับ "${searchQuery}"</div>`;
+  } else {
+    const moreCount = allMatches.length - matches.length;
+    box.innerHTML = matches.map(p => `
+      <button type="button" class="search-suggest-item" onmousedown="event.preventDefault(); selectSearchSuggestion('${p.id}')">
+        <span class="search-suggest-thumb">${renderThumb(p)}</span>
+        <span class="search-suggest-info">
+          <span class="search-suggest-name">${p.name}</span>
+          <span class="search-suggest-price">${priceLabelFor(p)}</span>
+        </span>
+      </button>
+    `).join('') + (moreCount > 0 ? `<div class="search-suggest-more">และอีก ${moreCount} รายการด้านล่าง</div>` : '');
+  }
+  box.classList.add('open');
+  searchSuggestOpen = true;
+}
+function selectSearchSuggestion(id){
+  hideSearchSuggestions();
+  openProductModal(id);
+}
+function hideSearchSuggestions(){
+  const box = document.getElementById('searchSuggest');
+  if(box) box.classList.remove('open');
+  searchSuggestOpen = false;
+}
+// ปิด dropdown เมื่อคลิกนอกกรอบค้นหา (กันเคสคลิกที่ไม่ได้ทำให้ input เสีย focus จริงๆ เช่นคลิกพื้นหลัง)
+document.addEventListener('click', (e) => {
+  if(searchSuggestOpen && !e.target.closest('.search-wrap')) hideSearchSuggestions();
+});
 
 function toggleReadyOnly(checked){
   showReadyOnly = checked;
@@ -1086,7 +1161,9 @@ function renderCatalog(){
         <p style="font-size:13.5px; color:var(--plum);">ลองล้างตัวกรอง หรือเลือกเงื่อนไขอื่นดูนะ</p>
       </div>`;
   } else {
-    main.innerHTML = html;
+    // แถบ "พบสินค้า N รายการ" แสดงเฉพาะจอคอม (ซ่อนบนมือถือด้วย CSS) ไว้เหนือกริดสินค้า
+    const resultsBarHtml = `<div class="catalog-results-bar"><span>พบสินค้า ${totalMatches} รายการ</span></div>`;
+    main.innerHTML = resultsBarHtml + html;
   }
   setupScrollSpy();
 }
