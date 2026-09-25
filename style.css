@@ -647,8 +647,7 @@ main{padding:18px 6vw 80px;}
   main{padding:10px 0 80px; flex:1; min-width:0;}
   .filter-sidebar{
     display:block; width:220px; flex-shrink:0;
-    background:#fff; border:1px solid var(--line); border-radius:10px;
-    padding:18px; position:sticky; top:78px;
+    padding:18px;
   }
   .filter-sidebar-head{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:16px;}
   .filter-sidebar-title{font-size:16px; color:var(--plum); margin:0;}
