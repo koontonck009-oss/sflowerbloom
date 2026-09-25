@@ -8,6 +8,7 @@
 /* ---------------- แก้ไขสินค้าตรงนี้ได้เลย ---------------- */
 let PRODUCTS = []; // โหลดจาก products.json ตอนเปิดหน้าเว็บ (ดูฟังก์ชัน loadProducts ด้านล่าง)
 const PAGE_LINK = 'https://m.me/S.Flower.Bloom44';
+const CATALOG_CACHE_KEY = 'sfb_catalog_fallback_v1';
 // วาง URL ของ Google Apps Script Web App (หลัง Deploy แล้ว) แทนที่ค่าด้านล่างนี้
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwfNGO22TxU0kBqbNbn7eaSIo4W4qlXiqTVPcSo5wyLMWedZmOWLYDKiKzJcfHEW-TdnA/exec';
 /* --------------------------------------------------------- */
@@ -2026,6 +2027,23 @@ async function fetchProductsFromFirestore(){
   return (Array.isArray(list) && list.length) ? list : null;
 }
 
+function saveCatalogFallback(list){
+  try {
+    localStorage.setItem(CATALOG_CACHE_KEY, JSON.stringify({ savedAt: Date.now(), list }));
+  } catch(err) {
+    console.warn('บันทึกแคตตาล็อกสำรองในเครื่องไม่สำเร็จ:', err);
+  }
+}
+
+function readCatalogFallback(){
+  try {
+    const saved = JSON.parse(localStorage.getItem(CATALOG_CACHE_KEY) || 'null');
+    return Array.isArray(saved?.list) && saved.list.length ? saved.list : null;
+  } catch(err) {
+    return null;
+  }
+}
+
 async function loadProducts(){
   const catalogEl = document.getElementById('catalog');
   // ลอง Firestore ก่อน แต่ไม่ยอมรอเกิน 6 วินาที ไม่งั้นเน็ตช้าจะค้างหน้าร้านทั้งหน้า
@@ -2036,6 +2054,7 @@ async function loadProducts(){
     ]);
     if(fromCloud){
       PRODUCTS = fromCloud;
+      saveCatalogFallback(PRODUCTS);
       finishLoadingProducts();
       return;
     }
@@ -2046,7 +2065,14 @@ async function loadProducts(){
     const res = await fetch('products.json');
     if(!res.ok) throw new Error('HTTP ' + res.status);
     PRODUCTS = await res.json();
+    saveCatalogFallback(PRODUCTS);
   } catch(err){
+    const cached = readCatalogFallback();
+    if(cached){
+      PRODUCTS = cached;
+      finishLoadingProducts();
+      return;
+    }
     catalogEl.innerHTML = `
       <div style="text-align:center; padding:60px 20px; color:var(--rose-dark);">
         <p style="font-size:16px; font-weight:700; margin-bottom:8px;">⚠️ โหลดข้อมูลสินค้าไม่สำเร็จ</p>

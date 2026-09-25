@@ -132,11 +132,18 @@ async function boot(){
 
   fb.authApi.onAuthStateChanged(fb.auth, user => {
     $('bootScreen').hidden = true;
-    if(user){
+    // UI check เป็นด่านเพิ่มความชัดเจน; สิทธิ์เขียนจริงบังคับโดย Firestore Rules
+    const isStoreAdmin = user && user.email === window.ADMIN_EMAIL;
+    if(isStoreAdmin){
       $('loginScreen').hidden = true;
       $('app').hidden = false;
       loadCatalog();
     } else {
+      if(user){
+        fb.authApi.signOut(fb.auth);
+        $('loginError').textContent = 'บัญชีนี้ไม่มีสิทธิ์เข้าระบบจัดการสินค้า';
+        $('loginError').hidden = false;
+      }
       $('app').hidden = true;
       $('loginScreen').hidden = false;
       $('loginUser').focus();
@@ -160,8 +167,8 @@ async function doLogin(){
   btn.disabled = true;
   btn.textContent = 'กำลังเข้าสู่ระบบ…';
   try{
-    // ชื่อผู้ใช้สั้นๆ เช่น admin ถูกแปลงเป็นอีเมลภายในก่อนส่งให้ Firebase ตรวจ
-    const email = user.includes('@') ? user : (window.ADMIN_EMAIL || 'admin@sflowerbloom.local');
+    // หน้าร้านนี้มีบัญชีผู้ดูแลเพียงบัญชีเดียว จึงไม่เปิดให้ป้อนอีเมลอื่น
+    const email = window.ADMIN_EMAIL || 'admin@sflowerbloom.local';
     await fb.authApi.signInWithEmailAndPassword(fb.auth, email, pass);
     $('loginPass').value = '';
   } catch(err){
