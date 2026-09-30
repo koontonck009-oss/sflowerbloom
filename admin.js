@@ -764,6 +764,7 @@ function renderPricePanel(){
                 <th style="width:104px">ราคา</th>
                 <th style="width:170px">รูป</th>
                 <th style="width:80px">พร้อมส่ง</th>
+                <th style="width:130px">ตัวกรองขนาด</th>
               </tr>
             </thead>
             <tbody>
@@ -776,6 +777,7 @@ function renderPricePanel(){
                   <td><input type="number" min="0" step="1" data-combo-price="${ci}" value="${v ? (num(v.price) || '') : ''}"${v ? '' : ' disabled'}></td>
                   <td><input type="text" data-combo-image="${ci}" value="${v ? esc(v.image || '') : ''}" placeholder="images/…"${v ? '' : ' disabled'}></td>
                   <td style="text-align:center"><input type="checkbox" data-combo-ready="${ci}"${v && v.ready ? ' checked' : ''}${v ? '' : ' disabled'}></td>
+                  <td><select data-combo-tag="${ci}"${v ? '' : ' disabled'}>${COMBO_TAG_CHOICES.map(([val, label]) => `<option value="${esc(val)}"${(v && v.tag || '') === val ? ' selected' : ''}>${esc(label)}</option>`).join('')}</select></td>
                 </tr>`;
               }).join('')}
             </tbody>
@@ -847,6 +849,9 @@ function renderAddonsPanel(){
 
 /* ───────────────── ผูกค่าจากช่องกรอกเข้ากับ draft ───────────────── */
 
+// ตัวเลือกตัวกรองขนาดต่อ "คู่ผสม" — ค่าว่าง = อัตโนมัติ (หน้าร้านเดาจากคำว่า "ใส่เงิน" ในชื่อแบบ เหมือนเดิม)
+const COMBO_TAG_CHOICES = [['', 'อัตโนมัติ (ตามชื่อ)'], ['เล็ก', 'เล็ก'], ['กลาง', 'กลาง'], ['ใหญ่', 'ใหญ่'], ['ใส่เงิน', 'ใส่เงิน']];
+
 function onDraftInput(e){
   const el = e.target;
   if(!draft) return;
@@ -889,6 +894,13 @@ function onDraftInput(e){
     const combo = comboList(draft.options)[+el.dataset.comboReady];
     const v = variantFor(combo);
     if(v) v.ready = el.checked;
+    return;
+  }
+
+  if(el.dataset.comboTag != null){
+    const combo = comboList(draft.options)[+el.dataset.comboTag];
+    const v = variantFor(combo);
+    if(v){ if(el.value) v.tag = el.value; else delete v.tag; }
   }
 }
 
@@ -1024,9 +1036,10 @@ function onComboToggle(e){
   const priceInput = tr.querySelector('input[type="number"]');
   const imageInput = tr.querySelector('input[type="text"]');
   const readyInput = tr.querySelector('[data-combo-ready]');
+  const tagSelect = tr.querySelector('[data-combo-tag]');
   tr.classList.toggle('is-off', !el.checked);
-  priceInput.disabled = imageInput.disabled = readyInput.disabled = !el.checked;
-  if(!el.checked){ priceInput.value = ''; imageInput.value = ''; readyInput.checked = false; }
+  priceInput.disabled = imageInput.disabled = readyInput.disabled = tagSelect.disabled = !el.checked;
+  if(!el.checked){ priceInput.value = ''; imageInput.value = ''; readyInput.checked = false; tagSelect.value = ''; }
   const counter = $('comboCount');
   if(counter) counter.textContent = draft.variants.length;
   if(el.checked) priceInput.focus();
@@ -1137,6 +1150,7 @@ function cleanProduct(p){
     out.variants = (p.variants || []).map(v => {
       const o = { match: (v.match || []).map(str), price: num(v.price) };
       if(str(v.image)) o.image = str(v.image);
+      if(str(v.tag)) o.tag = str(v.tag);
       if(v.ready) o.ready = true;
       return o;
     });

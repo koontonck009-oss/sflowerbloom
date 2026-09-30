@@ -151,16 +151,30 @@ function hasNewOptions(p){ return !!(p.options && p.options.length && p.variants
 // exactVariantMatch คืนค่าตรงๆ แบบไม่ fallback ไว้ใช้เช็คก่อนยอมให้เลือก/สั่งซื้อ
 // ส่วน matchVariant (มี fallback) ยังคงไว้สำหรับจุดที่ต้อง "เดาที่ดีที่สุด" เพื่อไม่ให้พัง เช่น
 // เรนเดอร์รูปธัมบ์เนลในตะกร้าเก่าที่อาจมี label ค้างจากก่อนแก้บั๊กนี้
+// ตอนเปิดหน้าสินค้าจากการ์ดที่ถูกตัวกรองบีบให้เหลือบางแบบ (เช่น กรอง "ใส่เงิน") ให้ใช้เฉพาะแบบที่ผ่านกรอง
+// ไม่งั้นหน้าสินค้าจะโชว์รูป/ปุ่มของช่อปกติปนเข้ามา modalAllowedVariants = Set ของ index ใน p.variants (null = ไม่จำกัด)
+let modalAllowedVariants = null;
+let cardNarrowByProduct = {}; // productId -> array ของ index แบบที่ผ่านกรอง (เฉพาะการ์ดที่ถูกบีบ) รีเซ็ตทุกครั้งที่ renderCatalog
+function modalVariantsOf(p){
+  if(modalAllowedVariants && modalProductId === p.id){
+    const sub = p.variants.filter((v,i) => modalAllowedVariants.has(i));
+    if(sub.length) return sub;
+  }
+  return p.variants;
+}
 function exactVariantMatch(p, selection){
   return p.variants.find(v => v.match.length===selection.length && v.match.every((val,i)=>val===selection[i])) || null;
 }
 function matchVariant(p, selection){
-  return exactVariantMatch(p, selection) || p.variants[0];
+  const exact = exactVariantMatch(p, selection);
+  if(exact) return exact;
+  const pool = modalVariantsOf(p);
+  return pool === p.variants ? p.variants[0] : pool.reduce((a,b) => (b.price < a.price ? b : a));
 }
 // เช็คว่าค่านี้ "เลือกได้" ไหมถ้าจะตั้งมิติ optIndex เป็น value โดยพิจารณาจากตัวเลือกมิติอื่นที่เลือกไว้แล้ว
 // (มิติที่ยังไม่ได้เลือก sel[i]==null ถือเป็น "อะไรก็ได้" ไม่จำกัด) ใช้ตัดสินว่าปุ่มไหนควรเป็นสีเทา (ปิด)
 function optionValueCompatible(p, sel, optIndex, value){
-  return p.variants.some(v => v.match[optIndex]===value &&
+  return modalVariantsOf(p).some(v => v.match[optIndex]===value &&
     v.match.every((val,i)=> i===optIndex || sel[i]==null || sel[i]===val));
 }
 // ราคาต่ำสุด-สูงสุดของ variant ที่ยังเป็นไปได้ตามตัวเลือกที่เลือกไว้ตอนนี้ (sel เป็น null ทุกช่อง = ยังไม่เลือกอะไรเลย
@@ -168,8 +182,9 @@ function optionValueCompatible(p, sel, optIndex, value){
 // รายละเอียดสินค้าตอนที่ลูกค้ายังเลือกตัวเลือกไม่ครบ (แสดงเป็นช่วง)
 function optionPriceRange(p, sel){
   const s = sel || p.options.map(()=>null);
-  const reachable = p.variants.filter(v => v.match.every((val,i)=> s[i]==null || s[i]===val));
-  const prices = (reachable.length ? reachable : p.variants).map(v=>v.price);
+  const pool = modalVariantsOf(p);
+  const reachable = pool.filter(v => v.match.every((val,i)=> s[i]==null || s[i]===val));
+  const prices = (reachable.length ? reachable : pool).map(v=>v.price);
   return { min: Math.min(...prices), max: Math.max(...prices) };
 }
 function hasFullOptionSelection(p, sel){
@@ -674,7 +689,17 @@ function variantMatchesSizeFilter(p, v, sizes){
   if(!sizes || sizes.size === 0) return true;
   return [...sizes].some(sz => variantMatchesOneSize(p, v, sz));
 }
+// ป้ายตัวกรองขนาดที่แอดมินตั้งไว้ที่ "คู่ผสม" นั้นๆ (variants[i].tag) — ถ้ามีจะใช้ตัดสินตรงๆ ไม่ต้องเดาจากชื่อ
+function variantTagOf(p, v){
+  if(v && v.optionIndex != null && hasNewOptions(p)){
+    const t = p.variants[v.optionIndex];
+    if(t && t.tag) return String(t.tag);
+  }
+  return null;
+}
 function variantMatchesOneSize(p, v, sizeFilter){
+  const explicitTag = variantTagOf(p, v);
+  if(explicitTag != null) return explicitTag === sizeFilter;
   const tags = sizeTagsOf(p);
   if(!tags.includes(sizeFilter)) return false;
   if(tags.length > 1 && tags.includes('ใส่เงิน')){
@@ -1208,6 +1233,14 @@ function renderProductCard(p, variant, narrow){
     priceHtml = fmt(variantSize.price);
   } else {
     thumbHtml = renderThumb(p);
+    if(narrow && narrow.passing.length && narrow.passing.length < narrow.total && hasNewOptions(p) && activeSizes.size){
+      // รูปการ์ด = รูปของแบบที่ผ่านกรองและราคาถูกสุด (ไม่ใช่แบบแรกของสินค้าซึ่งอาจเป็นช่อปกติ)
+      const idxs = narrow.passing.filter(x => x.optionIndex != null).map(x => x.optionIndex);
+      if(idxs.length){
+        const best = idxs.map(i => p.variants[i]).reduce((a,b) => (b.price < a.price ? b : a));
+        thumbHtml = renderThumb(p, best.match.join(', '));
+      }
+    }
     if(narrow && narrow.passing.length && narrow.passing.length < narrow.total){
       // ตัวกรองเหลือแค่บางแบบของสินค้านี้ — โชว์ราคาจากแบบที่ผ่านกรองเท่านั้น (ไม่ใช่ราคาเริ่มต้นของทั้งสินค้า)
       const prices = narrow.passing.map(x => variantPriceOf(p, x));
@@ -1250,6 +1283,7 @@ function renderCatalog(){
   const range = activePriceBounds();
   let totalMatches = 0;
   let html = '';
+  cardNarrowByProduct = {};
 
   // "ทั้งหมด" (ไม่เลือกหมวดเจาะจง) = เรียกดูทุกอย่างเหมือนเดิม (การ์ดแนะนำ + ทุกหมวดเรียงต่อกัน)
   // เลือกหมวดเจาะจงไว้ (หนึ่งหมวดหรือหลายหมวด) = กรองจริง โชว์เฉพาะหมวดที่เลือก
@@ -1310,6 +1344,10 @@ function renderCatalog(){
         const only = e.passing[0];
         const hasIdx = only && (only.colorIndex != null || only.optionIndex != null || only.sizeIndex != null);
         if(e.passing.length === 1 && e.total > 1 && hasIdx) return renderProductCard(e.p, only);
+        // ตัวกรองขนาด (เช่น ใส่เงิน) บีบเหลือบางแบบ — จำไว้ว่าแบบไหนผ่าน เพื่อให้รูปบนการ์ดและหน้าสินค้าตรงกับตัวกรอง
+        if(activeSizes.size && hasNewOptions(e.p) && e.passing.length < e.total){
+          cardNarrowByProduct[e.p.id] = e.passing.filter(x => x.optionIndex != null).map(x => x.optionIndex);
+        }
         return renderProductCard(e.p, undefined, e);
       }).join('');
     }
@@ -1975,6 +2013,8 @@ function openProductModal(id, colorIndex, optionIndex, sizeIndex){
   modalImgIndex = 0;
   modalSelectedAddons = new Set();
   const p = PRODUCTS.find(x=>x.id===id);
+  modalAllowedVariants = (colorIndex == null && optionIndex == null && sizeIndex == null && cardNarrowByProduct[id])
+    ? new Set(cardNarrowByProduct[id]) : null;
   modalBills = p && p.billSelector ? (p.minBills||1) : 1;
   if(p && p.colors && colorIndex != null){
     selectedColor[id] = colorIndex;
@@ -2001,6 +2041,7 @@ function closeProductModal(fromPopState){
   page.classList.remove('open');
   document.body.style.overflow = '';
   modalProductId = null;
+  modalAllowedVariants = null;
   updateChatFabVisibility();
   if(!fromPopState && history.state && history.state.productPage){
     history.back();
