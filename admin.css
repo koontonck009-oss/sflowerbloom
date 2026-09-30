@@ -571,3 +571,205 @@ button,input,select,textarea{ font-family:inherit; font-size:inherit; color:inhe
   .field input, .field select, .field textarea,
   .search-wrap input, .combo-table input, .img-list-row input{ font-size:16px; }
 }
+
+/* ───────────── Phase 1–2: เมนู ⋯ / สวิตช์ / ส่วนพับได้ ───────────── */
+.row{ cursor:pointer; }
+.row-actions{ display:flex; align-items:center; gap:10px; }
+.menu{ position:relative; }
+.menu > summary{ list-style:none; cursor:pointer; user-select:none; }
+.menu > summary::-webkit-details-marker{ display:none; }
+.menu > summary.icon-btn{ display:inline-flex; align-items:center; justify-content:center; font-size:20px; }
+.menu-pop{
+  position:absolute; right:0; top:calc(100% + 4px); z-index:20;
+  min-width:190px; padding:6px;
+  background:var(--panel); border:1px solid var(--line);
+  border-radius:10px; box-shadow:var(--shadow-lg);
+  display:flex; flex-direction:column;
+}
+.menu-pop button{
+  font:inherit; font-size:14px; text-align:left;
+  padding:9px 12px; border:0; background:none; border-radius:7px;
+  color:var(--ink); cursor:pointer;
+}
+.menu-pop button:hover:not(:disabled){ background:var(--line-soft); }
+.menu-pop button:disabled{ color:var(--ink-3); cursor:default; }
+.menu-pop button.is-danger{ color:var(--danger); }
+
+.switch{ display:inline-flex; align-items:center; gap:6px; font-size:13px; color:var(--ink-2); cursor:pointer; white-space:nowrap; }
+.switch input{ width:18px; height:18px; accent-color:var(--ok); }
+
+.acc{ border:1px solid var(--line); border-radius:var(--radius); background:var(--panel); margin-bottom:12px; overflow:hidden; }
+.acc-head{
+  width:100%; display:flex; align-items:center; gap:10px;
+  padding:14px 16px; border:0; background:none; cursor:pointer;
+  font:inherit; text-align:left; color:var(--ink);
+}
+.acc-head b{ font-size:15.5px; font-weight:600; }
+.acc-head small{ flex:1; color:var(--ink-3); font-size:12.5px; }
+.acc-head i{ width:8px; height:8px; border-right:2px solid var(--ink-3); border-bottom:2px solid var(--ink-3); transform:rotate(45deg); transition:transform .15s; margin-right:4px; }
+.acc.is-open .acc-head i{ transform:rotate(-135deg); }
+.acc-body{ display:none; padding:0 16px 16px; }
+.acc.is-open .acc-body{ display:block; }
+.acc-body > .group{ border:0; padding:0; box-shadow:none; background:none; margin-bottom:16px; }
+
+.sub{ margin:14px 0 0; border-top:1px dashed var(--line); padding-top:10px; }
+.sub > summary{ cursor:pointer; font-size:13.5px; color:var(--ink-2); padding:4px 0 12px; }
+
+@media (max-width:760px){
+  .toolbar-actions .menu{ flex:1; }
+  .toolbar-actions .menu > summary{ display:block; text-align:center; }
+  .row-actions{ justify-content:space-between; }
+  .menu-pop{ min-width:200px; }
+  .acc-body{ padding:0 12px 14px; }
+}
+
+/* =========================================================
+   Phase A: ระบบดีไซน์ใหม่ (สไตล์แอดมินร้านค้าออนไลน์)
+   ========================================================= */
+:root{
+  --ink:#303030; --ink-2:#616161; --ink-3:#8A8A8A;
+  --bg:#F1F1F1; --panel:#FFFFFF;
+  --line:#E3E3E3; --line-soft:#F4F4F4;
+  --radius:10px;
+  --shadow:0 1px 0 rgba(0,0,0,.05), 0 0 0 1px rgba(0,0,0,.04);
+}
+body{ background:var(--bg); color:var(--ink); }
+.btn{ border-radius:8px; font-weight:500; }
+.btn-primary{ box-shadow:inset 0 -1px 0 rgba(0,0,0,.2); }
+.btn-ghost{ border-color:#D4D4D4; }
+.btn.is-danger{ color:var(--danger); }
+.topbar{ border-bottom:1px solid var(--line); box-shadow:none; }
+.card{ background:var(--panel); border-radius:var(--radius); box-shadow:var(--shadow); overflow:visible; }
+.badge{
+  font:inherit; font-size:12.5px; font-weight:500; cursor:pointer;
+  padding:3px 10px; border-radius:999px; border:0;
+  background:#E8E8E8; color:var(--ink-2);
+}
+.badge-ok{ background:var(--ok-soft); color:var(--ok); }
+.badge:hover{ filter:brightness(.96); }
+
+/* =========================================================
+   Phase B: หน้ารายการแบบตาราง
+   ========================================================= */
+.page{ max-width:1080px; margin:0 auto; padding:20px 20px 80px; }
+.page-head{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px; }
+.page-head h2{ margin:0; font-size:20px; font-weight:600; }
+.page-actions{ display:flex; align-items:center; gap:8px; }
+
+.list-card{ --cols:28px 20px 44px minmax(0,1fr) 96px 120px 120px 36px; }
+.tabs-row{ display:flex; gap:4px; padding:8px 10px 0; overflow-x:auto; border-bottom:1px solid var(--line); scrollbar-width:none; }
+.tabs-row::-webkit-scrollbar{ display:none; }
+.tabs-row .chip{
+  border:0; background:none; border-radius:8px 8px 0 0; padding:9px 14px;
+  font:inherit; font-size:14px; font-weight:500; color:var(--ink-2);
+  white-space:nowrap; border-bottom:2px solid transparent; margin-bottom:-1px; cursor:pointer;
+}
+.tabs-row .chip:hover{ background:var(--line-soft); }
+.tabs-row .chip.is-active{ color:var(--ink); border-bottom-color:var(--brand); background:none; }
+.tabs-row .chip.is-fix{ color:var(--warn); }
+
+.list-tools{ display:flex; align-items:center; gap:14px; padding:12px 14px; }
+.list-tools .search-wrap{ flex:1; }
+.list-tools .list-meta{ padding:0; margin:0; white-space:nowrap; font-size:13px; color:var(--ink-3); }
+
+.bulkbar{
+  display:flex; flex-wrap:wrap; align-items:center; gap:8px;
+  padding:10px 14px; background:var(--brand-soft); border-top:1px solid var(--line); border-bottom:1px solid var(--line);
+}
+.bulkbar[hidden]{ display:none; }
+.bulkbar b{ font-size:14px; margin-right:6px; }
+.bulk-select{ font:inherit; font-size:13.5px; padding:6px 8px; border:1px solid #D4D4D4; border-radius:8px; background:#fff; }
+
+.tbl-head, .tr{ display:grid; grid-template-columns:var(--cols); gap:12px; align-items:center; padding:0 14px; }
+.tbl-head{
+  padding-top:9px; padding-bottom:9px; background:var(--line-soft);
+  border-top:1px solid var(--line); border-bottom:1px solid var(--line);
+  font-size:12.5px; font-weight:500; color:var(--ink-2);
+}
+.tr{ padding-top:10px; padding-bottom:10px; border-bottom:1px solid var(--line-soft); cursor:pointer; background:var(--panel); }
+.tr:last-child{ border-bottom:0; border-radius:0 0 var(--radius) var(--radius); }
+.tr:hover{ background:#FAFAFA; }
+.tr.is-selected{ background:var(--brand-soft); }
+.tr.is-dragging{ opacity:.45; }
+.tr.drag-target-before{ box-shadow:inset 0 2px 0 0 var(--brand); }
+.tr.drag-target-after{ box-shadow:inset 0 -2px 0 0 var(--brand); }
+.sel-cell{ display:flex; align-items:center; }
+.sel-cell input, #selAll{ width:17px; height:17px; accent-color:var(--brand); cursor:pointer; }
+.tr .row-thumb{ width:44px; height:44px; border-radius:8px; }
+.td-name{ min-width:0; }
+.td-name .row-name{ font-size:14.5px; font-weight:600; }
+.td-name .row-sub{ gap:2px 10px; align-items:center; }
+.td-price{ font-size:14.5px; font-weight:500; }
+.td-price small{ display:block; font-size:12px; font-weight:400; color:var(--ink-3); }
+.tbl-head .td-price{ font-weight:500; }
+.td-cat{ font-size:13.5px; color:var(--ink-2); }
+.td-menu{ justify-self:end; }
+
+@media (max-width:760px){
+  .page{ padding:14px 12px 60px; }
+  .page-head h2{ font-size:18px; }
+  .list-card{ --cols:24px 44px minmax(0,1fr) auto; }
+  .tbl-head{ display:none; }
+  .list-tools{ flex-wrap:wrap; }
+  .list-tools .list-meta{ width:100%; }
+  .tr{
+    grid-template-columns:var(--cols);
+    grid-template-areas:"chk thumb name menu" ". . price status";
+    row-gap:6px; gap:10px;
+  }
+  .tr .sel-cell{ grid-area:chk; }
+  .tr .row-thumb{ grid-area:thumb; width:44px; height:44px; }
+  .tr .td-name{ grid-area:name; }
+  .tr .td-menu{ grid-area:menu; }
+  .tr .td-price{ grid-area:price; text-align:left; }
+  .tr .td-price small{ display:inline; margin-left:6px; }
+  .tr .td-status{ grid-area:status; justify-self:end; }
+  .tr .td-cat, .tr .drag-handle{ display:none; }
+  .bulkbar .btn{ flex:1 1 auto; }
+}
+
+/* =========================================================
+   Phase C: หน้าแก้ไขสินค้าเต็มหน้า 2 คอลัมน์
+   ========================================================= */
+.app.is-editing .topbar{ display:none; }
+.editor-page{ max-width:1080px; margin:0 auto; padding:0 20px 90px; }
+.editor-page[hidden]{ display:none; }
+.ed-bar{
+  position:sticky; top:0; z-index:30;
+  display:flex; align-items:center; gap:10px;
+  padding:14px 0 12px; background:var(--bg);
+}
+.ed-back{ font-size:20px; width:38px; height:38px; flex:none; border:1px solid #D4D4D4; background:var(--panel); }
+.ed-title{ flex:1; min-width:0; }
+.ed-title h2{ margin:0; font-size:19px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.editor-page .editor-problem{ margin:0 0 14px; }
+
+.ed-grid{ display:grid; grid-template-columns:minmax(0,1fr) 320px; gap:16px; align-items:start; }
+.ed-main, .ed-side, .stack{ display:flex; flex-direction:column; gap:16px; min-width:0; }
+.ed-side{ position:sticky; top:76px; }
+.ed-card{ background:var(--panel); border-radius:var(--radius); box-shadow:var(--shadow); padding:16px; }
+.card-head{ display:flex; align-items:baseline; gap:10px; margin-bottom:12px; }
+.card-head h3{ margin:0; font-size:15px; font-weight:600; }
+.card-head small{ color:var(--ink-3); font-size:12.5px; }
+.card-body > .group{ border:0; padding:0; box-shadow:none; background:none; margin-bottom:16px; }
+.card-body > .group:last-child{ margin-bottom:0; }
+.card-body > .group + .group{ border-top:1px solid var(--line-soft); padding-top:16px; }
+.ed-side .field-row{ grid-template-columns:1fr; }
+
+.pv{ border:1px solid var(--line); border-radius:10px; overflow:hidden; background:#fff; padding-bottom:12px; }
+.pv-img{ display:block; width:100%; aspect-ratio:1/1; object-fit:cover; background:var(--line-soft); }
+.pv-img.is-missing{ display:flex; border-bottom:1px dashed var(--line); }
+.pv-name, .pv-price{ margin:10px 12px 0; }
+.pv-name{ font-weight:600; font-size:14.5px; overflow-wrap:anywhere; }
+.pv-price{ color:var(--brand-dark); font-weight:600; }
+.pv .badge{ margin:8px 12px 0; cursor:default; display:inline-block; }
+.pv .badge[hidden]{ display:none; }
+
+@media (max-width:900px){
+  .editor-page{ padding:0 12px 80px; }
+  .ed-grid{ grid-template-columns:1fr; }
+  .ed-side{ position:static; }
+  .ed-title h2{ font-size:17px; }
+  #cancelBtn{ display:none; }
+  .pv{ max-width:260px; }
+}

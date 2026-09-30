@@ -55,62 +55,86 @@
     </div>
   </header>
 
-  <div class="toolbar">
-    <div class="search-wrap">
-      <input type="search" id="searchBox" placeholder="ค้นหาชื่อสินค้า หรือรหัส เช่น s05">
+  <main class="page">
+    <div class="page-head">
+      <h2>สินค้า</h2>
+      <div class="page-actions">
+        <details class="menu">
+          <summary class="btn btn-ghost">⋯ เพิ่มเติม</summary>
+          <div class="menu-pop">
+            <button id="backupBtn">ดาวน์โหลดไฟล์สำรอง</button>
+            <button id="importBtn">นำเข้าจากไฟล์ (เขียนทับทั้งหมด)</button>
+          </div>
+        </details>
+        <button class="btn btn-primary" id="addBtn">เพิ่มสินค้า</button>
+        <input type="file" id="importFile" accept=".json,application/json" hidden>
+      </div>
     </div>
-    <div class="cat-chips" id="catChips"></div>
-    <div class="toolbar-actions">
-      <button class="btn btn-primary" id="addBtn">เพิ่มสินค้า</button>
-      <button class="btn btn-ghost" id="importBtn">นำเข้าจากไฟล์</button>
-      <button class="btn btn-ghost" id="backupBtn">ดาวน์โหลดสำรอง</button>
-      <input type="file" id="importFile" accept=".json,application/json" hidden>
+
+    <div class="card list-card" id="listCard">
+      <div class="tabs-row" id="catChips"></div>
+      <div class="list-tools">
+        <div class="search-wrap"><input type="search" id="searchBox" placeholder="ค้นหาชื่อสินค้า หรือรหัส เช่น s05"></div>
+        <span class="list-meta" id="listMeta"></span>
+      </div>
+      <div class="bulkbar" id="bulkBar" hidden>
+        <b id="bulkCount"></b>
+        <button class="btn btn-ghost btn-sm" id="bulkReady">ตั้งเป็นพร้อมส่ง</button>
+        <button class="btn btn-ghost btn-sm" id="bulkUnready">ยกเลิกพร้อมส่ง</button>
+        <select id="bulkCat" class="bulk-select"></select>
+        <button class="btn btn-ghost btn-sm is-danger" id="bulkDel">ลบ</button>
+        <button class="btn btn-ghost btn-sm" id="bulkClear">ยกเลิกการเลือก</button>
+      </div>
+      <div class="tbl-head">
+        <span class="sel-cell"><input type="checkbox" id="selAll" title="เลือกทั้งหมดที่แสดง"></span>
+        <span></span><span></span>
+        <span>สินค้า</span><span class="td-status">สถานะ</span><span class="td-price">ราคา</span><span class="td-cat">หมวดหมู่</span><span></span>
+      </div>
+      <div class="tbody" id="productList"></div>
     </div>
-  </div>
 
-  <p class="list-meta" id="listMeta"></p>
+    <div class="empty" id="emptyState" hidden>
+      <p class="empty-title">ยังไม่มีสินค้าในระบบ</p>
+      <p>กด “⋯ เพิ่มเติม” แล้วเลือก “นำเข้าจากไฟล์” จากนั้นเลือก products.json เพื่อย้ายสินค้าทั้งหมดขึ้น Firestore ครั้งเดียวจบ</p>
+    </div>
+  </main>
 
-  <div class="list" id="productList"></div>
+    <section class="editor-page" id="editorPage" hidden aria-label="แก้ไขสินค้า">
+      <div class="ed-bar">
+        <button class="icon-btn ed-back" id="editorClose" aria-label="กลับไปรายการสินค้า" title="กลับไปรายการสินค้า">←</button>
+        <div class="ed-title">
+          <h2 id="editorTitle">แก้ไขสินค้า</h2>
+          <p class="drawer-sub" id="editorSub"></p>
+        </div>
+        <button class="btn btn-ghost" id="cancelBtn">ยกเลิก</button>
+        <button class="btn btn-primary" id="saveBtn">บันทึกสินค้า</button>
+      </div>
+      <p class="editor-problem" id="editorProblem" hidden></p>
 
-  <div class="empty" id="emptyState" hidden>
-    <p class="empty-title">ยังไม่มีสินค้าในระบบ</p>
-    <p>กด “นำเข้าจากไฟล์” แล้วเลือก products.json เพื่อย้ายสินค้าทั้งหมดขึ้น Firestore ครั้งเดียวจบ</p>
-  </div>
+      <div class="ed-grid" id="editorBody">
+        <div class="ed-main">
+          <div class="ed-card"><div class="card-head"><h3>ข้อมูลสินค้า</h3></div><div class="card-body" id="panelMain"></div></div>
+          <div class="ed-card"><div class="card-head"><h3>รูปภาพและสี</h3><small id="sumMedia"></small></div><div class="card-body" id="panelMedia"></div></div>
+          <div class="ed-card"><div class="card-head"><h3>ราคา</h3><small id="sumPrice"></small></div><div class="card-body" id="panelPrice"></div></div>
+          <div class="ed-card"><div class="card-head"><h3>ของเสริม</h3><small id="sumAddons"></small></div><div class="card-body" id="panelAddons"></div></div>
+        </div>
+        <div class="ed-side">
+          <div class="stack" id="panelSide"></div>
+          <div class="ed-card">
+            <div class="card-head"><h3>ตัวอย่างที่ลูกค้าเห็น</h3></div>
+            <div class="pv">
+              <img class="pv-img is-missing" id="pvImg" alt="">
+              <p class="pv-name" id="pvName"></p>
+              <p class="pv-price" id="pvPrice"></p>
+              <span class="badge badge-ok" id="pvReady" hidden>พร้อมส่ง</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
 </div>
 
 <!-- ───────────── ตัวแก้ไขสินค้า ───────────── -->
-<div class="drawer-scrim" id="drawerScrim" hidden></div>
-<aside class="drawer" id="editorDrawer" hidden aria-label="แก้ไขสินค้า">
-  <div class="drawer-head">
-    <div>
-      <h2 id="editorTitle">แก้ไขสินค้า</h2>
-      <p class="drawer-sub" id="editorSub"></p>
-    </div>
-    <button class="icon-btn" id="editorClose" aria-label="ปิด">✕</button>
-  </div>
-
-  <nav class="tabs" id="editorTabs">
-    <button class="tab is-active" data-tab="main">ข้อมูลสินค้า</button>
-    <button class="tab" data-tab="media">รูปภาพและสี</button>
-    <button class="tab" data-tab="price">ราคา</button>
-    <button class="tab" data-tab="addons">ของเสริม</button>
-  </nav>
-
-  <div class="drawer-body">
-    <section class="tab-panel is-active" data-panel="main" id="panelMain"></section>
-    <section class="tab-panel" data-panel="media" id="panelMedia"></section>
-    <section class="tab-panel" data-panel="price" id="panelPrice"></section>
-    <section class="tab-panel" data-panel="addons" id="panelAddons"></section>
-  </div>
-
-  <div class="drawer-foot">
-    <p class="editor-problem" id="editorProblem" hidden></p>
-    <div class="drawer-foot-btns">
-      <button class="btn btn-ghost" id="cancelBtn">ยกเลิก</button>
-      <button class="btn btn-primary" id="saveBtn">บันทึกสินค้า</button>
-    </div>
-  </div>
-</aside>
 
 <!-- ───────────── กล่องยืนยัน ───────────── -->
 <div class="confirm-scrim" id="confirmScrim" hidden>
