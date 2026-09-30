@@ -785,3 +785,54 @@ body{ background:var(--bg); color:var(--ink); }
 .size-opt input{ width:18px; height:18px; accent-color:var(--brand); }
 .field .size-opt input{ width:18px; height:18px; padding:0; margin:0; border:0; box-shadow:none; flex:none; }
 .size-auto{ margin:0; padding:9px 12px; border:1px dashed var(--line); border-radius:8px; background:var(--line-soft); font-size:13.5px; line-height:1.6; color:var(--ink-2); }
+
+/* =========================================================
+   หน้ารายการ: สินค้าที่มีหลายแบบ (ป้ายบอกจำนวน + กางดูแบบทั้งหมด)
+   ========================================================= */
+.multi-badge{
+  font:inherit; font-size:11.5px; font-weight:600; line-height:1.5;
+  display:inline-flex; align-items:center; gap:4px;
+  margin-left:8px; padding:1px 9px; vertical-align:middle;
+  border:0; border-radius:999px; cursor:pointer;
+  background:var(--brand-soft); color:var(--brand-dark);
+}
+.multi-badge:hover{ filter:brightness(.96); }
+.multi-badge:focus-visible{ outline:2px solid var(--brand); outline-offset:2px; }
+.multi-badge .caret{ font-size:10px; }
+.tr.is-open .multi-badge{ background:var(--brand); color:#fff; }
+.tr.is-open .multi-badge .caret{ transform:rotate(180deg); }
+
+.td-name .row-variants{
+  margin:3px 0 0; font-size:12.5px; color:var(--ink-2);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+
+.variant-panel{
+  grid-column:1 / -1; cursor:default;
+  margin:6px 0 2px; padding:12px; border-radius:10px;
+  background:var(--line-soft);
+}
+.vp-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(230px, 1fr)); gap:8px; }
+.vp-item{
+  display:flex; align-items:center; gap:10px;
+  padding:7px; border-radius:9px; background:var(--panel); border:1px solid var(--line);
+}
+.vp-thumb{
+  width:40px; height:40px; flex:none; border-radius:7px; object-fit:cover; background:var(--line-soft);
+}
+.vp-thumb.is-missing{
+  display:flex; align-items:center; justify-content:center;
+  border:1px dashed var(--line); background:var(--line-soft);
+}
+.vp-text{ min-width:0; }
+.vp-name{ margin:0; font-size:13.5px; font-weight:600; overflow-wrap:anywhere; }
+.vp-price{ margin:2px 0 0; font-size:12.5px; color:var(--ink-2); display:flex; flex-wrap:wrap; align-items:center; gap:2px 8px; }
+.vp-nop{ color:var(--warn); }
+.vp-foot{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:10px; font-size:12.5px; color:var(--ink-3); }
+
+@media (max-width:760px){
+  .tr.is-open{ grid-template-areas:"chk thumb name menu" ". . price status" "vp vp vp vp"; }
+  .tr .variant-panel{ grid-area:vp; }
+  .vp-grid{ grid-template-columns:1fr; }
+  .td-name .row-variants{ white-space:normal; }
+}

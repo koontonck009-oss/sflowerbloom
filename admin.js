@@ -20,6 +20,7 @@ let searchTerm = '';
 let confirmResolve = null;
 let listScrollY = 0;
 const selected = new Set();   // ดัชนีสินค้าที่ติ๊กเลือกในตาราง
+const expanded = new Set();   // รหัสสินค้าที่กางดู "แบบทั้งหมด" อยู่ในหน้ารายการ
 
 const $ = id => document.getElementById(id);
 
@@ -291,13 +292,83 @@ function allCats(){
   return ['ทั้งหมด', ...[...set].sort()];
 }
 
+/* ───────────── สินค้าที่มีหลายแบบ (แสดงในหน้ารายการ) ─────────────
+   รวมทุกรูปแบบ: คู่ผสมหลายชั้น (variants), ไซซ์ (sizes), สี (colors)
+   คืน null ถ้ามีไม่ถึง 2 แบบ = ไม่ต้องขึ้นป้าย */
+function variantInfoOf(p){
+  const txt = v => String(v ?? '').trim();
+  const list = a => Array.isArray(a) ? a : [];
+
+  const vs = list(p.variants);
+  if(vs.length >= 2){
+    const total = comboList(list(p.options)).length;
+    return {
+      unit: 'แบบ',
+      rows: vs.map(v => ({
+        name: list(v.match).map(txt).filter(Boolean).join(' · ') || '(ยังไม่ตั้งชื่อ)',
+        price: num(v.price), image: v.image || '', ready: !!v.ready })),
+      summary: list(p.options).filter(o => txt(o.name))
+        .map(o => `${txt(o.name)} ${list(o.values).length}`).join(' · '),
+      note: total > vs.length ? `เปิดขาย ${vs.length} จาก ${total} คู่ผสม` : ''
+    };
+  }
+
+  const ss = list(p.sizes).filter(s => txt(s.name));
+  if(ss.length >= 2){
+    return {
+      unit: 'ไซซ์',
+      rows: ss.map(s => ({ name: txt(s.name), price: num(s.price), image: s.image || '', ready: !!s.ready })),
+      summary: ss.map(s => txt(s.name)).join(' · '),
+      note: ''
+    };
+  }
+
+  const cs = list(p.colors).filter(c => txt(c.name));
+  if(cs.length >= 2){
+    return {
+      unit: 'สี',
+      rows: cs.map(c => ({ name: txt(c.name), price: num(p.price),
+        image: c.image || list(c.images)[0] || '', ready: !!c.ready })),
+      summary: cs.map(c => txt(c.name)).join(' · '),
+      note: ''
+    };
+  }
+  return null;
+}
+
+function isMulti(p){ return !!variantInfoOf(p); }
+function expandKey(p, i){ return String(p.id || '') || '#' + i; }
+
+function variantPanelHtml(p, i){
+  const info = variantInfoOf(p);
+  if(!info) return '';
+  return `
+    <div class="variant-panel" id="vp-${i}">
+      <div class="vp-grid">
+        ${info.rows.map(r => `
+          <div class="vp-item">
+            ${thumbHtml(r.image, 'vp-thumb')}
+            <div class="vp-text">
+              <p class="vp-name">${esc(r.name)}</p>
+              <p class="vp-price">${r.price ? baht(r.price) + ' บาท' : '<span class="vp-nop">ยังไม่มีราคา</span>'}${r.ready ? '<span class="tag tag-ready">พร้อมส่ง</span>' : ''}</p>
+            </div>
+          </div>`).join('')}
+      </div>
+      <div class="vp-foot">
+        <span>${info.note ? esc(info.note) : ''}</span>
+        <button class="btn btn-ghost btn-sm" data-act="edit" data-i="${i}">แก้ไขสินค้านี้</button>
+      </div>
+    </div>`;
+}
+
 function needsFix(p){ return priceInfo(p).text === '—' || !mainImageOf(p); }
 
 function visibleProducts(){
   const q = searchTerm.trim().toLowerCase();
   return catalog
     .map((p, i) => ({ p, i }))
-    .filter(({ p }) => filterCat === 'ทั้งหมด' || (filterCat === '__fix__' ? needsFix(p) : p.cat === filterCat))
+    .filter(({ p }) => filterCat === 'ทั้งหมด' ||
+      (filterCat === '__fix__' ? needsFix(p) : filterCat === '__multi__' ? isMulti(p) : p.cat === filterCat))
     .filter(({ p }) => !q ||
       String(p.name || '').toLowerCase().includes(q) ||
       String(p.id || '').toLowerCase().includes(q) ||
@@ -317,10 +388,13 @@ function renderBulk(rows){
 function renderList(){
   selected.forEach(i => { if(i >= catalog.length) selected.delete(i); });
   const fixCount = catalog.filter(needsFix).length;
+  const multiCount = catalog.filter(isMulti).length;
   if(filterCat === '__fix__' && !fixCount) filterCat = 'ทั้งหมด';
+  if(filterCat === '__multi__' && !multiCount) filterCat = 'ทั้งหมด';
 
   const tabs = [['ทั้งหมด', 'ทั้งหมด']];
   if(fixCount) tabs.push(['__fix__', `ต้องแก้ไข ${fixCount}`]);
+  if(multiCount) tabs.push(['__multi__', `มีหลายแบบ ${multiCount}`]);
   allCats().slice(1).forEach(c => tabs.push([c, c]));
   $('catChips').innerHTML = tabs.map(([k, l]) =>
     `<button class="chip${k === filterCat ? ' is-active' : ''}${k === '__fix__' ? ' is-fix' : ''}" data-cat="${esc(k)}">${esc(l)}</button>`
@@ -350,16 +424,17 @@ function renderList(){
     const warns = [];
     if(pi.text === '—') warns.push('<span class="tag tag-warn">ยังไม่มีราคา</span>');
     if(!mainImageOf(p)) warns.push('<span class="tag tag-warn">ยังไม่มีรูป</span>');
-    const vc = (p.colors || []).length;
-    const extra = [vc ? vc + ' สี' : '', (p.sizes || []).length ? p.sizes.length + ' ไซซ์' : '', (p.variants || []).length ? p.variants.length + ' ตัวเลือก' : ''].filter(Boolean);
+    const vinfo = variantInfoOf(p);
+    const isOpen = !!vinfo && expanded.has(expandKey(p, i));
     return `
-      <div class="tr${selected.has(i) ? ' is-selected' : ''}" data-i="${i}">
+      <div class="tr${selected.has(i) ? ' is-selected' : ''}${isOpen ? ' is-open' : ''}" data-i="${i}">
         <span class="sel-cell"><input type="checkbox" class="sel" data-i="${i}"${selected.has(i) ? ' checked' : ''}></span>
         <span class="drag-handle${filtering ? ' is-disabled' : ''}" draggable="${filtering ? 'false' : 'true'}" data-i="${i}" title="ลากเพื่อเรียงลำดับใหม่">⠿</span>
         ${thumbHtml(mainImageOf(p), 'row-thumb')}
         <div class="td-name">
-          <p class="row-name">${esc(p.name || '(ยังไม่ตั้งชื่อ)')}</p>
-          <p class="row-sub"><span>${esc(p.id || '—')}</span>${sizeTagText(p) ? `<span>${esc(sizeTagText(p))}</span>` : ''}${extra.length ? `<span>${esc(extra.join(' · '))}</span>` : ''}${warns.join('')}</p>
+          <p class="row-name">${esc(p.name || '(ยังไม่ตั้งชื่อ)')}${vinfo ? `<button class="multi-badge" data-act="toggle-variants" data-i="${i}" aria-expanded="${isOpen}" aria-controls="vp-${i}" title="กดเพื่อดูแบบทั้งหมด">${vinfo.rows.length} ${vinfo.unit}<span class="caret" aria-hidden="true">▾</span></button>` : ''}</p>
+          <p class="row-sub"><span>${esc(p.id || '—')}</span>${sizeTagText(p) ? `<span>${esc(sizeTagText(p))}</span>` : ''}${warns.join('')}</p>
+          ${vinfo && vinfo.summary ? `<p class="row-variants">${esc(vinfo.summary)}</p>` : ''}
         </div>
         <span class="td-status"><button class="badge ${p.ready ? 'badge-ok' : ''}" data-act="ready-toggle" data-i="${i}" title="กดเพื่อสลับสถานะ">${p.ready ? 'พร้อมส่ง' : 'ปกติ'}</button></span>
         <span class="td-price">${pi.text}<small>${pi.note}</small></span>
@@ -374,6 +449,7 @@ function renderList(){
             <button class="is-danger" data-act="del" data-i="${i}">ลบสินค้า</button>
           </div>
         </details>
+        ${isOpen ? variantPanelHtml(p, i) : ''}
       </div>`;
   }).join('');
   renderBulk(rows);
@@ -1313,11 +1389,25 @@ $('productList').addEventListener('click', e => {
   if(!btn){
     // กดที่ตัวแถวตรงไหนก็ได้ = เปิดแก้ไข (ยกเว้นเมนู/ที่จับลาก/สวิตช์)
     const row = e.target.closest('.tr');
-    if(row && !e.target.closest('.menu, .drag-handle, .sel-cell')) openEditor(+row.dataset.i);
+    if(row && !e.target.closest('.menu, .drag-handle, .sel-cell, .variant-panel')) openEditor(+row.dataset.i);
     return;
   }
   if(btn.disabled || btn.dataset.act === 'ready') return;
   const i = +btn.dataset.i;
+  if(btn.dataset.act === 'toggle-variants'){
+    // กาง/พับในตำแหน่งเดิม ไม่ต้องวาดทั้งรายการใหม่ (เลื่อนหน้าจอไม่กระโดด)
+    const row = btn.closest('.tr');
+    const p = catalog[i];
+    const key = expandKey(p, i);
+    const open = !expanded.has(key);
+    if(open) expanded.add(key); else expanded.delete(key);
+    row.classList.toggle('is-open', open);
+    btn.setAttribute('aria-expanded', String(open));
+    const old = row.querySelector('.variant-panel');
+    if(old) old.remove();
+    if(open) row.insertAdjacentHTML('beforeend', variantPanelHtml(p, i));
+    return;
+  }
   if(btn.dataset.act === 'edit') openEditor(i);
   if(btn.dataset.act === 'copy') duplicateProduct(i);
   if(btn.dataset.act === 'del') deleteProduct(i);
