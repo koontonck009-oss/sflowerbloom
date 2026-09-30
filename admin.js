@@ -46,6 +46,26 @@ function sizeTagsOf(p){
   return Array.isArray(p.size) ? p.size : [p.size];
 }
 function sizeTagText(p){ return sizeTagsOf(p).join(', '); }
+// ตัวเลือกมาตรฐานของ "ขนาด/ป้ายกำกับ" (ต้องตรงกับ CATEGORY_SIZES ของหน้าร้าน)
+const BASE_SIZE_TAGS = ['เล็ก', 'กลาง', 'ใหญ่', 'ใส่เงิน'];
+// ตัวเลือกใน dropdown = ค่ามาตรฐาน + ค่าเดิมของสินค้านี้ที่ไม่อยู่ในรายการมาตรฐาน (กันค่าเก่าหายเงียบๆ)
+// สินค้าที่มีไซซ์/คู่ผสม: ขนาดระดับสินค้าสรุปจาก tag ของแต่ละแถวให้เอง (คืน null = สินค้าราคาเดียว ให้ใช้ค่าที่ตั้งไว้ตรงๆ)
+// ถ้าทุกแถวตั้ง tag แล้ว ใช้เฉพาะ tag ของแถว ถ้ามีแถว "อัตโนมัติ" ปนอยู่ ยังคงค่าเดิมของสินค้าไว้เป็นตัวสำรองให้แถวนั้น
+function derivedSizeTags(p){
+  const m = priceMode(p);
+  const clean = v => String(v ?? '').trim();
+  const rows = m === 'sizes' ? (p.sizes || []).filter(s => clean(s.name))
+             : m === 'options' ? (p.variants || []) : null;
+  if(!rows) return null;
+  const tags = rows.map(r => clean(r.tag)).filter(Boolean);
+  const all = (rows.length && tags.length === rows.length) ? tags : [...sizeTagsOf(p), ...tags];
+  const uniq = [...new Set(all.flatMap(v => clean(v).split(',')).map(clean).filter(Boolean))];
+  return [...BASE_SIZE_TAGS.filter(t => uniq.includes(t)), ...uniq.filter(t => !BASE_SIZE_TAGS.includes(t))];
+}
+function sizeChoicesFor(current){
+  const cur = (Array.isArray(current) ? current : [current]).map(v => String(v ?? '').trim()).filter(Boolean);
+  return [...BASE_SIZE_TAGS, ...cur.filter(v => !BASE_SIZE_TAGS.includes(v))];
+}
 
 function toast(msg, isError){
   const t = $('toast');
@@ -472,6 +492,8 @@ function updateSummaries(){
   const nc = (draft.colors || []).length;
   const media = (draft.image ? 'มีรูปหลัก' : 'ยังไม่มีรูป') + (nc ? ' · ' + nc + ' สี' : '');
   const na = (draft.addons || []).length + (draft.colors || []).reduce((a, c) => a + (c.addons || []).length, 0);
+  const auto = $('sizeAutoText');
+  if(auto) auto.textContent = (derivedSizeTags(draft) || []).join(', ') || 'ยังไม่ได้ตั้ง';
   $('sumPrice').textContent = price;
   $('sumMedia').textContent = media;
   $('sumAddons').textContent = na ? na + ' รายการ' : 'ไม่มี (ไม่บังคับ)';
@@ -547,12 +569,23 @@ function renderSidePanel(){
         <input type="text" data-bind="flowerType" list="dlFlower" value="${esc(draft.flowerType || '')}" placeholder="เช่น ทานตะวัน">
         <datalist id="dlFlower">${flowerTypes.map(f => `<option value="${esc(f)}">`).join('')}</datalist>
       </label>
-      <label class="field" style="margin-top:12px">
+      ${priceMode(draft) === 'single' ? `
+      <div class="field" style="margin-top:12px">
         <span>ขนาด/ป้ายกำกับ</span>
-        <input type="text" data-bind="size" list="dlSize" value="${esc(sizeTagText(draft))}" placeholder="เช่น กลาง, ใส่เงิน">
-        <datalist id="dlSize">${sizes.map(s => `<option value="${esc(s)}">`).join('')}</datalist>
-      </label>
-      <p class="field-hint">ใส่ได้มากกว่า 1 ค่าในช่องขนาด คั่นด้วยจุลภาค เช่น “กลาง, ใส่เงิน” สินค้าจะโผล่ทั้งตอนกรอง “กลาง” และ “ใส่เงิน”</p>
+        <details class="menu size-menu" id="sizeMenu">
+          <summary class="size-summary" id="sizeSummary">${esc(sizeTagText(draft)) || 'เลือกขนาด/ป้ายกำกับ'}</summary>
+          <div class="menu-pop size-pop">
+            ${sizeChoicesFor(sizeTagsOf(draft)).map(t => `<label class="size-opt"><input type="checkbox" data-size-tag value="${esc(t)}"${sizeTagsOf(draft).includes(t) ? ' checked' : ''}><span>${esc(t)}</span></label>`).join('')}
+          </div>
+        </details>
+      </div>
+      <p class="field-hint">ติ๊กได้มากกว่า 1 ค่า เช่น “กลาง” + “ใส่เงิน” สินค้าจะโผล่ทั้งตอนกรอง “กลาง” และ “ใส่เงิน”</p>
+      ` : `
+      <div class="field" style="margin-top:12px">
+        <span>ขนาด/ป้ายกำกับ</span>
+        <p class="size-auto">ตั้งที่แต่ละ${priceMode(draft) === 'sizes' ? 'ไซซ์' : 'คู่ผสม'}ในการ์ด “ราคา” ทางซ้าย · ตอนนี้: <b id="sizeAutoText">${esc((derivedSizeTags(draft) || []).join(', ') || 'ยังไม่ได้ตั้ง')}</b></p>
+        <p class="field-hint">ระบบสรุปให้เองตอนบันทึก ไม่ต้องกรอกช่องนี้ แถวที่เลือก “อัตโนมัติ” จะใช้คำว่า “ใส่เงิน” ในชื่อเป็นตัวตัดสิน</p>
+      </div>`}
     </div>`;
 }
 
@@ -697,6 +730,13 @@ function renderPricePanel(){
                 <input type="number" min="0" step="1" data-bind="sizes.${k}.price" data-type="number" value="${num(s.price) || ''}">
               </label>
             </div>
+            <label class="field" style="margin-bottom:12px">
+              <span>ตัวกรองขนาด (หน้าร้าน)</span>
+              <select data-bind="sizes.${k}.tag">
+                <option value="">อัตโนมัติ (ตามชื่อ)</option>
+                ${sizeChoicesFor(s.tag).map(t => `<option value="${esc(t)}"${(s.tag || '') === t ? ' selected' : ''}>${esc(t)}</option>`).join('')}
+              </select>
+            </label>
             <div class="img-field">
               <label class="field">
                 <span>รูปของไซซ์นี้</span>
@@ -922,6 +962,7 @@ function onDraftClick(e){
       if(mode === 'options'){ draft.options = [{ name:'', values:[] }]; draft.variants = []; delete draft.price; }
       if(mode === 'single' && draft.price == null) draft.price = 0;
       renderPricePanel();
+      renderSidePanel();
       return;
     }
 
@@ -1019,6 +1060,17 @@ function onDraftClick(e){
   }
 }
 
+// ติ๊ก/เอาออกใน dropdown "ขนาด/ป้ายกำกับ" ระดับสินค้า — เก็บเป็น array เรียงตามลำดับตัวเลือก (cleanProduct จะย่อเป็น string ถ้ามีค่าเดียว)
+function onSizeTagToggle(){
+  if(!draft) return;
+  const menu = $('sizeMenu');
+  if(!menu) return;
+  const picked = [...menu.querySelectorAll('input[data-size-tag]')].filter(i => i.checked).map(i => i.value);
+  draft.size = picked;
+  const sum = $('sizeSummary');
+  if(sum) sum.textContent = picked.join(', ') || 'เลือกขนาด/ป้ายกำกับ';
+}
+
 function onComboToggle(e){
   const el = e.target;
   if(!draft || el.dataset.act !== 'toggle-combo') return;
@@ -1092,7 +1144,9 @@ function cleanProduct(p){
   // ช่อง "ขนาด/ป้ายกำกับ" พิมพ์ได้หลายค่าคั่นด้วยจุลภาค (เช่น "กลาง, ใส่เงิน") — เก็บเป็น array ถ้ามี
   // มากกว่า 1 ค่า หรือเก็บเป็น string เดี่ยวเหมือนเดิมถ้ามีค่าเดียว (ไม่เปลี่ยนหน้าตาไฟล์โดยไม่จำเป็น)
   {
-    const sizeParts = sizeTagsOf(p).flatMap(v => str(v).split(',')).map(v => v.trim()).filter(Boolean);
+    // เติมป้ายที่ตั้งไว้ในไซซ์/คู่ผสมเข้าไปด้วย ให้ขนาดระดับสินค้าไม่หลุดจากที่ตั้งรายแบบ
+    const derived = derivedSizeTags(p);
+    const sizeParts = (derived || sizeTagsOf(p)).flatMap(v => str(v).split(',')).map(v => v.trim()).filter(Boolean);
     const uniqueSizes = [...new Set(sizeParts)];
     if(uniqueSizes.length === 1) out.size = uniqueSizes[0];
     else if(uniqueSizes.length > 1) out.size = uniqueSizes;
@@ -1132,6 +1186,7 @@ function cleanProduct(p){
     const sizes = (p.sizes || []).filter(s => str(s.name)).map(s => {
       const o = { name: str(s.name), price: num(s.price) };
       if(str(s.image)) o.image = str(s.image);
+      if(str(s.tag)) o.tag = str(s.tag);
       if(s.ready) o.ready = true;
       return o;
     });
@@ -1374,6 +1429,7 @@ const drawerBody = $('editorBody');
 drawerBody.addEventListener('input', onDraftInput);
 drawerBody.addEventListener('change', e => {
   if(e.target.dataset.act === 'toggle-combo') onComboToggle(e);
+  else if(e.target.dataset.sizeTag != null) onSizeTagToggle();
   else onDraftInput(e);
 });
 drawerBody.addEventListener('click', onDraftClick);

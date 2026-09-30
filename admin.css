@@ -774,3 +774,14 @@ body{ background:var(--bg); color:var(--ink); }
   #cancelBtn{ display:none; }
   .pv{ max-width:260px; }
 }
+
+/* dropdown ติ๊กหลายค่า: ขนาด/ป้ายกำกับ ระดับสินค้า */
+.size-menu{ width:100%; }
+.size-summary{ display:block; border:1px solid var(--line); border-radius:8px; padding:9px 12px; background:#fff; font:inherit; min-height:20px; }
+.size-summary::after{ content:'▾'; float:right; color:var(--ink-3); }
+.size-menu .size-pop{ left:0; right:auto; width:100%; min-width:0; }
+.size-opt{ display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:7px; cursor:pointer; font-size:14px; }
+.size-opt:hover{ background:var(--line-soft); }
+.size-opt input{ width:18px; height:18px; accent-color:var(--brand); }
+.field .size-opt input{ width:18px; height:18px; padding:0; margin:0; border:0; box-shadow:none; flex:none; }
+.size-auto{ margin:0; padding:9px 12px; border:1px dashed var(--line); border-radius:8px; background:var(--line-soft); font-size:13.5px; line-height:1.6; color:var(--ink-2); }

@@ -154,6 +154,7 @@ function hasNewOptions(p){ return !!(p.options && p.options.length && p.variants
 // ตอนเปิดหน้าสินค้าจากการ์ดที่ถูกตัวกรองบีบให้เหลือบางแบบ (เช่น กรอง "ใส่เงิน") ให้ใช้เฉพาะแบบที่ผ่านกรอง
 // ไม่งั้นหน้าสินค้าจะโชว์รูป/ปุ่มของช่อปกติปนเข้ามา modalAllowedVariants = Set ของ index ใน p.variants (null = ไม่จำกัด)
 let modalAllowedVariants = null;
+let cardNarrowSizesByProduct = {}; // productId -> array ของ index ไซซ์ที่ผ่านกรอง (สินค้าโหมด "เลือกไซซ์")
 let cardNarrowByProduct = {}; // productId -> array ของ index แบบที่ผ่านกรอง (เฉพาะการ์ดที่ถูกบีบ) รีเซ็ตทุกครั้งที่ renderCatalog
 function modalVariantsOf(p){
   if(modalAllowedVariants && modalProductId === p.id){
@@ -693,6 +694,10 @@ function variantMatchesSizeFilter(p, v, sizes){
 function variantTagOf(p, v){
   if(v && v.optionIndex != null && hasNewOptions(p)){
     const t = p.variants[v.optionIndex];
+    if(t && t.tag) return String(t.tag);
+  }
+  if(v && v.sizeIndex != null && p.sizes && p.sizes[v.sizeIndex]){
+    const t = p.sizes[v.sizeIndex];
     if(t && t.tag) return String(t.tag);
   }
   return null;
@@ -1241,6 +1246,13 @@ function renderProductCard(p, variant, narrow){
         thumbHtml = renderThumb(p, best.match.join(', '));
       }
     }
+    if(narrow && narrow.passing.length && narrow.passing.length < narrow.total && p.sizes && p.sizes.length && !hasNewOptions(p) && !(p.colors && p.colors.length) && activeSizes.size){
+      const sidx = narrow.passing.filter(x => x.sizeIndex != null).map(x => x.sizeIndex);
+      if(sidx.length){
+        const bestSize = sidx.map(i => p.sizes[i]).reduce((a,b) => (b.price < a.price ? b : a));
+        thumbHtml = renderThumb(p, bestSize.name);
+      }
+    }
     if(narrow && narrow.passing.length && narrow.passing.length < narrow.total){
       // ตัวกรองเหลือแค่บางแบบของสินค้านี้ — โชว์ราคาจากแบบที่ผ่านกรองเท่านั้น (ไม่ใช่ราคาเริ่มต้นของทั้งสินค้า)
       const prices = narrow.passing.map(x => variantPriceOf(p, x));
@@ -1284,6 +1296,7 @@ function renderCatalog(){
   let totalMatches = 0;
   let html = '';
   cardNarrowByProduct = {};
+  cardNarrowSizesByProduct = {};
 
   // "ทั้งหมด" (ไม่เลือกหมวดเจาะจง) = เรียกดูทุกอย่างเหมือนเดิม (การ์ดแนะนำ + ทุกหมวดเรียงต่อกัน)
   // เลือกหมวดเจาะจงไว้ (หนึ่งหมวดหรือหลายหมวด) = กรองจริง โชว์เฉพาะหมวดที่เลือก
@@ -1347,6 +1360,9 @@ function renderCatalog(){
         // ตัวกรองขนาด (เช่น ใส่เงิน) บีบเหลือบางแบบ — จำไว้ว่าแบบไหนผ่าน เพื่อให้รูปบนการ์ดและหน้าสินค้าตรงกับตัวกรอง
         if(activeSizes.size && hasNewOptions(e.p) && e.passing.length < e.total){
           cardNarrowByProduct[e.p.id] = e.passing.filter(x => x.optionIndex != null).map(x => x.optionIndex);
+        }
+        if(activeSizes.size && e.p.sizes && e.p.sizes.length && !hasNewOptions(e.p) && !(e.p.colors && e.p.colors.length) && e.passing.length < e.total){
+          cardNarrowSizesByProduct[e.p.id] = e.passing.filter(x => x.sizeIndex != null).map(x => x.sizeIndex);
         }
         return renderProductCard(e.p, undefined, e);
       }).join('');
@@ -2025,6 +2041,9 @@ function openProductModal(id, colorIndex, optionIndex, sizeIndex){
   }
   if(p && p.sizes && sizeIndex != null){
     selectedSizeVariant[id] = sizeIndex;
+  } else if(p && p.sizes && colorIndex == null && optionIndex == null && cardNarrowSizesByProduct[id] && cardNarrowSizesByProduct[id].length){
+    // เปิดจากการ์ดที่ตัวกรองบีบเหลือบางไซซ์ — เริ่มที่ไซซ์ราคาถูกสุดที่ผ่านกรอง ไม่ใช่ไซซ์แรก (ที่อาจเป็นช่อปกติ)
+    selectedSizeVariant[id] = cardNarrowSizesByProduct[id].reduce((best, i) => (p.sizes[i].price < p.sizes[best].price ? i : best));
   }
   renderModal();
   const page = document.getElementById('productModal');
