@@ -239,8 +239,9 @@ let activeCats = new Set();
 // ใช้แยกต่างหากจาก activeCats — เอาไว้ไฮไลต์แท็บบนสุดตาม scrollspy เฉพาะตอนอยู่ในโหมด "ทั้งหมด"
 // (activeCats ว่าง) เท่านั้น ไม่กระทบตัวกรองจริง
 let scrollSpyCat = 'ทั้งหมด';
-// ตัวกรองขนาด — ค่าเดียว (เลือกได้ทีละอัน) รายการตัวเลือกจะเป็น "ยูเนียน" ของทุกหมวดที่เลือกไว้อยู่
-let activeSizeFilter = 'ทั้งหมด';
+// ตัวกรองขนาด — เลือกได้หลายอันพร้อมกัน (ผลลัพธ์เป็น "หรือ") เซตว่าง = "ทั้งหมด" (ไม่กรองขนาด)
+// รายการตัวเลือกจะเป็น "ยูเนียน" ของทุกหมวดที่เลือกไว้อยู่
+let activeSizes = new Set();
 let showReadyOnly = false;
 let showFavoritesOnly = false;
 // โหมด "ดูสินค้าทั้งหมด" — แตกสินค้าทุกชิ้นที่มีสี/ตัวเลือก/ไซซ์ออกเป็นการ์ดย่อยรายตัว
@@ -267,27 +268,109 @@ function saveFavorites(){
     console.error('บันทึกรายการโปรดไม่สำเร็จ:', err);
   }
 }
-let favorites = loadFavoritesFromStorage(); // Set ของ product id
-function isFavorite(id){ return favorites.has(id); }
-function toggleFavorite(id){
-  if(favorites.has(id)) favorites.delete(id);
-  else favorites.add(id);
+let favorites = loadFavoritesFromStorage(); // Set ของคีย์รายการโปรด: "id" = ทั้งสินค้า, "id::ป้ายแบบ" = เฉพาะแบบนั้น
+// รายการโปรดเก็บได้ 2 ระดับ — ทั้งสินค้า (คีย์ = id เหมือนเดิม จึงใช้กับรายการโปรดเก่าที่บันทึกไว้ได้เลย)
+// หรือเฉพาะ "แบบ" ของสินค้า (สี / ตัวเลือก / ขนาด) เพื่อให้กดหัวใจ S08 ดอกเล็ก แล้วดอกใหญ่ไม่ติดไปด้วย
+const FAV_SEP = '::';
+// v = { colorIndex | optionIndex | sizeIndex } เหมือนที่ allVariantsOf()/readyVariantsOf() คืนมา
+function variantLabelOf(p, v){
+  if(!v) return null;
+  if(v.colorIndex != null && p.colors && p.colors[v.colorIndex]) return p.colors[v.colorIndex].name;
+  if(v.optionIndex != null && hasNewOptions(p) && p.variants[v.optionIndex]) return p.variants[v.optionIndex].match.join(', ');
+  if(v.sizeIndex != null && p.sizes && p.sizes[v.sizeIndex]) return p.sizes[v.sizeIndex].name;
+  return null;
+}
+function favKeyOf(p, v){
+  const label = variantLabelOf(p, v);
+  return label ? p.id + FAV_SEP + label : p.id;
+}
+// แบบนี้ถูกกดหัวใจไว้ไหม (นับทั้งกรณีกดทั้งสินค้าไว้ และกรณีกดเฉพาะแบบนี้)
+function isVariantFavorite(p, v){
+  return favorites.has(p.id) || favorites.has(favKeyOf(p, v));
+}
+// สินค้านี้มีอะไรถูกกดหัวใจไว้บ้างไหม (ทั้งสินค้า หรือบางแบบ) — ใช้กับการ์ดใบเดียวต่อสินค้า
+function isProductFavorite(p){
+  if(favorites.has(p.id)) return true;
+  const prefix = p.id + FAV_SEP;
+  for(const k of favorites){ if(k.startsWith(prefix)) return true; }
+  return false;
+}
+// colorIndex/optionIndex/sizeIndex ทั้งหมดว่าง = กดหัวใจทั้งสินค้า
+function toggleFavorite(id, colorIndex, optionIndex, sizeIndex){
+  const p = PRODUCTS.find(x => x.id === id);
+  if(!p) return;
+  const hasVariant = colorIndex != null || optionIndex != null || sizeIndex != null;
+  if(hasVariant){
+    const key = favKeyOf(p, { colorIndex, optionIndex, sizeIndex });
+    if(key === p.id){
+      // ไม่พบแบบนั้นแล้ว (ข้อมูลสินค้าเปลี่ยน) — ถือเป็นการกดทั้งสินค้า
+      if(favorites.has(p.id)) favorites.delete(p.id); else favorites.add(p.id);
+    } else if(favorites.has(p.id)){
+      // เคยกดทั้งสินค้าไว้ (รายการโปรดเก่า) แล้วมาเอาหัวใจออกจากแบบเดียว — แตกเป็นรายแบบ เหลือแบบอื่นไว้ตามเดิม
+      favorites.delete(p.id);
+      allVariantsOf(p).forEach(x => {
+        const k = favKeyOf(p, x);
+        if(k !== key && k !== p.id) favorites.add(k);
+      });
+    } else if(favorites.has(key)){
+      favorites.delete(key);
+    } else {
+      favorites.add(key);
+    }
+  } else {
+    if(isProductFavorite(p)){
+      favorites.delete(p.id);
+      const prefix = p.id + FAV_SEP;
+      [...favorites].forEach(k => { if(k.startsWith(prefix)) favorites.delete(k); });
+    } else {
+      favorites.add(p.id);
+    }
+  }
   saveFavorites();
   renderCatalog();
-  // อัปเดตหัวใจในหน้ารายละเอียดสินค้าด้วย ถ้าเปิดอยู่พอดี
-  const modalHeart = document.getElementById('modalFavHeart');
-  if(modalHeart && modalProductId === id){
-    const fav = favorites.has(id);
-    modalHeart.classList.toggle('active', fav);
-    modalHeart.textContent = fav ? '♥' : '♡';
-    modalHeart.setAttribute('aria-label', fav ? 'เอาออกจากรายการโปรด' : 'บันทึกไว้ในรายการโปรด');
-  }
+  updateModalHeart();
 }
-// สินค้าบางชิ้นอาจถูกลบออกจาก products.json ไปแล้ว — ตัดรายการโปรดที่ค้างอยู่ทิ้งไปด้วย
+// แบบที่กำลังเลือกอยู่ในหน้าสินค้า (ไว้ผูกหัวใจในหน้าสินค้ากับแบบนั้น) — null = ยังเลือกไม่ครบ/ไม่มีแบบ
+function currentVariantRef(p){
+  if(p.colors && p.colors.length) return { colorIndex: resolvedColorIndex(p) };
+  if(hasNewOptions(p)){
+    const sel = currentOptionSelection(p);
+    if(hasFullOptionSelection(p, sel)){
+      const i = p.variants.findIndex(x => x.match.join(', ') === sel.join(', '));
+      if(i >= 0) return { optionIndex: i };
+    }
+    return null;
+  }
+  if(p.sizes && p.sizes.length) return { sizeIndex: selectedSizeVariant[p.id] || 0 };
+  return null;
+}
+function toggleModalFavorite(){
+  const p = PRODUCTS.find(x => x.id === modalProductId);
+  if(!p) return;
+  const v = currentVariantRef(p);
+  toggleFavorite(p.id, v && v.colorIndex, v && v.optionIndex, v && v.sizeIndex);
+}
+function updateModalHeart(){
+  const modalHeart = document.getElementById('modalFavHeart');
+  if(!modalHeart || !modalProductId) return;
+  const p = PRODUCTS.find(x => x.id === modalProductId);
+  if(!p) return;
+  const v = currentVariantRef(p);
+  const fav = v ? isVariantFavorite(p, v) : isProductFavorite(p);
+  modalHeart.classList.toggle('active', fav);
+  modalHeart.textContent = fav ? '♥' : '♡';
+  modalHeart.setAttribute('aria-label', fav ? 'เอาออกจากรายการโปรด' : 'บันทึกไว้ในรายการโปรด');
+}
+// สินค้าบางชิ้น (หรือบางแบบ) อาจถูกลบออกจาก products.json ไปแล้ว — ตัดรายการโปรดที่ค้างอยู่ทิ้งไปด้วย
 function pruneFavoritesAgainstProducts(){
   let changed = false;
-  [...favorites].forEach(id => {
-    if(!PRODUCTS.find(p => p.id === id)){ favorites.delete(id); changed = true; }
+  [...favorites].forEach(k => {
+    const i = k.indexOf(FAV_SEP);
+    const id = i === -1 ? k : k.slice(0, i);
+    const p = PRODUCTS.find(x => x.id === id);
+    let keep = !!p;
+    if(p && i !== -1) keep = allVariantsOf(p).some(v => favKeyOf(p, v) === k);
+    if(!keep){ favorites.delete(k); changed = true; }
   });
   if(changed) saveFavorites();
 }
@@ -562,6 +645,61 @@ function sizeTagsOf(p){
   if(!p.size) return [];
   return Array.isArray(p.size) ? p.size : [p.size];
 }
+// ---------- กรองระดับ "แบบ" (variant) ----------
+// เดิมตัวกรองตัดสินที่ระดับสินค้า (ใช้ราคาถูกสุดของสินค้า) แล้วค่อยแตกการ์ดย่อยตามมา ทำให้แบบที่ราคาเกินงบ
+// หรือเป็นแบบใส่เงินหลุดเข้ามาได้ ตอนนี้ทุกแบบต้องผ่านเงื่อนไขด้วยตัวเอง
+// ราคาของ "แบบ" นั้นๆ (v = { colorIndex | optionIndex | sizeIndex } หรือ null = ทั้งสินค้า)
+function variantPriceOf(p, v){
+  if(v){
+    if(v.optionIndex != null && hasNewOptions(p) && p.variants[v.optionIndex]) return p.variants[v.optionIndex].price;
+    if(v.sizeIndex != null && p.sizes && p.sizes[v.sizeIndex]) return p.sizes[v.sizeIndex].price;
+  }
+  return displayPrice(p);
+}
+// พร้อมส่งของ "แบบ" นั้นๆ — ตรงกับที่ renderProductCard() ใช้โชว์ป้าย พร้อมส่ง บนการ์ดย่อย
+function variantIsReadyOf(p, v){
+  if(v && v.optionIndex != null && hasNewOptions(p)) return !!(p.variants[v.optionIndex] && p.variants[v.optionIndex].ready);
+  if(v && v.sizeIndex != null && p.sizes) return !!(p.sizes[v.sizeIndex] && p.sizes[v.sizeIndex].ready);
+  if(v && v.colorIndex != null && p.colors){
+    const c = p.colors[v.colorIndex];
+    return (c && typeof c.ready !== 'undefined') ? !!c.ready : !!p.ready;
+  }
+  return productHasAnyReady(p);
+}
+// ตัวกรองขนาดระดับแบบ: สินค้าที่ติดแท็กทั้ง "ใส่เงิน" และขนาดปกติ (เช่น ["กลาง","ใส่เงิน"]) —
+// แบบที่ชื่อมีคำว่า "ใส่เงิน" นับเป็น "ใส่เงิน" ส่วนแบบอื่นนับเป็นขนาดปกติ (กลาง) ไม่ปนกัน
+// สินค้าที่ไม่มีแบบย่อยให้แยก (เช่น DM01) ยังขึ้นเป็นการ์ดใบเดียวทั้งสองตัวกรอง
+// sizes = Set ของขนาดที่เลือก (เลือกหลายอันได้ ผ่านถ้าตรงกับอันใดอันหนึ่ง) เซตว่าง = ไม่กรองขนาด
+function variantMatchesSizeFilter(p, v, sizes){
+  if(!sizes || sizes.size === 0) return true;
+  return [...sizes].some(sz => variantMatchesOneSize(p, v, sz));
+}
+function variantMatchesOneSize(p, v, sizeFilter){
+  const tags = sizeTagsOf(p);
+  if(!tags.includes(sizeFilter)) return false;
+  if(tags.length > 1 && tags.includes('ใส่เงิน')){
+    const label = variantLabelOf(p, v);
+    if(label != null){
+      const isMoney = label.includes('ใส่เงิน');
+      return sizeFilter === 'ใส่เงิน' ? isMoney : !isMoney;
+    }
+  }
+  return true;
+}
+// opts = { range:{min,max}, sizes:Set, readyOnly, favOnly }
+function variantPasses(p, v, opts){
+  const price = variantPriceOf(p, v);
+  if(price < opts.range.min || price > opts.range.max) return false;
+  if(!variantMatchesSizeFilter(p, v, opts.sizes)) return false;
+  if(opts.readyOnly && !variantIsReadyOf(p, v)) return false;
+  if(opts.favOnly && !isVariantFavorite(p, v)) return false;
+  return true;
+}
+function sortByPrice(arr, priceFn){
+  if(activeSortOrder === 'asc') return arr.slice().sort((a,b)=> priceFn(a)-priceFn(b));
+  if(activeSortOrder === 'desc') return arr.slice().sort((a,b)=> priceFn(b)-priceFn(a));
+  return arr;
+}
 // Readiness of a specific order line (used to decide whether the deposit
 // payment option should be offered): falls back to the product's own
 // ready flag, but uses the picked color's ready flag when the line has one.
@@ -626,10 +764,10 @@ function scrollToCatalogTop(){
   }
 }
 // กดแท็บหมวดหมู่บนแถบ quick-nav ด้านบน = "กระโดดไปหมวดนั้นหมวดเดียว" (แทนที่ตัวเลือกหมวดเดิมทั้งหมด)
-// ถ้าต้องการเลือกได้หลายหมวดพร้อมกัน ให้ใช้ชิปหมวดหมู่ในแผงตัวกรอง (toggleCategory) แทน
+// (ชิปหมวดหมู่ในแผงตัวกรองก็เลือกได้ทีละหมวดเช่นกัน — ดู toggleCategory)
 function selectCategory(c){
   activeCats = c === 'ทั้งหมด' ? new Set() : new Set([c]);
-  activeSizeFilter = 'ทั้งหมด';
+  activeSizes = new Set();
   if(c !== 'ช่อดอกไม้') activeFlowerType = 'ทั้งหมด';
   scrollSpyCat = c;
   renderNav();
@@ -639,9 +777,11 @@ function selectCategory(c){
   scrollToCatalogTop();
 }
 // ปุ่มหมวดหมู่ในแผงตัวกรอง (เดสก์ท็อป, live) — กดติด/ปลดได้ทีละหมวด เลือกพร้อมกันได้หลายหมวด
+// หมวดหมู่หลักเลือกได้ทีละหมวดเดียว — กดหมวดอื่น = เปลี่ยนไปหมวดนั้น กดหมวดเดิมซ้ำ = กลับเป็น "ทั้งหมด"
+// (activeCats ยังเป็น Set เพื่อไม่ต้องแก้โค้ดส่วนอื่น แต่จะมีสมาชิกไม่เกิน 1 ตัว)
 function toggleCategory(c){
-  if(activeCats.has(c)) activeCats.delete(c); else activeCats.add(c);
-  activeSizeFilter = 'ทั้งหมด';
+  activeCats = activeCats.has(c) ? new Set() : new Set([c]);
+  activeSizes = new Set();
   if(!activeCats.has('ช่อดอกไม้')) activeFlowerType = 'ทั้งหมด';
   renderNav();
   renderCatalog();
@@ -651,7 +791,7 @@ function toggleCategory(c){
 }
 function clearCategorySelection(){
   activeCats = new Set();
-  activeSizeFilter = 'ทั้งหมด';
+  activeSizes = new Set();
   activeFlowerType = 'ทั้งหมด';
   renderNav();
   renderCatalog();
@@ -680,8 +820,13 @@ function setupScrollSpy(){
   }, { rootMargin: `-${totalSticky + 4}px 0px -65% 0px`, threshold: 0 });
   sections.forEach(s => scrollSpyObserver.observe(s));
 }
+// กดปุ่มขนาด = ติด/ปลดทีละปุ่ม (เลือกได้หลายอัน) กด "ทั้งหมด" = ล้างขนาดที่เลือกไว้
+function toggleSizeIn(set, s){
+  if(s === 'ทั้งหมด'){ set.clear(); return; }
+  if(set.has(s)) set.delete(s); else set.add(s);
+}
 function setSize(s){
-  activeSizeFilter = s;
+  toggleSizeIn(activeSizes, s);
   renderCatalog();
   renderFilterSidebar();
   updateFilterBadge();
@@ -873,7 +1018,7 @@ function buildFilterPanelHtml(state, mode){
     <div class="filter-group">
       <div class="filter-group-title">📏 ขนาด</div>
       <div class="filter-pills">${sizeList.map(s =>
-        `<button class="filter-pill ${((state.size||'ทั้งหมด')===s)?'active':''}" onclick="${mode==='sidebar' ? `setSize('${s}')` : `setDraftSize('${s}')`}">${s}</button>`
+        `<button class="filter-pill ${(s==='ทั้งหมด' ? !(state.sizes && state.sizes.size) : !!(state.sizes && state.sizes.has(s)))?'active':''}" onclick="${mode==='sidebar' ? `setSize('${s}')` : `setDraftSize('${s}')`}">${s}</button>`
       ).join('')}</div>
     </div>` : '';
 
@@ -923,7 +1068,7 @@ function renderFilterSidebar(){
     ready: showReadyOnly,
     favorites: showFavoritesOnly,
     allSplit: showAllVariantsSplit,
-    size: activeSizeFilter,
+    sizes: activeSizes,
     flowerType: activeFlowerType
   };
   el.innerHTML = `<div class="filter-sidebar-head">
@@ -940,7 +1085,7 @@ function clearSidebarFilters(){
   showReadyOnly = false;
   showFavoritesOnly = false;
   showAllVariantsSplit = false;
-  activeSizeFilter = 'ทั้งหมด';
+  activeSizes = new Set();
   activeFlowerType = 'ทั้งหมด';
   renderNav();
   renderCatalog();
@@ -962,7 +1107,7 @@ function openFilterSheet(){
     ready: showReadyOnly,
     favorites: showFavoritesOnly,
     allSplit: showAllVariantsSplit,
-    size: activeSizeFilter,
+    sizes: new Set(activeSizes),
     flowerType: activeFlowerType
   };
   renderFilterSheetBody();
@@ -976,23 +1121,23 @@ function closeFilterSheet(){
   document.body.style.overflow = '';
 }
 function toggleDraftCategory(c){
-  if(filterDraft.cats.has(c)) filterDraft.cats.delete(c); else filterDraft.cats.add(c);
-  filterDraft.size = 'ทั้งหมด';
+  filterDraft.cats = filterDraft.cats.has(c) ? new Set() : new Set([c]);
+  filterDraft.sizes = new Set();
   if(!filterDraft.cats.has('ช่อดอกไม้')) filterDraft.flowerType = 'ทั้งหมด';
   renderFilterSheetBody();
 }
 function clearDraftCategorySelection(){
   filterDraft.cats = new Set();
-  filterDraft.size = 'ทั้งหมด';
+  filterDraft.sizes = new Set();
   filterDraft.flowerType = 'ทั้งหมด';
   renderFilterSheetBody();
 }
 function setDraftReady(checked){ filterDraft.ready = checked; renderFilterSheetBody(); }
 function setDraftFavorites(checked){ filterDraft.favorites = checked; renderFilterSheetBody(); }
-function setDraftSize(s){ filterDraft.size = s; renderFilterSheetBody(); }
+function setDraftSize(s){ toggleSizeIn(filterDraft.sizes, s); renderFilterSheetBody(); }
 function setDraftFlowerType(t){ filterDraft.flowerType = t; renderFilterSheetBody(); }
 function clearFilterDraft(){
-  filterDraft = { cats:new Set(), customMin:PRICE_SLIDER_MIN, customMax:PRICE_SLIDER_MAX, sortOrder:'none', ready:false, favorites:false, allSplit:false, size:'ทั้งหมด', flowerType:'ทั้งหมด' };
+  filterDraft = { cats:new Set(), customMin:PRICE_SLIDER_MIN, customMax:PRICE_SLIDER_MAX, sortOrder:'none', ready:false, favorites:false, allSplit:false, sizes:new Set(), flowerType:'ทั้งหมด' };
   renderFilterSheetBody();
 }
 function applyFilterDraft(){
@@ -1003,7 +1148,7 @@ function applyFilterDraft(){
   showReadyOnly = filterDraft.ready;
   showFavoritesOnly = filterDraft.favorites;
   showAllVariantsSplit = filterDraft.allSplit;
-  activeSizeFilter = filterDraft.size;
+  activeSizes = new Set(filterDraft.sizes);
   activeFlowerType = filterDraft.flowerType;
   if(activeCats.size !== 1) scrollSpyCat = 'ทั้งหมด'; else scrollSpyCat = [...activeCats][0];
   renderNav();
@@ -1018,7 +1163,7 @@ function updateFilterBadge(){
   const dot = document.getElementById('filterBadgeDot');
   if(!dot) return;
   const priceActive = customPriceMin !== PRICE_SLIDER_MIN || customPriceMax !== PRICE_SLIDER_MAX;
-  const isActive = activeCats.size > 0 || priceActive || activeSortOrder !== 'none' || showReadyOnly || showFavoritesOnly || showAllVariantsSplit || activeFlowerType !== 'ทั้งหมด' || activeSizeFilter !== 'ทั้งหมด';
+  const isActive = activeCats.size > 0 || priceActive || activeSortOrder !== 'none' || showReadyOnly || showFavoritesOnly || showAllVariantsSplit || activeFlowerType !== 'ทั้งหมด' || activeSizes.size > 0;
   dot.classList.toggle('show', isActive);
 }
 
@@ -1027,15 +1172,19 @@ function updateFilterBadge(){
 function hasProductOptions(p){
   return !!(p.colors || p.sizes || p.billSelector || hasNewOptions(p));
 }
-function favHeartHtml(id){
-  const active = isFavorite(id);
-  return `<button type="button" class="fav-heart ${active?'active':''}" onclick="event.stopPropagation(); toggleFavorite('${id}')" aria-label="${active?'เอาออกจากรายการโปรด':'บันทึกไว้ในรายการโปรด'}">${active?'♥':'♡'}</button>`;
+// colorIndex/optionIndex/sizeIndex ว่างทั้งหมด = หัวใจของทั้งสินค้า (การ์ดใบเดียวต่อสินค้า)
+// มีค่าอย่างใดอย่างหนึ่ง = หัวใจเฉพาะแบบนั้น (การ์ดย่อยที่แตกตามสี/ตัวเลือก/ขนาด)
+function favHeartHtml(p, colorIndex, optionIndex, sizeIndex){
+  const isVar = colorIndex != null || optionIndex != null || sizeIndex != null;
+  const active = isVar ? isVariantFavorite(p, { colorIndex, optionIndex, sizeIndex }) : isProductFavorite(p);
+  const args = `'${p.id}', ${colorIndex ?? 'null'}, ${optionIndex ?? 'null'}, ${sizeIndex ?? 'null'}`;
+  return `<button type="button" class="fav-heart ${active?'active':''}" onclick="event.stopPropagation(); toggleFavorite(${args})" aria-label="${active?'เอาออกจากรายการโปรด':'บันทึกไว้ในรายการโปรด'}">${active?'♥':'♡'}</button>`;
 }
 // variant (optional): { colorIndex } หรือ { optionIndex } หรือ { sizeIndex } — ใช้เมื่อการ์ดนี้เป็น
 // "การ์ดย่อยที่แตกตามสี/ตัวเลือก/ขนาด" ในโซนสินค้าแนะนำ — จะโชว์รูป/ชื่อ/ราคาของตัวเลือกนั้นๆ ตรงๆ
 // (ไม่ผูกกับตัวเลือกที่ลูกค้าเลือกไว้ในสถานะกลาง) และเปิดหน้าสินค้าพร้อม pre-select ตัวเลือกนั้นให้ทันที
 // ส่วนการ์ดปกติ (variant เป็น undefined) ทำงานเหมือนเดิมทุกอย่าง
-function renderProductCard(p, variant){
+function renderProductCard(p, variant, narrow){
   const colorIndex = variant && variant.colorIndex != null ? variant.colorIndex : null;
   const optionIndex = variant && variant.optionIndex != null ? variant.optionIndex : null;
   const sizeIndex = variant && variant.sizeIndex != null ? variant.sizeIndex : null;
@@ -1059,7 +1208,14 @@ function renderProductCard(p, variant){
     priceHtml = fmt(variantSize.price);
   } else {
     thumbHtml = renderThumb(p);
-    priceHtml = (p.billSelector || hasNewOptions(p)) ? `เริ่มต้น ${fmt(displayPrice(p))}` : fmt(displayPrice(p));
+    if(narrow && narrow.passing.length && narrow.passing.length < narrow.total){
+      // ตัวกรองเหลือแค่บางแบบของสินค้านี้ — โชว์ราคาจากแบบที่ผ่านกรองเท่านั้น (ไม่ใช่ราคาเริ่มต้นของทั้งสินค้า)
+      const prices = narrow.passing.map(x => variantPriceOf(p, x));
+      const lo = Math.min(...prices), hi = Math.max(...prices);
+      priceHtml = (lo !== hi) ? `เริ่มต้น ${fmt(lo)}` : fmt(lo);
+    } else {
+      priceHtml = (p.billSelector || hasNewOptions(p)) ? `เริ่มต้น ${fmt(displayPrice(p))}` : fmt(displayPrice(p));
+    }
   }
   // เดิมการ์ดย่อย (isSplit) จะถือว่าพร้อมส่งเสมอ เพราะ readyVariantsOf() คัดมาแต่ตัวที่พร้อมส่งอยู่แล้ว
   // แต่ allVariantsOf() (โหมด "ดูสินค้าทั้งหมด") ส่งมาทั้งที่พร้อมส่งและยังไม่พร้อม จึงต้องเช็คสถานะ
@@ -1076,7 +1232,7 @@ function renderProductCard(p, variant){
         <div class="thumb">${thumbHtml}</div>
         ${isReady ? '<span class="badge-ready">พร้อมส่ง</span>' : ''}
         ${p.isNew ? '<span class="badge-new">ใหม่</span>' : ''}
-        ${favHeartHtml(p.id)}
+        ${favHeartHtml(p, colorIndex, optionIndex, sizeIndex)}
       </div>
       <div class="card-body">
         <h4>${displayName}</h4>
@@ -1099,15 +1255,16 @@ function renderCatalog(){
   // เลือกหมวดเจาะจงไว้ (หนึ่งหมวดหรือหลายหมวด) = กรองจริง โชว์เฉพาะหมวดที่เลือก
   // โซน "สินค้าแนะนำ" จะไม่โชว์เมื่อเปิดโหมด "ดูสินค้าทั้งหมด" (การ์ดแยกครบทุกแบบอยู่ในแต่ละหมวดอยู่แล้ว)
   if(activeCats.size === 0 && !showAllVariantsSplit){
-    // เรียงลำดับ/กรองที่ระดับ "สินค้า" ก่อน (ราคาไม่ต่างกันตามสี) แล้วค่อยแตกแต่ละสินค้า
-    // เป็นการ์ดย่อยตามสีที่พร้อมส่งจริง — สินค้าที่พร้อมส่งทั้งชิ้น/ไม่มีสี ยังเป็น 1 การ์ดเหมือนเดิม
-    const readyProducts = PRODUCTS.filter(p =>
-      productHasAnyReady(p)
-      && matchesSearch(p)
-      && (!showFavoritesOnly || isFavorite(p.id))
-      && (displayPrice(p) >= range.min && displayPrice(p) <= range.max)
+    // กรอง/เรียงที่ระดับ "แบบ" — แต่ละการ์ดย่อยต้องผ่านเงื่อนไขราคา/รายการโปรดด้วยตัวเอง
+    // (สินค้าที่พร้อมส่งทั้งชิ้น/ไม่มีสี ยังเป็น 1 การ์ดเหมือนเดิม)
+    const recOpts = { range, sizes:new Set(), readyOnly:false, favOnly:showFavoritesOnly };
+    const recommended = sortByPrice(
+      PRODUCTS
+        .filter(p => productHasAnyReady(p) && matchesSearch(p))
+        .flatMap(readyVariantsOf)
+        .filter(v => variantPasses(v.product, v, recOpts)),
+      v => variantPriceOf(v.product, v)
     );
-    const recommended = applySortOrder(readyProducts).flatMap(readyVariantsOf);
     totalMatches += recommended.length;
     const recommendedHtml = recommended.length ? `
       <div class="section-title featured"><h3>🌟 สินค้าแนะนำ (พร้อมส่ง)</h3><span>${recommended.length} รายการ</span></div>
@@ -1121,28 +1278,48 @@ function renderCatalog(){
   const catsToRender = activeCats.size ? CATS.slice(1).filter(c => activeCats.has(c)) : CATS.slice(1);
   html += catsToRender.map(cat => {
     const sizeList = CATEGORY_SIZES[cat];
-    const currentSize = activeSizeFilter;
-    const matched = applySortOrder(PRODUCTS.filter(p =>
+    const catOpts = {
+      range,
+      sizes: sizeList ? activeSizes : new Set(),
+      readyOnly: showReadyOnly,
+      favOnly: showFavoritesOnly
+    };
+    const baseProducts = PRODUCTS.filter(p =>
       p.cat === cat
       && matchesSearch(p)
-      && (!sizeList || currentSize === 'ทั้งหมด' || sizeTagsOf(p).includes(currentSize))
       && (cat !== 'ช่อดอกไม้' || activeFlowerType === 'ทั้งหมด' || p.flowerType === activeFlowerType)
-      && (!showReadyOnly || productHasAnyReady(p))
-      && (!showFavoritesOnly || isFavorite(p.id))
-      && (displayPrice(p) >= range.min && displayPrice(p) <= range.max)
-    ));
-    // โหมด "ดูสินค้าทั้งหมด": แตกสินค้าทุกชิ้นที่มีสี/ตัวเลือก/ไซซ์ออกเป็นการ์ดย่อยรายตัว
-    // (เหมือนโซนสินค้าแนะนำ) แทนที่จะโชว์การ์ดเดียวต่อสินค้าแบบปกติ
-    const items = showAllVariantsSplit ? matched.flatMap(allVariantsOf) : matched;
+    );
+    let items, cardsHtml;
+    if(showAllVariantsSplit){
+      // โหมด "ดูสินค้าทั้งหมด": แตกเป็นการ์ดย่อยรายแบบ แล้วกรอง/เรียงตามราคาของแต่ละแบบจริง
+      items = sortByPrice(
+        baseProducts.flatMap(allVariantsOf).filter(v => variantPasses(v.product, v, catOpts)),
+        v => variantPriceOf(v.product, v)
+      );
+      cardsHtml = items.map(v => renderProductCard(v.product, v)).join('');
+    } else {
+      // โหมดการ์ดเดียวต่อสินค้า: ขึ้นเมื่อมีอย่างน้อย 1 แบบที่ผ่านเงื่อนไข ราคาบนการ์ดคือราคาของแบบที่ผ่านกรอง
+      items = baseProducts.map(p => {
+        const all = allVariantsOf(p);
+        return { p, total: all.length, passing: all.filter(v => variantPasses(p, v, catOpts)) };
+      }).filter(e => e.passing.length);
+      items = sortByPrice(items, e => Math.min(...e.passing.map(v => variantPriceOf(e.p, v))));
+      cardsHtml = items.map(e => {
+        // เหลือแบบเดียวที่ผ่านกรอง (เช่น S08 ตอนกรอง ≤300) — โชว์เป็นการ์ดของแบบนั้นตรงๆ
+        // รูป/ชื่อ/ราคา/หัวใจ และหน้าสินค้าที่เปิดจะตรงกับแบบนั้น ไม่ใช่แบบอื่นของสินค้าเดียวกัน
+        const only = e.passing[0];
+        const hasIdx = only && (only.colorIndex != null || only.optionIndex != null || only.sizeIndex != null);
+        if(e.passing.length === 1 && e.total > 1 && hasIdx) return renderProductCard(e.p, only);
+        return renderProductCard(e.p, undefined, e);
+      }).join('');
+    }
     totalMatches += items.length;
     const body = !items.length ? `
       <div class="section-title"><h3>${cat}</h3><span>0 รายการ</span></div>
     ` : `
       <div class="section-title"><h3>${cat}</h3><span>${items.length} รายการ</span></div>
       <div class="grid">
-        ${showAllVariantsSplit
-          ? items.map(v => renderProductCard(v.product, v)).join('')
-          : items.map(p => renderProductCard(p)).join('')}
+        ${cardsHtml}
       </div>
     `;
     return `<div class="cat-section" id="${catSectionId(cat)}" data-cat="${cat}">${body}</div>`;
@@ -1854,13 +2031,7 @@ function renderModal(){
   document.getElementById('modalImg').innerHTML = renderModalMainImage(p);
   renderModalThumbs(p);
   document.getElementById('modalName').textContent = p.name;
-  const modalHeart = document.getElementById('modalFavHeart');
-  if(modalHeart){
-    const fav = isFavorite(p.id);
-    modalHeart.classList.toggle('active', fav);
-    modalHeart.textContent = fav ? '♥' : '♡';
-    modalHeart.setAttribute('aria-label', fav ? 'เอาออกจากรายการโปรด' : 'บันทึกไว้ในรายการโปรด');
-  }
+  updateModalHeart();
   document.getElementById('modalDesc').textContent = p.desc;
   document.getElementById('modalQty').textContent = modalQty;
   document.getElementById('modalBadges').innerHTML =
