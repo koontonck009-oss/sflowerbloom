@@ -16,6 +16,7 @@ let catalog = [];        // รายการสินค้าทั้งห�
 let draft = null;        // สินค้าที่กำลังแก้ไขอยู่
 let draftIndex = -1;     // -1 = สินค้าใหม่
 let filterCat = 'ทั้งหมด';
+let filterFlower = '';   // '' = ทุกชนิด · '__none__' = ช่อดอกไม้ที่ยังไม่ระบุชนิด · '__off__' = ชนิดนอกรายการหน้าร้าน · อื่นๆ = ชื่อชนิด
 let searchTerm = '';
 let confirmResolve = null;
 let listScrollY = 0;
@@ -47,8 +48,44 @@ function sizeTagsOf(p){
   return Array.isArray(p.size) ? p.size : [p.size];
 }
 function sizeTagText(p){ return sizeTagsOf(p).join(', '); }
-// ตัวเลือกมาตรฐานของ "ขนาด/ป้ายกำกับ" (ต้องตรงกับ CATEGORY_SIZES ของหน้าร้าน)
-const BASE_SIZE_TAGS = ['เล็ก', 'กลาง', 'ใหญ่', 'ใส่เงิน'];
+// ชนิดดอกไม้ที่หน้าร้านกรองได้ — ต้องตรงกับ FLOWER_TYPES ใน script.js (ไม่รวมปุ่ม "ทั้งหมด") แก้ฝั่งใดฝั่งหนึ่งต้องแก้อีกฝั่งด้วย
+// ใช้ได้กับทุกหมวด — หน้าร้านจะโชว์ตัวกรองชนิดดอกไม้ให้หมวดที่มีสินค้าตั้งค่านี้ไว้ (ช่อดอกไม้โชว์เสมอ)
+const FLOWER_TYPE_TAGS = ['ดอกไม้คละชนิด', 'กุหลาบ', 'ทานตะวัน', 'ทิวลิป', 'ไฮเดรนเยีย', 'เดซี่', 'ลิลลี่', 'เยอบีร่า'];
+// สถานะชนิดดอกไม้ของสินค้า: 'ok' | 'none' (ช่อดอกไม้ที่ยังไม่ระบุ) | 'off' (ค่านอกรายการหน้าร้าน) | 'skip' (หมวดอื่นที่ไม่มีค่า)
+function flowerStateOf(p){
+  const t = String(p.flowerType ?? '').trim();
+  if(!t) return p.cat === 'ช่อดอกไม้' ? 'none' : 'skip';
+  return FLOWER_TYPE_TAGS.includes(t) ? 'ok' : 'off';
+}
+function flowerMatchesFilter(p, f){
+  if(!f) return true;
+  if(f === '__none__') return flowerStateOf(p) === 'none';
+  if(f === '__off__') return flowerStateOf(p) === 'off';
+  return String(p.flowerType ?? '').trim() === f;
+}
+// ตัวเลือก "ขนาด/ป้ายกำกับ" ของแต่ละหมวด — ต้องตรงกับ CATEGORY_SIZES ใน script.js ของหน้าร้านทุกตัวอักษร
+// (ไม่รวมปุ่ม "ทั้งหมด") ถ้าแก้ฝั่งใดฝั่งหนึ่ง ต้องแก้อีกฝั่งให้ตรงกันด้วย ไม่งั้นสินค้าจะหลุดจากตัวกรอง
+const CATEGORY_SIZE_TAGS = {
+  'ช่อดอกไม้': ['เล็ก', 'กลาง', 'ใหญ่', 'ใส่เงิน'],
+  'กรอบรูป': ['A5', 'A4'],
+  'กระถาง': ['3 นิ้ว', '5 นิ้ว', '9 นิ้ว'],
+  'อื่นๆ': ['กลิตเตอร์', 'กล่องดอกไม้', 'ดอกไม้เจ้าสาว', 'ตุ๊กตา', 'มงกุฎ'],
+};
+// ตัวเลือกของหมวดนั้น (หมวดที่หน้าร้านไม่มีตัวกรองขนาด = array ว่าง)
+function baseSizeTagsFor(cat){ return CATEGORY_SIZE_TAGS[String(cat ?? '').trim()] || []; }
+// ค่านี้หน้าร้านกรองได้จริงในหมวดนี้หรือไม่
+function isSizeTagValid(cat, tag){ return baseSizeTagsFor(cat).includes(String(tag ?? '').trim()); }
+// ป้ายที่ใช้แสดงใน dropdown — ค่านอกรายการของหมวดจะมีหมายเหตุกำกับให้เห็นชัด
+function sizeTagLabel(cat, tag){ return isSizeTagValid(cat, tag) ? tag : `${tag} (ไม่อยู่ในตัวกรองหน้าร้าน)`; }
+// ค่าขนาดทุกตัวที่สินค้านี้ตั้งไว้ (ระดับสินค้า + ไซซ์ + คู่ผสม) ที่ไม่อยู่ในตัวเลือกของหมวดปัจจุบัน
+function offListSizeTags(p){
+  const all = [
+    ...sizeTagsOf(p),
+    ...(p.sizes || []).map(s => s && s.tag),
+    ...(p.variants || []).map(v => v && v.tag),
+  ].flatMap(v => String(v ?? '').split(',')).map(v => v.trim()).filter(Boolean);
+  return [...new Set(all)].filter(t => !isSizeTagValid(p.cat, t));
+}
 // ตัวเลือกใน dropdown = ค่ามาตรฐาน + ค่าเดิมของสินค้านี้ที่ไม่อยู่ในรายการมาตรฐาน (กันค่าเก่าหายเงียบๆ)
 // สินค้าที่มีไซซ์/คู่ผสม: ขนาดระดับสินค้าสรุปจาก tag ของแต่ละแถวให้เอง (คืน null = สินค้าราคาเดียว ให้ใช้ค่าที่ตั้งไว้ตรงๆ)
 // ถ้าทุกแถวตั้ง tag แล้ว ใช้เฉพาะ tag ของแถว ถ้ามีแถว "อัตโนมัติ" ปนอยู่ ยังคงค่าเดิมของสินค้าไว้เป็นตัวสำรองให้แถวนั้น
@@ -61,11 +98,14 @@ function derivedSizeTags(p){
   const tags = rows.map(r => clean(r.tag)).filter(Boolean);
   const all = (rows.length && tags.length === rows.length) ? tags : [...sizeTagsOf(p), ...tags];
   const uniq = [...new Set(all.flatMap(v => clean(v).split(',')).map(clean).filter(Boolean))];
-  return [...BASE_SIZE_TAGS.filter(t => uniq.includes(t)), ...uniq.filter(t => !BASE_SIZE_TAGS.includes(t))];
+  const base = baseSizeTagsFor(p.cat);
+  return [...base.filter(t => uniq.includes(t)), ...uniq.filter(t => !base.includes(t))];
 }
-function sizeChoicesFor(current){
+// ตัวเลือกใน dropdown = ตัวเลือกของหมวดนั้น + ค่าเดิมของสินค้าที่ไม่อยู่ในรายการ (กันค่าเก่าหายเงียบๆ — ค่าพวกนี้จะมีหมายเหตุกำกับ)
+function sizeChoicesFor(current, cat){
+  const base = baseSizeTagsFor(cat);
   const cur = (Array.isArray(current) ? current : [current]).map(v => String(v ?? '').trim()).filter(Boolean);
-  return [...BASE_SIZE_TAGS, ...cur.filter(v => !BASE_SIZE_TAGS.includes(v))];
+  return [...base, ...cur.filter(v => !base.includes(v))];
 }
 
 function toast(msg, isError){
@@ -372,7 +412,8 @@ function visibleProducts(){
     .filter(({ p }) => !q ||
       String(p.name || '').toLowerCase().includes(q) ||
       String(p.id || '').toLowerCase().includes(q) ||
-      String(p.flowerType || '').toLowerCase().includes(q));
+      String(p.flowerType || '').toLowerCase().includes(q))
+    .filter(({ p }) => flowerMatchesFilter(p, filterFlower));
 }
 
 function renderBulk(rows){
@@ -404,8 +445,21 @@ function renderList(){
   $('bulkCat').innerHTML = '<option value="">เปลี่ยนหมวดหมู่เป็น…</option>' +
     cats.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
 
+  // ตัวกรองชนิดดอกไม้ — นับจากสินค้าทั้งหมด (ไม่ขึ้นกับแท็บหมวด) ตัวเลือกที่ไม่มีสินค้าเลยจะไม่แสดง
+  const fCount = f => catalog.filter(p => flowerMatchesFilter(p, f)).length;
+  const noneCount = fCount('__none__'), offCount = fCount('__off__');
+  if(filterFlower === '__none__' && !noneCount) filterFlower = '';
+  if(filterFlower === '__off__' && !offCount) filterFlower = '';
+  if(filterFlower && !['__none__', '__off__'].includes(filterFlower) && !fCount(filterFlower)) filterFlower = '';
+  const flowerOpts = [['', 'ชนิดดอกไม้: ทั้งหมด']];
+  FLOWER_TYPE_TAGS.forEach(t => { const n = fCount(t); if(n) flowerOpts.push([t, `${t} (${n})`]); });
+  if(noneCount) flowerOpts.push(['__none__', `⚠ ยังไม่ระบุชนิด (${noneCount})`]);
+  if(offCount) flowerOpts.push(['__off__', `⚠ ชนิดนอกรายการ (${offCount})`]);
+  $('flowerFilter').innerHTML = flowerOpts.map(([v, l]) => `<option value="${esc(v)}"${v === filterFlower ? ' selected' : ''}>${esc(l)}</option>`).join('');
+  $('flowerFilter').classList.toggle('is-active', !!filterFlower);
+
   const rows = visibleProducts();
-  const filtering = filterCat !== 'ทั้งหมด' || !!searchTerm.trim();
+  const filtering = filterCat !== 'ทั้งหมด' || !!searchTerm.trim() || !!filterFlower;
 
   $('emptyState').hidden = catalog.length > 0;
   $('listCard').hidden = !catalog.length;
@@ -424,6 +478,10 @@ function renderList(){
     const warns = [];
     if(pi.text === '—') warns.push('<span class="tag tag-warn">ยังไม่มีราคา</span>');
     if(!mainImageOf(p)) warns.push('<span class="tag tag-warn">ยังไม่มีรูป</span>');
+    const fs = flowerStateOf(p);
+    const flowerHtml = fs === 'ok' ? `<span class="row-flower">🌸 ${esc(String(p.flowerType).trim())}</span>`
+      : fs === 'off' ? `<span class="tag tag-warn">⚠ ${esc(String(p.flowerType).trim())} (หน้าร้านกรองไม่ได้)</span>`
+      : fs === 'none' ? '<span class="tag tag-warn">ยังไม่ระบุชนิดดอกไม้</span>' : '';
     const vinfo = variantInfoOf(p);
     const isOpen = !!vinfo && expanded.has(expandKey(p, i));
     return `
@@ -433,7 +491,7 @@ function renderList(){
         ${thumbHtml(mainImageOf(p), 'row-thumb')}
         <div class="td-name">
           <p class="row-name">${esc(p.name || '(ยังไม่ตั้งชื่อ)')}${vinfo ? `<button class="multi-badge" data-act="toggle-variants" data-i="${i}" aria-expanded="${isOpen}" aria-controls="vp-${i}" title="กดเพื่อดูแบบทั้งหมด">${vinfo.rows.length} ${vinfo.unit}<span class="caret" aria-hidden="true">▾</span></button>` : ''}</p>
-          <p class="row-sub"><span>${esc(p.id || '—')}</span>${sizeTagText(p) ? `<span>${esc(sizeTagText(p))}</span>` : ''}${warns.join('')}</p>
+          <p class="row-sub"><span>${esc(p.id || '—')}</span>${sizeTagText(p) ? `<span>${esc(sizeTagText(p))}</span>` : ''}${flowerHtml}${warns.join('')}</p>
           ${vinfo && vinfo.summary ? `<p class="row-variants">${esc(vinfo.summary)}</p>` : ''}
         </div>
         <span class="td-status"><button class="badge ${p.ready ? 'badge-ok' : ''}" data-act="ready-toggle" data-i="${i}" title="กดเพื่อสลับสถานะ">${p.ready ? 'พร้อมส่ง' : 'ปกติ'}</button></span>
@@ -619,7 +677,6 @@ function renderMainPanel(){
 
 function renderSidePanel(){
   const cats = [...new Set([...catalog.map(p => p.cat), 'ช่อดอกไม้', 'กระถาง', 'กรอบรูป', 'อื่นๆ'])].filter(Boolean).sort();
-  const flowerTypes = [...new Set(catalog.map(p => p.flowerType).filter(Boolean))].sort();
   const sizes = [...new Set(catalog.flatMap(p => sizeTagsOf(p)))].sort();
 
   $('panelSide').innerHTML = `
@@ -642,25 +699,35 @@ function renderSidePanel(){
       <div class="card-head"><h3>ตัวกรองหน้าร้าน</h3><small>ไม่บังคับ</small></div>
       <label class="field">
         <span>ชนิดดอกไม้</span>
-        <input type="text" data-bind="flowerType" list="dlFlower" value="${esc(draft.flowerType || '')}" placeholder="เช่น ทานตะวัน">
-        <datalist id="dlFlower">${flowerTypes.map(f => `<option value="${esc(f)}">`).join('')}</datalist>
+        <select data-bind="flowerType">
+          <option value="">— ไม่ระบุ —</option>
+          ${[...FLOWER_TYPE_TAGS, ...(draft.flowerType && !FLOWER_TYPE_TAGS.includes(String(draft.flowerType).trim()) ? [String(draft.flowerType).trim()] : [])].map(t => `<option value="${esc(t)}"${String(draft.flowerType || '').trim() === t ? ' selected' : ''}>${esc(FLOWER_TYPE_TAGS.includes(t) ? t : t + ' (ไม่อยู่ในตัวกรองหน้าร้าน)')}</option>`).join('')}
+        </select>
+        ${draft.flowerType && !FLOWER_TYPE_TAGS.includes(String(draft.flowerType).trim()) ? '<p class="field-hint size-warn">⚠ ค่านี้หน้าร้านไม่มีให้กรอง — เลือกชนิดที่ถูกต้องจากรายการ</p>' : ''}
       </label>
-      ${priceMode(draft) === 'single' ? `
+      ${!CATEGORY_SIZE_TAGS[String(draft.cat || '').trim()] && !offListSizeTags(draft).length ? `
+      <div class="field" style="margin-top:12px">
+        <span>ขนาด/ป้ายกำกับ</span>
+        <p class="size-auto">หมวด “${esc(draft.cat || '—')}” ไม่มีตัวกรองขนาดในหน้าร้าน จึงไม่ต้องตั้งค่านี้</p>
+      </div>
+      ` : priceMode(draft) === 'single' ? `
       <div class="field" style="margin-top:12px">
         <span>ขนาด/ป้ายกำกับ</span>
         <details class="menu size-menu" id="sizeMenu">
           <summary class="size-summary" id="sizeSummary">${esc(sizeTagText(draft)) || 'เลือกขนาด/ป้ายกำกับ'}</summary>
           <div class="menu-pop size-pop">
-            ${sizeChoicesFor(sizeTagsOf(draft)).map(t => `<label class="size-opt"><input type="checkbox" data-size-tag value="${esc(t)}"${sizeTagsOf(draft).includes(t) ? ' checked' : ''}><span>${esc(t)}</span></label>`).join('')}
+            ${sizeChoicesFor(sizeTagsOf(draft), draft.cat).map(t => `<label class="size-opt${isSizeTagValid(draft.cat, t) ? '' : ' is-off'}"><input type="checkbox" data-size-tag value="${esc(t)}"${sizeTagsOf(draft).includes(t) ? ' checked' : ''}><span>${esc(sizeTagLabel(draft.cat, t))}</span></label>`).join('')}
           </div>
         </details>
       </div>
-      <p class="field-hint">ติ๊กได้มากกว่า 1 ค่า เช่น “กลาง” + “ใส่เงิน” สินค้าจะโผล่ทั้งตอนกรอง “กลาง” และ “ใส่เงิน”</p>
+      <p class="field-hint">ติ๊กได้มากกว่า 1 ค่า${draft.cat === 'ช่อดอกไม้' ? ' เช่น “กลาง” + “ใส่เงิน” สินค้าจะโผล่ทั้งตอนกรอง “กลาง” และ “ใส่เงิน”' : ' สินค้าจะโผล่ในตัวกรองของทุกค่าที่ติ๊ก'}</p>
+      ${offListSizeTags(draft).length ? `<p class="field-hint size-warn">⚠ มีค่า “${esc(offListSizeTags(draft).join(', '))}” ที่หน้าร้านไม่มีให้กรองในหมวดนี้ — ติ๊กออกแล้วเลือกค่าที่ถูกต้อง</p>` : ''}
       ` : `
       <div class="field" style="margin-top:12px">
         <span>ขนาด/ป้ายกำกับ</span>
         <p class="size-auto">ตั้งที่แต่ละ${priceMode(draft) === 'sizes' ? 'ไซซ์' : 'คู่ผสม'}ในการ์ด “ราคา” ทางซ้าย · ตอนนี้: <b id="sizeAutoText">${esc((derivedSizeTags(draft) || []).join(', ') || 'ยังไม่ได้ตั้ง')}</b></p>
-        <p class="field-hint">ระบบสรุปให้เองตอนบันทึก ไม่ต้องกรอกช่องนี้ แถวที่เลือก “อัตโนมัติ” จะใช้คำว่า “ใส่เงิน” ในชื่อเป็นตัวตัดสิน</p>
+        <p class="field-hint">ระบบสรุปให้เองตอนบันทึก ไม่ต้องกรอกช่องนี้ ${draft.cat === 'ช่อดอกไม้' ? 'แถวที่เลือก “อัตโนมัติ” จะใช้คำว่า “ใส่เงิน” ในชื่อเป็นตัวตัดสิน' : 'แถวที่ไม่ได้เลือกค่า จะไม่ถูกจัดเข้าตัวกรองขนาดใดๆ ในหน้าร้าน'}</p>
+        ${offListSizeTags(draft).length ? `<p class="field-hint size-warn">⚠ มีค่า “${esc(offListSizeTags(draft).join(', '))}” ที่หน้าร้านไม่มีให้กรองในหมวดนี้ — แก้ที่การ์ด “ราคา”</p>` : ''}
       </div>`}
     </div>`;
 }
@@ -810,7 +877,7 @@ function renderPricePanel(){
               <span>ตัวกรองขนาด (หน้าร้าน)</span>
               <select data-bind="sizes.${k}.tag">
                 <option value="">อัตโนมัติ (ตามชื่อ)</option>
-                ${sizeChoicesFor(s.tag).map(t => `<option value="${esc(t)}"${(s.tag || '') === t ? ' selected' : ''}>${esc(t)}</option>`).join('')}
+                ${sizeChoicesFor(s.tag, draft.cat).map(t => `<option value="${esc(t)}"${(s.tag || '') === t ? ' selected' : ''}>${esc(sizeTagLabel(draft.cat, t))}</option>`).join('')}
               </select>
             </label>
             <div class="img-field">
@@ -893,7 +960,7 @@ function renderPricePanel(){
                   <td><input type="number" min="0" step="1" data-combo-price="${ci}" value="${v ? (num(v.price) || '') : ''}"${v ? '' : ' disabled'}></td>
                   <td><input type="text" data-combo-image="${ci}" value="${v ? esc(v.image || '') : ''}" placeholder="images/…"${v ? '' : ' disabled'}></td>
                   <td style="text-align:center"><input type="checkbox" data-combo-ready="${ci}"${v && v.ready ? ' checked' : ''}${v ? '' : ' disabled'}></td>
-                  <td><select data-combo-tag="${ci}"${v ? '' : ' disabled'}>${COMBO_TAG_CHOICES.map(([val, label]) => `<option value="${esc(val)}"${(v && v.tag || '') === val ? ' selected' : ''}>${esc(label)}</option>`).join('')}</select></td>
+                  <td><select data-combo-tag="${ci}"${v ? '' : ' disabled'}>${comboTagChoices(draft.cat, v && v.tag).map(([val, label]) => `<option value="${esc(val)}"${(v && v.tag || '') === val ? ' selected' : ''}>${esc(label)}</option>`).join('')}</select></td>
                 </tr>`;
               }).join('')}
             </tbody>
@@ -966,7 +1033,11 @@ function renderAddonsPanel(){
 /* ───────────────── ผูกค่าจากช่องกรอกเข้ากับ draft ───────────────── */
 
 // ตัวเลือกตัวกรองขนาดต่อ "คู่ผสม" — ค่าว่าง = อัตโนมัติ (หน้าร้านเดาจากคำว่า "ใส่เงิน" ในชื่อแบบ เหมือนเดิม)
-const COMBO_TAG_CHOICES = [['', 'อัตโนมัติ (ตามชื่อ)'], ['เล็ก', 'เล็ก'], ['กลาง', 'กลาง'], ['ใหญ่', 'ใหญ่'], ['ใส่เงิน', 'ใส่เงิน']];
+// ตัวเลือก "ตัวกรองขนาด" ของแต่ละคู่ผสม ตามหมวดของสินค้า (+ ค่าเดิมที่ตั้งไว้แล้วแต่ไม่อยู่ในหมวด จะมีหมายเหตุกำกับ)
+function comboTagChoices(cat, current){
+  const auto = ['', cat === 'ช่อดอกไม้' ? 'อัตโนมัติ (ตามชื่อ)' : 'ไม่กำหนด'];
+  return [auto, ...sizeChoicesFor(current ? [current] : [], cat).map(t => [t, sizeTagLabel(cat, t)])];
+}
 
 function onDraftInput(e){
   const el = e.target;
@@ -979,6 +1050,15 @@ function onDraftInput(e){
     else if(type === 'number') val = num(el.value);
     else val = el.value;
     setPath(draft, el.dataset.bind, val);
+
+    // เปลี่ยนหมวด → ตัวเลือกขนาดเปลี่ยนตาม ต้องวาดแผงข้าง/การ์ดราคาใหม่ และเตือนถ้ามีค่าเดิมที่ไม่เข้าหมวดใหม่
+    if(el.dataset.bind === 'cat'){
+      renderSidePanel();
+      renderPricePanel();
+      const bad = offListSizeTags(draft);
+      if(bad.length) toast(`ค่าขนาด “${bad.join(', ')}” ไม่อยู่ในตัวกรองของหมวด ${val} กรุณาเลือกใหม่`, true);
+      return;
+    }
 
     // อัปเดตรูปตัวอย่างข้างช่องทันทีโดยไม่ต้องวาดใหม่ทั้งแท็บ (ไม่งั้นเคอร์เซอร์จะเด้ง)
     if(/(^|\.)image$|(^|\.)images\.\d+$/.test(el.dataset.bind)){
@@ -1367,6 +1447,7 @@ $('logoutBtn').addEventListener('click', async () => {
 });
 
 $('searchBox').addEventListener('input', e => { searchTerm = e.target.value; renderList(); });
+$('flowerFilter').addEventListener('change', e => { filterFlower = e.target.value; renderList(); });
 
 $('catChips').addEventListener('click', e => {
   const chip = e.target.closest('[data-cat]');

@@ -796,9 +796,11 @@ function scrollToCatalogTop(){
 // กดแท็บหมวดหมู่บนแถบ quick-nav ด้านบน = "กระโดดไปหมวดนั้นหมวดเดียว" (แทนที่ตัวเลือกหมวดเดิมทั้งหมด)
 // (ชิปหมวดหมู่ในแผงตัวกรองก็เลือกได้ทีละหมวดเช่นกัน — ดู toggleCategory)
 function selectCategory(c){
+  const prevCat = activeCats.size === 1 ? [...activeCats][0] : null;
   activeCats = c === 'ทั้งหมด' ? new Set() : new Set([c]);
   activeSizes = new Set();
-  if(c !== 'ช่อดอกไม้') activeFlowerType = 'ทั้งหมด';
+  // ชนิดดอกไม้ใช้ได้ทุกหมวด — ย้ายไปหมวดอื่นแล้วล้างตัวกรองชนิด (กดหมวดเดิมซ้ำยังคงค่าไว้)
+  if(c === 'ทั้งหมด' || c !== prevCat) activeFlowerType = 'ทั้งหมด';
   scrollSpyCat = c;
   renderNav();
   renderCatalog();
@@ -812,7 +814,7 @@ function selectCategory(c){
 function toggleCategory(c){
   activeCats = activeCats.has(c) ? new Set() : new Set([c]);
   activeSizes = new Set();
-  if(!activeCats.has('ช่อดอกไม้')) activeFlowerType = 'ทั้งหมด';
+  activeFlowerType = 'ทั้งหมด';
   renderNav();
   renderCatalog();
   renderFilterSidebar();
@@ -1052,10 +1054,13 @@ function buildFilterPanelHtml(state, mode){
       ).join('')}</div>
     </div>` : '';
 
-  const flowerHtml = state.cats.has('ช่อดอกไม้') ? `
+  // ช่อดอกไม้: โชว์ครบทุกชนิดเสมอ · หมวดอื่น: โชว์เฉพาะชนิดที่มีสินค้าในหมวดนั้นจริง (ไม่มีเลย = ไม่โชว์กลุ่มนี้)
+  const flowerList = state.cats.has('ช่อดอกไม้') ? FLOWER_TYPES
+    : ['ทั้งหมด', ...FLOWER_TYPES.slice(1).filter(t => PRODUCTS.some(p => state.cats.has(p.cat) && p.flowerType === t))];
+  const flowerHtml = (state.cats.size > 0 && flowerList.length > 1) ? `
     <div class="filter-group">
       <div class="filter-group-title">🌸 ชนิดดอกไม้</div>
-      <div class="filter-pills">${FLOWER_TYPES.map(t =>
+      <div class="filter-pills">${flowerList.map(t =>
         `<button class="filter-pill ${t===state.flowerType?'active':''}" onclick="${setFlowerFn}('${t}')">${t}</button>`
       ).join('')}</div>
     </div>` : '';
@@ -1153,7 +1158,7 @@ function closeFilterSheet(){
 function toggleDraftCategory(c){
   filterDraft.cats = filterDraft.cats.has(c) ? new Set() : new Set([c]);
   filterDraft.sizes = new Set();
-  if(!filterDraft.cats.has('ช่อดอกไม้')) filterDraft.flowerType = 'ทั้งหมด';
+  filterDraft.flowerType = 'ทั้งหมด';
   renderFilterSheetBody();
 }
 function clearDraftCategorySelection(){
@@ -1334,7 +1339,7 @@ function renderCatalog(){
     const baseProducts = PRODUCTS.filter(p =>
       p.cat === cat
       && matchesSearch(p)
-      && (cat !== 'ช่อดอกไม้' || activeFlowerType === 'ทั้งหมด' || p.flowerType === activeFlowerType)
+      && (activeFlowerType === 'ทั้งหมด' || p.flowerType === activeFlowerType)
     );
     let items, cardsHtml;
     if(showAllVariantsSplit){

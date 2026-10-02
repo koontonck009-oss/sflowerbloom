@@ -836,3 +836,10 @@ body{ background:var(--bg); color:var(--ink); }
   .vp-grid{ grid-template-columns:1fr; }
   .td-name .row-variants{ white-space:normal; }
 }
+.size-opt.is-off{ color:var(--ink-3); }
+.size-warn{ color:#b45309; font-weight:500; }
+
+.row-flower{ color:var(--ink-2); }
+.flower-filter{ padding:9px 10px; max-width:220px; }
+.flower-filter.is-active{ border-color:var(--brand); background:var(--brand-soft); font-weight:500; }
+@media (max-width:760px){ .flower-filter{ flex:1 1 100%; max-width:none; font-size:16px; } }

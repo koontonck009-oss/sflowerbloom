@@ -502,7 +502,7 @@ h1,h2,h3,.display{font-family:'Kanit',sans-serif; font-weight:600;}
 }
 
 /* ---------- Product grid ---------- */
-main{padding:18px 6vw 80px;}
+main{padding:18px 3vw 80px;}
 
 /* ---------- Unified filter panel (shared building blocks: sidebar + bottom sheet) ---------- */
 .filter-group{margin-bottom:20px;}
@@ -644,7 +644,7 @@ main{padding:18px 6vw 80px;}
   /* แท็บหมวดหมู่ด้านบนซ้ำกับ sidebar ซ้ายแล้ว เลยตัดออกบนจอคอม */
   .cat-nav{display:none;}
 
-  .catalog-layout{display:flex; align-items:flex-start; gap:28px; padding:0 6vw;}
+  .catalog-layout{display:flex; align-items:flex-start; gap:20px; padding:0 3vw;}
   main{padding:10px 0 80px; flex:1; min-width:0;}
   .filter-sidebar{
     display:block; width:220px; flex-shrink:0;
@@ -666,7 +666,7 @@ main{padding:18px 6vw 80px;}
   }
 
   /* การ์ดสินค้า/กริด: แบนลง เส้นขอบบางแทนเงาหนัก แน่นขึ้น */
-  .grid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:16px;}
+  .grid{grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:8px;}
   .card{border-radius:10px; box-shadow:none; border:1px solid var(--line);}
   .card:hover{box-shadow:0 4px 14px rgba(59,18,48,0.10);}
 }
@@ -1307,7 +1307,7 @@ footer{
   .cat-btn{padding:12px 12px 10px; font-size:13.5px;}
 
   /* 2 columns of products on mobile instead of 1 */
-  .grid{grid-template-columns:1fr 1fr; gap:12px;}
+  .grid{grid-template-columns:1fr 1fr; gap:6px;}
   .card{border-radius:16px;}
   .card-body{padding:10px 10px 12px;}
   .badge-ready, .badge-new{font-size:9.5px; padding:3px 8px; top:6px;}
