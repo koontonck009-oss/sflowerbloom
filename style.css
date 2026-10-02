@@ -505,27 +505,76 @@ h1,h2,h3,.display{font-family:'Kanit',sans-serif; font-weight:600;}
 main{padding:18px 3vw 80px;}
 
 /* ---------- Unified filter panel (shared building blocks: sidebar + bottom sheet) ---------- */
-.filter-group{margin-bottom:20px;}
-.filter-group:last-of-type{margin-bottom:0;}
+.filter-group{margin:0; padding:14px 0; border-top:1px solid var(--line);}
+.filter-group:first-child, .filter-sidebar-head + .filter-group{border-top:none; padding-top:2px;}
 .filter-group-title{
-  font-family:'Kanit'; font-weight:700; font-size:13.5px; color:var(--plum); margin-bottom:10px;
+  display:flex; align-items:center; gap:6px;
+  font-family:'Kanit'; font-weight:700; font-size:13px; color:var(--plum); margin-bottom:9px;
 }
-.filter-pills{display:flex; gap:8px; flex-wrap:wrap;}
+/* ตัวเลขจำนวนที่เลือกไว้ในกลุ่มนั้น */
+.fg-count{
+  min-width:18px; height:18px; padding:0 5px; border-radius:999px; background:var(--sage); color:#fff;
+  font-size:11px; font-weight:600; display:inline-flex; align-items:center; justify-content:center;
+}
+.filter-pills{display:flex; gap:6px; flex-wrap:wrap;}
 .filter-pill{
   border:1.5px solid var(--line); background:#fff; color:var(--plum);
-  padding:7px 14px; border-radius:999px; font-family:'Kanit'; font-weight:600; font-size:13px;
-  cursor:pointer; white-space:nowrap;
+  padding:0 12px; min-height:30px; border-radius:999px; font-family:'Kanit'; font-weight:500; font-size:12.5px;
+  cursor:pointer; white-space:nowrap; display:inline-flex; align-items:center; gap:4px;
 }
+.filter-pill:hover{border-color:var(--sage);}
 .filter-pill.active{background:var(--sage); border-color:var(--sage); color:#fff;}
-.filter-ready-toggle{
-  display:inline-flex; align-items:center; gap:8px;
-  font-family:'Kanit'; font-weight:700; font-size:13.5px; color:var(--sage-dark);
-  cursor:pointer; user-select:none; margin-top:4px;
+/* ตัวเลือกที่เลือกได้หลายอัน มีเครื่องหมายถูกเมื่อเลือก */
+.filter-pill.is-multi.active::before{content:'✓'; font-size:11px; line-height:1;}
+.filter-pill:focus-visible, .fseg button:focus-visible{outline:2px solid var(--sage); outline-offset:2px;}
+
+/* เรียงตามราคา: ปุ่มคู่แถวเดียว */
+.fseg{display:flex; border:1.5px solid var(--line); border-radius:10px; overflow:hidden; background:#fff;}
+.fseg button{
+  flex:1; min-width:0; border:none; background:transparent; color:var(--plum); cursor:pointer;
+  font-family:'Kanit'; font-weight:500; font-size:12.5px; min-height:32px; padding:0 6px; white-space:nowrap;
 }
-.filter-ready-toggle input{width:16px; height:16px; accent-color:var(--sage); cursor:pointer;}
+.fseg button + button{border-left:1.5px solid var(--line);}
+.fseg button.active{background:var(--sage); color:#fff;}
+
+/* ตัวเลือกเปิด-ปิด (พร้อมส่ง / รายการโปรด / แยกการ์ด) */
+.fswitch{
+  display:flex; align-items:center; justify-content:space-between; gap:10px; padding:7px 0;
+  font-family:'Kanit'; font-weight:500; font-size:13px; color:var(--plum); cursor:pointer; user-select:none;
+}
+.fswitch-input{
+  -webkit-appearance:none; appearance:none; flex-shrink:0; margin:0; cursor:pointer;
+  width:36px; height:20px; border-radius:999px; background:rgba(59,18,48,0.18); position:relative; transition:background .15s;
+}
+.fswitch-input::after{
+  content:''; position:absolute; top:2px; left:2px; width:16px; height:16px; border-radius:50%;
+  background:#fff; box-shadow:0 1px 3px rgba(0,0,0,0.25); transition:transform .15s;
+}
+.fswitch-input:checked{background:var(--sage);}
+.fswitch-input:checked::after{transform:translateX(16px);}
+.fswitch-input:focus-visible{outline:2px solid var(--sage); outline-offset:2px;}
+@media (prefers-reduced-motion:reduce){ .fswitch-input, .fswitch-input::after{transition:none;} }
+
+/* กลุ่มที่พับได้ (แผงมือถือ) */
+.fg-details > summary{cursor:pointer; list-style:none; margin-bottom:0;}
+.fg-details > summary::-webkit-details-marker{display:none;}
+.fg-details > summary::after{
+  content:''; margin-left:auto; width:7px; height:7px; flex-shrink:0;
+  border-right:2px solid var(--rose-dark); border-bottom:2px solid var(--rose-dark);
+  transform:rotate(45deg) translateY(-2px); transition:transform .15s;
+}
+.fg-details[open] > summary{margin-bottom:9px;}
+.fg-details[open] > summary::after{transform:rotate(-135deg) translateY(-2px);}
+
+/* มือถือ: ปุ่มกดใหญ่ขึ้นให้กดง่ายด้วยนิ้ว */
+@media (max-width:859px){
+  .filter-pill{min-height:36px; padding:0 14px; font-size:13px;}
+  .fseg button{min-height:38px; font-size:13px;}
+  .fswitch{padding:10px 0; font-size:14px;}
+}
 
 /* ---------- ราคา: แถบเลื่อนกำหนดเอง (dual-handle range slider) ---------- */
-.price-slider-wrap{margin-top:12px;}
+.price-slider-wrap{margin-top:0;}
 .price-slider{position:relative; height:36px;}
 .price-slider-track{
   position:absolute; top:50%; left:0; right:0; height:4px;
@@ -567,7 +616,7 @@ main{padding:18px 3vw 80px;}
 .price-num-input{
   width:100%; min-width:0; border:none; outline:none; background:transparent;
   font-family:'Kanit'; font-weight:700; font-size:13.5px; color:var(--sage-dark);
-  padding:8px 8px; text-align:center;
+  padding:6px 8px; text-align:center;
   -moz-appearance:textfield;
 }
 .price-num-input::-webkit-outer-spin-button,
@@ -602,7 +651,7 @@ main{padding:18px 3vw 80px;}
   border:none; background:var(--cream); color:var(--plum); width:30px; height:30px;
   border-radius:50%; font-size:15px; cursor:pointer; display:flex; align-items:center; justify-content:center;
 }
-.filter-sheet-body{padding:18px 20px; overflow-y:auto; flex:1;}
+.filter-sheet-body{padding:12px 20px 8px; overflow-y:auto; flex:1;}
 .filter-sheet-footer{
   display:flex; gap:10px; padding:14px 20px; border-top:1px solid var(--line); flex-shrink:0;
   padding-bottom:calc(14px + env(safe-area-inset-bottom));
@@ -648,9 +697,12 @@ main{padding:18px 3vw 80px;}
   main{padding:10px 0 80px; flex:1; min-width:0;}
   .filter-sidebar{
     display:block; width:220px; flex-shrink:0;
-    padding:18px;
+    padding:0 18px 16px;
   }
-  .filter-sidebar-head{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:16px;}
+  .filter-sidebar-head{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:14px 0 10px;
+  }
   .filter-sidebar-title{font-size:16px; color:var(--plum); margin:0;}
   .filter-sidebar-clear{
     border:none; background:transparent; color:var(--rose-dark);

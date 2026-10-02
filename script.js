@@ -782,6 +782,8 @@ function updateStickyOffsets(){
   const bar = document.getElementById('searchCartBar');
   const nav = document.getElementById('catNav');
   if(bar && nav) nav.style.top = bar.offsetHeight + 'px';
+  // ใช้ตรึงแถบตัวกรองด้านข้าง (เดสก์ท็อป) ให้อยู่ใต้แถบค้นหาพอดี
+  document.documentElement.style.setProperty('--bar-h', (bar ? bar.offsetHeight : 64) + 'px');
 }
 window.addEventListener('resize', updateStickyOffsets);
 // เลื่อนหน้าไปบนสุดของรายการสินค้า (ใช้ร่วมกันทุกจุดที่เปลี่ยนตัวกรองแล้วอยากเลื่อนให้เห็นผลลัพธ์)
@@ -799,8 +801,8 @@ function selectCategory(c){
   const prevCat = activeCats.size === 1 ? [...activeCats][0] : null;
   activeCats = c === 'ทั้งหมด' ? new Set() : new Set([c]);
   activeSizes = new Set();
-  // ชนิดดอกไม้ใช้ได้ทุกหมวด — ย้ายไปหมวดอื่นแล้วล้างตัวกรองชนิด (กดหมวดเดิมซ้ำยังคงค่าไว้)
-  if(c === 'ทั้งหมด' || c !== prevCat) activeFlowerType = 'ทั้งหมด';
+  // ชนิดดอกไม้เลือกแยกจากหมวด — คงไว้เฉพาะชนิดที่ยังมีในหมวดใหม่
+  activeFlowerTypes = pruneFlowerTypes(activeFlowerTypes, activeCats);
   scrollSpyCat = c;
   renderNav();
   renderCatalog();
@@ -814,7 +816,7 @@ function selectCategory(c){
 function toggleCategory(c){
   activeCats = activeCats.has(c) ? new Set() : new Set([c]);
   activeSizes = new Set();
-  activeFlowerType = 'ทั้งหมด';
+  activeFlowerTypes = pruneFlowerTypes(activeFlowerTypes, activeCats);
   renderNav();
   renderCatalog();
   renderFilterSidebar();
@@ -824,7 +826,6 @@ function toggleCategory(c){
 function clearCategorySelection(){
   activeCats = new Set();
   activeSizes = new Set();
-  activeFlowerType = 'ทั้งหมด';
   renderNav();
   renderCatalog();
   renderFilterSidebar();
@@ -865,9 +866,25 @@ function setSize(s){
 }
 
 const FLOWER_TYPES = ['ทั้งหมด','ดอกไม้คละชนิด','กุหลาบ','ทานตะวัน','ทิวลิป','ไฮเดรนเยีย','เดซี่','ลิลลี่','เยอบีร่า'];
-let activeFlowerType = 'ทั้งหมด';
+// ชนิดดอกไม้ที่เลือก — เลือกได้หลายชนิดพร้อมกัน (Set ว่าง = ทุกชนิด) ใช้ได้ทุกหมวด ไม่ต้องเลือกหมวดก่อน
+let activeFlowerTypes = new Set();
+function flowerMatches(p, set = activeFlowerTypes){
+  return !set || set.size === 0 || set.has(p.flowerType);
+}
+// ชนิดดอกไม้ที่มีสินค้าอยู่จริงในขอบเขตที่เลือก (ไม่เลือกหมวด = ทั้งร้าน)
+function flowerTypesInScope(catsSet){
+  return FLOWER_TYPES.slice(1).filter(t => PRODUCTS.some(p => p.flowerType === t && (!catsSet || catsSet.size === 0 || catsSet.has(p.cat))));
+}
+// เปลี่ยนหมวดแล้ว ตัดชนิดที่ไม่มีในหมวดใหม่ทิ้ง (ชนิดที่ยังมีอยู่ในหมวดใหม่จะคงไว้)
+function pruneFlowerTypes(flowerSet, catsSet){
+  const ok = new Set(flowerTypesInScope(catsSet));
+  return new Set([...flowerSet].filter(t => ok.has(t)));
+}
+function toggleFlowerIn(set, t){
+  if(set.has(t)) set.delete(t); else set.add(t);
+}
 function setFlowerType(t){
-  activeFlowerType = t;
+  if(t === 'ทั้งหมด') activeFlowerTypes = new Set(); else toggleFlowerIn(activeFlowerTypes, t);
   renderCatalog();
   renderFilterSidebar();
   updateFilterBadge();
@@ -957,9 +974,11 @@ function applyPriceSliderValues(mode, minVal, maxVal){
     customPriceMax = maxVal;
     renderCatalog();
     updateFilterBadge();
+    syncSidebarClear();
   } else {
     filterDraft.customMin = minVal;
     filterDraft.customMax = maxVal;
+    updateSheetApplyLabel();
   }
 }
 function activePriceBounds(){
@@ -1018,6 +1037,48 @@ function unionSizeList(catsSet){
   return ['ทั้งหมด', ...values];
 }
 
+// สถานะเปิด/ปิดของกลุ่มที่พับได้ในแผงมือถือ (ต้องจำไว้นอกตัว HTML เพราะแผงถูกวาดใหม่ทุกครั้งที่กดเลือก)
+let filterGroupOpen = { sort:false, more:false };
+
+// มีตัวกรองใดต่างจากค่าเริ่มต้นหรือไม่ (ใช้โชว์/ซ่อนปุ่ม "ล้างตัวกรอง")
+function filtersAreActive(st){
+  return st.cats.size > 0 || st.flowerTypes.size > 0 || (st.sizes && st.sizes.size > 0)
+    || st.customMin !== PRICE_SLIDER_MIN || st.customMax !== PRICE_SLIDER_MAX
+    || st.sortOrder !== 'none' || st.ready || st.favorites || st.allSplit;
+}
+function sidebarState(){
+  return {
+    cats: activeCats, customMin: customPriceMin, customMax: customPriceMax,
+    sortOrder: activeSortOrder, ready: showReadyOnly, favorites: showFavoritesOnly,
+    allSplit: showAllVariantsSplit, sizes: activeSizes, flowerTypes: activeFlowerTypes
+  };
+}
+// ซ่อน/โชว์ปุ่มล้างตัวกรองบนแถบข้างโดยไม่วาดแผงใหม่ (ใช้ตอนลากแถบราคา กันแถบกระตุก)
+function syncSidebarClear(){
+  const btn = document.querySelector('#filterSidebar .filter-sidebar-clear');
+  if(btn) btn.hidden = !filtersAreActive(sidebarState());
+}
+// นับผลลัพธ์ตามตัวกรองในแผงมือถือ (ตรรกะเดียวกับ renderCatalog ส่วนรายหมวด)
+function countResultsForState(st){
+  const range = { min: st.customMin, max: st.customMax };
+  const cats = st.cats.size ? CATS.slice(1).filter(c => st.cats.has(c)) : CATS.slice(1);
+  let total = 0;
+  cats.forEach(cat => {
+    const opts = { range, sizes: CATEGORY_SIZES[cat] ? st.sizes : new Set(), readyOnly: st.ready, favOnly: st.favorites };
+    PRODUCTS.filter(p => p.cat === cat && matchesSearch(p) && flowerMatches(p, st.flowerTypes)).forEach(p => {
+      const passing = allVariantsOf(p).filter(v => variantPasses(p, v, opts));
+      total += st.allSplit ? passing.length : (passing.length ? 1 : 0);
+    });
+  });
+  return total;
+}
+function updateSheetApplyLabel(){
+  const btn = document.querySelector('.filter-sheet-footer .filter-apply-btn');
+  if(!btn || !filterDraft) return;
+  const n = countResultsForState(filterDraft);
+  btn.textContent = n ? `แสดง ${n} รายการ` : 'ไม่พบสินค้า';
+}
+
 function buildFilterPanelHtml(state, mode){
   // mode: 'sidebar' (live — pill click applies immediately) or 'sheet' (draft)
   const setReadyFn = mode === 'sidebar' ? 'toggleReadyOnly' : 'setDraftReady';
@@ -1028,87 +1089,70 @@ function buildFilterPanelHtml(state, mode){
   const toggleCatFn = mode === 'sidebar' ? 'toggleCategory' : 'toggleDraftCategory';
   const clearCatFn = mode === 'sidebar' ? 'clearCategorySelection' : 'clearDraftCategorySelection';
 
-  // หมวดหมู่ — เลือกได้มากกว่า 1 พร้อมกัน (multi-select) "ทั้งหมด" คือ "ไม่เลือกหมวดไหนเลย"
+  // กลุ่มตัวกรอง: หัวข้อ + ตัวเลขจำนวนที่เลือก · บนมือถือกลุ่มที่ key ไว้พับได้ (เปิดเองเมื่อมีค่าที่เลือกอยู่)
+  const group = (title, count, body, key, forceOpen) => {
+    const t = `${title}${count ? `<span class="fg-count">${count}</span>` : ''}`;
+    if(!key || mode !== 'sheet') return `<div class="filter-group"><div class="filter-group-title">${t}</div>${body}</div>`;
+    const open = filterGroupOpen[key] || forceOpen;
+    return `<details class="filter-group fg-details"${open ? ' open' : ''} ontoggle="filterGroupOpen['${key}']=this.open"><summary class="filter-group-title">${t}</summary>${body}</details>`;
+  };
+
+  // หมวดหมู่ — เลือกได้ทีละหมวด "ทั้งหมด" คือ "ไม่เลือกหมวดไหนเลย"
   const catHtml = CATS.map(c => {
     const isActive = c === 'ทั้งหมด' ? state.cats.size === 0 : state.cats.has(c);
     const clickFn = c === 'ทั้งหมด' ? clearCatFn + '()' : `${toggleCatFn}('${c}')`;
-    return `<button class="filter-pill ${isActive?'active':''}" onclick="${clickFn}">${c}</button>`;
+    return `<button class="filter-pill ${isActive?'active':''}" aria-pressed="${isActive}" onclick="${clickFn}">${c}</button>`;
   }).join('');
-  const priceSliderHtml = renderPriceSliderHtml(state, mode);
-  const sortHtml = `
-    <div class="filter-group">
-      <div class="filter-group-title">เรียงตาม</div>
-      <div class="filter-pills">
-        <button class="filter-pill ${state.sortOrder==='asc'?'active':''}" onclick="${setSortFn}('asc')">ราคา: น้อย → มาก</button>
-        <button class="filter-pill ${state.sortOrder==='desc'?'active':''}" onclick="${setSortFn}('desc')">ราคา: มาก → น้อย</button>
-      </div>
-    </div>`;
 
-  // ตัวเลือกขนาด — ถ้าเลือกหลายหมวดพร้อมกัน จะรวม (union) ตัวเลือกขนาดของทุกหมวดที่เลือกไว้
+  // ตัวเลือกขนาด — เลือกได้หลายค่า ถ้าเลือกหลายหมวดจะรวมตัวเลือกของทุกหมวด
   const sizeList = unionSizeList(state.cats);
-  const sizeHtml = sizeList ? `
-    <div class="filter-group">
-      <div class="filter-group-title">📏 ขนาด</div>
-      <div class="filter-pills">${sizeList.map(s =>
-        `<button class="filter-pill ${(s==='ทั้งหมด' ? !(state.sizes && state.sizes.size) : !!(state.sizes && state.sizes.has(s)))?'active':''}" onclick="${mode==='sidebar' ? `setSize('${s}')` : `setDraftSize('${s}')`}">${s}</button>`
-      ).join('')}</div>
-    </div>` : '';
+  const sizeHtml = sizeList ? group('📏 ขนาด', state.sizes ? state.sizes.size : 0,
+    `<div class="filter-pills">${sizeList.map(s => {
+      const on = s === 'ทั้งหมด' ? !(state.sizes && state.sizes.size) : !!(state.sizes && state.sizes.has(s));
+      return `<button class="filter-pill${s === 'ทั้งหมด' ? '' : ' is-multi'} ${on?'active':''}" aria-pressed="${on}" onclick="${mode==='sidebar' ? `setSize('${s}')` : `setDraftSize('${s}')`}">${s}</button>`;
+    }).join('')}</div>`) : '';
 
-  // ช่อดอกไม้: โชว์ครบทุกชนิดเสมอ · หมวดอื่น: โชว์เฉพาะชนิดที่มีสินค้าในหมวดนั้นจริง (ไม่มีเลย = ไม่โชว์กลุ่มนี้)
-  const flowerList = state.cats.has('ช่อดอกไม้') ? FLOWER_TYPES
-    : ['ทั้งหมด', ...FLOWER_TYPES.slice(1).filter(t => PRODUCTS.some(p => state.cats.has(p.cat) && p.flowerType === t))];
-  const flowerHtml = (state.cats.size > 0 && flowerList.length > 1) ? `
-    <div class="filter-group">
-      <div class="filter-group-title">🌸 ชนิดดอกไม้</div>
-      <div class="filter-pills">${flowerList.map(t =>
-        `<button class="filter-pill ${t===state.flowerType?'active':''}" onclick="${setFlowerFn}('${t}')">${t}</button>`
-      ).join('')}</div>
-    </div>` : '';
+  // ชนิดดอกไม้ — แสดงตลอด เลือกได้หลายชนิด ("ทั้งหมด" = ไม่เลือกชนิดไหนเลย)
+  // รายการชนิดมาจากสินค้าที่มีจริงในหมวดที่เลือก (ไม่เลือกหมวด = ทั้งร้าน)
+  const flowerList = ['ทั้งหมด', ...flowerTypesInScope(state.cats)];
+  const flowerHtml = group('🌸 ชนิดดอกไม้', state.flowerTypes.size,
+    `<div class="filter-pills">${flowerList.map(t => {
+      const on = t === 'ทั้งหมด' ? state.flowerTypes.size === 0 : state.flowerTypes.has(t);
+      return `<button class="filter-pill${t === 'ทั้งหมด' ? '' : ' is-multi'} ${on?'active':''}" aria-pressed="${on}" onclick="${setFlowerFn}('${t}')">${t}</button>`;
+    }).join('')}</div>`);
 
-  return `
-    <div class="filter-group">
-      <div class="filter-group-title">หมวดหมู่</div>
-      <div class="filter-pills">${catHtml}</div>
-    </div>
-    <div class="filter-group">
-      <div class="filter-group-title">ช่วงราคา</div>
-      ${priceSliderHtml}
-    </div>
-    ${sortHtml}
-    ${sizeHtml}
-    ${flowerHtml}
-    <div class="filter-group">
-      <label class="filter-ready-toggle">
-        <input type="checkbox" ${state.ready?'checked':''} onchange="${setReadyFn}(this.checked)"> ⚡ พร้อมส่งเท่านั้น
-      </label>
-      <label class="filter-ready-toggle" style="margin-top:8px;">
-        <input type="checkbox" ${state.favorites?'checked':''} onchange="${setFavFn}(this.checked)"> ❤️ รายการโปรดเท่านั้น
-      </label>
-      <label class="filter-ready-toggle" style="margin-top:8px;">
-        <input type="checkbox" ${state.allSplit?'checked':''} onchange="${setAllSplitFn}(this.checked)"> 🧾 ดูสินค้าทั้งหมด (แยกทุกสี/แบบ)
-      </label>
-    </div>
-  `;
+  const priceHtml = group('ช่วงราคา', 0, renderPriceSliderHtml(state, mode));
+
+  const sortHtml = group('เรียงตามราคา', 0, `
+    <div class="fseg" role="group" aria-label="เรียงตามราคา">
+      <button class="${state.sortOrder==='asc'?'active':''}" aria-pressed="${state.sortOrder==='asc'}" onclick="${setSortFn}('asc')">น้อย → มาก</button>
+      <button class="${state.sortOrder==='desc'?'active':''}" aria-pressed="${state.sortOrder==='desc'}" onclick="${setSortFn}('desc')">มาก → น้อย</button>
+    </div>`, 'sort', state.sortOrder !== 'none');
+
+  const moreCount = (state.ready ? 1 : 0) + (state.favorites ? 1 : 0) + (state.allSplit ? 1 : 0);
+  const sw = (label, checked, fn, hint) => `
+    <label class="fswitch"${hint ? ` title="${hint}"` : ''}>
+      <span>${label}</span>
+      <input type="checkbox" class="fswitch-input" ${checked?'checked':''} onchange="${fn}(this.checked)">
+    </label>`;
+  const moreHtml = group('ตัวเลือกอื่น', moreCount,
+    sw('⚡ พร้อมส่ง', state.ready, setReadyFn) +
+    sw('❤️ รายการโปรด', state.favorites, setFavFn) +
+    sw('🧾 แยกการ์ดทุกสี/แบบ', state.allSplit, setAllSplitFn, 'แสดงทุกสี/แบบเป็นการ์ดแยกกัน'),
+    'more', moreCount > 0);
+
+  return group('หมวดหมู่', 0, `<div class="filter-pills">${catHtml}</div>`)
+    + sizeHtml + flowerHtml + priceHtml + sortHtml + moreHtml;
 }
 
 // Desktop sidebar — always visible, applies every change immediately (no apply button needed)
 function renderFilterSidebar(){
   const el = document.getElementById('filterSidebar');
   if(!el) return;
-  const state = {
-    cats: activeCats,
-    customMin: customPriceMin,
-    customMax: customPriceMax,
-    sortOrder: activeSortOrder,
-    ready: showReadyOnly,
-    favorites: showFavoritesOnly,
-    allSplit: showAllVariantsSplit,
-    sizes: activeSizes,
-    flowerType: activeFlowerType
-  };
+  const state = sidebarState();
   el.innerHTML = `<div class="filter-sidebar-head">
       <h4 class="filter-sidebar-title">ตัวกรองสินค้า</h4>
-      <button class="filter-sidebar-clear" onclick="clearSidebarFilters()">ล้างตัวกรอง</button>
+      <button class="filter-sidebar-clear" onclick="clearSidebarFilters()"${filtersAreActive(state) ? '' : ' hidden'}>ล้างตัวกรอง</button>
     </div>` + buildFilterPanelHtml(state, 'sidebar');
 }
 // ล้างตัวกรองทั้งหมด (ปุ่มบนแถบข้าง — เดสก์ท็อป) แล้วอัปเดตหน้าเว็บทันที
@@ -1121,7 +1165,7 @@ function clearSidebarFilters(){
   showFavoritesOnly = false;
   showAllVariantsSplit = false;
   activeSizes = new Set();
-  activeFlowerType = 'ทั้งหมด';
+  activeFlowerTypes = new Set();
   renderNav();
   renderCatalog();
   renderFilterSidebar();
@@ -1132,6 +1176,7 @@ function clearSidebarFilters(){
 function renderFilterSheetBody(){
   const body = document.getElementById('filterSheetBody');
   if(body) body.innerHTML = buildFilterPanelHtml(filterDraft, 'sheet');
+  updateSheetApplyLabel();
 }
 function openFilterSheet(){
   filterDraft = {
@@ -1143,7 +1188,7 @@ function openFilterSheet(){
     favorites: showFavoritesOnly,
     allSplit: showAllVariantsSplit,
     sizes: new Set(activeSizes),
-    flowerType: activeFlowerType
+    flowerTypes: new Set(activeFlowerTypes)
   };
   renderFilterSheetBody();
   document.getElementById('filterOverlay').classList.add('open');
@@ -1158,21 +1203,23 @@ function closeFilterSheet(){
 function toggleDraftCategory(c){
   filterDraft.cats = filterDraft.cats.has(c) ? new Set() : new Set([c]);
   filterDraft.sizes = new Set();
-  filterDraft.flowerType = 'ทั้งหมด';
+  filterDraft.flowerTypes = pruneFlowerTypes(filterDraft.flowerTypes, filterDraft.cats);
   renderFilterSheetBody();
 }
 function clearDraftCategorySelection(){
   filterDraft.cats = new Set();
   filterDraft.sizes = new Set();
-  filterDraft.flowerType = 'ทั้งหมด';
   renderFilterSheetBody();
 }
 function setDraftReady(checked){ filterDraft.ready = checked; renderFilterSheetBody(); }
 function setDraftFavorites(checked){ filterDraft.favorites = checked; renderFilterSheetBody(); }
 function setDraftSize(s){ toggleSizeIn(filterDraft.sizes, s); renderFilterSheetBody(); }
-function setDraftFlowerType(t){ filterDraft.flowerType = t; renderFilterSheetBody(); }
+function setDraftFlowerType(t){
+  if(t === 'ทั้งหมด') filterDraft.flowerTypes = new Set(); else toggleFlowerIn(filterDraft.flowerTypes, t);
+  renderFilterSheetBody();
+}
 function clearFilterDraft(){
-  filterDraft = { cats:new Set(), customMin:PRICE_SLIDER_MIN, customMax:PRICE_SLIDER_MAX, sortOrder:'none', ready:false, favorites:false, allSplit:false, sizes:new Set(), flowerType:'ทั้งหมด' };
+  filterDraft = { cats:new Set(), customMin:PRICE_SLIDER_MIN, customMax:PRICE_SLIDER_MAX, sortOrder:'none', ready:false, favorites:false, allSplit:false, sizes:new Set(), flowerTypes:new Set() };
   renderFilterSheetBody();
 }
 function applyFilterDraft(){
@@ -1184,7 +1231,7 @@ function applyFilterDraft(){
   showFavoritesOnly = filterDraft.favorites;
   showAllVariantsSplit = filterDraft.allSplit;
   activeSizes = new Set(filterDraft.sizes);
-  activeFlowerType = filterDraft.flowerType;
+  activeFlowerTypes = new Set(filterDraft.flowerTypes);
   if(activeCats.size !== 1) scrollSpyCat = 'ทั้งหมด'; else scrollSpyCat = [...activeCats][0];
   renderNav();
   renderCatalog();
@@ -1198,7 +1245,7 @@ function updateFilterBadge(){
   const dot = document.getElementById('filterBadgeDot');
   if(!dot) return;
   const priceActive = customPriceMin !== PRICE_SLIDER_MIN || customPriceMax !== PRICE_SLIDER_MAX;
-  const isActive = activeCats.size > 0 || priceActive || activeSortOrder !== 'none' || showReadyOnly || showFavoritesOnly || showAllVariantsSplit || activeFlowerType !== 'ทั้งหมด' || activeSizes.size > 0;
+  const isActive = activeCats.size > 0 || priceActive || activeSortOrder !== 'none' || showReadyOnly || showFavoritesOnly || showAllVariantsSplit || activeFlowerTypes.size > 0 || activeSizes.size > 0;
   dot.classList.toggle('show', isActive);
 }
 
@@ -1312,7 +1359,7 @@ function renderCatalog(){
     const recOpts = { range, sizes:new Set(), readyOnly:false, favOnly:showFavoritesOnly };
     const recommended = sortByPrice(
       PRODUCTS
-        .filter(p => productHasAnyReady(p) && matchesSearch(p))
+        .filter(p => productHasAnyReady(p) && matchesSearch(p) && flowerMatches(p))
         .flatMap(readyVariantsOf)
         .filter(v => variantPasses(v.product, v, recOpts)),
       v => variantPriceOf(v.product, v)
@@ -1339,7 +1386,7 @@ function renderCatalog(){
     const baseProducts = PRODUCTS.filter(p =>
       p.cat === cat
       && matchesSearch(p)
-      && (activeFlowerType === 'ทั้งหมด' || p.flowerType === activeFlowerType)
+      && flowerMatches(p)
     );
     let items, cardsHtml;
     if(showAllVariantsSplit){
@@ -1373,6 +1420,8 @@ function renderCatalog(){
       }).join('');
     }
     totalMatches += items.length;
+    // เลือกชนิดดอกไม้ตอนดูทุกหมวด: ซ่อนหมวดที่ไม่มีสินค้าชนิดนั้น ไม่ให้ขึ้น "0 รายการ" เต็มหน้า
+    if(!items.length && activeFlowerTypes.size && activeCats.size === 0) return '';
     const body = !items.length ? `
       <div class="section-title"><h3>${cat}</h3><span>0 รายการ</span></div>
     ` : `
