@@ -169,6 +169,7 @@
 
 <div class="product-page" id="productModal">
   <div class="product-page-scroll" id="productPageScroll">
+    <button type="button" class="pd-close" onclick="closeProductModal()" aria-label="ปิด">✕</button>
     <div class="page-gallery" id="pageGallery">
       <div class="gallery-thumbs" id="galleryThumbs"></div>
       <div class="page-media">
@@ -177,8 +178,11 @@
       </div>
     </div>
     <div class="page-body">
-      <div id="modalBadges" style="margin-bottom:8px;"></div>
-      <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:10px;">
+      <div class="pd-toprow">
+        <span class="pd-cat" id="modalCat"></span>
+        <div id="modalBadges" style="margin-bottom:8px;"></div>
+      </div>
+      <div class="pd-title-row" style="display:flex; align-items:flex-start; justify-content:space-between; gap:10px;">
         <h3 id="modalName" style="margin:0 0 8px;"></h3>
         <button type="button" class="fav-heart-inline" id="modalFavHeart" onclick="toggleModalFavorite()" aria-label="บันทึกไว้ในรายการโปรด">♡</button>
       </div>

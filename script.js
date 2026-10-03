@@ -2072,6 +2072,40 @@ function changeModalImg(delta){
   }, {passive:true});
 })();
 
+// Desktop product card: click on the dark area outside the card to close it.
+// Only counts when the mouse was pressed AND released on the backdrop, so dragging to
+// select text inside the card and letting go outside does not close it by accident.
+(function(){
+  const page = document.getElementById('productModal');
+  if(!page) return;
+  let downOnBackdrop = false;
+  page.addEventListener('mousedown', function(e){
+    downOnBackdrop = (e.target === page);
+  });
+  page.addEventListener('click', function(e){
+    if(e.target === page && downOnBackdrop && window.matchMedia('(min-width:860px)').matches){
+      closeProductModal();
+    }
+    downOnBackdrop = false;
+  });
+})();
+
+// Keyboard for the product card: Esc closes, ←/→ switch photos (when there are several).
+// Skips when typing in a field, using modifier keys, or when another popup is on top.
+document.addEventListener('keydown', function(e){
+  const page = document.getElementById('productModal');
+  if(!page || !page.classList.contains('open')) return;
+  if(e.ctrlKey || e.metaKey || e.altKey) return;
+  const t = e.target;
+  if(t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
+  const onTop = ['reviewLightbox', 'promoOverlay', 'reviewsAllModal', 'orderSummaryModal']
+    .some(id => { const el = document.getElementById(id); return el && el.classList.contains('open'); });
+  if(onTop) return;
+  if(e.key === 'Escape'){ closeProductModal(); }
+  else if(e.key === 'ArrowLeft'){ changeModalImg(-1); }
+  else if(e.key === 'ArrowRight'){ changeModalImg(1); }
+});
+
 // Full-page product view (not a floating pop-up) — behaves like a real "page" so the
 // device/browser back button closes it and returns to the catalog, like a native app.
 // colorIndex/optionIndex/sizeIndex (optional): มาจากการ์ดย่อยที่แตกตามสี/ตัวเลือก/ขนาด
@@ -2145,6 +2179,8 @@ function renderModal(){
   document.getElementById('modalImg').innerHTML = renderModalMainImage(p);
   renderModalThumbs(p);
   document.getElementById('modalName').textContent = p.name;
+  const modalCatEl = document.getElementById('modalCat');
+  if(modalCatEl) modalCatEl.textContent = p.cat || '';
   updateModalHeart();
   document.getElementById('modalDesc').textContent = p.desc;
   document.getElementById('modalQty').textContent = modalQty;
