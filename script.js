@@ -367,15 +367,18 @@ function toggleModalFavorite(){
   toggleFavorite(p.id, v && v.colorIndex, v && v.optionIndex, v && v.sizeIndex);
 }
 function updateModalHeart(){
-  const modalHeart = document.getElementById('modalFavHeart');
-  if(!modalHeart || !modalProductId) return;
+  const hearts = document.querySelectorAll('#modalFavHeart, #modalFavHeartImg');
+  if(!hearts.length || !modalProductId) return;
   const p = PRODUCTS.find(x => x.id === modalProductId);
   if(!p) return;
   const v = currentVariantRef(p);
   const fav = v ? isVariantFavorite(p, v) : isProductFavorite(p);
-  modalHeart.classList.toggle('active', fav);
-  modalHeart.textContent = fav ? '♥' : '♡';
-  modalHeart.setAttribute('aria-label', fav ? 'เอาออกจากรายการโปรด' : 'บันทึกไว้ในรายการโปรด');
+  // มีปุ่มหัวใจ 2 ตัว: ข้างชื่อ (มือถือ) และบนรูป (คอม) — อัพเดทพร้อมกัน
+  hearts.forEach(modalHeart => {
+    modalHeart.classList.toggle('active', fav);
+    modalHeart.textContent = fav ? '♥' : '♡';
+    modalHeart.setAttribute('aria-label', fav ? 'เอาออกจากรายการโปรด' : 'บันทึกไว้ในรายการโปรด');
+  });
 }
 // สินค้าบางชิ้น (หรือบางแบบ) อาจถูกลบออกจาก products.json ไปแล้ว — ตัดรายการโปรดที่ค้างอยู่ทิ้งไปด้วย
 function pruneFavoritesAgainstProducts(){
@@ -1966,6 +1969,7 @@ let modalProductId = null;
 let modalQty = 1;
 let modalBills = 1;
 let modalImgIndex = 0; // which photo in the gallery is currently shown
+let lastModalImgSrc = ''; // used to fade the main photo only when it actually changes (desktop CSS)
 let modalSelectedAddons = new Set(); // ชื่อตัวเลือกเสริม (addon) ที่ลูกค้าติ๊กไว้ในหน้ารายละเอียดสินค้า — เลือกได้พร้อมกันหลายตัว, รีเซ็ตทุกครั้งที่เปลี่ยนสีหรือเปิดสินค้าใหม่
 
 // Returns the list of photo URLs to show for the product's current selection.
@@ -2011,6 +2015,12 @@ function currentGalleryImages(p){
   if(p.images && p.images.length) return p.images;
   if(p.image) return [p.image];
   return [];
+}
+// Small round preview photo inside a choice chip (desktop only — hidden by CSS on mobile).
+// Works for anything with .image / .images[0] (colors, sizes, addons); no photo → no thumbnail.
+function chipThumb(o){
+  const src = o && (o.image || (o.images && o.images[0]));
+  return src ? `<img class="chip-thumb" src="${src}" alt="" loading="lazy" decoding="async" onerror="this.remove()">` : '';
 }
 function renderModalMainImage(p){
   const imgs = currentGalleryImages(p);
@@ -2177,6 +2187,10 @@ function renderModal(){
   const imgs = currentGalleryImages(p);
   if(modalImgIndex >= imgs.length) modalImgIndex = 0;
   document.getElementById('modalImg').innerHTML = renderModalMainImage(p);
+  const mainImgEl = document.querySelector('#modalImg img');
+  const mainSrc = imgs[modalImgIndex] || '';
+  if(mainImgEl && mainSrc !== lastModalImgSrc) mainImgEl.classList.add('pd-fade');
+  lastModalImgSrc = mainSrc;
   renderModalThumbs(p);
   document.getElementById('modalName').textContent = p.name;
   const modalCatEl = document.getElementById('modalCat');
@@ -2184,26 +2198,35 @@ function renderModal(){
   updateModalHeart();
   document.getElementById('modalDesc').textContent = p.desc;
   document.getElementById('modalQty').textContent = modalQty;
-  document.getElementById('modalBadges').innerHTML =
+  const badgesHtml =
     (currentReadyState(p) ? '<span class="badge-inline ready">พร้อมส่ง</span>' : '') +
     (p.isNew ? '<span class="badge-inline new">ใหม่</span>' : '');
+  document.getElementById('modalBadges').innerHTML = badgesHtml;
+  const imgBadgesEl = document.getElementById('modalImgBadges'); // desktop: badges sit on the photo
+  if(imgBadgesEl) imgBadgesEl.innerHTML = badgesHtml;
 
   const colorsWrap = document.getElementById('modalColors');
   if(p.colors){
     colorsWrap.innerHTML = p.colors.map((c,i)=>`
-      <button class="color-chip ${(resolvedColorIndex(p)===i)?'active':''}" onclick="modalImgIndex=0; modalSelectedAddons=new Set(); selectColor('${p.id}',${i}); renderModal();">${c.name}</button>
+      <button class="color-chip ${(resolvedColorIndex(p)===i)?'active':''}" onclick="modalImgIndex=0; modalSelectedAddons=new Set(); selectColor('${p.id}',${i}); renderModal();">${chipThumb(c)}${c.name}</button>
     `).join('');
+    const selColor = p.colors[resolvedColorIndex(p)];
+    colorsWrap.dataset.sel = selColor ? ': ' + selColor.name : '';
   } else {
     colorsWrap.innerHTML = '';
+    delete colorsWrap.dataset.sel;
   }
 
   const sizesWrap = document.getElementById('modalSizes');
   if(p.sizes){
     sizesWrap.innerHTML = p.sizes.map((s,i)=>`
-      <button class="color-chip ${((selectedSizeVariant[p.id]||0)===i)?'active':''}" onclick="modalImgIndex=0; selectSizeVariant('${p.id}',${i}); renderModal();">${s.name}</button>
+      <button class="color-chip ${((selectedSizeVariant[p.id]||0)===i)?'active':''}" onclick="modalImgIndex=0; selectSizeVariant('${p.id}',${i}); renderModal();">${chipThumb(s)}${s.name}</button>
     `).join('');
+    const selSize = p.sizes[selectedSizeVariant[p.id]||0];
+    sizesWrap.dataset.sel = selSize ? ': ' + selSize.name : '';
   } else {
     sizesWrap.innerHTML = '';
+    delete sizesWrap.dataset.sel;
   }
 
   // ตัวเลือกเสริมแบบมีราคา (เช่น "เพิ่มผึ้งน้อย +20 บาท") — โผล่เฉพาะตอนสีที่เลือกอยู่ประกาศ .addons ไว้
@@ -2214,11 +2237,13 @@ function renderModal(){
     if(addons && addons.length){
       addonWrap.style.display = '';
       addonWrap.innerHTML = addons.map(a => `
-        <button type="button" class="color-chip ${modalSelectedAddons.has(a.name)?'active':''}" onclick="toggleModalAddon('${a.name}', ${!modalSelectedAddons.has(a.name)})">➕ ${a.name} (+${a.price}฿)</button>
+        <button type="button" class="color-chip ${modalSelectedAddons.has(a.name)?'active':''}" onclick="toggleModalAddon('${a.name}', ${!modalSelectedAddons.has(a.name)})">${chipThumb(a)}➕ ${a.name} (+${a.price}฿)</button>
       `).join('');
+      addonWrap.dataset.sel = modalSelectedAddons.size ? ': ' + [...modalSelectedAddons].join(', ') : '';
     } else {
       addonWrap.style.display = 'none';
       addonWrap.innerHTML = '';
+      delete addonWrap.dataset.sel;
       if(modalSelectedAddons.size) modalSelectedAddons = new Set();
     }
   }
@@ -2230,7 +2255,7 @@ function renderModal(){
       const sel = currentOptionSelection(p);
       optionGroupsWrap.innerHTML = p.options.map((opt, oi) => `
         <div class="option-group">
-          <div style="font-size:12.5px; color:var(--plum); font-weight:600; margin:10px 0 4px;">${opt.name}</div>
+          <div style="font-size:12.5px; color:var(--plum); font-weight:600; margin:10px 0 4px;">${opt.name}<span class="pd-selval">${sel[oi] ? ': ' + sel[oi] : ''}</span></div>
           <div class="color-row">
             ${opt.values.map(val => {
               const isActive = sel[oi]===val;
@@ -2277,11 +2302,11 @@ function updateModalPriceDisplay(){
     return;
   }
   const unitPrice = currentModalVariant(p).unitPrice;
-  if(modalQty > 1){
-    priceEl.innerHTML = `${fmt(unitPrice)} <span style="font-size:13px; font-weight:500; color:var(--plum);">/ ช่อ</span> × ${modalQty} = <strong>${fmt(unitPrice * modalQty)}</strong>`;
-  } else {
-    priceEl.innerHTML = `${fmt(unitPrice)} <span style="font-size:13px; font-weight:500; color:var(--plum);">/ ช่อ</span>`;
-  }
+  const lineTotal = unitPrice * modalQty;
+  // มือถือ: "฿249 / ช่อ × 2 = ฿498" (.pd-mx)   คอม: ราคาต่อช่อซ้าย + "ยอดรวม" ขวา (.pd-total) — CSS สลับให้
+  priceEl.innerHTML = `${fmt(unitPrice)} <span style="font-size:13px; font-weight:500; color:var(--plum);">/ ช่อ</span>` +
+    (modalQty > 1 ? `<span class="pd-mx"> × ${modalQty} = <strong>${fmt(lineTotal)}</strong></span>` : '') +
+    `<span class="pd-total"><span class="pd-total-label">ยอดรวม</span><b>${fmt(lineTotal)}</b></span>`;
 }
 function currentModalVariant(p){
   if(p.billSelector) return { label:`ใส่ธนบัตร ${modalBills} ใบ`, unitPrice: unitPriceFor(p, modalBills) };

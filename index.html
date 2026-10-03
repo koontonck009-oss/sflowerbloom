@@ -175,6 +175,8 @@
       <div class="page-media">
         <button class="page-back-btn" onclick="closeProductModal()" aria-label="กลับ">←</button>
         <div class="page-img" id="modalImg"></div>
+        <button type="button" class="pd-heart-img" id="modalFavHeartImg" onclick="toggleModalFavorite()" aria-label="บันทึกไว้ในรายการโปรด">♡</button>
+        <div class="pd-img-badges" id="modalImgBadges"></div>
       </div>
     </div>
     <div class="page-body">
@@ -187,10 +189,12 @@
         <button type="button" class="fav-heart-inline" id="modalFavHeart" onclick="toggleModalFavorite()" aria-label="บันทึกไว้ในรายการโปรด">♡</button>
       </div>
       <p class="modal-desc" id="modalDesc"></p>
-      <div class="color-row" id="modalColors"></div>
-      <div class="color-row" id="modalSizes"></div>
-      <div class="color-row" id="modalAddons" style="display:none;"></div>
-      <div id="modalOptionGroups"></div>
+      <div class="pd-opts">
+        <div class="color-row" id="modalColors"></div>
+        <div class="color-row" id="modalSizes"></div>
+        <div class="color-row" id="modalAddons" style="display:none;"></div>
+        <div id="modalOptionGroups"></div>
+      </div>
       <div class="modal-qty" id="modalBillsRow" style="display:none;">
         <span>จำนวนธนบัตร (ใบ)</span>
         <div class="qty-ctrl">
@@ -200,6 +204,7 @@
         </div>
       </div>
       <div class="modal-price" id="modalPrice"></div>
+      <hr class="pd-hr pd-hr-1">
       <div class="modal-qty">
         <span>จำนวนช่อ</span>
         <div class="qty-ctrl">
@@ -208,6 +213,7 @@
           <button onclick="changeModalQty(1)">+</button>
         </div>
       </div>
+      <hr class="pd-hr pd-hr-2">
       <div class="modal-actions modal-actions-mobile">
         <button class="add-btn secondary icon-only" onclick="addModalToCart()" aria-label="ใส่ตะกร้า">🧺</button>
         <button class="checkout-btn" onclick="startCheckout(buildModalOrderLines)">สั่งทำสินค้า</button>
