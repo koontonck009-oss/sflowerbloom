@@ -7,7 +7,7 @@
 <title>จัดการสินค้า · S.Flower Bloom</title>
 <link rel="icon" type="image/jpeg" href="images/logo.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Kanit:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="admin.css">
 <script src="firebase-config.js"></script>
 </head>
@@ -62,6 +62,7 @@
         <details class="menu">
           <summary class="btn btn-ghost">⋯ เพิ่มเติม</summary>
           <div class="menu-pop">
+            <button id="catalogBtn">ดาวน์โหลดแคตตาล็อก (JPG)</button>
             <button id="backupBtn">ดาวน์โหลดไฟล์สำรอง</button>
             <button id="importBtn">นำเข้าจากไฟล์ (เขียนทับทั้งหมด)</button>
           </div>
@@ -122,6 +123,11 @@
         <div class="ed-side">
           <div class="stack" id="panelSide"></div>
           <div class="ed-card">
+            <div class="card-head"><h3>ภาพแคตตาล็อก</h3></div>
+            <button class="btn btn-ghost btn-block" id="posterOneBtn">โหลดภาพแคตตาล็อกของสินค้านี้</button>
+            <p class="ed-hint">ใช้ข้อมูลที่กำลังแก้อยู่ ไม่ต้องกดบันทึกก่อน · ถ้ามีหลายสี/แบบจะได้เป็นไฟล์ ZIP</p>
+          </div>
+          <div class="ed-card">
             <div class="card-head"><h3>ตัวอย่างที่ลูกค้าเห็น</h3></div>
             <div class="pv">
               <img class="pv-img is-missing" id="pvImg" alt="">
@@ -149,8 +155,20 @@
   </div>
 </div>
 
+<div class="confirm-scrim" id="progressScrim" hidden>
+  <div class="confirm-card">
+    <h3>กำลังสร้างภาพแคตตาล็อก</h3>
+    <p id="progressText"></p>
+    <div class="progress"><i id="progressBar"></i></div>
+    <div class="confirm-btns">
+      <button class="btn btn-ghost" id="progressCancel">ยกเลิก</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast" hidden></div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" defer></script>
 <script src="admin.js" defer></script>
 </body>
 </html>

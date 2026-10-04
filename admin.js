@@ -424,6 +424,7 @@ function renderBulk(rows){
   const all = vis.length > 0 && vis.every(i => selected.has(i));
   $('selAll').checked = all;
   $('selAll').indeterminate = !all && vis.some(i => selected.has(i));
+  updateCatalogBtn(rows);
 }
 
 function renderList(){
@@ -1435,6 +1436,365 @@ function downloadBackup(){
   toast('ดาวน์โหลดไฟล์สำรองแล้ว');
 }
 
+/* ───────────────── ภาพแคตตาล็อก (JPG 2:3) ─────────────────
+   ภาพละ 1200×1800: ครึ่งบนเป็นรูปสินค้า 1:1 ครึ่งล่างเป็นแผงข้อความพื้นขาว
+   สร้างทุกสี/ไซซ์/คู่ผสมของสินค้า โหลดหลายภาพรวมเป็น ZIP ภาพเดียวโหลดเป็น JPG ตรงๆ */
+
+const POSTER = { W: 1200, H: 1800, PHOTO: 1200, PAD: 56, PINK: '#F62188', INK: '#111111', GRAY: '#5A5A5A' };
+const POSTER_CONDITIONS = ['ราคาไม่รวมค่าจัดส่ง', 'ลูกค้านครสวรรค์นัดรับฟรี (สั่งซื้อ 299 ขึ้นไป)'];
+const POSTER_NOTE = 'หมายเหตุ: หากต้องการเปลี่ยนสีดอกไม้ ช่อ ริบบิ้น กระดาษรองช่อ หรือเพิ่มการ์ดอวยพร สามารถแจ้งแอดมินได้เลยค่ะ';
+
+let posterBusy = false;
+let posterCancel = false;
+const posterImgCache = new Map();
+
+// แตกสินค้า 1 ชิ้นเป็นรายการภาพ: คู่ผสม (variants) > ไซซ์ > สี > ภาพเดียว
+function posterEntries(p){
+  const txt = v => String(v ?? '').trim();
+  const list = a => Array.isArray(a) ? a : [];
+  const addonsOf = o => list(o && o.addons).filter(a => txt(a.name));
+  const base = mainImageOf(p);
+  const basePrice = num(p.price);
+  let out = [];
+
+  const vs = list(p.variants).filter(v => list(v.match).some(txt));
+  const ss = list(p.sizes).filter(s => txt(s.name));
+  const cs = list(p.colors).filter(c => txt(c.name));
+
+  if(vs.length){
+    out = vs.map(v => ({ parts: list(v.match).map(txt).filter(Boolean), price: num(v.price) || basePrice, image: v.image || base, addons: addonsOf(p) }));
+  }else if(ss.length){
+    out = ss.map(s => ({ parts: [txt(s.name)], price: num(s.price) || basePrice, image: s.image || base, addons: addonsOf(s).length ? addonsOf(s) : addonsOf(p) }));
+  }else if(cs.length){
+    // สินค้ามีสี: ของเสริมอยู่ที่สีนั้น (เหมือนหน้าร้าน)
+    out = cs.map(c => ({ parts: [txt(c.name)], price: basePrice, image: c.image || list(c.images)[0] || base, addons: addonsOf(c) }));
+  }else{
+    out = [{ parts: [], price: basePrice, image: base, addons: addonsOf(p) }];
+  }
+  if(out.length === 1) out[0].parts = [];   // มีแบบเดียว ไม่ต้องต่อท้ายชื่อ
+  return out;
+}
+
+function posterFileName(p, e, used){
+  // รูปแบบ: หมวดหมู่_ชื่อสินค้า_ราคา_แบบ-สี.jpg (ช่องว่างในชื่อ " - " บีบเหลือ "-")
+  const clean = s => String(s ?? '').replace(/[\\/:*?"<>|]/g, '-').replace(/\s*-\s*/g, '-').replace(/\s+/g, ' ').replace(/-{2,}/g, '-').replace(/^[-\s]+|[-\s]+$/g, '');
+  const bits = [
+    clean(p.cat),
+    clean(p.name || p.id || 'product'),
+    e.price ? e.price + '฿' : '',
+    e.parts.map(clean).filter(Boolean).join('-')
+  ].filter(Boolean);
+  const name = bits.join('_');
+  let final = name, n = 2;
+  while(used.has(final)) final = `${name}-${n++}`;
+  used.add(final);
+  return final + '.jpg';
+}
+
+function posterEncodePath(src){
+  if(/^(https?:|data:|blob:)/i.test(src)) return src;
+  return src.split('/').map(encodeURIComponent).join('/');
+}
+
+function posterLoadImage(src){
+  if(!src) return Promise.resolve(null);
+  if(posterImgCache.has(src)) return posterImgCache.get(src);
+  const pr = new Promise(res => {
+    const im = new Image();
+    im.onload = () => res(im);
+    im.onerror = () => res(null);
+    im.src = posterEncodePath(src);
+  });
+  posterImgCache.set(src, pr);
+  return pr;
+}
+
+async function posterEnsureFonts(){
+  const specs = ['400 30px Kanit', '600 30px Kanit', '700 60px Kanit', 'italic 400 28px Kanit'];
+  await Promise.all(specs.map(f => document.fonts.load(f, 'กขค฿0Aa').catch(() => {})));
+  await document.fonts.ready;
+}
+
+// ตัดบรรทัดตามความกว้าง (ภาษาไทยไม่มีเว้นวรรค ใช้ Intl.Segmenter ช่วยตัดคำ)
+function posterWrap(ctx, text, maxW){
+  const lines = [];
+  const seg = typeof Intl !== 'undefined' && Intl.Segmenter
+    ? new Intl.Segmenter('th', { granularity: 'word' }) : null;
+  String(text || '').split(/\r?\n/).forEach(par => {
+    const words = seg ? [...seg.segment(par)].map(s => s.segment) : par.split(/(?<= )/);
+    let line = '';
+    words.forEach(w => {
+      const t = line + w;
+      if(line.trim() && ctx.measureText(t.trimEnd()).width > maxW){
+        lines.push(line.trimEnd());
+        line = w.trimStart();
+      }else line = t;
+    });
+    lines.push(line.trimEnd());
+  });
+  while(lines.length > 1 && !lines[lines.length - 1]) lines.pop();
+  return lines;
+}
+
+function posterPillPath(ctx, x, y, w, h){
+  const r = h / 2;
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+// วงกลมรูปของเสริมที่มุมล่างขวาของรูปสินค้า + ป้ายชื่อ/ราคาสีชมพูใต้วงกลม
+async function posterDrawAddons(ctx, addons){
+  const { W, PHOTO, PINK } = POSTER;
+  const list = addons.slice(0, 3);
+  if(!list.length) return;
+  const R = 150, EDGE = 36, GAP = 28, PILL_H = 54;
+  const imgs = await Promise.all(list.map(a => posterLoadImage(a.image)));
+  const maxPill = list.length > 1 ? 2 * R + GAP - 10 : 560;
+
+  list.forEach((a, k) => {
+    const cx = W - EDGE - R - k * (2 * R + GAP);
+    const cy = PHOTO - EDGE - PILL_H - 12 - R;
+
+    // วงกลมขอบขาว + เงา
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,.35)';
+    ctx.shadowBlur = 26;
+    ctx.shadowOffsetY = 6;
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+
+    ctx.save();
+    ctx.beginPath(); ctx.arc(cx, cy, R - 10, 0, Math.PI * 2); ctx.clip();
+    const im = imgs[k];
+    if(im){
+      const s = Math.min(im.naturalWidth, im.naturalHeight);
+      ctx.drawImage(im, (im.naturalWidth - s) / 2, (im.naturalHeight - s) / 2, s, s, cx - R, cy - R, 2 * R, 2 * R);
+    }else{
+      ctx.fillStyle = '#FFD9EA';
+      ctx.fillRect(cx - R, cy - R, 2 * R, 2 * R);
+      ctx.fillStyle = PINK;
+      ctx.font = '600 30px Kanit, sans-serif';
+      ctx.textAlign = 'center';
+      posterWrap(ctx, a.name, 2 * R - 60).slice(0, 3).forEach((l, i, arr) =>
+        ctx.fillText(l, cx, cy + 10 + (i - (arr.length - 1) / 2) * 38));
+    }
+    ctx.restore();
+
+    // ป้ายชื่อ + ราคา
+    const price = num(a.price);
+    const priceTxt = price ? ` +฿${price.toLocaleString('en-US')}` : '';
+    let nm = String(a.name).trim();
+    let fs = 28;
+    ctx.font = `600 ${fs}px Kanit, sans-serif`;
+    while(fs > 20 && ctx.measureText(nm + priceTxt).width + 44 > maxPill){ fs -= 2; ctx.font = `600 ${fs}px Kanit, sans-serif`; }
+    // ชื่อยาวเกินให้ตัดที่ชื่อ เก็บราคาไว้ครบเสมอ
+    while(nm.length > 1 && ctx.measureText(nm + priceTxt).width + 44 > maxPill) nm = nm.slice(0, -1).trimEnd();
+    const text = (nm === String(a.name).trim() ? nm : nm + '…') + priceTxt;
+    const pw = ctx.measureText(text).width + 44;
+    const px = Math.min(cx - pw / 2, W - 24 - pw);
+    const py = cy + R + 12;
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,.25)';
+    ctx.shadowBlur = 12;
+    ctx.shadowOffsetY = 3;
+    ctx.fillStyle = PINK;
+    posterPillPath(ctx, px, py, pw, PILL_H);
+    ctx.fill();
+    ctx.restore();
+    ctx.fillStyle = '#fff';
+    ctx.textAlign = 'center';
+    ctx.fillText(text, px + pw / 2, py + PILL_H / 2 + fs * 0.35);
+    ctx.textAlign = 'left';
+  });
+}
+
+async function posterRender(p, e){
+  const { W, H, PHOTO, PAD, PINK, INK, GRAY } = POSTER;
+  const cv = document.createElement('canvas');
+  cv.width = W; cv.height = H;
+  const ctx = cv.getContext('2d');
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, W, H);
+  ctx.textBaseline = 'alphabetic';
+  ctx.textAlign = 'left';
+
+  // ── รูปสินค้า 1:1 (ครอบกึ่งกลาง) ──
+  const img = await posterLoadImage(e.image);
+  if(img){
+    const s = Math.min(img.naturalWidth, img.naturalHeight);
+    const sx = (img.naturalWidth - s) / 2, sy = (img.naturalHeight - s) / 2;
+    ctx.drawImage(img, sx, sy, s, s, 0, 0, PHOTO, PHOTO);
+  }else{
+    ctx.fillStyle = '#EFEAEC';
+    ctx.fillRect(0, 0, PHOTO, PHOTO);
+    ctx.fillStyle = '#9A8F94';
+    ctx.font = '600 44px Kanit, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('ไม่พบไฟล์รูปสินค้า', W / 2, PHOTO / 2);
+    ctx.textAlign = 'left';
+  }
+
+  await posterDrawAddons(ctx, e.addons || []);
+
+  const maxW = W - PAD * 2;
+
+  // ── ชื่อสินค้า ──
+  const title = String(p.name || p.id || '') + (e.parts.length ? ` (${e.parts.join(' · ')})` : '');
+  let fs = 64;
+  for(; fs > 34; fs -= 2){
+    ctx.font = `700 ${fs}px Kanit, sans-serif`;
+    if(ctx.measureText(title).width <= maxW) break;
+  }
+  ctx.fillStyle = INK;
+  ctx.fillText(title, PAD, 1292);
+
+  // ── ราคา + เงื่อนไข ──
+  if(e.price){
+    ctx.font = '700 128px Kanit, sans-serif';
+    ctx.fillStyle = PINK;
+    const priceText = '฿' + Number(e.price).toLocaleString('en-US');
+    ctx.fillText(priceText, PAD, 1432);
+    const pw = ctx.measureText(priceText).width;
+    const cx = PAD + pw + 30;
+    ctx.font = 'italic 400 28px Kanit, sans-serif';
+    ctx.fillStyle = GRAY;
+    let cy = 1362;
+    POSTER_CONDITIONS.forEach((c, i) => {
+      posterWrap(ctx, c, W - PAD - cx).forEach(l => { ctx.fillText(l, cx, cy); cy += 36; });
+      if(i === 0) cy += 14;
+    });
+  }
+
+  // ── หมายเหตุด้านล่างสุด ──
+  ctx.font = 'italic 400 26px Kanit, sans-serif';
+  const noteLines = posterWrap(ctx, POSTER_NOTE, maxW);
+  const noteLast = 1768;
+  const noteFirst = noteLast - (noteLines.length - 1) * 36;
+  ctx.fillStyle = GRAY;
+  noteLines.forEach((l, i) => ctx.fillText(l, PAD, noteFirst + i * 36));
+
+  // ── รายละเอียดสินค้า ──
+  ctx.fillStyle = INK;
+  ctx.font = '600 36px Kanit, sans-serif';
+  ctx.fillText('รายละเอียดสินค้า', PAD, 1534);
+
+  const descTop = 1552;
+  const descBottom = noteFirst - 44;
+  let size = 30, lines = [];
+  for(; size >= 22; size -= 2){
+    ctx.font = `400 ${size}px Kanit, sans-serif`;
+    lines = posterWrap(ctx, p.desc || '', maxW);
+    if(lines.length * size * 1.5 <= descBottom - descTop) break;
+  }
+  const lh = size * 1.5;
+  const maxLines = Math.max(1, Math.floor((descBottom - descTop) / lh));
+  if(lines.length > maxLines){
+    lines = lines.slice(0, maxLines);
+    let last = lines[maxLines - 1];
+    while(last.length > 1 && ctx.measureText(last + '…').width > maxW) last = last.slice(0, -1);
+    lines[maxLines - 1] = last.trimEnd() + '…';
+  }
+  ctx.fillStyle = '#222';
+  lines.forEach((l, i) => ctx.fillText(l, PAD, descTop + size + i * lh));
+
+  const blob = await new Promise((res, rej) => {
+    try{ cv.toBlob(b => b ? res(b) : rej(new Error('toBlob')), 'image/jpeg', 0.92); }
+    catch(err){ rej(err); }
+  });
+  return { blob, hadImage: !!img };
+}
+
+function posterProgress(show, text, pct){
+  $('progressScrim').hidden = !show;
+  if(!show) return;
+  $('progressText').textContent = text;
+  $('progressBar').style.width = Math.max(0, Math.min(100, pct || 0)) + '%';
+}
+
+function posterSave(blob, name){
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+
+async function exportPosters(products, zipBase){
+  if(posterBusy) return;
+  const jobs = [];
+  products.forEach(p => posterEntries(p).forEach(e => jobs.push({ p, e })));
+  if(!jobs.length){ toast('ไม่มีสินค้าให้สร้างภาพ', true); return; }
+  if(jobs.length > 1 && typeof JSZip === 'undefined'){
+    toast('โหลดตัวสร้างไฟล์ ZIP ไม่สำเร็จ ตรวจสอบอินเทอร์เน็ตแล้วรีเฟรชหน้าก่อน', true);
+    return;
+  }
+
+  posterBusy = true;
+  posterCancel = false;
+  const used = new Set();
+  const files = [];
+  let missing = 0;
+  try{
+    posterProgress(true, 'กำลังเตรียมฟอนต์…', 0);
+    await posterEnsureFonts();
+    for(let k = 0; k < jobs.length; k++){
+      if(posterCancel) break;
+      posterProgress(true, `กำลังสร้าง ${k + 1}/${jobs.length}`, (k / jobs.length) * 100);
+      await new Promise(r => setTimeout(r, 0));   // ให้เบราว์เซอร์วาดแถบความคืบหน้าก่อน
+      const { p, e } = jobs[k];
+      const { blob, hadImage } = await posterRender(p, e);
+      if(!hadImage) missing++;
+      files.push({ name: posterFileName(p, e, used), blob });
+    }
+    if(posterCancel){ toast('ยกเลิกการสร้างภาพแล้ว'); return; }
+
+    if(files.length === 1){
+      posterSave(files[0].blob, files[0].name);
+    }else{
+      const zip = new JSZip();
+      files.forEach(f => zip.file(f.name, f.blob, { binary: true }));
+      const zblob = await zip.generateAsync({ type: 'blob', compression: 'STORE' },
+        m => posterProgress(true, `กำลังรวมไฟล์ ZIP ${Math.round(m.percent)}%`, m.percent));
+      posterSave(zblob, `${zipBase}.zip`);
+    }
+    toast(missing
+      ? `สร้างเสร็จ ${files.length} ภาพ (${missing} ภาพไม่พบไฟล์รูป ตรวจพาธรูปในสินค้า)`
+      : `สร้างเสร็จ ${files.length} ภาพ`, !!missing);
+  }catch(err){
+    console.error(err);
+    const tainted = err && (err.name === 'SecurityError' || /tainted|insecure/i.test(String(err.message)));
+    toast(tainted
+      ? 'สร้างภาพไม่ได้ ต้องเปิดหน้าแอดมินผ่านเว็บไซต์จริง ไม่ใช่เปิดไฟล์ในเครื่อง'
+      : 'สร้างภาพไม่สำเร็จ: ' + (err.message || err), true);
+  }finally{
+    posterProgress(false);
+    posterImgCache.clear();
+    posterBusy = false;
+  }
+}
+
+// สินค้าที่จะโหลด: ที่ติ๊กเลือกไว้ ถ้าไม่ได้เลือกใช้ตามตัวกรองที่แสดงอยู่ (ไม่กรองเลย = ทั้งหมด)
+function catalogTargets(){
+  if(selected.size) return [...selected].sort((a, b) => a - b).map(i => catalog[i]).filter(Boolean);
+  return visibleProducts().map(r => r.p);
+}
+
+function updateCatalogBtn(rows){
+  const btn = $('catalogBtn');
+  if(!btn) return;
+  const n = selected.size || rows.length;
+  btn.textContent = `ดาวน์โหลดแคตตาล็อก (JPG) · ${selected.size ? 'ที่เลือก ' : ''}${n} สินค้า`;
+  btn.disabled = !n;
+}
+
 /* ───────────────── ต่อสายเหตุการณ์ทั้งหมด ───────────────── */
 
 $('loginBtn').addEventListener('click', doLogin);
@@ -1457,6 +1817,16 @@ $('catChips').addEventListener('click', e => {
 });
 
 $('addBtn').addEventListener('click', () => openEditor(-1));
+$('catalogBtn').addEventListener('click', () => {
+  const list = catalogTargets();
+  const stamp = new Date().toISOString().slice(0, 10);
+  exportPosters(list, `catalog-${stamp}`);
+});
+$('posterOneBtn').addEventListener('click', () => {
+  if(!draft) return;
+  exportPosters([draft], `${String(draft.id || 'product').replace(/[\\/:*?"<>|\s]+/g, '-')}_catalog`);
+});
+$('progressCancel').addEventListener('click', () => { posterCancel = true; });
 $('importBtn').addEventListener('click', () => $('importFile').click());
 $('importFile').addEventListener('change', e => {
   const f = e.target.files[0];
