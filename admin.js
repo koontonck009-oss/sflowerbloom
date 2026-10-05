@@ -139,7 +139,7 @@ function closeConfirm(answer){
 /* รูปตัวอย่าง: ถ้าไฟล์ไม่มีจริง จะกลายเป็นกรอบเส้นประแทนไอคอนรูปแตก */
 function thumbHtml(src, baseClass){
   const c = baseClass || 'img-preview';
-  return `<img class="${c}${src ? '' : ' is-missing'}" ${src ? `src="${esc(src)}"` : ''} alt="" loading="lazy"
+  return `<img class="${c}${src ? '' : ' is-missing'}" ${src ? `src="${esc(window.imgUrl(src))}"` : ''} alt="" loading="lazy"
     onerror="this.removeAttribute('src'); this.classList.add('is-missing');">`;
 }
 
@@ -637,7 +637,7 @@ function updateSummaries(){
   const src = mainImageOf(draft);
   const im = $('pvImg');
   if((im.getAttribute('src') || '') !== src){
-    if(src){ im.classList.remove('is-missing'); im.src = src; }
+    if(src){ im.classList.remove('is-missing'); im.src = window.imgUrl(src); }
     else { im.removeAttribute('src'); im.classList.add('is-missing'); }
   }
   $('pvName').textContent = draft.name || 'ชื่อสินค้า';
@@ -741,7 +741,7 @@ function imageListHtml(arr, pathPrefix){
     <div data-img-list="${pathPrefix}">
       ${list.map((src, k) => `
         <div class="img-list-row">
-          ${src ? `<img src="${esc(src)}" alt="" onerror="this.removeAttribute('src')">` : '<img alt="">'}
+          ${src ? `<img src="${esc(window.imgUrl(src))}" alt="" onerror="this.removeAttribute('src')">` : '<img alt="">'}
           <input type="text" data-bind="${pathPrefix}.${k}" value="${esc(src)}" placeholder="images/…">
           <button class="icon-btn" data-act="rm-img" data-path="${pathPrefix}" data-k="${k}" title="ลบรูปนี้">✕</button>
         </div>`).join('')}
@@ -754,7 +754,7 @@ function renderMediaPanel(){
   $('panelMedia').innerHTML = `
     <div class="group">
       <div class="group-head"><h3>รูปหลัก</h3></div>
-      <p class="group-note">ใส่เป็นที่อยู่ไฟล์ในโฟลเดอร์ images เช่น images/bouquet/ช่อทานตะวัน/เล็ก.jpg — ต้องอัปโหลดไฟล์รูปขึ้นเว็บแยกต่างหากก่อน</p>
+      <p class="group-note">ใส่เป็นที่อยู่ไฟล์ในโฟลเดอร์ images เช่น images/bouquet/ช่อทานตะวัน/เล็ก.jpg — ต้องอัปโหลดไฟล์รูปขึ้น GitHub repo เก็บรูปก่อน (path ยังเขียนเป็น images/… เหมือนเดิม)</p>
       <div class="img-field">
         <label class="field">
           <span>ที่อยู่รูป</span>
@@ -1067,7 +1067,7 @@ function onDraftInput(e){
       const img = box && box.querySelector('img, .img-preview');
       if(img && img.tagName === 'IMG'){
         img.classList.remove('is-missing');
-        if(el.value) img.src = el.value; else img.removeAttribute('src');
+        if(el.value) img.src = window.imgUrl(el.value); else img.removeAttribute('src');
       }
     }
     return;
@@ -1492,8 +1492,9 @@ function posterFileName(p, e, used){
 }
 
 function posterEncodePath(src){
-  if(/^(https?:|data:|blob:)/i.test(src)) return src;
-  return src.split('/').map(encodeURIComponent).join('/');
+  const u = window.imgUrl(src);
+  if(/^(https?:|data:|blob:)/i.test(u)) return u;
+  return u.split('/').map(encodeURIComponent).join('/');
 }
 
 function posterLoadImage(src){
@@ -1503,7 +1504,9 @@ function posterLoadImage(src){
     const im = new Image();
     im.onload = () => res(im);
     im.onerror = () => res(null);
-    im.src = posterEncodePath(src);
+    const url = posterEncodePath(src);
+    if(/^https?:/i.test(url)) im.crossOrigin = 'anonymous'; // รูปจากโดเมนอื่นต้องขอสิทธิ์ ไม่งั้นส่งออก JPG จาก canvas ไม่ได้
+    im.src = url;
   });
   posterImgCache.set(src, pr);
   return pr;

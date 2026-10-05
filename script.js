@@ -2405,7 +2405,19 @@ async function loadProducts(){
 }
 
 /* ขั้นตอนหลังได้ข้อมูลสินค้ามาแล้ว ใช้ร่วมกันทั้งทาง Firestore และ products.json */
+/* แปลง path รูป images/... ในข้อมูลสินค้า ให้เป็น URL ของที่เก็บรูป (ถ้าตั้ง IMAGE_BASE ไว้) */
+function applyImageBase(node){
+  if(!window.IMAGE_BASE || !node || typeof node !== 'object') return;
+  if(Array.isArray(node)){ node.forEach(applyImageBase); return; }
+  Object.keys(node).forEach(k => {
+    const v = node[k];
+    if(k === 'image' && typeof v === 'string') node[k] = window.imgUrl(v);
+    else if(k === 'images' && Array.isArray(v)) node[k] = v.map(x => typeof x === 'string' ? window.imgUrl(x) : x);
+    else if(v && typeof v === 'object') applyImageBase(v);
+  });
+}
 function finishLoadingProducts(){
+  applyImageBase(PRODUCTS);
   pruneCartAgainstProducts();
   pruneFavoritesAgainstProducts();
   renderNav();
@@ -2443,7 +2455,7 @@ async function loadReviews(){
     const end = Math.min(start + REVIEW_BATCH_SIZE - 1, MAX_REVIEWS);
     const checks = [];
     for(let i = start; i <= end; i++){
-      checks.push(checkImageExists(`images/reviews/review${i}.jpg`));
+      checks.push(checkImageExists(window.imgUrl(`images/reviews/review${i}.jpg`)));
     }
     const results = await Promise.all(checks);
     const batchFound = results.filter(Boolean);
@@ -2677,7 +2689,7 @@ function renderPromoSlides(){
   const dots = document.getElementById('promoDots');
   if(!track || !dots) return;
   track.innerHTML = PROMO_SLIDES.map(s => {
-    const img = `<img src="${s.image}" alt="${s.alt || ''}" loading="lazy">`;
+    const img = `<img src="${window.imgUrl(s.image)}" alt="${s.alt || ''}" loading="lazy">`;
     return `<div class="promo-slide">${s.link ? `<a href="${s.link}" target="_blank" rel="noopener">${img}</a>` : img}</div>`;
   }).join('');
   dots.innerHTML = PROMO_SLIDES.length > 1
