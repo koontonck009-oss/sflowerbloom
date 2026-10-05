@@ -32,7 +32,7 @@ window.CATALOG_DOC = "products";
    รูปแบบ:  https://cdn.jsdelivr.net/gh/<ชื่อ GitHub>/<ชื่อ repo รูป>@main/
    ตัวอย่าง: https://cdn.jsdelivr.net/gh/somchai/sflowerbloom-images@main/
    ปล่อยเป็น "" = ใช้รูปจากเว็บเดิมเหมือนก่อน (ปลอดภัย ใช้ได้ระหว่างย้าย) */
-window.IMAGE_BASE = "";
+window.IMAGE_BASE = "https://cdn.jsdelivr.net/gh/koontonck009-oss/sflowerbloom-images@main/";
 
 /* รูปที่ต้องอยู่กับเว็บ (ไฟล์เล็ก ใช้เป็นโลโก้/og:image) ไม่ย้ายไป repo รูป */
 window.IMAGE_LOCAL = ["images/logo.jpg", "images/banner.jpg"];
