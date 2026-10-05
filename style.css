@@ -42,15 +42,13 @@ h1,h2,h3,.display{font-family:'Kanit',sans-serif; font-weight:600;}
   background:var(--cream);
 }
 .brand-mark{
-  width:42px;height:42px;border-radius:50%;
-  background:var(--sage);
+  width:42px;height:42px;
+  background:transparent;
   display:flex;align-items:center;justify-content:center;
-  box-shadow:var(--shadow);
   flex-shrink:0;
-  overflow:hidden;
 }
 .brand-mark svg{width:24px;height:24px;}
-.brand-mark img{width:100%;height:100%;object-fit:cover;}
+.brand-mark img{width:100%;height:100%;object-fit:contain;}
 .brand-name{display:none; font-family:'Kanit'; font-weight:700; font-size:16px; color:var(--sage-dark); white-space:nowrap; flex-shrink:0;}
 
 .search-wrap{
@@ -679,7 +677,7 @@ main{padding:18px 3vw 80px;}
   body{background-image:none;}
 
   /* header: รวมเป็นแถบเดียว โชว์ชื่อร้านในแถบค้นหาแทน brand-row */
-  .search-cart-bar{gap:16px;}
+  .search-cart-bar{gap:16px; position:relative;} /* desktop: ไม่ลอยค้าง จะได้ไม่ติดมากลางภาพตอนแคปหน้าจอเต็มหน้า */
   .brand-name{display:block;}
   .brand-row{display:none;}
 
