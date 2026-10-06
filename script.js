@@ -1479,9 +1479,9 @@ function renderCatalog(){
    รูป JPG 1800x3200 (9:16) หน้าละ 12 ชิ้น จัด 3 คอลัมน์ x 4 แถว
    วาดด้วย canvas ในเบราว์เซอร์ แล้วโหลดทีละรูปต่อเนื่องกัน
    ========================================================= */
-const CATALOG_IMG_W = 1080, CATALOG_IMG_H = 1920; // พิกัดที่ใช้จัดเลย์เอาต์ (9:16)
-const CATALOG_OUT_W = 1800, CATALOG_OUT_H = 3200;  // ขนาดไฟล์จริงที่ได้ (9:16 เท่ากัน ขยายเลย์เอาต์ตามสัดส่วนให้ชัดขึ้น)
-const CATALOG_PHOTO_RATIO = 0.9; // สูง/กว้างของช่องรูป (ครอปบนล่างเล็กน้อยให้มีที่พอสำหรับชื่อ 2 บรรทัด + ราคา)
+const CATALOG_IMG_W = 1080, CATALOG_IMG_H = 2160; // พิกัดที่ใช้จัดเลย์เอาต์ (1:2)
+const CATALOG_OUT_W = 1800, CATALOG_OUT_H = 3600;  // ขนาดไฟล์จริงที่ได้ (1:2 เท่ากัน ขยายเลย์เอาต์ตามสัดส่วนให้ชัดขึ้น)
+const CATALOG_PHOTO_RATIO = 1; // สูง/กว้างของช่องรูป (1 = สี่เหลี่ยมจัตุรัส 1:1)
 const CATALOG_COLS = 3, CATALOG_ROWS = 4, CATALOG_PER_PAGE = CATALOG_COLS * CATALOG_ROWS;
 
 // ดึง src ของรูปออกจาก HTML ของ thumbnail (ใช้ DOMParser = เอกสารเปล่า ไม่โหลดรูปจริง และไม่รัน onerror)
@@ -1603,7 +1603,10 @@ function drawCatalogPage(items, pageNo, pageCount, imgs, logo, summary){
   const FOOT_H = 66, PAD = 36, GAP = 14;
   const gridX = PAD, gridY = HEAD_H + 24;
   const gridW = W - PAD * 2;
-  const gridH = H - gridY - FOOT_H - 22;
+  // แถบข้อความหมายเหตุ (อยู่นอกการ์ดสินค้า วางใต้ตาราง เหนือแถบท้ายรูป)
+  const NOTE_H = 130, NOTE_GAP_TOP = 16, NOTE_GAP_BOTTOM = 14;
+  const noteY = H - FOOT_H - NOTE_GAP_BOTTOM - NOTE_H;
+  const gridH = noteY - NOTE_GAP_TOP - gridY;
   const cellW = (gridW - GAP * (CATALOG_COLS - 1)) / CATALOG_COLS;
   const cellH = (gridH - GAP * (CATALOG_ROWS - 1)) / CATALOG_ROWS;
   const photo = cellW;                         // ความกว้างช่องรูป
@@ -1652,12 +1655,35 @@ function drawCatalogPage(items, pageNo, pageCount, imgs, logo, summary){
     ctx.fillStyle = PLUM;
     ctx.font = '600 21px Kanit, sans-serif';
     const lines = catalogWrapText(ctx, it.name, tw2, 2);
-    lines.forEach((ln, li) => ctx.fillText(ln, tx, y + photoH + 28 + li * 26));
+    lines.forEach((ln, li) => ctx.fillText(ln, tx, y + photoH + 27 + li * 25));
     ctx.fillStyle = PINK_DARK;
     let ps = 28;
     ctx.font = `700 ${ps}px Kanit, sans-serif`;
     while(ctx.measureText(it.price).width > tw2 && ps > 15){ ps -= 1; ctx.font = `700 ${ps}px Kanit, sans-serif`; }
-    ctx.fillText(it.price, tx, y + cellH - 13);
+    ctx.fillText(it.price, tx, y + cellH - 12);
+  });
+
+  // แถบข้อความหมายเหตุ
+  ctx.save();
+  ctx.fillStyle = '#FFE9F4';
+  catalogRoundRect(ctx, PAD, noteY, W - PAD * 2, NOTE_H, 18); ctx.fill();
+  ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(246,33,136,0.28)';
+  catalogRoundRect(ctx, PAD, noteY, W - PAD * 2, NOTE_H, 18); ctx.stroke();
+  ctx.restore();
+  const noteLines = [
+    'ราคาไม่รวมค่าจัดส่ง',
+    'ลูกค้านครสวรรค์นัดรับฟรี (สั่งซื้อ 299 บาทขึ้นไป)',
+    'หมายเหตุ: สามารถแจ้งแอดมินเพื่อปรับสี เพิ่มการ์ด หรือปรับรายละเอียดได้ค่ะ'
+  ];
+  const noteTextX = PAD + 54, noteMaxW = W - PAD * 2 - 54 - 24;
+  ctx.fillStyle = PLUM;
+  ctx.font = '500 25px Kanit, sans-serif';
+  noteLines.forEach((t, i) => {
+    const by = noteY + 42 + i * 35;
+    ctx.fillStyle = PINK;
+    ctx.beginPath(); ctx.arc(PAD + 32, by - 9, 6, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = PLUM;
+    ctx.fillText(catalogFitOneLine(ctx, t, noteMaxW), noteTextX, by);
   });
 
   // ท้ายรูป
