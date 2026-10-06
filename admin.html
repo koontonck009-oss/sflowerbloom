@@ -73,6 +73,14 @@
       </div>
     </div>
 
+    <div class="price-switch" id="priceSwitch">
+      <div class="ps-text">
+        <b>ซ่อนราคาบนหน้าร้าน</b>
+        <span id="priceSwitchHint">กำลังตรวจสอบสถานะ…</span>
+      </div>
+      <button type="button" class="switch" id="hidePricesBtn" role="switch" aria-checked="false" aria-label="ซ่อนราคาบนหน้าร้าน" disabled><i></i></button>
+    </div>
+
     <div class="card list-card" id="listCard">
       <div class="tabs-row" id="catChips"></div>
       <div class="list-tools">
@@ -123,7 +131,7 @@
         </div>
         <div class="ed-side">
           <div class="stack" id="panelSide"></div>
-          <div class="ed-card">
+          <div class="ed-card" id="posterCard">
             <div class="card-head"><h3>ภาพแคตตาล็อก</h3></div>
             <button class="btn btn-ghost btn-block" id="posterOneBtn">โหลดภาพแคตตาล็อกของสินค้านี้</button>
             <p class="ed-hint">ใช้ข้อมูลที่กำลังแก้อยู่ ไม่ต้องกดบันทึกก่อน · ถ้ามีหลายสี/แบบจะได้เป็นไฟล์ ZIP</p>

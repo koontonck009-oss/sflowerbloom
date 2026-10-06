@@ -8,6 +8,23 @@
 /* ---------------- แก้ไขสินค้าตรงนี้ได้เลย ---------------- */
 let PRODUCTS = []; // โหลดจาก products.json ตอนเปิดหน้าเว็บ (ดูฟังก์ชัน loadProducts ด้านล่าง)
 const PAGE_LINK = 'https://m.me/S.Flower.Bloom44';
+
+/* ---------- โหมดปิดราคาทั้งร้าน (สวิตช์อยู่ที่หลังบ้าน admin.html) ----------
+   ค่าเริ่มต้น = ซ่อนไว้ก่อน เพื่อกันราคาหลุดเมื่ออ่านค่าจาก Firestore ไม่ทัน/ไม่ได้ (ตกไปใช้ products.json)
+   จะแสดงราคาก็ต่อเมื่ออ่านเอกสารจาก Firestore ได้สำเร็จ และหลังบ้านไม่ได้เปิดสวิตช์ซ่อนราคาไว้ */
+let PRICES_HIDDEN = true;
+let cloudHidePrices = true;   // ค่าที่อ่านได้ล่าสุดจาก Firestore
+let cloudStamp = null;        // ตราเวลา+สถานะสวิตช์ล่าสุดจาก Firestore
+let CATALOG_DOC_STAMP = null; // ตราที่ใช้ตอนโหลดหน้านี้ (null = ไม่ได้ใช้ข้อมูลจาก Firestore)
+const PRICE_ASK_SHORT = 'สอบถามราคาทางเพจ';
+function setPricesHidden(v){
+  PRICES_HIDDEN = !!v;
+  document.documentElement.classList.toggle('prices-hidden', PRICES_HIDDEN);
+}
+function priceAskHtml(){
+  return '<div class="price-ask-text">📸 <b>แคปหน้าจอสินค้านี้</b> (ให้เห็นชื่อสินค้าและตัวเลือกที่เลือก) แล้วส่งให้เพจเพื่อสอบถามราคาได้เลยค่ะ</div>'
+    + '<a class="price-ask-btn" href="' + PAGE_LINK + '" target="_blank" rel="noopener">💬 ทักเพจสอบถามราคา</a>';
+}
 // วาง URL ของ Google Apps Script Web App (หลัง Deploy แล้ว) แทนที่ค่าด้านล่างนี้
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwfNGO22TxU0kBqbNbn7eaSIo4W4qlXiqTVPcSo5wyLMWedZmOWLYDKiKzJcfHEW-TdnA/exec';
 /* --------------------------------------------------------- */
@@ -479,6 +496,7 @@ function matchesSearch(p){
 let searchSuggestOpen = false;
 const SEARCH_SUGGEST_LIMIT = 6;
 function priceLabelFor(p){
+  if(PRICES_HIDDEN) return PRICE_ASK_SHORT;
   const startsFrom = (p.sizes && p.sizes.length > 1) || hasNewOptions(p);
   return (startsFrom ? 'เริ่มต้น ' : '') + fmt(displayPrice(p));
 }
@@ -558,7 +576,7 @@ function escapeHtml(str){
     .replace(/'/g, '&#39;');
 }
 
-function fmt(n){ return '฿' + n.toLocaleString('th-TH'); }
+function fmt(n){ return PRICES_HIDDEN ? 'สอบถามราคา' : '฿' + n.toLocaleString('th-TH'); } // ตอนปิดราคา: ด่านสุดท้ายกันราคาหลุดจากจุดที่ลืมดัก
 
 function unitPriceFor(p, bills){
   if(p.billSelector){
@@ -1124,9 +1142,9 @@ function buildFilterPanelHtml(state, mode){
       return `<button class="filter-pill${t === 'ทั้งหมด' ? '' : ' is-multi'} ${on?'active':''}" aria-pressed="${on}" onclick="${setFlowerFn}('${t}')">${t}</button>`;
     }).join('')}</div>`);
 
-  const priceHtml = group('ช่วงราคา', 0, renderPriceSliderHtml(state, mode));
+  const priceHtml = PRICES_HIDDEN ? '' : group('ช่วงราคา', 0, renderPriceSliderHtml(state, mode));
 
-  const sortHtml = group('เรียงตามราคา', 0, `
+  const sortHtml = PRICES_HIDDEN ? '' : group('เรียงตามราคา', 0, `
     <div class="fseg" role="group" aria-label="เรียงตามราคา">
       <button class="${state.sortOrder==='asc'?'active':''}" aria-pressed="${state.sortOrder==='asc'}" onclick="${setSortFn}('asc')">น้อย → มาก</button>
       <button class="${state.sortOrder==='desc'?'active':''}" aria-pressed="${state.sortOrder==='desc'}" onclick="${setSortFn}('desc')">มาก → น้อย</button>
@@ -1326,6 +1344,7 @@ function renderProductCard(p, variant, narrow){
   // เดิมการ์ดย่อย (isSplit) จะถือว่าพร้อมส่งเสมอ เพราะ readyVariantsOf() คัดมาแต่ตัวที่พร้อมส่งอยู่แล้ว
   // แต่ allVariantsOf() (โหมด "ดูสินค้าทั้งหมด") ส่งมาทั้งที่พร้อมส่งและยังไม่พร้อม จึงต้องเช็คสถานะ
   // ของ "ตัวเลือกนั้นๆ" ตรงๆ แทนที่จะเหมารวมเป็น true เสมอ
+  if(PRICES_HIDDEN) priceHtml = PRICE_ASK_SHORT;
   let isReady;
   if(variantOption) isReady = !!variantOption.ready;
   else if(variantSize) isReady = !!variantSize.ready;
@@ -1347,7 +1366,7 @@ function renderProductCard(p, variant, narrow){
         <h4>${displayName}</h4>
         <p class="desc">${p.desc || ''}</p>
         <div class="price-row">
-          <span class="price">${priceHtml}</span>
+          <span class="price${PRICES_HIDDEN ? ' price-ask' : ''}">${priceHtml}</span>
         </div>
         ${(!isSplit && hasProductOptions(p)) ? '<span class="option-badge">เลือกแบบ/สีได้</span>' : ''}
       </div>
@@ -1464,7 +1483,7 @@ function renderCatalog(){
   } else {
     // แถบ "พบสินค้า N รายการ" แสดงเฉพาะจอคอม (ซ่อนบนมือถือด้วย CSS) ไว้เหนือกริดสินค้า
     // ปุ่ม "โหลดแคตตาล็อก" ขึ้นเฉพาะตอนมีตัวกรอง/คำค้นหาทำงานอยู่ และมีสินค้าให้ทำรูปอย่างน้อย 1 ชิ้น (แถบนี้แสดงเฉพาะจอคอม)
-    const showDl = (filtersAreActive(sidebarState()) || !!searchQuery) && catalogExportItems.length > 0;
+    const showDl = !PRICES_HIDDEN && (filtersAreActive(sidebarState()) || !!searchQuery) && catalogExportItems.length > 0;
     const dlBtnHtml = showDl
       ? `<button type="button" class="catalog-dl-btn" id="catalogDlBtn" onclick="downloadCatalogImages()"${catalogExporting ? ' disabled' : ''}>📥 โหลดแคตตาล็อก (${catalogExportItems.length} รายการ)</button>`
       : '';
@@ -1729,7 +1748,7 @@ function catalogFileName(pageNo, pageCount){
 }
 
 async function downloadCatalogImages(){
-  if(catalogExporting) return;
+  if(PRICES_HIDDEN || catalogExporting) return;
   const items = catalogExportItems.slice(); // ถ่ายสำเนา ณ ตอนกดปุ่ม กันตัวกรองเปลี่ยนระหว่างวาด
   if(!items.length) return;
   catalogExporting = true;
@@ -1765,6 +1784,7 @@ async function downloadCatalogImages(){
 }
 
 function addToCart(id){
+  if(PRICES_HIDDEN) return;
   const p = PRODUCTS.find(x=>x.id===id);
   if(!p) return;
   if(p.billSelector){ openProductModal(id); return; }
@@ -1849,6 +1869,7 @@ function updateCartUI(){
 }
 
 function openCart(){
+  if(PRICES_HIDDEN) return;
   document.getElementById('drawer').classList.add('open');
   document.getElementById('overlay').classList.add('show');
   updateChatFabVisibility();
@@ -1920,6 +1941,7 @@ function quickOrder(id){
   startCheckout(() => buildSingleProductLines(id));
 }
 function startCheckout(builderFn){
+  if(PRICES_HIDDEN) return;
   orderBuildBlockedMsgShown = false;
   const result = builderFn();
   if(!result){
@@ -2545,7 +2567,7 @@ function renderModal(){
     if(addons && addons.length){
       addonWrap.style.display = '';
       addonWrap.innerHTML = addons.map(a => `
-        <button type="button" class="color-chip ${modalSelectedAddons.has(a.name)?'active':''}" onclick="toggleModalAddon('${a.name}', ${!modalSelectedAddons.has(a.name)})">${chipThumb(a)}➕ ${a.name} (+${a.price}฿)</button>
+        <button type="button" class="color-chip ${modalSelectedAddons.has(a.name)?'active':''}" onclick="toggleModalAddon('${a.name}', ${!modalSelectedAddons.has(a.name)})">${chipThumb(a)}➕ ${a.name}${PRICES_HIDDEN ? '' : ` (+${a.price}฿)`}</button>
       `).join('');
       addonWrap.dataset.sel = modalSelectedAddons.size ? ': ' + [...modalSelectedAddons].join(', ') : '';
     } else {
@@ -2600,6 +2622,12 @@ function updateModalPriceDisplay(){
   const p = PRODUCTS.find(x=>x.id===modalProductId);
   const priceEl = document.getElementById('modalPrice');
   if(!p || !priceEl) return;
+  if(PRICES_HIDDEN){
+    priceEl.classList.add('price-ask');
+    priceEl.innerHTML = priceAskHtml();
+    return;
+  }
+  priceEl.classList.remove('price-ask');
   // ยังเลือกตัวเลือกไม่ครบทุกมิติ — โชว์เป็นช่วงราคา (ต่ำสุด-สูงสุด) ของชุดที่ยังเป็นไปได้ตามที่เลือกไว้แล้ว
   // แทนที่จะเดาราคาจาก variant ใดตัวหนึ่งไปก่อน เพราะยังไม่รู้ว่าลูกค้าจะเลือกจบที่ชุดไหน
   if(hasNewOptions(p) && !hasFullOptionSelection(p, currentOptionSelection(p))){
@@ -2645,6 +2673,7 @@ function currentModalVariant(p){
   return { label, unitPrice };
 }
 function addModalToCart(){
+  if(PRICES_HIDDEN) return;
   const p = PRODUCTS.find(x=>x.id===modalProductId);
   if(!p) return;
   if(warnIfInvalidOptionSelection(p)) return;
@@ -2676,6 +2705,8 @@ async function fetchProductsFromFirestore(){
   const snap = await dbMod.getDoc(ref);
   if(!snap.exists()) return null;
   const data = snap.data() || {};
+  cloudHidePrices = data.hidePrices === true;
+  cloudStamp = String(data.updatedAt || '') + '|' + cloudHidePrices;
   const list = typeof data.json === 'string' ? JSON.parse(data.json) : data.list;
   return (Array.isArray(list) && list.length) ? list : null;
 }
@@ -2690,6 +2721,8 @@ async function loadProducts(){
     ]);
     if(fromCloud){
       PRODUCTS = fromCloud;
+      setPricesHidden(cloudHidePrices);
+      CATALOG_DOC_STAMP = cloudStamp;
       finishLoadingProducts();
       return;
     }
@@ -2724,6 +2757,19 @@ function finishLoadingProducts(){
   loadSavedFbName();
 }
 loadProducts();
+
+/* ลูกค้ากลับมาที่แท็บ: เช็คว่าหลังบ้านเปิด/ปิดสวิตช์ราคา หรือแก้ข้อมูลสินค้าไปหรือยัง ถ้าเปลี่ยนให้โหลดหน้าใหม่
+   (กันลูกค้าที่เปิดหน้าค้างไว้เห็นราคาเก่า) เช็คเฉพาะตอนที่หน้านี้ใช้ข้อมูลจาก Firestore และไม่เช็คถี่เกิน 30 วินาที */
+let lastCloudCheck = 0;
+document.addEventListener('visibilitychange', async () => {
+  if(document.visibilityState !== 'visible' || !CATALOG_DOC_STAMP) return;
+  if(Date.now() - lastCloudCheck < 30000) return;
+  lastCloudCheck = Date.now();
+  try{
+    await fetchProductsFromFirestore();
+    if(cloudStamp && cloudStamp !== CATALOG_DOC_STAMP) location.reload();
+  } catch(err){ /* เน็ตหลุด — ใช้ข้อมูลเดิมต่อ */ }
+});
 
 /* ---------- รีวิวจากลูกค้า (รูปภาพล้วน) ----------
    ไม่ต้องแก้โค้ดหรือแก้ไฟล์ JSON — แค่เอารูปรีวิว (แคปแชท/รูปที่ลูกค้าส่งมา) ไปวางใน

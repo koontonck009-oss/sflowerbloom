@@ -847,3 +847,32 @@ body{ background:var(--bg); color:var(--ink); }
 .progress{ height:8px; border-radius:99px; background:var(--line-soft); overflow:hidden; margin:-6px 0 20px; }
 .progress > i{ display:block; height:100%; width:0; background:var(--brand); transition:width .15s; }
 .ed-hint{ margin:10px 0 0; color:var(--ink-3); font-size:12.5px; }
+
+/* ───────────── สวิตช์ซ่อนราคาหน้าร้าน ───────────── */
+.price-switch{
+  display:flex; align-items:center; justify-content:space-between; gap:16px;
+  margin:0 0 14px; padding:14px 18px;
+  background:var(--panel); border:1.5px solid var(--line); border-radius:var(--radius);
+  box-shadow:var(--shadow);
+}
+.price-switch .ps-text{ display:flex; flex-direction:column; gap:2px; min-width:0; }
+.price-switch .ps-text b{ font-size:15px; font-weight:600; }
+.price-switch .ps-text span{ font-size:13px; color:var(--ink-2); line-height:1.5; }
+.price-switch.is-on{ background:var(--warn-soft); border-color:#E9B88F; }
+.price-switch.is-on .ps-text b{ color:var(--warn); }
+.switch{
+  position:relative; flex-shrink:0; width:52px; height:30px; padding:0;
+  border:0; border-radius:999px; background:#CFC5CA; cursor:pointer; transition:background .18s ease;
+}
+.switch i{
+  position:absolute; top:3px; left:3px; width:24px; height:24px; border-radius:50%;
+  background:#fff; box-shadow:0 1px 4px rgba(0,0,0,.25); transition:transform .18s ease;
+}
+.switch[aria-checked="true"]{ background:var(--warn); }
+.switch[aria-checked="true"] i{ transform:translateX(22px); }
+.switch:disabled{ opacity:.55; cursor:default; }
+.switch:focus-visible{ outline:3px solid rgba(246,33,136,.35); outline-offset:2px; }
+
+/* ตอนซ่อนราคา: ไม่ให้สร้างภาพแคตตาล็อก (ภาพมีราคา) */
+body.prices-off #catalogBtn,
+body.prices-off #posterCard{ display:none !important; }

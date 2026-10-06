@@ -13,6 +13,7 @@ const FIRESTORE_DOC_LIMIT = 1048576; // 1 MB ต่อเอกสาร
 
 let fb = null;           // { auth, db, authApi, dbApi }
 let catalog = [];        // รายการสินค้าทั้งหมด
+let pricesHidden = false; // สวิตช์ "ซ่อนราคาบนหน้าร้าน" (เก็บในเอกสาร catalog/products ช่อง hidePrices)
 let draft = null;        // สินค้าที่กำลังแก้ไขอยู่
 let draftIndex = -1;     // -1 = สินค้าใหม่
 let filterCat = 'ทั้งหมด';
@@ -259,9 +260,12 @@ async function loadCatalog(){
       const data = snap.data() || {};
       const list = typeof data.json === 'string' ? JSON.parse(data.json) : data.list;
       catalog = Array.isArray(list) ? list : [];
+      pricesHidden = data.hidePrices === true;
     } else {
       catalog = [];
+      pricesHidden = false;
     }
+    applyPricesHiddenUI(true);
     setSaveState(catalog.length ? 'ข้อมูลตรงกับหน้าร้านแล้ว' : 'ยังไม่มีสินค้าในระบบ');
     renderList();
   } catch(err){
@@ -281,12 +285,13 @@ async function saveCatalog(successMsg){
 
   setSaveState('กำลังบันทึก…', 'is-saving');
   try{
+    // merge:true สำคัญ — ไม่งั้นการบันทึกสินค้าจะเขียนทับและลบช่อง hidePrices ทิ้ง
     await fb.dbApi.setDoc(catalogRef(), {
       json,
       count: catalog.length,
       updatedAt: new Date().toISOString(),
       updatedBy: fb.auth.currentUser ? fb.auth.currentUser.email : ''
-    });
+    }, { merge: true });
     setSaveState('บันทึกแล้ว · หน้าร้านอัปเดตทันที');
     if(successMsg) toast(successMsg);
     return true;
@@ -297,6 +302,51 @@ async function saveCatalog(successMsg){
       : 'บันทึกไม่สำเร็จ: ' + (err.code || err.message), true);
     console.error(err);
     return false;
+  }
+}
+
+/* ───────────────── สวิตช์ซ่อนราคาหน้าร้าน ───────────────── */
+
+function applyPricesHiddenUI(ready){
+  const btn = $('hidePricesBtn');
+  $('priceSwitch').classList.toggle('is-on', pricesHidden);
+  document.body.classList.toggle('prices-off', pricesHidden);
+  btn.setAttribute('aria-checked', String(pricesHidden));
+  if(ready) btn.disabled = false;
+  $('priceSwitchHint').textContent = pricesHidden
+    ? 'เปิดอยู่ — หน้าร้านไม่แสดงราคา และปิดตะกร้า/การสั่งซื้อ ลูกค้าต้องแคปหน้าจอแล้วทักเพจ (ปุ่มภาพแคตตาล็อกถูกซ่อนไว้)'
+    : 'ปิดอยู่ — หน้าร้านแสดงราคาตามปกติ';
+}
+
+async function togglePricesHidden(){
+  const next = !pricesHidden;
+  const ok = await askConfirm(
+    next ? 'ซ่อนราคาบนหน้าร้าน?' : 'แสดงราคาบนหน้าร้านอีกครั้ง?',
+    next
+      ? 'ลูกค้าจะไม่เห็นราคาทุกจุด และสั่งซื้อผ่านหน้าเว็บไม่ได้ (ต้องแคปหน้าจอแล้วทักเพจ) ราคาที่ตั้งไว้ในสินค้าไม่หายไปไหน'
+      : 'หน้าร้านจะกลับมาแสดงราคาและเปิดตะกร้า/การสั่งซื้อตามปกติ ตรวจสอบราคาสินค้าให้เรียบร้อยก่อนนะ',
+    next ? 'ซ่อนราคา' : 'แสดงราคา'
+  );
+  if(!ok) return;
+  const btn = $('hidePricesBtn');
+  btn.disabled = true;
+  setSaveState('กำลังบันทึก…', 'is-saving');
+  try{
+    await fb.dbApi.setDoc(catalogRef(), {
+      hidePrices: next,
+      hidePricesUpdatedAt: new Date().toISOString()
+    }, { merge: true });
+    pricesHidden = next;
+    applyPricesHiddenUI(true);
+    setSaveState('บันทึกแล้ว · หน้าร้านอัปเดตทันที');
+    toast(next ? 'ซ่อนราคาบนหน้าร้านแล้ว' : 'แสดงราคาบนหน้าร้านแล้ว');
+  } catch(err){
+    btn.disabled = false;
+    setSaveState('บันทึกไม่สำเร็จ', 'is-error');
+    toast(err.code === 'permission-denied'
+      ? 'บันทึกไม่ได้: กฎความปลอดภัยของ Firestore ยังไม่อนุญาตให้เพิ่มช่อง hidePrices'
+      : 'บันทึกไม่สำเร็จ: ' + (err.code || err.message), true);
+    console.error(err);
   }
 }
 
@@ -1729,6 +1779,7 @@ function posterSave(blob, name){
 
 async function exportPosters(products, zipBase){
   if(posterBusy) return;
+  if(pricesHidden){ toast('ตอนนี้ปิดราคาอยู่ จึงสร้างภาพแคตตาล็อกไม่ได้ (ภาพมีราคา)', true); return; }
   const jobs = [];
   products.forEach(p => posterEntries(p).forEach(e => jobs.push({ p, e })));
   if(!jobs.length){ toast('ไม่มีสินค้าให้สร้างภาพ', true); return; }
@@ -1817,6 +1868,7 @@ $('catChips').addEventListener('click', e => {
 });
 
 $('addBtn').addEventListener('click', () => openEditor(-1));
+$('hidePricesBtn').addEventListener('click', togglePricesHidden);
 $('catalogBtn').addEventListener('click', () => {
   const list = catalogTargets();
   const stamp = new Date().toISOString().slice(0, 10);

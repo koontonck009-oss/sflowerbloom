@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="th" class="prices-hidden">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -74,7 +74,7 @@
 
 <section class="hero">
   <h2>ช่อดอกไม้กำมะหยี่<br>สำหรับโอกาสพิเศษ</h2>
-  <p>เลือกสินค้าที่ชอบ กดใส่ตะกร้า แล้วกดปุ่มเดียวเพื่อส่งรายการสั่งซื้อมาที่แชทเพจของเราได้ทันที ไม่ต้องพิมพ์เอง</p>
+  <p><span class="price-on">เลือกสินค้าที่ชอบ กดใส่ตะกร้า แล้วกดปุ่มเดียวเพื่อส่งรายการสั่งซื้อมาที่แชทเพจของเราได้ทันที ไม่ต้องพิมพ์เอง</span><span class="price-off">เลือกดูสินค้าที่ชอบ แล้วแคปหน้าจอสินค้านั้นส่งให้เพจเพื่อสอบถามราคาและสั่งทำได้เลย</span></p>
   <a href="#catalog" class="cta">เลือกดูสินค้า ↓</a>
 </section>
 
@@ -117,6 +117,13 @@
   <img id="reviewLightboxImg" src="" alt="รีวิวลูกค้า" onclick="event.stopPropagation();">
   <button class="review-lightbox-nav next" onclick="event.stopPropagation(); navReviewLightbox(1);" aria-label="รูปถัดไป">›</button>
   <div class="review-lightbox-counter" id="reviewLightboxCounter"></div>
+</div>
+
+<!-- ข้อความตอนปิดราคา (แสดงเฉพาะเมื่อ <html> มีคลาส prices-hidden) -->
+<div class="price-notice" id="priceNotice" role="note">
+  <span class="pn-ico" aria-hidden="true">📸</span>
+  <p><b>ตอนนี้ร้านยังไม่แสดงราคาบนหน้าเว็บ</b> สนใจสินค้าไหน <b>แคปหน้าจอสินค้านั้น</b> (ให้เห็นชื่อสินค้าและตัวเลือกที่เลือก) แล้วส่งให้เพจเพื่อสอบถามราคาได้เลยค่ะ</p>
+  <a class="pn-btn" href="https://m.me/S.Flower.Bloom44" target="_blank" rel="noopener">💬 ทักเพจ</a>
 </div>
 
 <nav class="cat-nav" id="catNav"></nav>

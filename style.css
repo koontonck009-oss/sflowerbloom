@@ -1555,3 +1555,62 @@ footer{
   .form-input{font-size:16px; padding:10px 13px;}
   .price-num-input{font-size:16px; padding:7px 6px;}
 }
+
+/* =========================================================
+   โหมดปิดราคา — ทำงานเมื่อ <html> มีคลาส prices-hidden
+   (สวิตช์อยู่หลังบ้าน admin.html · หน้าเว็บตั้งคลาสนี้ให้เองจาก script.js)
+   ========================================================= */
+.price-off{display:none;}
+.prices-hidden .price-on{display:none;}
+.prices-hidden .price-off{display:inline;}
+
+.price-notice{display:none;}
+.prices-hidden .price-notice{
+  display:flex; align-items:center; gap:12px;
+  max-width:1180px; margin:12px auto 0; padding:12px 16px;
+  background:#FFF3FA; border:1px solid rgba(246,33,136,0.18); border-radius:16px;
+  color:var(--plum); font-size:13.5px; line-height:1.55;
+}
+.price-notice .pn-ico{font-size:24px; flex-shrink:0;}
+.price-notice p{margin:0; flex:1; min-width:0;}
+.price-notice b{color:var(--rose-dark); font-weight:700;}
+.price-notice .pn-btn{
+  flex-shrink:0; padding:9px 16px; border-radius:999px; text-decoration:none;
+  background:var(--rose-dark); color:#fff; font-weight:600; font-size:13px; white-space:nowrap;
+}
+@media (max-width:1210px){
+  .prices-hidden .price-notice{margin-left:14px; margin-right:14px;}
+}
+@media (max-width:560px){
+  .prices-hidden .price-notice{flex-wrap:wrap;}
+  .price-notice .pn-btn{width:100%; text-align:center;}
+}
+
+/* ปิดตะกร้า/สั่งซื้อ/โหลดแคตตาล็อก ตอนปิดราคา (ตัวเลือกสี/แบบยังเลือกได้ เพื่อให้ลูกค้าแคปภาพที่เลือกไว้) */
+.prices-hidden .cart-btn-top,
+.prices-hidden .fab-cart,
+.prices-hidden #drawer,
+.prices-hidden #overlay,
+.prices-hidden #orderSummaryModal,
+.prices-hidden #summaryOverlay,
+.prices-hidden .catalog-dl-btn,
+.prices-hidden .modal-actions,
+.prices-hidden .pd-hr-2,
+.prices-hidden .modal-qty:not(#modalBillsRow){display:none !important;}
+
+/* ราคาบนการ์ดสินค้า → ข้อความสอบถามราคา */
+.price.price-ask{font-size:13px; font-weight:600; color:var(--rose-dark);}
+
+/* กล่องราคาในหน้าสินค้า → คำแนะนำให้แคปหน้าจอ + ปุ่มทักเพจ */
+.prices-hidden .page-body .modal-price.price-ask{
+  display:block; padding:14px 16px; margin:0 0 18px;
+  font-family:'Kanit'; font-size:14px; font-weight:500; line-height:1.6; color:var(--plum);
+  background:linear-gradient(135deg,#FFF3FA,#FFE4F3);
+  border:1px solid rgba(246,33,136,0.14); border-radius:16px;
+}
+.price-ask-text b{font-weight:700; color:var(--rose-dark);}
+.price-ask-btn{
+  display:flex; align-items:center; justify-content:center;
+  margin-top:12px; height:46px; border-radius:14px; text-decoration:none;
+  background:var(--rose-dark); color:#fff; font-weight:700; font-size:15px;
+}
