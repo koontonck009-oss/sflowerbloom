@@ -187,6 +187,14 @@ h1,h2,h3,.display{font-family:'Kanit',sans-serif; font-weight:600;}
 
 /* ---------- Catalog results bar (desktop only — "พบสินค้า N รายการ") ---------- */
 .catalog-results-bar{display:none;}
+.catalog-dl-btn{
+  border:1.5px solid var(--sage); background:var(--paper); color:var(--sage-dark);
+  font-family:'Kanit'; font-weight:600; font-size:13px; line-height:1;
+  padding:8px 16px; border-radius:999px; cursor:pointer; white-space:nowrap;
+  transition:background .15s, color .15s;
+}
+.catalog-dl-btn:hover{background:var(--sage); color:#fff;}
+.catalog-dl-btn:disabled{opacity:.65; cursor:progress; background:var(--paper); color:var(--sage-dark);}
 
 /* ---------- Floating chat button (bottom-right, sits above the cart FAB) ---------- */
 .chat-fab-wrap{

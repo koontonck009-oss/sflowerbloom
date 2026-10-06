@@ -1269,6 +1269,12 @@ function favHeartHtml(p, colorIndex, optionIndex, sizeIndex){
 // "การ์ดย่อยที่แตกตามสี/ตัวเลือก/ขนาด" ในโซนสินค้าแนะนำ — จะโชว์รูป/ชื่อ/ราคาของตัวเลือกนั้นๆ ตรงๆ
 // (ไม่ผูกกับตัวเลือกที่ลูกค้าเลือกไว้ในสถานะกลาง) และเปิดหน้าสินค้าพร้อม pre-select ตัวเลือกนั้นให้ทันที
 // ส่วนการ์ดปกติ (variant เป็น undefined) ทำงานเหมือนเดิมทุกอย่าง
+// ---------- เก็บรายการการ์ดที่ผ่านตัวกรอง (ใช้ทำรูปแคตตาล็อก) ----------
+// renderCatalog() จะเปิด catalogExportCollect เฉพาะตอนวาดการ์ดในแต่ละหมวด (ไม่รวมโซน "สินค้าแนะนำ" กันสินค้าซ้ำ)
+// แล้ว renderProductCard() จะส่งชื่อ/ราคา/รูปของการ์ดนั้นเข้ามาเก็บตามลำดับที่ลูกค้าเห็นบนหน้าเว็บ
+let catalogExportItems = [];
+let catalogExportCollect = false;
+let catalogExporting = false;
 function renderProductCard(p, variant, narrow){
   const colorIndex = variant && variant.colorIndex != null ? variant.colorIndex : null;
   const optionIndex = variant && variant.optionIndex != null ? variant.optionIndex : null;
@@ -1326,6 +1332,9 @@ function renderProductCard(p, variant, narrow){
   else if(variantColor) isReady = typeof variantColor.ready !== 'undefined' ? !!variantColor.ready : !!p.ready;
   else isReady = currentReadyState(p);
   const clickHandler = `openProductModal('${p.id}', ${colorIndex}, ${optionIndex}, ${sizeIndex})`;
+  if(catalogExportCollect){
+    catalogExportItems.push({ name: displayName, price: String(priceHtml), imgSrc: imgSrcFromThumbHtml(thumbHtml), ready: !!isReady, isNew: !!p.isNew });
+  }
   return `
     <div class="card" onclick="${clickHandler}">
       <div class="thumb-wrap">
@@ -1352,6 +1361,8 @@ function renderCatalog(){
   let html = '';
   cardNarrowByProduct = {};
   cardNarrowSizesByProduct = {};
+  catalogExportItems = [];
+  catalogExportCollect = false;
 
   // "ทั้งหมด" (ไม่เลือกหมวดเจาะจง) = เรียกดูทุกอย่างเหมือนเดิม (การ์ดแนะนำ + ทุกหมวดเรียงต่อกัน)
   // เลือกหมวดเจาะจงไว้ (หนึ่งหมวดหรือหลายหมวด) = กรองจริง โชว์เฉพาะหมวดที่เลือก
@@ -1378,6 +1389,7 @@ function renderCatalog(){
   }
 
   const catsToRender = activeCats.size ? CATS.slice(1).filter(c => activeCats.has(c)) : CATS.slice(1);
+  catalogExportCollect = true;
   html += catsToRender.map(cat => {
     const sizeList = CATEGORY_SIZES[cat];
     const catOpts = {
@@ -1435,6 +1447,7 @@ function renderCatalog(){
     `;
     return `<div class="cat-section" id="${catSectionId(cat)}" data-cat="${cat}">${body}</div>`;
   }).join('');
+  catalogExportCollect = false;
 
   if(searchQuery && totalMatches === 0){
     main.innerHTML = `
@@ -1450,10 +1463,261 @@ function renderCatalog(){
       </div>`;
   } else {
     // แถบ "พบสินค้า N รายการ" แสดงเฉพาะจอคอม (ซ่อนบนมือถือด้วย CSS) ไว้เหนือกริดสินค้า
-    const resultsBarHtml = `<div class="catalog-results-bar"><span>พบสินค้า ${totalMatches} รายการ</span></div>`;
+    // ปุ่ม "โหลดแคตตาล็อก" ขึ้นเฉพาะตอนมีตัวกรอง/คำค้นหาทำงานอยู่ และมีสินค้าให้ทำรูปอย่างน้อย 1 ชิ้น (แถบนี้แสดงเฉพาะจอคอม)
+    const showDl = (filtersAreActive(sidebarState()) || !!searchQuery) && catalogExportItems.length > 0;
+    const dlBtnHtml = showDl
+      ? `<button type="button" class="catalog-dl-btn" id="catalogDlBtn" onclick="downloadCatalogImages()"${catalogExporting ? ' disabled' : ''}>📥 โหลดแคตตาล็อก (${catalogExportItems.length} รายการ)</button>`
+      : '';
+    const resultsBarHtml = `<div class="catalog-results-bar"><span>พบสินค้า ${totalMatches} รายการ</span>${dlBtnHtml}</div>`;
     main.innerHTML = resultsBarHtml + html;
   }
   setupScrollSpy();
+}
+
+/* =========================================================
+   โหลดแคตตาล็อกเป็นรูป (เฉพาะสินค้าที่ผ่านตัวกรอง)
+   รูป JPG 1920x2400 (4:5) หน้าละ 12 ชิ้น จัด 4 คอลัมน์ x 3 แถว
+   วาดด้วย canvas ในเบราว์เซอร์ แล้วโหลดทีละรูปต่อเนื่องกัน
+   ========================================================= */
+const CATALOG_IMG_W = 1080, CATALOG_IMG_H = 1350; // พิกัดที่ใช้จัดเลย์เอาต์ (4:5)
+const CATALOG_OUT_W = 1920, CATALOG_OUT_H = 2400;  // ขนาดไฟล์จริงที่ได้ (4:5 เท่ากัน ขยายเลย์เอาต์ตามสัดส่วนให้ชัดขึ้น)
+const CATALOG_COLS = 4, CATALOG_ROWS = 3, CATALOG_PER_PAGE = CATALOG_COLS * CATALOG_ROWS;
+
+// ดึง src ของรูปออกจาก HTML ของ thumbnail (ใช้ DOMParser = เอกสารเปล่า ไม่โหลดรูปจริง และไม่รัน onerror)
+function imgSrcFromThumbHtml(html){
+  try{
+    const doc = new DOMParser().parseFromString(String(html || ''), 'text/html');
+    const img = doc.querySelector('img');
+    return img ? img.getAttribute('src') : null;
+  }catch(e){ return null; }
+}
+
+// ข้อความสรุปตัวกรองที่ใช้อยู่ แสดงใต้ชื่อร้านบนหัวรูป
+function catalogFilterSummary(){
+  const parts = [];
+  if(activeCats.size) parts.push([...activeCats].join(' + '));
+  if(activeFlowerTypes.size) parts.push([...activeFlowerTypes].join(' + '));
+  if(activeSizes.size) parts.push('ขนาด ' + [...activeSizes].join(' + '));
+  if(customPriceMin !== PRICE_SLIDER_MIN || customPriceMax !== PRICE_SLIDER_MAX){
+    const lo = customPriceMin, hi = customPriceMax;
+    if(lo > PRICE_SLIDER_MIN && hi < PRICE_SLIDER_MAX) parts.push(`${fmt(lo)} - ${fmt(hi)}`);
+    else if(lo > PRICE_SLIDER_MIN) parts.push(`ตั้งแต่ ${fmt(lo)}`);
+    else parts.push(`ไม่เกิน ${fmt(hi)}`);
+  }
+  if(showReadyOnly) parts.push('พร้อมส่ง');
+  if(showFavoritesOnly) parts.push('รายการโปรด');
+  if(searchQuery) parts.push(`ค้นหา "${searchQuery}"`);
+  return parts.length ? parts.join(' · ') : 'สินค้าทั้งหมด';
+}
+
+function catalogLoadImage(src){
+  return new Promise(resolve => {
+    if(!src) return resolve(null);
+    const img = new Image();
+    let done = false;
+    const finish = v => { if(!done){ done = true; resolve(v); } };
+    img.crossOrigin = 'anonymous'; // รูปจากโดเมนอื่นที่ไม่เปิด CORS จะโหลดไม่ขึ้น → ใช้ช่องสำรองแทน (ไม่ให้ไฟล์ทั้งรูปพัง)
+    img.onload = () => finish(img);
+    img.onerror = () => finish(null);
+    setTimeout(() => finish(null), 10000);
+    img.src = src;
+  });
+}
+
+function catalogRoundRect(ctx, x, y, w, h, r){
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+// ตัดข้อความให้พอดีความกว้าง (ตัดตามตัวอักษร เพราะภาษาไทยไม่มีเว้นวรรคระหว่างคำ) สูงสุด maxLines บรรทัด
+function catalogWrapText(ctx, text, maxW, maxLines){
+  const chars = Array.from(String(text));
+  const lines = [];
+  let cur = '', used = 0;
+  for(let i = 0; i < chars.length; i++){
+    const test = cur + chars[i];
+    if(ctx.measureText(test).width > maxW && cur){
+      lines.push(cur); used += Array.from(cur).length; cur = chars[i];
+      if(lines.length === maxLines){ cur = ''; break; }
+    } else cur = test;
+  }
+  if(cur && lines.length < maxLines){ lines.push(cur); used += Array.from(cur).length; }
+  if(used < chars.length && lines.length){
+    let last = lines[lines.length - 1];
+    while(last.length > 1 && ctx.measureText(last + '…').width > maxW) last = last.slice(0, -1);
+    lines[lines.length - 1] = last + '…';
+  }
+  return lines;
+}
+function catalogFitOneLine(ctx, text, maxW){
+  let t = String(text);
+  if(ctx.measureText(t).width <= maxW) return t;
+  while(t.length > 1 && ctx.measureText(t + '…').width > maxW) t = t.slice(0, -1);
+  return t + '…';
+}
+
+function drawCatalogPage(items, pageNo, pageCount, imgs, logo, summary){
+  const W = CATALOG_IMG_W, H = CATALOG_IMG_H;
+  const cv = document.createElement('canvas');
+  cv.width = CATALOG_OUT_W; cv.height = CATALOG_OUT_H;
+  const ctx = cv.getContext('2d');
+  const K = CATALOG_OUT_W / W; // ตัวคูณขยาย: โค้ดวาดด้านล่างยังใช้พิกัด 1080x1350 เหมือนเดิม
+  ctx.scale(K, CATALOG_OUT_H / H);
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  const PINK = '#F62188', PINK_DARK = '#C4106D', PLUM = '#3B1230', CREAM = '#FFF7FC';
+  ctx.textBaseline = 'alphabetic';
+
+  // พื้นหลัง
+  ctx.fillStyle = CREAM; ctx.fillRect(0, 0, W, H);
+
+  // หัวรูป
+  const HEAD_H = 150;
+  const grad = ctx.createLinearGradient(0, 0, W, HEAD_H);
+  grad.addColorStop(0, PINK); grad.addColorStop(1, PINK_DARK);
+  ctx.fillStyle = grad; ctx.fillRect(0, 0, W, HEAD_H);
+  let textX = 40;
+  if(logo){
+    const d = 84, lx = 40, ly = (HEAD_H - d) / 2;
+    ctx.save();
+    ctx.beginPath(); ctx.arc(lx + d/2, ly + d/2, d/2, 0, Math.PI * 2); ctx.closePath(); ctx.clip();
+    ctx.fillStyle = '#fff'; ctx.fillRect(lx, ly, d, d);
+    const r = Math.min(d / logo.width, d / logo.height);
+    const lw = logo.width * r, lh = logo.height * r;
+    ctx.drawImage(logo, lx + (d - lw)/2, ly + (d - lh)/2, lw, lh);
+    ctx.restore();
+    textX = lx + d + 22;
+  }
+  ctx.fillStyle = '#fff';
+  ctx.font = '700 44px Kanit, sans-serif';
+  ctx.fillText('S.Flower Bloom', textX, 74);
+  ctx.font = '500 24px Kanit, sans-serif';
+  ctx.fillText(catalogFitOneLine(ctx, summary, W - textX - 40), textX, 112);
+
+  // กริดสินค้า
+  const FOOT_H = 74, PAD = 36, GAP = 14;
+  const gridX = PAD, gridY = HEAD_H + 28;
+  const gridW = W - PAD * 2;
+  const gridH = H - gridY - FOOT_H - 22;
+  const cellW = (gridW - GAP * (CATALOG_COLS - 1)) / CATALOG_COLS;
+  const cellH = (gridH - GAP * (CATALOG_ROWS - 1)) / CATALOG_ROWS;
+  const photo = cellW; // ช่องรูปเป็นสี่เหลี่ยมจัตุรัส
+
+  items.forEach((it, i) => {
+    const col = i % CATALOG_COLS, row = Math.floor(i / CATALOG_COLS);
+    const x = gridX + col * (cellW + GAP), y = gridY + row * (cellH + GAP);
+
+    // การ์ด
+    ctx.save();
+    ctx.shadowColor = 'rgba(59,18,48,0.10)'; ctx.shadowBlur = 10 * K; ctx.shadowOffsetY = 2 * K;
+    ctx.fillStyle = '#fff';
+    catalogRoundRect(ctx, x, y, cellW, cellH, 14); ctx.fill();
+    ctx.restore();
+
+    // รูป (ครอปให้เต็มช่องจัตุรัส) หรือช่องสำรองถ้ารูปโหลดไม่ขึ้น
+    ctx.save();
+    catalogRoundRect(ctx, x, y, cellW, cellH, 14); ctx.clip();
+    const img = imgs[i];
+    if(img){
+      const sc = Math.max(photo / img.width, photo / img.height);
+      const sw = photo / sc, sh = photo / sc;
+      ctx.drawImage(img, (img.width - sw)/2, (img.height - sh)/2, sw, sh, x, y, photo, photo);
+    } else {
+      ctx.fillStyle = '#FFE3F1'; ctx.fillRect(x, y, photo, photo);
+      ctx.font = '64px sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = PINK;
+      ctx.fillText('🌸', x + photo/2, y + photo/2 + 22);
+      ctx.textAlign = 'left';
+    }
+    ctx.restore();
+
+    // ป้าย พร้อมส่ง / ใหม่
+    const drawBadge = (label, bx, by, bg, align) => {
+      ctx.font = '600 15px Kanit, sans-serif';
+      const tw = ctx.measureText(label).width, bw = tw + 18, bh = 26;
+      const px = align === 'right' ? bx - bw : bx;
+      ctx.fillStyle = bg; catalogRoundRect(ctx, px, by, bw, bh, 13); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.fillText(label, px + 9, by + 19);
+    };
+    if(it.ready) drawBadge('พร้อมส่ง', x + 8, y + 8, '#16A34A', 'left');
+    if(it.isNew) drawBadge('ใหม่', x + cellW - 8, y + 8, PINK, 'right');
+
+    // ชื่อ + ราคา
+    const tx = x + 10, tw2 = cellW - 20;
+    ctx.fillStyle = PLUM;
+    ctx.font = '600 19px Kanit, sans-serif';
+    const lines = catalogWrapText(ctx, it.name, tw2, 2);
+    lines.forEach((ln, li) => ctx.fillText(ln, tx, y + photo + 28 + li * 24));
+    ctx.fillStyle = PINK_DARK;
+    let ps = 26;
+    ctx.font = `700 ${ps}px Kanit, sans-serif`;
+    while(ctx.measureText(it.price).width > tw2 && ps > 15){ ps -= 1; ctx.font = `700 ${ps}px Kanit, sans-serif`; }
+    ctx.fillText(it.price, tx, y + cellH - 14);
+  });
+
+  // ท้ายรูป
+  const fy = H - FOOT_H;
+  ctx.fillStyle = PINK_DARK; ctx.fillRect(0, fy, W, FOOT_H);
+  ctx.fillStyle = '#fff';
+  ctx.font = '500 22px Kanit, sans-serif';
+  const chat = (typeof PAGE_LINK === 'string' ? PAGE_LINK.replace(/^https?:\/\//, '') : '');
+  ctx.fillText('สั่งซื้อทักแชท Facebook: ' + chat, PAD, fy + 45);
+  ctx.textAlign = 'right';
+  ctx.font = '600 22px Kanit, sans-serif';
+  ctx.fillText(`หน้า ${pageNo}/${pageCount}`, W - PAD, fy + 45);
+  ctx.textAlign = 'left';
+  return cv;
+}
+
+function catalogCanvasToBlob(cv){
+  return new Promise(resolve => cv.toBlob(b => resolve(b), 'image/jpeg', 0.95));
+}
+function catalogSaveBlob(blob, filename){
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
+const catalogSleep = ms => new Promise(r => setTimeout(r, ms));
+
+async function downloadCatalogImages(){
+  if(catalogExporting) return;
+  const items = catalogExportItems.slice(); // ถ่ายสำเนา ณ ตอนกดปุ่ม กันตัวกรองเปลี่ยนระหว่างวาด
+  if(!items.length) return;
+  catalogExporting = true;
+  const setLabel = t => { const b = document.getElementById('catalogDlBtn'); if(b){ b.disabled = true; b.textContent = t; } };
+  try{
+    setLabel('กำลังเตรียมรูป...');
+    // รอให้ฟอนต์ Kanit พร้อมก่อนวาด ไม่งั้น canvas จะใช้ฟอนต์สำรอง
+    try{
+      await Promise.all(['500','600','700'].map(w => document.fonts.load(`${w} 24px Kanit`, 'กขค')));
+    }catch(e){}
+    const logo = await catalogLoadImage('images/logo.png?v=2');
+    const summary = catalogFilterSummary();
+    const pageCount = Math.ceil(items.length / CATALOG_PER_PAGE);
+    for(let pg = 0; pg < pageCount; pg++){
+      setLabel(`กำลังสร้างรูป ${pg + 1}/${pageCount}...`);
+      const slice = items.slice(pg * CATALOG_PER_PAGE, (pg + 1) * CATALOG_PER_PAGE);
+      const imgs = await Promise.all(slice.map(it => catalogLoadImage(it.imgSrc)));
+      const cv = drawCatalogPage(slice, pg + 1, pageCount, imgs, logo, summary);
+      const blob = await catalogCanvasToBlob(cv);
+      if(!blob) throw new Error('toBlob failed');
+      catalogSaveBlob(blob, `แคตตาล็อก_S-Flower-Bloom_${pg + 1}-${pageCount}.jpg`);
+      if(pg < pageCount - 1) await catalogSleep(600); // เว้นช่วงให้เบราว์เซอร์รับไฟล์ต่อเนื่องได้
+    }
+    showToast(`โหลดแคตตาล็อกแล้ว ${pageCount} รูป 🌸`);
+  }catch(e){
+    console.error('catalog export failed', e);
+    showToast('สร้างรูปแคตตาล็อกไม่สำเร็จ ลองใหม่อีกครั้งนะ');
+  }finally{
+    catalogExporting = false;
+    const b = document.getElementById('catalogDlBtn');
+    if(b){ b.disabled = false; b.textContent = `📥 โหลดแคตตาล็อก (${catalogExportItems.length} รายการ)`; }
+  }
 }
 
 function addToCart(id){
