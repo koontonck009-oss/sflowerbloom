@@ -1476,12 +1476,13 @@ function renderCatalog(){
 
 /* =========================================================
    โหลดแคตตาล็อกเป็นรูป (เฉพาะสินค้าที่ผ่านตัวกรอง)
-   รูป JPG 1920x2400 (4:5) หน้าละ 12 ชิ้น จัด 4 คอลัมน์ x 3 แถว
+   รูป JPG 1800x3200 (9:16) หน้าละ 12 ชิ้น จัด 3 คอลัมน์ x 4 แถว
    วาดด้วย canvas ในเบราว์เซอร์ แล้วโหลดทีละรูปต่อเนื่องกัน
    ========================================================= */
-const CATALOG_IMG_W = 1080, CATALOG_IMG_H = 1350; // พิกัดที่ใช้จัดเลย์เอาต์ (4:5)
-const CATALOG_OUT_W = 1920, CATALOG_OUT_H = 2400;  // ขนาดไฟล์จริงที่ได้ (4:5 เท่ากัน ขยายเลย์เอาต์ตามสัดส่วนให้ชัดขึ้น)
-const CATALOG_COLS = 4, CATALOG_ROWS = 3, CATALOG_PER_PAGE = CATALOG_COLS * CATALOG_ROWS;
+const CATALOG_IMG_W = 1080, CATALOG_IMG_H = 1920; // พิกัดที่ใช้จัดเลย์เอาต์ (9:16)
+const CATALOG_OUT_W = 1800, CATALOG_OUT_H = 3200;  // ขนาดไฟล์จริงที่ได้ (9:16 เท่ากัน ขยายเลย์เอาต์ตามสัดส่วนให้ชัดขึ้น)
+const CATALOG_PHOTO_RATIO = 0.9; // สูง/กว้างของช่องรูป (ครอปบนล่างเล็กน้อยให้มีที่พอสำหรับชื่อ 2 บรรทัด + ราคา)
+const CATALOG_COLS = 3, CATALOG_ROWS = 4, CATALOG_PER_PAGE = CATALOG_COLS * CATALOG_ROWS;
 
 // ดึง src ของรูปออกจาก HTML ของ thumbnail (ใช้ DOMParser = เอกสารเปล่า ไม่โหลดรูปจริง และไม่รัน onerror)
 function imgSrcFromThumbHtml(html){
@@ -1576,13 +1577,13 @@ function drawCatalogPage(items, pageNo, pageCount, imgs, logo, summary){
   ctx.fillStyle = CREAM; ctx.fillRect(0, 0, W, H);
 
   // หัวรูป
-  const HEAD_H = 150;
+  const HEAD_H = 140;
   const grad = ctx.createLinearGradient(0, 0, W, HEAD_H);
   grad.addColorStop(0, PINK); grad.addColorStop(1, PINK_DARK);
   ctx.fillStyle = grad; ctx.fillRect(0, 0, W, HEAD_H);
   let textX = 40;
   if(logo){
-    const d = 84, lx = 40, ly = (HEAD_H - d) / 2;
+    const d = 80, lx = 40, ly = (HEAD_H - d) / 2;
     ctx.save();
     ctx.beginPath(); ctx.arc(lx + d/2, ly + d/2, d/2, 0, Math.PI * 2); ctx.closePath(); ctx.clip();
     ctx.fillStyle = '#fff'; ctx.fillRect(lx, ly, d, d);
@@ -1594,18 +1595,19 @@ function drawCatalogPage(items, pageNo, pageCount, imgs, logo, summary){
   }
   ctx.fillStyle = '#fff';
   ctx.font = '700 44px Kanit, sans-serif';
-  ctx.fillText('S.Flower Bloom', textX, 74);
+  ctx.fillText('S.Flower Bloom', textX, 68);
   ctx.font = '500 24px Kanit, sans-serif';
-  ctx.fillText(catalogFitOneLine(ctx, summary, W - textX - 40), textX, 112);
+  ctx.fillText(catalogFitOneLine(ctx, summary, W - textX - 40), textX, 106);
 
   // กริดสินค้า
-  const FOOT_H = 74, PAD = 36, GAP = 14;
-  const gridX = PAD, gridY = HEAD_H + 28;
+  const FOOT_H = 66, PAD = 36, GAP = 14;
+  const gridX = PAD, gridY = HEAD_H + 24;
   const gridW = W - PAD * 2;
   const gridH = H - gridY - FOOT_H - 22;
   const cellW = (gridW - GAP * (CATALOG_COLS - 1)) / CATALOG_COLS;
   const cellH = (gridH - GAP * (CATALOG_ROWS - 1)) / CATALOG_ROWS;
-  const photo = cellW; // ช่องรูปเป็นสี่เหลี่ยมจัตุรัส
+  const photo = cellW;                         // ความกว้างช่องรูป
+  const photoH = Math.round(cellW * CATALOG_PHOTO_RATIO); // ความสูงช่องรูป
 
   items.forEach((it, i) => {
     const col = i % CATALOG_COLS, row = Math.floor(i / CATALOG_COLS);
@@ -1623,24 +1625,24 @@ function drawCatalogPage(items, pageNo, pageCount, imgs, logo, summary){
     catalogRoundRect(ctx, x, y, cellW, cellH, 14); ctx.clip();
     const img = imgs[i];
     if(img){
-      const sc = Math.max(photo / img.width, photo / img.height);
-      const sw = photo / sc, sh = photo / sc;
-      ctx.drawImage(img, (img.width - sw)/2, (img.height - sh)/2, sw, sh, x, y, photo, photo);
+      const sc = Math.max(photo / img.width, photoH / img.height);
+      const sw = photo / sc, sh = photoH / sc;
+      ctx.drawImage(img, (img.width - sw)/2, (img.height - sh)/2, sw, sh, x, y, photo, photoH);
     } else {
-      ctx.fillStyle = '#FFE3F1'; ctx.fillRect(x, y, photo, photo);
-      ctx.font = '64px sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = PINK;
-      ctx.fillText('🌸', x + photo/2, y + photo/2 + 22);
+      ctx.fillStyle = '#FFE3F1'; ctx.fillRect(x, y, photo, photoH);
+      ctx.font = '72px sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = PINK;
+      ctx.fillText('🌸', x + photo/2, y + photoH/2 + 24);
       ctx.textAlign = 'left';
     }
     ctx.restore();
 
     // ป้าย พร้อมส่ง / ใหม่
     const drawBadge = (label, bx, by, bg, align) => {
-      ctx.font = '600 15px Kanit, sans-serif';
-      const tw = ctx.measureText(label).width, bw = tw + 18, bh = 26;
+      ctx.font = '600 17px Kanit, sans-serif';
+      const tw = ctx.measureText(label).width, bw = tw + 20, bh = 29;
       const px = align === 'right' ? bx - bw : bx;
       ctx.fillStyle = bg; catalogRoundRect(ctx, px, by, bw, bh, 13); ctx.fill();
-      ctx.fillStyle = '#fff'; ctx.fillText(label, px + 9, by + 19);
+      ctx.fillStyle = '#fff'; ctx.fillText(label, px + 10, by + 21);
     };
     if(it.ready) drawBadge('พร้อมส่ง', x + 8, y + 8, '#16A34A', 'left');
     if(it.isNew) drawBadge('ใหม่', x + cellW - 8, y + 8, PINK, 'right');
@@ -1648,14 +1650,14 @@ function drawCatalogPage(items, pageNo, pageCount, imgs, logo, summary){
     // ชื่อ + ราคา
     const tx = x + 10, tw2 = cellW - 20;
     ctx.fillStyle = PLUM;
-    ctx.font = '600 19px Kanit, sans-serif';
+    ctx.font = '600 21px Kanit, sans-serif';
     const lines = catalogWrapText(ctx, it.name, tw2, 2);
-    lines.forEach((ln, li) => ctx.fillText(ln, tx, y + photo + 28 + li * 24));
+    lines.forEach((ln, li) => ctx.fillText(ln, tx, y + photoH + 28 + li * 26));
     ctx.fillStyle = PINK_DARK;
-    let ps = 26;
+    let ps = 28;
     ctx.font = `700 ${ps}px Kanit, sans-serif`;
     while(ctx.measureText(it.price).width > tw2 && ps > 15){ ps -= 1; ctx.font = `700 ${ps}px Kanit, sans-serif`; }
-    ctx.fillText(it.price, tx, y + cellH - 14);
+    ctx.fillText(it.price, tx, y + cellH - 13);
   });
 
   // ท้ายรูป
