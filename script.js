@@ -1479,8 +1479,8 @@ function renderCatalog(){
    รูป JPG 1800x3200 (9:16) หน้าละ 12 ชิ้น จัด 3 คอลัมน์ x 4 แถว
    วาดด้วย canvas ในเบราว์เซอร์ แล้วโหลดทีละรูปต่อเนื่องกัน
    ========================================================= */
-const CATALOG_IMG_W = 1080, CATALOG_IMG_H = 2160; // พิกัดที่ใช้จัดเลย์เอาต์ (1:2)
-const CATALOG_OUT_W = 1800, CATALOG_OUT_H = 3600;  // ขนาดไฟล์จริงที่ได้ (1:2 เท่ากัน ขยายเลย์เอาต์ตามสัดส่วนให้ชัดขึ้น)
+const CATALOG_IMG_W = 1080, CATALOG_IMG_H = 1920; // พิกัดที่ใช้จัดเลย์เอาต์ (9:16)
+const CATALOG_OUT_W = 1800, CATALOG_OUT_H = 3200;  // ขนาดไฟล์จริงที่ได้ (9:16 — ขยายจากพิกัดเลย์เอาต์ด้วยตัวคูณเดียวกันทั้งแกน X และ Y จึงไม่บิดภาพ)
 const CATALOG_PHOTO_RATIO = 1; // สูง/กว้างของช่องรูป (1 = สี่เหลี่ยมจัตุรัส 1:1)
 const CATALOG_COLS = 3, CATALOG_ROWS = 4, CATALOG_PER_PAGE = CATALOG_COLS * CATALOG_ROWS;
 
@@ -1566,8 +1566,8 @@ function drawCatalogPage(items, pageNo, pageCount, imgs, logo, summary){
   const cv = document.createElement('canvas');
   cv.width = CATALOG_OUT_W; cv.height = CATALOG_OUT_H;
   const ctx = cv.getContext('2d');
-  const K = CATALOG_OUT_W / W; // ตัวคูณขยาย: โค้ดวาดด้านล่างยังใช้พิกัด 1080x1350 เหมือนเดิม
-  ctx.scale(K, CATALOG_OUT_H / H);
+  const K = CATALOG_OUT_W / W; // ตัวคูณขยาย: โค้ดวาดด้านล่างใช้พิกัด 1080x1920
+  ctx.scale(K, K); // ตัวคูณเดียวกันทั้งสองแกน (1800/1080 = 3200/1920) รูปสินค้าไม่ถูกยืดหรือบีบ
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
   const PINK = '#F62188', PINK_DARK = '#C4106D', PLUM = '#3B1230', CREAM = '#FFF7FC';
@@ -1577,13 +1577,13 @@ function drawCatalogPage(items, pageNo, pageCount, imgs, logo, summary){
   ctx.fillStyle = CREAM; ctx.fillRect(0, 0, W, H);
 
   // หัวรูป
-  const HEAD_H = 140;
+  const HEAD_H = 110;
   const grad = ctx.createLinearGradient(0, 0, W, HEAD_H);
   grad.addColorStop(0, PINK); grad.addColorStop(1, PINK_DARK);
   ctx.fillStyle = grad; ctx.fillRect(0, 0, W, HEAD_H);
-  let textX = 40;
+  let textX = 44;
   if(logo){
-    const d = 80, lx = 40, ly = (HEAD_H - d) / 2;
+    const d = 72, lx = 44, ly = (HEAD_H - d) / 2;
     ctx.save();
     ctx.beginPath(); ctx.arc(lx + d/2, ly + d/2, d/2, 0, Math.PI * 2); ctx.closePath(); ctx.clip();
     ctx.fillStyle = '#fff'; ctx.fillRect(lx, ly, d, d);
@@ -1591,30 +1591,30 @@ function drawCatalogPage(items, pageNo, pageCount, imgs, logo, summary){
     const lw = logo.width * r, lh = logo.height * r;
     ctx.drawImage(logo, lx + (d - lw)/2, ly + (d - lh)/2, lw, lh);
     ctx.restore();
-    textX = lx + d + 22;
+    textX = lx + d + 20;
   }
   ctx.fillStyle = '#fff';
-  ctx.font = '700 44px Kanit, sans-serif';
-  ctx.fillText('S.Flower Bloom', textX, 68);
-  ctx.font = '500 24px Kanit, sans-serif';
-  ctx.fillText(catalogFitOneLine(ctx, summary, W - textX - 40), textX, 106);
+  ctx.font = '700 42px Kanit, sans-serif';
+  ctx.fillText('S.Flower Bloom', textX, 52);
+  ctx.font = '500 23px Kanit, sans-serif';
+  ctx.fillText(catalogFitOneLine(ctx, summary, W - textX - 44), textX, 88);
 
   // กริดสินค้า
-  const FOOT_H = 66, PAD = 36, GAP = 14;
-  const gridX = PAD, gridY = HEAD_H + 24;
+  const FOOT_H = 58, PAD = 44, GAP = 14, GAP_Y = 10; // GAP = ช่องไฟแนวนอนระหว่างคอลัมน์, GAP_Y = ช่องไฟแนวตั้งระหว่างแถว
+  const gridX = PAD, gridY = HEAD_H + 12;
   const gridW = W - PAD * 2;
   // แถบข้อความหมายเหตุ (อยู่นอกการ์ดสินค้า วางใต้ตาราง เหนือแถบท้ายรูป)
-  const NOTE_H = 130, NOTE_GAP_TOP = 16, NOTE_GAP_BOTTOM = 14;
+  const NOTE_H = 104, NOTE_GAP_TOP = 10, NOTE_GAP_BOTTOM = 10;
   const noteY = H - FOOT_H - NOTE_GAP_BOTTOM - NOTE_H;
   const gridH = noteY - NOTE_GAP_TOP - gridY;
   const cellW = (gridW - GAP * (CATALOG_COLS - 1)) / CATALOG_COLS;
-  const cellH = (gridH - GAP * (CATALOG_ROWS - 1)) / CATALOG_ROWS;
+  const cellH = (gridH - GAP_Y * (CATALOG_ROWS - 1)) / CATALOG_ROWS; // ความสูงการ์ด = ช่องรูปจัตุรัส + แถบชื่อ/ราคาที่กระชับขึ้น
   const photo = cellW;                         // ความกว้างช่องรูป
   const photoH = Math.round(cellW * CATALOG_PHOTO_RATIO); // ความสูงช่องรูป
 
   items.forEach((it, i) => {
     const col = i % CATALOG_COLS, row = Math.floor(i / CATALOG_COLS);
-    const x = gridX + col * (cellW + GAP), y = gridY + row * (cellH + GAP);
+    const x = gridX + col * (cellW + GAP), y = gridY + row * (cellH + GAP_Y);
 
     // การ์ด
     ctx.save();
@@ -1653,14 +1653,14 @@ function drawCatalogPage(items, pageNo, pageCount, imgs, logo, summary){
     // ชื่อ + ราคา
     const tx = x + 10, tw2 = cellW - 20;
     ctx.fillStyle = PLUM;
-    ctx.font = '600 21px Kanit, sans-serif';
+    ctx.font = '600 19px Kanit, sans-serif';
     const lines = catalogWrapText(ctx, it.name, tw2, 2);
-    lines.forEach((ln, li) => ctx.fillText(ln, tx, y + photoH + 27 + li * 25));
+    lines.forEach((ln, li) => ctx.fillText(ln, tx, y + photoH + 21 + li * 20));
     ctx.fillStyle = PINK_DARK;
-    let ps = 28;
+    let ps = 24;
     ctx.font = `700 ${ps}px Kanit, sans-serif`;
     while(ctx.measureText(it.price).width > tw2 && ps > 15){ ps -= 1; ctx.font = `700 ${ps}px Kanit, sans-serif`; }
-    ctx.fillText(it.price, tx, y + cellH - 12);
+    ctx.fillText(it.price, tx, y + cellH - 9);
   });
 
   // แถบข้อความหมายเหตุ
@@ -1675,13 +1675,13 @@ function drawCatalogPage(items, pageNo, pageCount, imgs, logo, summary){
     'ลูกค้านครสวรรค์นัดรับฟรี (สั่งซื้อ 299 บาทขึ้นไป)',
     'หมายเหตุ: สามารถแจ้งแอดมินเพื่อปรับสี เพิ่มการ์ด หรือปรับรายละเอียดได้ค่ะ'
   ];
-  const noteTextX = PAD + 54, noteMaxW = W - PAD * 2 - 54 - 24;
+  const noteTextX = PAD + 50, noteMaxW = W - PAD * 2 - 50 - 24;
   ctx.fillStyle = PLUM;
-  ctx.font = '500 25px Kanit, sans-serif';
+  ctx.font = '500 23px Kanit, sans-serif';
   noteLines.forEach((t, i) => {
-    const by = noteY + 42 + i * 35;
+    const by = noteY + 34 + i * 31;
     ctx.fillStyle = PINK;
-    ctx.beginPath(); ctx.arc(PAD + 32, by - 9, 6, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(PAD + 30, by - 8, 5.5, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = PLUM;
     ctx.fillText(catalogFitOneLine(ctx, t, noteMaxW), noteTextX, by);
   });
@@ -1690,12 +1690,12 @@ function drawCatalogPage(items, pageNo, pageCount, imgs, logo, summary){
   const fy = H - FOOT_H;
   ctx.fillStyle = PINK_DARK; ctx.fillRect(0, fy, W, FOOT_H);
   ctx.fillStyle = '#fff';
-  ctx.font = '500 22px Kanit, sans-serif';
+  ctx.font = '500 21px Kanit, sans-serif';
   const chat = (typeof PAGE_LINK === 'string' ? PAGE_LINK.replace(/^https?:\/\//, '') : '');
-  ctx.fillText('สั่งซื้อทักแชท Facebook: ' + chat, PAD, fy + 45);
+  ctx.fillText('สั่งซื้อทักแชท Facebook: ' + chat, PAD, fy + 37);
   ctx.textAlign = 'right';
-  ctx.font = '600 22px Kanit, sans-serif';
-  ctx.fillText(`หน้า ${pageNo}/${pageCount}`, W - PAD, fy + 45);
+  ctx.font = '600 21px Kanit, sans-serif';
+  ctx.fillText(`หน้า ${pageNo}/${pageCount}`, W - PAD, fy + 37);
   ctx.textAlign = 'left';
   return cv;
 }
