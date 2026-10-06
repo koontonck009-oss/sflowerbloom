@@ -876,3 +876,74 @@ body{ background:var(--bg); color:var(--ink); }
 /* ตอนซ่อนราคา: ไม่ให้สร้างภาพแคตตาล็อก (ภาพมีราคา) */
 body.prices-off #catalogBtn,
 body.prices-off #posterCard{ display:none !important; }
+/* ───── การ์ดตัวแปร / ช่องที่ล็อกเมื่อมีตัวแปร ───── */
+.is-locked{ opacity:.6; }
+.is-locked input:disabled{ cursor:not-allowed; background:#f3f0f2; }
+.var-empty{ text-align:center; padding:22px 16px; border:1.5px dashed var(--line, #e6dfe3); border-radius:14px; }
+.var-empty-title{ margin:0 0 4px; font-weight:600; }
+.var-foot{ display:flex; flex-wrap:wrap; gap:8px; justify-content:space-between; }
+
+/* ───── การ์ดข้อมูลสินค้า: จัดเป็นแถว ───── */
+.main-rows{ display:flex; flex-direction:column; gap:14px; }
+.main-rows .field-hint{ margin:-6px 0 0; }
+.main-row{ display:grid; grid-template-columns:minmax(0,1fr); gap:12px; align-items:start; }
+.main-row-top{ grid-template-columns:minmax(0,1.7fr) repeat(3, minmax(0,1fr)); }
+.main-row .field{ margin:0; }
+.main-row .field-hint{ margin:6px 0 0; }
+.main-row .size-menu,.main-row .size-summary{ width:100%; }
+@media (max-width:1180px){ .main-row-top{ grid-template-columns:repeat(2, minmax(0,1fr)); } .main-row-top > .field:first-child{ grid-column:1 / -1; } }
+@media (max-width:520px){ .main-row-top{ grid-template-columns:minmax(0,1fr); } }
+
+/* ───── หน้าต่างสร้าง/แก้ไขตัวเลือก ───── */
+#varScrim{ z-index:55; }                       /* กล่องยืนยัน (z 60) ต้องอยู่เหนือหน้าต่างนี้ */
+.vm-card{ background:var(--panel); border-radius:14px; width:min(760px,100%); max-height:92vh; display:flex; flex-direction:column; box-shadow:var(--shadow-lg); overflow:hidden; }
+.vm-title{ margin:0; padding:20px 24px; font-size:20px; font-weight:500; border-bottom:1px solid var(--line); }
+.vm-body{ padding:8px 24px 0; overflow-y:auto; flex:1 1 auto; }
+.vm-row{ display:grid; grid-template-columns:28px minmax(0,1fr) minmax(0,2fr) 36px; gap:16px; align-items:start; padding:18px 0; border-bottom:1px solid var(--line-soft); }
+.vm-row.is-over{ background:var(--brand-soft); }
+.vm-row.is-dragging{ opacity:.45; }
+.vm-handle{ cursor:grab; color:var(--ink-3); font-size:18px; line-height:1; padding-top:22px; user-select:none; text-align:center; }
+.vm-label{ display:block; font-size:12.5px; color:var(--ink-2); margin-bottom:2px; }
+.vm-name input,.vm-newval{ width:100%; border:none; border-bottom:1px solid var(--line); border-radius:0; background:none; padding:8px 0; font:inherit; font-size:15px; color:var(--ink); outline:none; }
+.vm-name input:focus,.vm-newval:focus{ border-bottom:2px solid var(--brand); padding-bottom:7px; }
+.vm-vals small{ display:block; margin-top:4px; font-size:12.5px; color:var(--ink-2); }
+.vm-chips{ display:flex; flex-wrap:wrap; gap:8px; margin:4px 0 2px; }
+.vm-chips:empty{ display:none; }
+.vm-chip{ display:inline-flex; align-items:center; gap:8px; background:#E4E1E3; border-radius:999px; padding:7px 8px 7px 16px; font-size:14px; }
+.vm-chip button{ border:none; cursor:pointer; width:20px; height:20px; border-radius:50%; background:#6b6468; color:#fff; font-size:11px; line-height:1; padding:0; }
+.vm-chip button:hover{ background:var(--danger); }
+.vm-del{ border:none; background:none; cursor:pointer; font-size:20px; padding:18px 0 0; color:var(--ink-2); }
+.vm-del:hover:not(:disabled){ color:var(--danger); }
+.vm-del:disabled{ opacity:.25; cursor:not-allowed; }
+.vm-add{ display:flex; align-items:center; gap:10px; margin:6px 24px 14px; padding:10px 0; border:none; background:none; cursor:pointer; color:var(--brand-dark); font:inherit; font-weight:600; align-self:flex-start; }
+.vm-add span{ display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; border:2px solid var(--brand); border-radius:50%; font-size:16px; line-height:1; }
+.vm-foot{ display:flex; align-items:center; justify-content:flex-end; gap:8px; padding:12px 24px; border-top:1px solid var(--line); }
+.vm-hint{ margin:0 auto 0 0; color:var(--danger); font-size:13px; }
+.vm-btn{ border:none; background:none; cursor:pointer; font:inherit; font-weight:600; padding:10px 18px; border-radius:8px; color:var(--ink); }
+.vm-btn:hover:not(:disabled){ background:var(--line-soft); }
+.vm-save{ color:var(--brand-dark); }
+.vm-save:disabled{ color:var(--ink-3); cursor:not-allowed; opacity:.7; }
+@media (max-width:620px){
+  .vm-row{ grid-template-columns:24px minmax(0,1fr) 32px; }
+  .vm-vals{ grid-column:2 / 3; }
+  .vm-del{ grid-row:1; grid-column:3; }
+  .vm-handle{ grid-row:1; }
+  .vm-body{ padding:4px 16px 0; } .vm-title{ padding:16px; } .vm-add{ margin-left:16px; } .vm-foot{ padding:10px 16px; }
+}
+/* สรุปตัวเลือกในการ์ดตัวแปร */
+.vsum{ display:flex; flex-direction:column; gap:10px; }
+.vsum-row{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+.vsum-row b{ min-width:90px; font-weight:600; }
+
+/* ───── หน้าต่างรูปเพิ่มเติมของแถว ───── */
+#imgScrim{ z-index:55; }
+.im-card{ width:min(620px,100%); }
+.im-sub{ margin:-6px 24px 0; padding-top:12px; color:var(--ink-2); font-size:13.5px; font-weight:600; }
+.im-card .vm-body{ padding-top:14px; padding-bottom:8px; }
+.im-row{ display:flex; align-items:center; gap:10px; margin-top:8px; }
+.im-row input{ flex:1; min-width:0; border:1px solid var(--line); border-radius:8px; padding:9px 10px; font:inherit; font-size:14px; }
+.im-row input:focus{ outline:none; border-color:var(--brand); }
+.im-thumb{ width:44px; height:44px; object-fit:cover; border-radius:8px; background:var(--line-soft); flex:none; }
+.im-thumb.is-missing{ border:1px dashed var(--line); }
+.im-path{ font-size:13.5px; color:var(--ink-2); word-break:break-all; }
+.combo-more{ margin-top:6px; width:100%; }

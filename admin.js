@@ -670,12 +670,12 @@ function closeEditor(){
 function updateSummaries(){
   if(!draft) return;
   const mode = priceMode(draft);
-  let price = '';
-  if(mode === 'single') price = num(draft.price) ? baht(draft.price) + ' บาท' : 'ยังไม่มีราคา';
-  if(mode === 'sizes') price = (draft.sizes || []).length + ' ไซซ์';
-  if(mode === 'options') price = (draft.options || []).length + ' ชั้น · เปิดขาย ' + (draft.variants || []).length + ' คู่';
   const nc = (draft.colors || []).length;
-  const media = (draft.image ? 'มีรูปหลัก' : 'ยังไม่มีรูป') + (nc ? ' · ' + nc + ' สี' : '');
+  let price = '';
+  if(mode === 'single') price = nc ? nc + ' สี' : 'ไม่มีตัวแปร';
+  if(mode === 'sizes') price = 'ไซซ์ ' + (draft.sizes || []).length + ' ค่า' + (nc ? ' · ' + nc + ' สี' : '');
+  if(mode === 'options') price = (draft.options || []).length + ' ตัวแปร · เปิดขาย ' + (draft.variants || []).length + ' แบบ';
+  const media = (draft.image ? 'มีรูปหลัก' : 'ยังไม่มีรูป') + ((draft.images || []).length ? ' · แกลเลอรี ' + draft.images.length + ' รูป' : '');
   const na = (draft.addons || []).length + (draft.colors || []).reduce((a, c) => a + (c.addons || []).length, 0);
   const auto = $('sizeAutoText');
   if(auto) auto.textContent = (derivedSizeTags(draft) || []).join(', ') || 'ยังไม่ได้ตั้ง';
@@ -699,91 +699,157 @@ $('pvImg').addEventListener('error', e => { e.target.removeAttribute('src'); e.t
 
 function renderAllPanels(){
   renderMainPanel();
-  renderSidePanel();
-  renderMediaPanel();
   renderPricePanel();
   renderAddonsPanel();
+  renderMediaPanel();
 }
 
-/* --- แท็บ 1: ข้อมูลสินค้า --- */
+/* --- การ์ด 1: ข้อมูลสินค้า (ชื่อ · หมวด · ชนิด · ขนาด · รายละเอียด · พร้อมส่ง · ราคา · รหัส) --- */
+
+// คืน { field, notes } — field = ช่อง "ขนาด" ที่วางในแถวแรก, notes = ข้อความอธิบาย/คำเตือนที่วางใต้แถว (ไม่ให้ดันความสูงของช่องในแถว)
+function sizeFieldHtml(){
+  if(!CATEGORY_SIZE_TAGS[String(draft.cat || '').trim()] && !offListSizeTags(draft).length){
+    return {
+      field: `<div class="field"><span>ขนาด</span><p class="size-auto">หมวดนี้ไม่มีตัวกรองขนาด</p></div>`,
+      notes: ''
+    };
+  }
+  if(priceMode(draft) === 'single'){
+    return {
+      field: `
+        <div class="field">
+          <span>ขนาด</span>
+          <details class="menu size-menu" id="sizeMenu">
+            <summary class="size-summary" id="sizeSummary">${esc(sizeTagText(draft)) || 'เลือกขนาด'}</summary>
+            <div class="menu-pop size-pop">
+              ${sizeChoicesFor(sizeTagsOf(draft), draft.cat).map(t => `<label class="size-opt${isSizeTagValid(draft.cat, t) ? '' : ' is-off'}"><input type="checkbox" data-size-tag value="${esc(t)}"${sizeTagsOf(draft).includes(t) ? ' checked' : ''}><span>${esc(sizeTagLabel(draft.cat, t))}</span></label>`).join('')}
+            </div>
+          </details>
+        </div>`,
+      notes: `
+        <p class="field-hint">ขนาด: ติ๊กได้มากกว่า 1 ค่า${draft.cat === 'ช่อดอกไม้' ? ' เช่น “กลาง” + “ใส่เงิน” สินค้าจะโผล่ทั้งตอนกรอง “กลาง” และ “ใส่เงิน”' : ' สินค้าจะโผล่ในตัวกรองของทุกค่าที่ติ๊ก'}</p>
+        ${offListSizeTags(draft).length ? `<p class="field-hint size-warn">⚠ มีค่า “${esc(offListSizeTags(draft).join(', '))}” ที่หน้าร้านไม่มีให้กรองในหมวดนี้ — ติ๊กออกแล้วเลือกค่าที่ถูกต้อง</p>` : ''}`
+    };
+  }
+  return {
+    field: `
+      <div class="field">
+        <span>ขนาด</span>
+        <p class="size-auto">ตั้งในการ์ด “ตัวแปร” · <b id="sizeAutoText">${esc((derivedSizeTags(draft) || []).join(', ') || 'ยังไม่ได้ตั้ง')}</b></p>
+      </div>`,
+    notes: `
+      <p class="field-hint">ขนาด: ระบบสรุปให้เองตอนบันทึก ${draft.cat === 'ช่อดอกไม้' ? 'แถวที่เลือก “อัตโนมัติ” จะใช้คำว่า “ใส่เงิน” ในชื่อเป็นตัวตัดสิน' : 'แถวที่ไม่ได้เลือกค่า จะไม่ถูกจัดเข้าตัวกรองขนาดใดๆ ในหน้าร้าน'}</p>
+      ${offListSizeTags(draft).length ? `<p class="field-hint size-warn">⚠ มีค่า “${esc(offListSizeTags(draft).join(', '))}” ที่หน้าร้านไม่มีให้กรองในหมวดนี้ — แก้ที่การ์ด “ตัวแปร”</p>` : ''}`
+  };
+}
 
 function renderMainPanel(){
-  $('panelMain').innerHTML = `
-    <div class="group">
-      <label class="field">
-        <span>ชื่อสินค้า</span>
-        <input type="text" data-bind="name" value="${esc(draft.name)}" placeholder="เช่น ช่อดอกทานตะวัน - S16">
-      </label>
-      <label class="field" style="margin-top:14px">
-        <span>รายละเอียด</span>
-        <textarea data-bind="desc" placeholder="อธิบายสิ่งที่ลูกค้าจะได้รับ เช่น จำนวนดอก สีกระดาษห่อ">${esc(draft.desc || '')}</textarea>
-      </label>
-      <label class="field" style="margin-top:14px">
-        <span>รหัสสินค้า</span>
-        <input type="text" data-bind="id" value="${esc(draft.id)}" placeholder="เช่น s16">
-      </label>
-      <p class="field-hint">รหัสห้ามซ้ำกับสินค้าอื่น ใช้เป็นตัวอ้างอิงในตะกร้าและใบสั่งซื้อ</p>
-    </div>`;
-}
-
-function renderSidePanel(){
+  const mode = priceMode(draft);
+  const hasVars = mode !== 'single';
   const cats = [...new Set([...catalog.map(p => p.cat), 'ช่อดอกไม้', 'กระถาง', 'กรอบรูป', 'อื่นๆ'])].filter(Boolean).sort();
-  const sizes = [...new Set(catalog.flatMap(p => sizeTagsOf(p)))].sort();
+  const curFlower = String(draft.flowerType || '').trim();
+  const offFlower = curFlower && !FLOWER_TYPE_TAGS.includes(curFlower);
+  const flowers = [...FLOWER_TYPE_TAGS, ...(offFlower ? [curFlower] : [])];
+  const size = sizeFieldHtml();
 
-  $('panelSide').innerHTML = `
-    <div class="ed-card">
-      <div class="card-head"><h3>สถานะ</h3></div>
-      <label class="check" style="margin:0">
-        <input type="checkbox" data-bind="ready" data-type="bool"${draft.ready ? ' checked' : ''}>
-        <span>ทำไว้แล้ว พร้อมส่งทันที (ขึ้นป้าย “พร้อมส่ง” ในหน้าร้าน)</span>
-      </label>
-    </div>
-    <div class="ed-card">
-      <div class="card-head"><h3>หมวดหมู่</h3></div>
-      <label class="field" style="margin:0">
-        <select data-bind="cat">
-          ${cats.map(c => `<option value="${esc(c)}"${c === draft.cat ? ' selected' : ''}>${esc(c)}</option>`).join('')}
-        </select>
-      </label>
-    </div>
-    <div class="ed-card">
-      <div class="card-head"><h3>ตัวกรองหน้าร้าน</h3><small>ไม่บังคับ</small></div>
+  let priceField;
+  if(mode === 'single'){
+    priceField = `
       <label class="field">
-        <span>ชนิดดอกไม้</span>
-        <select data-bind="flowerType">
-          <option value="">— ไม่ระบุ —</option>
-          ${[...FLOWER_TYPE_TAGS, ...(draft.flowerType && !FLOWER_TYPE_TAGS.includes(String(draft.flowerType).trim()) ? [String(draft.flowerType).trim()] : [])].map(t => `<option value="${esc(t)}"${String(draft.flowerType || '').trim() === t ? ' selected' : ''}>${esc(FLOWER_TYPE_TAGS.includes(t) ? t : t + ' (ไม่อยู่ในตัวกรองหน้าร้าน)')}</option>`).join('')}
-        </select>
-        ${draft.flowerType && !FLOWER_TYPE_TAGS.includes(String(draft.flowerType).trim()) ? '<p class="field-hint size-warn">⚠ ค่านี้หน้าร้านไม่มีให้กรอง — เลือกชนิดที่ถูกต้องจากรายการ</p>' : ''}
+        <span>ราคา (บาท)</span>
+        <input type="number" min="0" step="1" data-bind="price" data-type="number" value="${num(draft.price) || ''}">
       </label>
-      ${!CATEGORY_SIZE_TAGS[String(draft.cat || '').trim()] && !offListSizeTags(draft).length ? `
-      <div class="field" style="margin-top:12px">
-        <span>ขนาด/ป้ายกำกับ</span>
-        <p class="size-auto">หมวด “${esc(draft.cat || '—')}” ไม่มีตัวกรองขนาดในหน้าร้าน จึงไม่ต้องตั้งค่านี้</p>
+      <p class="field-hint">${(draft.colors || []).length ? 'ราคานี้ใช้กับทุกสีในการ์ด “ตัวแปร”' : 'ถ้าสินค้ามีหลายแบบที่ราคาต่างกัน ให้เพิ่มตัวแปรในการ์ดถัดไป แล้วตั้งราคาที่นั่นแทน'}</p>`;
+  }else{
+    const shown = mode === 'sizes' ? (num(draft.price) || Math.min(...(draft.sizes || []).map(s => num(s.price)).filter(Boolean), Infinity)) : 0;
+    priceField = `
+      <label class="field is-locked">
+        <span>ราคา (บาท)</span>
+        <input type="text" disabled value="${Number.isFinite(shown) && shown ? 'เริ่มต้น ' + baht(shown) : 'ตั้งที่การ์ดตัวแปร'}">
+      </label>
+      <p class="field-hint">สินค้านี้มีตัวแปร ราคาตั้งแยกในแต่ละแถวของการ์ด “ตัวแปร”</p>`;
+  }
+
+  $('panelMain').innerHTML = `
+    <div class="main-rows">
+
+      <div class="main-row main-row-top">
+        <label class="field">
+          <span>ชื่อสินค้า</span>
+          <input type="text" data-bind="name" value="${esc(draft.name)}" placeholder="เช่น ช่อดอกทานตะวัน - S16">
+        </label>
+        <label class="field">
+          <span>หมวดหมู่</span>
+          <select data-bind="cat">
+            ${cats.map(c => `<option value="${esc(c)}"${c === draft.cat ? ' selected' : ''}>${esc(c)}</option>`).join('')}
+          </select>
+        </label>
+        <label class="field">
+          <span>ชนิด (ดอกไม้)</span>
+          <select data-bind="flowerType">
+            <option value="">— ไม่ระบุ —</option>
+            ${flowers.map(t => `<option value="${esc(t)}"${curFlower === t ? ' selected' : ''}>${esc(FLOWER_TYPE_TAGS.includes(t) ? t : t + ' (ไม่อยู่ในตัวกรองหน้าร้าน)')}</option>`).join('')}
+          </select>
+        </label>
+        ${size.field}
       </div>
-      ` : priceMode(draft) === 'single' ? `
-      <div class="field" style="margin-top:12px">
-        <span>ขนาด/ป้ายกำกับ</span>
-        <details class="menu size-menu" id="sizeMenu">
-          <summary class="size-summary" id="sizeSummary">${esc(sizeTagText(draft)) || 'เลือกขนาด/ป้ายกำกับ'}</summary>
-          <div class="menu-pop size-pop">
-            ${sizeChoicesFor(sizeTagsOf(draft), draft.cat).map(t => `<label class="size-opt${isSizeTagValid(draft.cat, t) ? '' : ' is-off'}"><input type="checkbox" data-size-tag value="${esc(t)}"${sizeTagsOf(draft).includes(t) ? ' checked' : ''}><span>${esc(sizeTagLabel(draft.cat, t))}</span></label>`).join('')}
-          </div>
-        </details>
+      ${offFlower ? '<p class="field-hint size-warn">⚠ ชนิดดอกไม้นี้หน้าร้านไม่มีให้กรอง — เลือกชนิดที่ถูกต้องจากรายการ</p>' : ''}
+      ${size.notes}
+
+      <div class="main-row">
+        <label class="field">
+          <span>รายละเอียด</span>
+          <textarea data-bind="desc" placeholder="อธิบายสิ่งที่ลูกค้าจะได้รับ เช่น จำนวนดอก สีกระดาษห่อ">${esc(draft.desc || '')}</textarea>
+        </label>
       </div>
-      <p class="field-hint">ติ๊กได้มากกว่า 1 ค่า${draft.cat === 'ช่อดอกไม้' ? ' เช่น “กลาง” + “ใส่เงิน” สินค้าจะโผล่ทั้งตอนกรอง “กลาง” และ “ใส่เงิน”' : ' สินค้าจะโผล่ในตัวกรองของทุกค่าที่ติ๊ก'}</p>
-      ${offListSizeTags(draft).length ? `<p class="field-hint size-warn">⚠ มีค่า “${esc(offListSizeTags(draft).join(', '))}” ที่หน้าร้านไม่มีให้กรองในหมวดนี้ — ติ๊กออกแล้วเลือกค่าที่ถูกต้อง</p>` : ''}
-      ` : `
-      <div class="field" style="margin-top:12px">
-        <span>ขนาด/ป้ายกำกับ</span>
-        <p class="size-auto">ตั้งที่แต่ละ${priceMode(draft) === 'sizes' ? 'ไซซ์' : 'คู่ผสม'}ในการ์ด “ราคา” ทางซ้าย · ตอนนี้: <b id="sizeAutoText">${esc((derivedSizeTags(draft) || []).join(', ') || 'ยังไม่ได้ตั้ง')}</b></p>
-        <p class="field-hint">ระบบสรุปให้เองตอนบันทึก ไม่ต้องกรอกช่องนี้ ${draft.cat === 'ช่อดอกไม้' ? 'แถวที่เลือก “อัตโนมัติ” จะใช้คำว่า “ใส่เงิน” ในชื่อเป็นตัวตัดสิน' : 'แถวที่ไม่ได้เลือกค่า จะไม่ถูกจัดเข้าตัวกรองขนาดใดๆ ในหน้าร้าน'}</p>
-        ${offListSizeTags(draft).length ? `<p class="field-hint size-warn">⚠ มีค่า “${esc(offListSizeTags(draft).join(', '))}” ที่หน้าร้านไม่มีให้กรองในหมวดนี้ — แก้ที่การ์ด “ราคา”</p>` : ''}
-      </div>`}
+
+      <div class="main-row">
+        <label class="check${hasVars ? ' is-locked' : ''}" style="margin:0">
+          <input type="checkbox" ${hasVars ? 'disabled' : 'data-bind="ready" data-type="bool"'}${draft.ready ? ' checked' : ''}>
+          <span>${hasVars ? 'พร้อมส่ง — ตั้งแยกในแต่ละแถวของการ์ด “ตัวแปร”' : 'ทำไว้แล้ว พร้อมส่งทันที (ขึ้นป้าย “พร้อมส่ง” ในหน้าร้าน)'}</span>
+        </label>
+      </div>
+
+      <div class="main-row">
+        <div>${priceField}</div>
+      </div>
+
+      <div class="main-row">
+        <div>
+          <label class="field">
+            <span>รหัสสินค้า</span>
+            <input type="text" data-bind="id" value="${esc(draft.id)}" placeholder="เช่น s16">
+          </label>
+          <p class="field-hint">รหัสห้ามซ้ำกับสินค้าอื่น ใช้เป็นตัวอ้างอิงในตะกร้าและใบสั่งซื้อ</p>
+        </div>
+      </div>
     </div>`;
 }
 
 /* --- แท็บ 2: รูปภาพและสี --- */
+
+// รูปทั้งหมดของแถว (ไซซ์/คู่ผสม): รูปหลัก (image) ตามด้วยรูปเพิ่มเติม (images) ตัดค่าว่าง/ซ้ำ
+function imgsOf(o){
+  const out = [];
+  [o && o.image, ...((o && o.images) || [])].forEach(v => {
+    const t = String(v ?? '').trim();
+    if(t && !out.includes(t)) out.push(t);
+  });
+  return out;
+}
+// ข้อมูลเก่าอาจมีแต่ images[] (ไม่มี image) → ยกรูปแรกขึ้นเป็นรูปหลัก ส่วน images เก็บเฉพาะรูปเพิ่มเติม (ทำซ้ำกี่รอบก็ได้ผลเท่าเดิม)
+function normalizeRowImages(o){
+  if(!o || !Array.isArray(o.images)) return;
+  const t = v => String(v ?? '').trim();
+  if(!t(o.image)){
+    const i = o.images.findIndex(x => t(x));
+    if(i >= 0){ o.image = t(o.images[i]); o.images.splice(i, 1); }
+  }
+  const main = t(o.image);
+  // ตัดรูปที่ซ้ำกับรูปหลักออก แต่เก็บช่องว่างที่เพิ่งกด "เพิ่มรูป" ไว้ (ผู้ใช้ยังไม่ทันพิมพ์)
+  o.images = o.images.filter(x => !t(x) || t(x) !== main);
+  if(!o.images.length) delete o.images;
+}
 
 function imageListHtml(arr, pathPrefix){
   const list = arr || [];
@@ -800,14 +866,12 @@ function imageListHtml(arr, pathPrefix){
 }
 
 function renderMediaPanel(){
-  const colors = draft.colors || [];
   $('panelMedia').innerHTML = `
     <div class="group">
-      <div class="group-head"><h3>รูปหลัก</h3></div>
-      <p class="group-note">ใส่เป็นที่อยู่ไฟล์ในโฟลเดอร์ images เช่น images/bouquet/ช่อทานตะวัน/เล็ก.jpg — ต้องอัปโหลดไฟล์รูปขึ้นเว็บแยกต่างหากก่อน</p>
+      <p class="group-note">ใส่เป็นที่อยู่ไฟล์ในโฟลเดอร์ images เช่น images/bouquet/ช่อทานตะวัน/เล็ก.jpg — ต้องอัปโหลดไฟล์รูปขึ้นเว็บแยกต่างหากก่อน · รูปของแต่ละตัวเลือกใส่ในการ์ด “ตัวแปร”</p>
       <div class="img-field">
         <label class="field">
-          <span>ที่อยู่รูป</span>
+          <span>รูปหลัก</span>
           <input type="text" data-bind="image" value="${esc(draft.image || '')}" placeholder="images/…">
         </label>
         ${thumbHtml(draft.image)}
@@ -816,48 +880,6 @@ function renderMediaPanel(){
         <span class="field" style="margin:0"><span>รูปเพิ่มเติม (แกลเลอรี)</span></span>
         ${imageListHtml(draft.images, 'images')}
       </div>
-    </div>
-
-    <div class="group">
-      <div class="group-head">
-        <h3>สีให้เลือก</h3>
-        <button class="btn btn-ghost btn-sm" data-act="add-color">+ เพิ่มสี</button>
-      </div>
-      <p class="group-note">แต่ละสีมีรูปของตัวเอง ลูกค้ากดเลือกแล้วรูปในหน้าสินค้าจะเปลี่ยนตาม ถ้าสินค้าชิ้นนี้มีแบบเดียว ไม่ต้องใส่อะไรตรงนี้</p>
-      ${colors.length ? colors.map((c, k) => `
-        <div class="item-card">
-          <div class="item-card-head">
-            <span class="item-no">สีที่ ${k + 1}</span>
-            <span class="spacer"></span>
-            <button class="icon-btn" data-act="move-color" data-k="${k}" data-d="-1" ${k === 0 ? 'disabled' : ''} title="เลื่อนขึ้น">↑</button>
-            <button class="icon-btn" data-act="move-color" data-k="${k}" data-d="1" ${k === colors.length - 1 ? 'disabled' : ''} title="เลื่อนลง">↓</button>
-            <button class="icon-btn" data-act="rm-color" data-k="${k}" title="ลบสีนี้">✕</button>
-          </div>
-          <label class="field">
-            <span>ชื่อสี</span>
-            <input type="text" data-bind="colors.${k}.name" value="${esc(c.name || '')}" placeholder="เช่น ขาว, แบบที่ 1">
-          </label>
-          <div class="img-field">
-            <label class="field">
-              <span>รูปของสีนี้</span>
-              <input type="text" data-bind="colors.${k}.image" value="${esc(c.image || '')}" placeholder="images/…">
-            </label>
-            ${thumbHtml(c.image)}
-          </div>
-          <div style="margin-top:12px">
-            <span class="field" style="margin:0"><span>รูปเพิ่มเติมของสีนี้</span></span>
-            ${imageListHtml(c.images, `colors.${k}.images`)}
-          </div>
-          <label class="check" style="margin:12px 0 0">
-            <input type="checkbox" data-bind="colors.${k}.ready" data-type="bool"${c.ready ? ' checked' : ''}>
-            <span>สีนี้ทำไว้แล้ว พร้อมส่ง</span>
-          </label>
-          <div style="margin-top:12px">
-            <span class="field" style="margin:0"><span>ของเสริมเฉพาะสีนี้</span></span>
-            ${addonsEditorHtml(c.addons, `colors.${k}.addons`, 'color-addon', k)}
-          </div>
-        </div>`).join('')
-      : '<p class="field-hint" style="margin:0">ยังไม่มีสี — สินค้าจะใช้รูปหลักด้านบนอย่างเดียว</p>'}
     </div>`;
 }
 
@@ -878,45 +900,100 @@ function variantFor(combo){
     Array.isArray(v.match) && v.match.length === combo.length && v.match.every((m, i) => m === combo[i]));
 }
 
-function renderPricePanel(){
-  const mode = priceMode(draft);
-  const modes = [
-    ['single', 'ราคาเดียว', 'ไม่มีไซซ์ให้เลือก'],
-    ['sizes', 'เลือกไซซ์', 'เล็ก/ใหญ่ ราคาต่างกัน'],
-    ['options', 'เลือกหลายอย่างรวมกัน', 'เช่น สีช่อ + จำนวน']
-  ];
+function colorsBlockHtml(){
+  const colors = draft.colors || [];
+  return `
+    <div class="group">
+      <div class="group-head">
+        <h3>ตัวแปร: สี</h3>
+        <button class="btn btn-ghost btn-sm" data-act="add-color">+ เพิ่มสี</button>
+      </div>
+      <p class="group-note">ทุกสีใช้ราคาเดียวกันจากการ์ดแรก ลูกค้ากดเลือกสีแล้วรูปจะเปลี่ยนตาม</p>
+      ${colors.length ? colors.map((c, k) => `
+        <div class="item-card">
+          <div class="item-card-head">
+            <span class="item-no">สีที่ ${k + 1}</span>
+            <span class="spacer"></span>
+            <button class="icon-btn" data-act="move-color" data-k="${k}" data-d="-1" ${k === 0 ? 'disabled' : ''} title="เลื่อนขึ้น">↑</button>
+            <button class="icon-btn" data-act="move-color" data-k="${k}" data-d="1" ${k === colors.length - 1 ? 'disabled' : ''} title="เลื่อนลง">↓</button>
+            <button class="icon-btn" data-act="rm-color" data-k="${k}" title="ลบสีนี้">✕</button>
+          </div>
+          <label class="check" style="margin:0 0 12px">
+            <input type="checkbox" data-bind="colors.${k}.ready" data-type="bool"${c.ready ? ' checked' : ''}>
+            <span>สีนี้ทำไว้แล้ว พร้อมส่ง</span>
+          </label>
+          <label class="field">
+            <span>ชื่อสี</span>
+            <input type="text" data-bind="colors.${k}.name" value="${esc(c.name || '')}" placeholder="เช่น ขาว, แบบที่ 1">
+          </label>
+          <div class="img-field">
+            <label class="field">
+              <span>รูปสินค้าของสีนี้</span>
+              <input type="text" data-bind="colors.${k}.image" value="${esc(c.image || '')}" placeholder="images/…">
+            </label>
+            ${thumbHtml(c.image)}
+          </div>
+          <div style="margin-top:12px">
+            <span class="field" style="margin:0"><span>รูปเพิ่มเติมของสีนี้</span></span>
+            ${imageListHtml(c.images, `colors.${k}.images`)}
+          </div>
+          <div style="margin-top:12px">
+            <span class="field" style="margin:0"><span>ของเสริมเฉพาะสีนี้</span></span>
+            ${addonsEditorHtml(c.addons, `colors.${k}.addons`, 'color-addon', k)}
+          </div>
+        </div>`).join('') : '<p class="field-hint" style="margin:0">ยังไม่มีสี</p>'}
+    </div>`;
+}
 
+function renderPricePanel(){
+  (draft.variants || []).forEach(normalizeRowImages);
+  (draft.sizes || []).forEach(normalizeRowImages);
+  const mode = priceMode(draft);
+  const hasColors = (draft.colors || []).length > 0;
   let body = '';
 
-  if(mode === 'single'){
+  // ---- ไม่มีตัวแปร ----
+  if(mode === 'single' && !hasColors){
     body = `
-      <div class="group">
-        <label class="field" style="margin:0">
-          <span>ราคา (บาท)</span>
-          <input type="number" min="0" step="1" data-bind="price" data-type="number" value="${num(draft.price) || ''}">
-        </label>
+      <div class="group var-empty">
+        <p class="var-empty-title">ยังไม่มีตัวแปร</p>
+        <p class="group-note" style="margin:0 0 12px">สินค้านี้ขายแบบเดียว ใช้ราคาและสถานะพร้อมส่งจากการ์ดแรก ถ้ามีหลายแบบ (เช่น ปกติ / ใส่เงิน) ให้เพิ่มตัวแปร แล้วตั้งราคา รูป และพร้อมส่งแยกแต่ละค่า</p>
+        <button class="btn btn-ghost" data-act="add-var">+ เพิ่มตัวแปร</button>
       </div>`;
   }
 
+  // ---- สินค้าเดิมที่ใช้ "สี" (ราคาเท่ากันทุกสี) ----
+  if(mode === 'single' && hasColors){
+    body = colorsBlockHtml() + `
+      <div class="group var-foot">
+        <button class="btn btn-ghost btn-sm" data-act="to-options">เปลี่ยนเป็นตัวแปรแบบตั้งราคาแยกแต่ละสี / เพิ่มตัวแปรอื่น</button>
+      </div>`;
+  }
+
+  // ---- สินค้าเดิมที่ใช้ "ไซซ์" ----
   if(mode === 'sizes'){
     const sizes = draft.sizes || [];
     body = `
       <div class="group">
         <div class="group-head">
-          <h3>ไซซ์และราคา</h3>
-          <button class="btn btn-ghost btn-sm" data-act="add-size">+ เพิ่มไซซ์</button>
+          <h3>ตัวแปร: ไซซ์</h3>
+          <button class="btn btn-ghost btn-sm" data-act="add-size">+ เพิ่มค่า</button>
         </div>
         <p class="group-note">ราคาที่ถูกที่สุดจะถูกใช้เป็นราคาเริ่มต้นที่โชว์บนการ์ดสินค้าในหน้าร้าน</p>
         ${sizes.length ? sizes.map((s, k) => `
           <div class="item-card">
             <div class="item-card-head">
-              <span class="item-no">ไซซ์ที่ ${k + 1}</span>
+              <span class="item-no">ค่าที่ ${k + 1}</span>
               <span class="spacer"></span>
-              <button class="icon-btn" data-act="rm-size" data-k="${k}" title="ลบไซซ์นี้">✕</button>
+              <button class="icon-btn" data-act="rm-size" data-k="${k}" title="ลบค่านี้">✕</button>
             </div>
+            <label class="check" style="margin:0 0 12px">
+              <input type="checkbox" data-bind="sizes.${k}.ready" data-type="bool"${s.ready ? ' checked' : ''}>
+              <span>ทำไว้แล้ว พร้อมส่ง</span>
+            </label>
             <div class="field-row">
               <label class="field">
-                <span>ชื่อไซซ์</span>
+                <span>ชื่อค่าตัวเลือก</span>
                 <input type="text" data-bind="sizes.${k}.name" value="${esc(s.name || '')}" placeholder="เช่น ดอกใหญ่">
               </label>
               <label class="field">
@@ -924,80 +1001,67 @@ function renderPricePanel(){
                 <input type="number" min="0" step="1" data-bind="sizes.${k}.price" data-type="number" value="${num(s.price) || ''}">
               </label>
             </div>
-            <label class="field" style="margin-bottom:12px">
+            <div class="img-field">
+              <label class="field">
+                <span>รูปสินค้า</span>
+                <input type="text" data-bind="sizes.${k}.image" value="${esc(s.image || '')}" placeholder="images/…">
+              </label>
+              ${thumbHtml(s.image)}
+            </div>
+            <div style="margin-top:12px">
+              <span class="field" style="margin:0"><span>รูปเพิ่มเติมของค่านี้</span></span>
+              ${imageListHtml(s.images, `sizes.${k}.images`)}
+            </div>
+            <label class="field" style="margin-top:12px">
               <span>ตัวกรองขนาด (หน้าร้าน)</span>
               <select data-bind="sizes.${k}.tag">
                 <option value="">อัตโนมัติ (ตามชื่อ)</option>
                 ${sizeChoicesFor(s.tag, draft.cat).map(t => `<option value="${esc(t)}"${(s.tag || '') === t ? ' selected' : ''}>${esc(sizeTagLabel(draft.cat, t))}</option>`).join('')}
               </select>
             </label>
-            <div class="img-field">
-              <label class="field">
-                <span>รูปของไซซ์นี้</span>
-                <input type="text" data-bind="sizes.${k}.image" value="${esc(s.image || '')}" placeholder="images/…">
-              </label>
-              ${thumbHtml(s.image)}
-            </div>
-            <label class="check" style="margin:12px 0 0">
-              <input type="checkbox" data-bind="sizes.${k}.ready" data-type="bool"${s.ready ? ' checked' : ''}>
-              <span>ไซซ์นี้ทำไว้แล้ว พร้อมส่ง</span>
-            </label>
           </div>`).join('')
-        : '<p class="field-hint" style="margin:0">ยังไม่มีไซซ์ กด “เพิ่มไซซ์” เพื่อเริ่ม</p>'}
+        : '<p class="field-hint" style="margin:0">ยังไม่มีค่า กด “เพิ่มค่า” เพื่อเริ่ม</p>'}
+      </div>
+      ${hasColors ? colorsBlockHtml() : ''}
+      <div class="group var-foot">
+        <button class="btn btn-ghost btn-sm" data-act="to-options">เพิ่มตัวแปรอีกชั้น (เช่น สี × ไซซ์)</button>
+        <button class="btn btn-ghost btn-sm is-danger" data-act="clear-vars">เลิกใช้ตัวแปร</button>
       </div>`;
   }
 
+  // ---- ตัวแปรหลายชั้น (options + variants) ----
   if(mode === 'options'){
     const options = draft.options || [];
     const combos = comboList(options);
     const sellable = combos.filter(c => variantFor(c)).length;
-
     body = `
       <div class="group">
         <div class="group-head">
-          <h3>ชั้นตัวเลือก</h3>
-          <button class="btn btn-ghost btn-sm" data-act="add-option">+ เพิ่มชั้น</button>
+          <h3>ตัวแปร</h3>
+          <button class="btn btn-ghost btn-sm" data-act="edit-vars">แก้ไขตัวเลือก</button>
         </div>
-        <p class="group-note">เช่น ชั้นที่ 1 คือ “สีช่อ” มีค่า เขียว/น้ำเงิน/กะปิ ชั้นที่ 2 คือ “แบบ” มีค่า 5 ใบ/10 ใบ</p>
-        ${options.length ? options.map((o, k) => `
-          <div class="item-card">
-            <div class="item-card-head">
-              <span class="item-no">ชั้นที่ ${k + 1}</span>
-              <span class="spacer"></span>
-              <button class="icon-btn" data-act="rm-option" data-k="${k}" title="ลบชั้นนี้">✕</button>
-            </div>
-            <label class="field" style="margin-bottom:10px">
-              <span>ชื่อชั้น</span>
-              <input type="text" data-bind="options.${k}.name" value="${esc(o.name || '')}" placeholder="เช่น สีช่อ">
-            </label>
-            <span class="field" style="margin:0"><span>ค่าที่เลือกได้</span></span>
-            <div class="value-chips">
-              ${(o.values || []).map((v, vi) => `
-                <span class="value-chip">${esc(v)}
-                  <button data-act="rm-value" data-k="${k}" data-vi="${vi}" title="ลบ">✕</button>
-                </span>`).join('')}
-            </div>
-            <div class="img-list-row" style="margin-top:10px">
-              <input type="text" data-new-value="${k}" placeholder="พิมพ์ค่าใหม่ แล้วกด Enter">
-              <button class="btn btn-ghost btn-sm" data-act="add-value" data-k="${k}">เพิ่ม</button>
-            </div>
-          </div>`).join('')
-        : '<p class="field-hint" style="margin:0">ยังไม่มีชั้นตัวเลือก กด “เพิ่มชั้น” เพื่อเริ่ม</p>'}
+        <div class="vsum">
+          ${options.map(o => `
+            <div class="vsum-row">
+              <b>${esc(o.name || '(ยังไม่มีชื่อ)')}</b>
+              <div class="value-chips">${(o.values || []).map(v => `<span class="value-chip" style="padding:4px 12px">${esc(v)}</span>`).join('')}</div>
+            </div>`).join('')}
+        </div>
       </div>
 
       ${combos.length && combos[0].length ? `
       <div class="group">
-        <div class="group-head"><h3>คู่ผสมที่เปิดขาย</h3></div>
-        <p class="group-note">ติ๊กเฉพาะคู่ผสมที่ทำขายจริง คู่ที่ไม่ติ๊กจะถูกปิดไม่ให้ลูกค้ากดเลือกในหน้าร้าน — เปิดขายอยู่ <span id="comboCount">${sellable}</span> จาก ${combos.length} คู่</p>
+        <div class="group-head"><h3>ราคา รูป และสถานะของแต่ละค่า</h3></div>
+        <p class="group-note">ติ๊ก “ขาย” เฉพาะแบบที่ทำขายจริง ที่ไม่ติ๊กจะถูกปิดไม่ให้ลูกค้ากดเลือกในหน้าร้าน — เปิดขายอยู่ <span id="comboCount">${sellable}</span> จาก ${combos.length} แบบ</p>
         <div class="combo-scroll">
           <table class="combo-table">
             <thead>
               <tr>
                 <th style="width:34px">ขาย</th>
-                <th>คู่ผสม</th>
-                <th style="width:104px">ราคา</th>
-                <th style="width:170px">รูป</th>
                 <th style="width:80px">พร้อมส่ง</th>
+                <th>ค่าตัวเลือก</th>
+                <th style="width:104px">ราคา</th>
+                <th style="width:200px">รูปสินค้า</th>
                 <th style="width:130px">ตัวกรองขนาด</th>
               </tr>
             </thead>
@@ -1007,27 +1071,24 @@ function renderPricePanel(){
                 return `
                 <tr class="${v ? '' : 'is-off'}">
                   <td><input type="checkbox" data-act="toggle-combo" data-ci="${ci}"${v ? ' checked' : ''}></td>
+                  <td style="text-align:center"><input type="checkbox" data-combo-ready="${ci}"${v && v.ready ? ' checked' : ''}${v ? '' : ' disabled'}></td>
                   <td class="combo-combo">${c.map(esc).join(' · ')}</td>
                   <td><input type="number" min="0" step="1" data-combo-price="${ci}" value="${v ? (num(v.price) || '') : ''}"${v ? '' : ' disabled'}></td>
-                  <td><input type="text" data-combo-image="${ci}" value="${v ? esc(v.image || '') : ''}" placeholder="images/…"${v ? '' : ' disabled'}></td>
-                  <td style="text-align:center"><input type="checkbox" data-combo-ready="${ci}"${v && v.ready ? ' checked' : ''}${v ? '' : ' disabled'}></td>
+                  <td><input type="text" data-combo-image="${ci}" value="${v ? esc(v.image || '') : ''}" placeholder="รูปหลัก images/…"${v ? '' : ' disabled'}>
+                    <button type="button" class="btn btn-ghost btn-sm combo-more" data-combo-more="${ci}"${v ? '' : ' disabled'}>${v && (v.images || []).length ? 'รูปเพิ่มเติม ' + v.images.length : '+ รูปเพิ่มเติม'}</button></td>
                   <td><select data-combo-tag="${ci}"${v ? '' : ' disabled'}>${comboTagChoices(draft.cat, v && v.tag).map(([val, label]) => `<option value="${esc(val)}"${(v && v.tag || '') === val ? ' selected' : ''}>${esc(label)}</option>`).join('')}</select></td>
                 </tr>`;
               }).join('')}
             </tbody>
           </table>
         </div>
-      </div>` : ''}`;
+      </div>` : ''}
+      <div class="group var-foot">
+        <button class="btn btn-ghost btn-sm is-danger" data-act="clear-vars">เลิกใช้ตัวแปร</button>
+      </div>`;
   }
 
-  $('panelPrice').innerHTML = `
-    <div class="mode-picker">
-      ${modes.map(([key, title, sub]) => `
-        <button class="mode-option${key === mode ? ' is-active' : ''}" data-act="set-mode" data-mode="${key}">
-          <b>${title}</b><span>${sub}</span>
-        </button>`).join('')}
-    </div>
-    ${body}`;
+  $('panelPrice').innerHTML = body;
 }
 
 /* --- แท็บ 4: ของเสริม --- */
@@ -1074,10 +1135,10 @@ function renderAddonsPanel(){
       <div class="group-head"><h3>ของเสริมของสินค้าชิ้นนี้</h3></div>
       <p class="group-note">ลูกค้ากดเปิด/ปิดได้เอง เลือกพร้อมกันหลายอย่างได้ ราคาจะบวกเพิ่มจากราคาสินค้า${
         (draft.colors || []).length
-          ? ' — สินค้าชิ้นนี้มีสีให้เลือก ถ้าของเสริมมีเฉพาะบางสี ให้ไปใส่ในการ์ด “รูปภาพและสี” แทน'
+          ? ' — สินค้าชิ้นนี้มีสีให้เลือก ถ้าของเสริมมีเฉพาะบางสี ให้ไปใส่ในการ์ด “ตัวแปร” แทน'
           : ''}</p>
       ${addonsEditorHtml(draft.addons, 'addons', 'add-addon')}
-      ${usedOnColors ? '<p class="field-hint">หมายเหตุ: ตอนนี้มีของเสริมที่ผูกกับสีอยู่แล้วในการ์ด “รูปภาพและสี”</p>' : ''}
+      ${usedOnColors ? '<p class="field-hint">หมายเหตุ: ตอนนี้มีของเสริมที่ผูกกับสีอยู่แล้วในการ์ด “ตัวแปร”</p>' : ''}
     </div>`;
 }
 
@@ -1104,7 +1165,7 @@ function onDraftInput(e){
 
     // เปลี่ยนหมวด → ตัวเลือกขนาดเปลี่ยนตาม ต้องวาดแผงข้าง/การ์ดราคาใหม่ และเตือนถ้ามีค่าเดิมที่ไม่เข้าหมวดใหม่
     if(el.dataset.bind === 'cat'){
-      renderSidePanel();
+      renderMainPanel();
       renderPricePanel();
       const bad = offListSizeTags(draft);
       if(bad.length) toast(`ค่าขนาด “${bad.join(', ')}” ไม่อยู่ในตัวกรองของหมวด ${val} กรุณาเลือกใหม่`, true);
@@ -1161,49 +1222,51 @@ function onDraftClick(e){
   const path = btn.dataset.path;
 
   switch(act){
-    case 'set-mode': {
-      const mode = btn.dataset.mode;
-      if(mode === priceMode(draft)) return;
-      delete draft.sizes; delete draft.options; delete draft.variants;
-      if(mode === 'sizes'){ draft.sizes = [{ name:'', price:num(draft.price) || 0, image:'' }]; }
-      if(mode === 'options'){ draft.options = [{ name:'', values:[] }]; draft.variants = []; delete draft.price; }
-      if(mode === 'single' && draft.price == null) draft.price = 0;
-      renderPricePanel();
-      renderSidePanel();
+    case 'add-var':
+    case 'edit-vars':
+      openVarModal();
       return;
-    }
+
+    case 'to-options':
+      convertToOptions();
+      return;
+
+    case 'clear-vars':
+      clearVariables();
+      return;
 
     case 'add-img': {
       const arr = getPath(draft, path) || [];
       arr.push('');
       setPath(draft, path, arr);
-      renderMediaPanel();
+      if(path.startsWith('colors.') || path.startsWith('sizes.')) renderPricePanel(); else renderMediaPanel();
       return;
     }
     case 'rm-img': {
       const arr = getPath(draft, path) || [];
       arr.splice(+btn.dataset.k, 1);
       if(!arr.length) setPath(draft, path, undefined);
-      renderMediaPanel();
+      if(path.startsWith('colors.') || path.startsWith('sizes.')) renderPricePanel(); else renderMediaPanel();
       return;
     }
 
     case 'add-color':
       draft.colors = draft.colors || [];
       draft.colors.push({ name:'', image:'' });
-      renderMediaPanel();
+      renderPricePanel();
       return;
     case 'rm-color':
       draft.colors.splice(k, 1);
       if(!draft.colors.length) delete draft.colors;
-      renderMediaPanel();
+      renderMainPanel();
+      renderPricePanel();
       renderAddonsPanel();
       return;
     case 'move-color': {
       const d = +btn.dataset.d, j = k + d;
       if(j < 0 || j >= draft.colors.length) return;
       [draft.colors[k], draft.colors[j]] = [draft.colors[j], draft.colors[k]];
-      renderMediaPanel();
+      renderPricePanel();
       return;
     }
 
@@ -1217,36 +1280,6 @@ function onDraftClick(e){
       renderPricePanel();
       return;
 
-    case 'add-option':
-      draft.options = draft.options || [];
-      draft.options.push({ name:'', values:[] });
-      renderPricePanel();
-      return;
-    case 'rm-option':
-      draft.options.splice(k, 1);
-      draft.variants = [];            // คู่ผสมเดิมใช้ไม่ได้แล้วเมื่อจำนวนชั้นเปลี่ยน
-      renderPricePanel();
-      return;
-    case 'add-value': {
-      const input = $('panelPrice').querySelector(`[data-new-value="${k}"]`);
-      const v = input.value.trim();
-      if(!v) return;
-      draft.options[k].values = draft.options[k].values || [];
-      if(draft.options[k].values.includes(v)){ toast('มีค่านี้อยู่แล้ว', true); return; }
-      draft.options[k].values.push(v);
-      renderPricePanel();
-      return;
-    }
-    case 'rm-value': {
-      const vi = +btn.dataset.vi;
-      const removed = draft.options[k].values[vi];
-      draft.options[k].values.splice(vi, 1);
-      // คู่ผสมที่อ้างถึงค่าที่เพิ่งลบ ต้องถูกลบตามไปด้วย ไม่งั้นจะเป็นคู่ผีค้างในระบบ
-      draft.variants = (draft.variants || []).filter(v => !(v.match || []).includes(removed));
-      renderPricePanel();
-      return;
-    }
-
     case 'add-addon':
       draft.addons = draft.addons || [];
       draft.addons.push({ name:'', price:0, image:'' });
@@ -1255,17 +1288,354 @@ function onDraftClick(e){
     case 'color-addon':
       draft.colors[k].addons = draft.colors[k].addons || [];
       draft.colors[k].addons.push({ name:'', price:0, image:'' });
-      renderMediaPanel();
+      renderPricePanel();
       return;
     case 'rm-addon': {
       const arr = getPath(draft, path) || [];
       arr.splice(k, 1);
       if(!arr.length) setPath(draft, path, undefined);
-      if(path.startsWith('colors.')) renderMediaPanel(); else renderAddonsPanel();
+      if(path.startsWith('colors.')) renderPricePanel(); else renderAddonsPanel();
       return;
     }
   }
 }
+
+// แปลง "สี" (ราคาเท่ากันทุกสี) หรือ "ไซซ์" ของสินค้าเดิม ให้เป็นตัวแปรแบบ options เพื่อเพิ่มตัวแปรอื่นหรือตั้งราคาแยกได้
+async function convertToOptions(){
+  const mode = priceMode(draft);
+  const str = v => String(v ?? '').trim();
+  if(mode === 'sizes'){
+    const sizes = (draft.sizes || []).filter(s => str(s.name));
+    if(!sizes.length){ toast('เพิ่มค่าไซซ์ก่อน', true); return; }
+    draft.options = [{ name:'ไซซ์', values: sizes.map(s => str(s.name)) }];
+    draft.variants = sizes.map(s => {
+      const o = { match:[str(s.name)], price: num(s.price), image: s.image || '' };
+      if((s.images || []).length) o.images = s.images.slice();
+      if(s.tag) o.tag = s.tag;
+      if(s.ready) o.ready = true;
+      return o;
+    });
+    delete draft.sizes; delete draft.price;
+  }else{
+    const colors = (draft.colors || []).filter(c => str(c.name));
+    if(!colors.length){ toast('เพิ่มสีก่อน', true); return; }
+    const losing = colors.some(c => (c.addons || []).length);
+    if(losing){
+      const ok = await askConfirm('เปลี่ยนเป็นตัวแปร', 'ของเสริมเฉพาะสีจะหายไป (ตัวแปรเก็บของเสริมรายแถวไม่ได้ ส่วนรูปทุกรูปยังติดไปครบ) ทำต่อไหม', 'เปลี่ยน');
+      if(!ok) return;
+    }
+    const base = num(draft.price);
+    draft.options = [{ name:'สี', values: colors.map(c => str(c.name)) }];
+    draft.variants = colors.map(c => {
+      const o = { match:[str(c.name)], price: base, image: c.image || '' };
+      if((c.images || []).length) o.images = c.images.slice();
+      if(c.ready) o.ready = true;
+      return o;
+    });
+    delete draft.colors; delete draft.price;
+  }
+  renderMainPanel();
+  renderPricePanel();
+  renderAddonsPanel();
+  updateSummaries();
+}
+
+async function clearVariables(){
+  const ok = await askConfirm('เลิกใช้ตัวแปร', 'ราคา รูป และพร้อมส่งของแต่ละค่าจะหายไป สินค้ากลับไปขายราคาเดียว (ตั้งราคาที่การ์ดแรก) ทำต่อไหม', 'เลิกใช้ตัวแปร');
+  if(!ok) return;
+  const min = Math.min(...(draft.sizes || []).map(s => num(s.price)).filter(Boolean), Infinity);
+  delete draft.sizes; delete draft.options; delete draft.variants;
+  draft.price = Number.isFinite(min) ? min : 0;
+  renderMainPanel();
+  renderPricePanel();
+  updateSummaries();
+}
+
+/* ───────────────── หน้าต่าง "สร้างตัวเลือก" ───────────────── */
+
+let vm = null;   // { rows:[{name, values:[], orig}], hadVariants } ขณะหน้าต่างเปิดอยู่
+
+function openVarModal(){
+  const old = draft.options || [];
+  vm = {
+    rows: old.length
+      ? old.map((o, i) => ({ name: o.name || '', values: (o.values || []).slice(), orig: i }))
+      : [{ name:'', values:[], orig:null }],
+    dragFrom: null
+  };
+  $('varTitle').textContent = old.length ? 'แก้ไขตัวเลือก' : 'สร้างตัวเลือก';
+  $('varScrim').hidden = false;
+  renderVarModal(old.length ? null : { row:0, field:'name' });
+}
+
+function closeVarModal(){
+  $('varScrim').hidden = true;
+  vm = null;
+}
+
+// อ่านค่าที่ยังพิมพ์ค้างในช่องจากหน้าจอ (ชื่อตัวเลือก + ค่าที่ยังไม่ได้กด Enter)
+function readVarModalInputs(){
+  if(!vm) return;
+  document.querySelectorAll('#varBody [data-vm-name]').forEach(inp => { vm.rows[+inp.dataset.vmName].name = inp.value; });
+  document.querySelectorAll('#varBody [data-vm-newval]').forEach(inp => { vm.rows[+inp.dataset.vmNewval].pending = inp.value; });
+}
+
+function renderVarModal(focus){
+  $('varBody').innerHTML = vm.rows.map((r, i) => `
+    <div class="vm-row" data-vm-row="${i}">
+      <span class="vm-handle" draggable="true" data-vm-handle="${i}" title="ลากเพื่อเรียงลำดับ">☰</span>
+      <label class="vm-name">
+        <span class="vm-label">ชื่อตัวเลือก</span>
+        <input type="text" data-vm-name="${i}" value="${esc(r.name)}" placeholder="เช่น สี, แบบ" autocomplete="off">
+      </label>
+      <div class="vm-vals">
+        <span class="vm-label">ค่าตัวเลือก</span>
+        <div class="vm-chips">
+          ${r.values.map((v, vi) => `<span class="vm-chip">${esc(v)}<button type="button" data-vm-rmval="${i}" data-vi="${vi}" aria-label="ลบ ${esc(v)}">✕</button></span>`).join('')}
+        </div>
+        <input type="text" class="vm-newval" data-vm-newval="${i}" value="${esc(r.pending || '')}" placeholder="${r.values.length ? '' : 'ค่าตัวเลือก'}" autocomplete="off">
+        <small>กด Enter เพื่อเพิ่มค่า</small>
+      </div>
+      <button type="button" class="vm-del" data-vm-delrow="${i}" title="ลบตัวเลือกนี้" ${vm.rows.length === 1 ? 'disabled' : ''}>🗑</button>
+    </div>`).join('');
+  refreshVarModal();
+  if(focus){
+    const sel = focus.field === 'name' ? `[data-vm-name="${focus.row}"]` : `[data-vm-newval="${focus.row}"]`;
+    const el = $('varBody').querySelector(sel);
+    if(el) el.focus();
+  }
+}
+
+// ตัวเลือกที่สมบูรณ์ (รวมค่าที่พิมพ์ค้างไว้แต่ยังไม่ได้กด Enter) + ปัญหาที่ทำให้ยังบันทึกไม่ได้
+function collectVarModal(){
+  readVarModalInputs();
+  const rows = vm.rows.map((r, i) => {
+    const pending = r.pending;
+    const values = r.values.slice();
+    const p = String(pending || '').trim();
+    if(p && !values.includes(p)) values.push(p);
+    return { name: r.name.trim(), values, orig: r.orig };
+  });
+  const filled = rows.filter(r => r.name || r.values.length);
+  let problem = '';
+  if(!filled.length) problem = 'ใส่ชื่อและค่าตัวเลือกอย่างน้อย 1 อย่าง';
+  else{
+    const noName = filled.find(r => !r.name);
+    const noVals = filled.find(r => !r.values.length);
+    const names = filled.map(r => r.name);
+    if(noName) problem = 'มีตัวเลือกที่ยังไม่ได้ตั้งชื่อ';
+    else if(noVals) problem = `ตัวเลือก “${noVals.name}” ยังไม่มีค่า`;
+    else if(new Set(names).size !== names.length) problem = 'ชื่อตัวเลือกซ้ำกัน';
+  }
+  return { rows: filled, problem };
+}
+
+function refreshVarModal(){
+  const { problem } = collectVarModal();
+  $('varSave').disabled = !!problem;
+  $('varHint').textContent = problem && vm.rows.some(r => r.name || r.values.length) ? problem : '';
+}
+
+function addVarValue(i){
+  const inp = $('varBody').querySelector(`[data-vm-newval="${i}"]`);
+  const v = inp.value.trim();
+  if(!v) return;
+  if(vm.rows[i].values.includes(v)){ toast('มีค่านี้อยู่แล้ว', true); return; }
+  readVarModalInputs();
+  vm.rows[i].values.push(v);
+  vm.rows[i].pending = '';
+  renderVarModal({ row:i, field:'val' });
+}
+
+async function saveVarModal(){
+  const { rows, problem } = collectVarModal();
+  if(problem) return;
+  const old = draft.options || [];
+  const oldVariants = draft.variants || [];
+
+  // แถวราคา/รูป/พร้อมส่งเดิม เก็บไว้ได้ก็ต่อเมื่อจำนวนตัวเลือกเท่าเดิม (แค่สลับลำดับ/เพิ่มลบค่าได้)
+  let kept = [];
+  const sameShape = rows.length === old.length && rows.every(r => r.orig != null) && new Set(rows.map(r => r.orig)).size === rows.length;
+  if(sameShape){
+    kept = oldVariants
+      .filter(v => (v.match || []).length === old.length && rows.every(r => r.values.includes(v.match[r.orig])))
+      .map(v => Object.assign({}, v, { match: rows.map(r => v.match[r.orig]) }));
+  }
+  const lost = oldVariants.length - kept.length;
+  if(lost > 0){
+    const ok = await askConfirm('ยืนยันการแก้ไขตัวเลือก', `การเปลี่ยนนี้ทำให้ราคา/รูป/พร้อมส่งของ ${lost} แบบเดิมหายไป ต้องตั้งใหม่ ทำต่อไหม`, 'ทำต่อ');
+    if(!ok) return;
+  }
+
+  // ตัวเลือกเดียว: ทุกค่าคือแถวขายอยู่แล้ว สร้างแถวให้ครบเลย (ไม่ต้องติ๊ก "ขาย" ทีละแถว)
+  if(rows.length === 1){
+    rows[0].values.forEach(val => {
+      if(!kept.some(v => v.match[0] === val)) kept.push({ match:[val], price:0, image:'' });
+    });
+    kept.sort((x, y) => rows[0].values.indexOf(x.match[0]) - rows[0].values.indexOf(y.match[0]));
+  }
+
+  draft.options = rows.map(r => ({ name: r.name, values: r.values }));
+  draft.variants = kept;
+  delete draft.sizes;
+  delete draft.price;
+  closeVarModal();
+  renderMainPanel();
+  renderPricePanel();
+  updateSummaries();
+}
+
+$('varBody').addEventListener('input', e => { if(e.target.dataset.vmName != null || e.target.dataset.vmNewval != null) refreshVarModal(); });
+$('varBody').addEventListener('keydown', e => {
+  const t = e.target;
+  if(t.dataset.vmNewval != null){
+    if(e.key === 'Enter'){ e.preventDefault(); addVarValue(+t.dataset.vmNewval); }
+    // กด Backspace ในช่องว่าง = ลบค่าสุดท้ายของแถวนั้น
+    if(e.key === 'Backspace' && !t.value){
+      const i = +t.dataset.vmNewval;
+      if(vm.rows[i].values.length){ readVarModalInputs(); vm.rows[i].values.pop(); renderVarModal({ row:i, field:'val' }); }
+    }
+  }else if(t.dataset.vmName != null && e.key === 'Enter'){
+    e.preventDefault();
+    const nv = $('varBody').querySelector(`[data-vm-newval="${t.dataset.vmName}"]`);
+    if(nv) nv.focus();
+  }
+});
+$('varBody').addEventListener('click', e => {
+  const rm = e.target.closest('[data-vm-rmval]');
+  if(rm){
+    readVarModalInputs();
+    const i = +rm.dataset.vmRmval;
+    vm.rows[i].values.splice(+rm.dataset.vi, 1);
+    renderVarModal({ row:i, field:'val' });
+    return;
+  }
+  const del = e.target.closest('[data-vm-delrow]');
+  if(del && vm.rows.length > 1){
+    readVarModalInputs();
+    vm.rows.splice(+del.dataset.vmDelrow, 1);
+    renderVarModal();
+  }
+});
+// ลากเรียงลำดับตัวเลือก (ใช้ที่จับ ☰)
+$('varBody').addEventListener('dragstart', e => {
+  const h = e.target.closest('[data-vm-handle]');
+  if(!h) return;
+  vm.dragFrom = +h.dataset.vmHandle;
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', String(vm.dragFrom));
+  const row = h.closest('.vm-row');
+  if(row && e.dataTransfer.setDragImage) e.dataTransfer.setDragImage(row, 20, 20);
+  row.classList.add('is-dragging');
+});
+$('varBody').addEventListener('dragend', () => { document.querySelectorAll('.vm-row.is-dragging,.vm-row.is-over').forEach(r => r.classList.remove('is-dragging', 'is-over')); });
+$('varBody').addEventListener('dragover', e => {
+  if(!vm || vm.dragFrom == null) return;
+  const row = e.target.closest('.vm-row');
+  if(!row) return;
+  e.preventDefault();
+  document.querySelectorAll('.vm-row.is-over').forEach(r => r.classList.remove('is-over'));
+  row.classList.add('is-over');
+});
+$('varBody').addEventListener('drop', e => {
+  if(!vm || vm.dragFrom == null) return;
+  const row = e.target.closest('.vm-row');
+  if(!row) return;
+  e.preventDefault();
+  readVarModalInputs();
+  const from = vm.dragFrom, to = +row.dataset.vmRow;
+  vm.dragFrom = null;
+  if(from === to) { renderVarModal(); return; }
+  const [moved] = vm.rows.splice(from, 1);
+  vm.rows.splice(to, 0, moved);
+  renderVarModal();
+});
+
+$('varAddRow').addEventListener('click', () => {
+  readVarModalInputs();
+  vm.rows.push({ name:'', values:[], orig:null });
+  renderVarModal({ row: vm.rows.length - 1, field:'name' });
+  const body = $('varBody'); body.scrollTop = body.scrollHeight;
+});
+$('varCancel').addEventListener('click', closeVarModal);
+$('varSave').addEventListener('click', saveVarModal);
+$('varScrim').addEventListener('mousedown', e => { if(e.target === $('varScrim')) closeVarModal(); });
+
+/* ───────────────── หน้าต่าง "รูปเพิ่มเติม" ของแต่ละแถวตัวแปร ───────────────── */
+
+let im = null;   // { v: แถวที่กำลังแก้, list: [รูปเพิ่มเติม], main }
+
+function openImgModal(ci){
+  const combo = comboList(draft.options)[ci];
+  const v = variantFor(combo);
+  if(!v) return;
+  normalizeRowImages(v);
+  im = { v, list: (v.images || []).slice(), main: v.image || '' };
+  $('imgSub').textContent = combo.join(' · ');
+  $('imgScrim').hidden = false;
+  renderImgModal();
+}
+
+function closeImgModal(){
+  $('imgScrim').hidden = true;
+  im = null;
+}
+
+function renderImgModal(focusLast){
+  $('imgBody').innerHTML = `
+    <div class="im-main">
+      <span class="vm-label">รูปหลัก (แก้ในตารางด้านหลัง)</span>
+      <div class="im-row">${thumbHtml(im.main, 'im-thumb')}<span class="im-path">${esc(im.main) || '— ยังไม่ได้ใส่ —'}</span></div>
+    </div>
+    <span class="vm-label" style="margin-top:14px">รูปเพิ่มเติม (ลูกค้าเห็นต่อจากรูปหลัก ตามลำดับนี้)</span>
+    ${im.list.length ? im.list.map((src, i) => `
+      <div class="im-row">
+        ${thumbHtml(src, 'im-thumb')}
+        <input type="text" data-im-i="${i}" value="${esc(src)}" placeholder="images/…" autocomplete="off">
+        <button type="button" class="icon-btn" data-im-move="${i}" data-d="-1" ${i === 0 ? 'disabled' : ''} title="เลื่อนขึ้น">↑</button>
+        <button type="button" class="icon-btn" data-im-move="${i}" data-d="1" ${i === im.list.length - 1 ? 'disabled' : ''} title="เลื่อนลง">↓</button>
+        <button type="button" class="icon-btn" data-im-rm="${i}" title="ลบรูปนี้">✕</button>
+      </div>`).join('') : '<p class="field-hint" style="margin:6px 0 0">ยังไม่มีรูปเพิ่มเติม กด “เพิ่มรูป” ด้านล่าง</p>'}`;
+  if(focusLast){
+    const inputs = $('imgBody').querySelectorAll('[data-im-i]');
+    if(inputs.length) inputs[inputs.length - 1].focus();
+  }
+}
+
+function saveImgModal(){
+  const list = [];
+  im.list.forEach(x => { const t = String(x || '').trim(); if(t && t !== im.main && !list.includes(t)) list.push(t); });
+  if(list.length) im.v.images = list; else delete im.v.images;
+  closeImgModal();
+  renderPricePanel();
+  updateSummaries();
+}
+
+$('imgBody').addEventListener('input', e => {
+  if(e.target.dataset.imI == null) return;
+  im.list[+e.target.dataset.imI] = e.target.value;
+  // อัปเดตรูปตัวอย่างข้างช่อง (ไม่วาดใหม่ทั้งหน้าต่าง กันเสียตำแหน่งที่พิมพ์)
+  const th = e.target.previousElementSibling;
+  if(th && th.tagName === 'IMG'){ if(e.target.value.trim()){ th.classList.remove('is-missing'); th.src = e.target.value.trim(); } else { th.removeAttribute('src'); th.classList.add('is-missing'); } }
+});
+$('imgBody').addEventListener('click', e => {
+  const rm = e.target.closest('[data-im-rm]');
+  if(rm){ im.list.splice(+rm.dataset.imRm, 1); renderImgModal(); return; }
+  const mv = e.target.closest('[data-im-move]');
+  if(mv){
+    const i = +mv.dataset.imMove, j = i + +mv.dataset.d;
+    if(j < 0 || j >= im.list.length) return;
+    [im.list[i], im.list[j]] = [im.list[j], im.list[i]];
+    renderImgModal();
+  }
+});
+$('imgBody').addEventListener('keydown', e => {
+  if(e.key === 'Enter' && e.target.dataset.imI != null){ e.preventDefault(); $('imgAddRow').click(); }
+});
+$('imgAddRow').addEventListener('click', () => { im.list.push(''); renderImgModal(true); });
+$('imgCancel').addEventListener('click', closeImgModal);
+$('imgSave').addEventListener('click', saveImgModal);
+$('imgScrim').addEventListener('mousedown', e => { if(e.target === $('imgScrim')) closeImgModal(); });
 
 // ติ๊ก/เอาออกใน dropdown "ขนาด/ป้ายกำกับ" ระดับสินค้า — เก็บเป็น array เรียงตามลำดับตัวเลือก (cleanProduct จะย่อเป็น string ถ้ามีค่าเดียว)
 function onSizeTagToggle(){
@@ -1296,6 +1666,8 @@ function onComboToggle(e){
   const imageInput = tr.querySelector('input[type="text"]');
   const readyInput = tr.querySelector('[data-combo-ready]');
   const tagSelect = tr.querySelector('[data-combo-tag]');
+  const moreBtn = tr.querySelector('[data-combo-more]');
+  if(moreBtn){ moreBtn.disabled = !el.checked; if(!el.checked) moreBtn.textContent = '+ รูปเพิ่มเติม'; }
   tr.classList.toggle('is-off', !el.checked);
   priceInput.disabled = imageInput.disabled = readyInput.disabled = tagSelect.disabled = !el.checked;
   if(!el.checked){ priceInput.value = ''; imageInput.value = ''; readyInput.checked = false; tagSelect.value = ''; }
@@ -1392,7 +1764,7 @@ function cleanProduct(p){
   if(mode === 'sizes'){
     const sizes = (p.sizes || []).filter(s => str(s.name)).map(s => {
       const o = { name: str(s.name), price: num(s.price) };
-      if(str(s.image)) o.image = str(s.image);
+      { const all = imgsOf(s); if(all.length) o.image = all[0]; if(all.length > 1) o.images = all; }
       if(str(s.tag)) o.tag = str(s.tag);
       if(s.ready) o.ready = true;
       return o;
@@ -1409,9 +1781,9 @@ function cleanProduct(p){
     out.options = (p.options || [])
       .filter(o => str(o.name) && (o.values || []).length)
       .map(o => ({ name: str(o.name), values: o.values.map(str).filter(Boolean) }));
-    out.variants = (p.variants || []).map(v => {
+    out.variants = (p.variants || []).filter(v => (v.match || []).length === out.options.length).map(v => {
       const o = { match: (v.match || []).map(str), price: num(v.price) };
-      if(str(v.image)) o.image = str(v.image);
+      { const all = imgsOf(v); if(all.length) o.image = all[0]; if(all.length > 1) o.images = all; }
       if(str(v.tag)) o.tag = str(v.tag);
       if(v.ready) o.ready = true;
       return o;
@@ -2026,17 +2398,10 @@ drawerBody.addEventListener('change', e => {
   else onDraftInput(e);
 });
 drawerBody.addEventListener('click', onDraftClick);
+drawerBody.addEventListener('click', e => { const b = e.target.closest('[data-combo-more]'); if(b && !b.disabled) openImgModal(+b.dataset.comboMore); });
 drawerBody.addEventListener('click', updateSummaries);
 drawerBody.addEventListener('input', updateSummaries);
 drawerBody.addEventListener('change', updateSummaries);
-drawerBody.addEventListener('keydown', e => {
-  // กด Enter ในช่อง "ค่าใหม่" ให้เพิ่มค่าเลย จะได้พิมพ์รัวๆ ได้
-  if(e.key === 'Enter' && e.target.dataset.newValue != null){
-    e.preventDefault();
-    const k = e.target.dataset.newValue;
-    $('panelPrice').querySelector(`[data-act="add-value"][data-k="${k}"]`).click();
-  }
-});
 
 $('editorClose').addEventListener('click', closeEditor);
 $('cancelBtn').addEventListener('click', closeEditor);
@@ -2049,6 +2414,8 @@ $('confirmScrim').addEventListener('click', e => { if(e.target === $('confirmScr
 document.addEventListener('keydown', e => {
   if(e.key !== 'Escape') return;
   if(!$('confirmScrim').hidden) closeConfirm(false);
+  else if(!$('imgScrim').hidden) closeImgModal();
+  else if(!$('varScrim').hidden) closeVarModal();
   else if(!$('editorPage').hidden) closeEditor();
 });
 

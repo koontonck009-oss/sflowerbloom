@@ -125,12 +125,11 @@
       <div class="ed-grid" id="editorBody">
         <div class="ed-main">
           <div class="ed-card"><div class="card-head"><h3>ข้อมูลสินค้า</h3></div><div class="card-body" id="panelMain"></div></div>
-          <div class="ed-card"><div class="card-head"><h3>รูปภาพและสี</h3><small id="sumMedia"></small></div><div class="card-body" id="panelMedia"></div></div>
-          <div class="ed-card"><div class="card-head"><h3>ราคา</h3><small id="sumPrice"></small></div><div class="card-body" id="panelPrice"></div></div>
+          <div class="ed-card"><div class="card-head"><h3>ตัวแปร</h3><small id="sumPrice"></small></div><div class="card-body" id="panelPrice"></div></div>
           <div class="ed-card"><div class="card-head"><h3>ของเสริม</h3><small id="sumAddons"></small></div><div class="card-body" id="panelAddons"></div></div>
+          <div class="ed-card"><div class="card-head"><h3>รูปสินค้า</h3><small id="sumMedia"></small></div><div class="card-body" id="panelMedia"></div></div>
         </div>
         <div class="ed-side">
-          <div class="stack" id="panelSide"></div>
           <div class="ed-card" id="posterCard">
             <div class="card-head"><h3>ภาพแคตตาล็อก</h3></div>
             <button class="btn btn-ghost btn-block" id="posterOneBtn">โหลดภาพแคตตาล็อกของสินค้านี้</button>
@@ -151,6 +150,34 @@
 </div>
 
 <!-- ───────────── ตัวแก้ไขสินค้า ───────────── -->
+
+<!-- ───────────── หน้าต่างสร้าง/แก้ไขตัวเลือก ───────────── -->
+<div class="confirm-scrim" id="varScrim" hidden>
+  <div class="vm-card" role="dialog" aria-modal="true" aria-labelledby="varTitle">
+    <h3 class="vm-title" id="varTitle">สร้างตัวเลือก</h3>
+    <div class="vm-body" id="varBody"></div>
+    <button type="button" class="vm-add" id="varAddRow"><span>＋</span> เพิ่มตัวเลือก</button>
+    <div class="vm-foot">
+      <p class="vm-hint" id="varHint"></p>
+      <button type="button" class="vm-btn" id="varCancel">ยกเลิก</button>
+      <button type="button" class="vm-btn vm-save" id="varSave" disabled>บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<!-- ───────────── หน้าต่างรูปเพิ่มเติมของแถวตัวแปร ───────────── -->
+<div class="confirm-scrim" id="imgScrim" hidden>
+  <div class="vm-card im-card" role="dialog" aria-modal="true" aria-labelledby="imgTitle">
+    <h3 class="vm-title" id="imgTitle">รูปเพิ่มเติม</h3>
+    <p class="im-sub" id="imgSub"></p>
+    <div class="vm-body" id="imgBody"></div>
+    <button type="button" class="vm-add" id="imgAddRow"><span>＋</span> เพิ่มรูป</button>
+    <div class="vm-foot">
+      <button type="button" class="vm-btn" id="imgCancel">ยกเลิก</button>
+      <button type="button" class="vm-btn vm-save" id="imgSave">บันทึก</button>
+    </div>
+  </div>
+</div>
 
 <!-- ───────────── กล่องยืนยัน ───────────── -->
 <div class="confirm-scrim" id="confirmScrim" hidden>
