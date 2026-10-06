@@ -1686,6 +1686,22 @@ function catalogSaveBlob(blob, filename){
 }
 const catalogSleep = ms => new Promise(r => setTimeout(r, ms));
 
+// ชื่อไฟล์ตามตัวกรองที่ใช้ เช่น "S.Flower Bloom_ช่อดอกไม้_ไม่เกิน 600_01-12.jpg"
+// ตัดอักขระที่ตั้งชื่อไฟล์ไม่ได้ออก (/ \ : * ? " < > | และ ฿) แล้วย่อไม่ให้ชื่อส่วนตัวกรองยาวเกิน 80 ตัวอักษร
+function catalogFileName(pageNo, pageCount){
+  let base = catalogFilterSummary()
+    .replace(/\s·\s/g, '_')
+    .replace(/[\\/:*?"<>|฿\u0000-\u001f]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if(base.length > 80) base = base.slice(0, 80).trim();
+  base = base.replace(/[ ._]+$/, '');
+  if(!base) base = 'สินค้าทั้งหมด';
+  const digits = String(pageCount).length;
+  const n = String(pageNo).padStart(digits, '0');
+  return `S.Flower Bloom_${base}_${n}-${pageCount}.jpg`;
+}
+
 async function downloadCatalogImages(){
   if(catalogExporting) return;
   const items = catalogExportItems.slice(); // ถ่ายสำเนา ณ ตอนกดปุ่ม กันตัวกรองเปลี่ยนระหว่างวาด
@@ -1708,7 +1724,7 @@ async function downloadCatalogImages(){
       const cv = drawCatalogPage(slice, pg + 1, pageCount, imgs, logo, summary);
       const blob = await catalogCanvasToBlob(cv);
       if(!blob) throw new Error('toBlob failed');
-      catalogSaveBlob(blob, `แคตตาล็อก_S-Flower-Bloom_${pg + 1}-${pageCount}.jpg`);
+      catalogSaveBlob(blob, catalogFileName(pg + 1, pageCount));
       if(pg < pageCount - 1) await catalogSleep(600); // เว้นช่วงให้เบราว์เซอร์รับไฟล์ต่อเนื่องได้
     }
     showToast(`โหลดแคตตาล็อกแล้ว ${pageCount} รูป 🌸`);
