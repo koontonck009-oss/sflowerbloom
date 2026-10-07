@@ -205,6 +205,12 @@ function optionPriceRange(p, sel){
   const prices = (reachable.length ? reachable : pool).map(v=>v.price);
   return { min: Math.min(...prices), max: Math.max(...prices) };
 }
+// สินค้าที่มีตัวเลือก แต่ราคาทุกแบบเท่ากัน (เช่น ช่อ R01 ทุกสี 99) ไม่ต้องขึ้น "เริ่มต้น"
+function optionPricesVary(p){
+  if(!hasNewOptions(p)) return false;
+  const r = optionPriceRange(p);
+  return r.min !== r.max;
+}
 function hasFullOptionSelection(p, sel){
   return sel.every(v => v!=null);
 }
@@ -497,7 +503,7 @@ let searchSuggestOpen = false;
 const SEARCH_SUGGEST_LIMIT = 6;
 function priceLabelFor(p){
   if(PRICES_HIDDEN) return PRICE_ASK_SHORT;
-  const startsFrom = (p.sizes && p.sizes.length > 1) || hasNewOptions(p);
+  const startsFrom = (p.sizes && p.sizes.length > 1 && new Set(p.sizes.map(z => z.price)).size > 1) || optionPricesVary(p);
   return (startsFrom ? 'เริ่มต้น ' : '') + fmt(displayPrice(p));
 }
 function handleSearchFocus(){
@@ -1293,6 +1299,111 @@ function favHeartHtml(p, colorIndex, optionIndex, sizeIndex){
 let catalogExportItems = [];
 let catalogExportCollect = false;
 let catalogExporting = false;
+/* ---------- แถวรูปจิ๋วบนการ์ดสินค้า (บอกว่ามีหลายสี/แบบ + แตะแล้วรูปหลักเปลี่ยนตาม) ---------- */
+function escAttr(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+// รวบรวมรูปของแต่ละสี/แบบ/ไซซ์ของสินค้า (ถ้าตัวกรองบีบเหลือบางแบบ ให้โชว์เฉพาะแบบที่ผ่านกรอง)
+function cardSwatchItems(p, narrow){
+  const narrowed = !!(narrow && narrow.passing.length && narrow.passing.length < narrow.total);
+  const only = key => {
+    if(!narrowed) return null;
+    const s = new Set(narrow.passing.map(x => x[key]).filter(x => x != null));
+    return s.size ? s : null;
+  };
+  const items = [], seen = new Set();
+  let total = 0, noun = 'แบบ';
+  const add = (src, label, key, idx, ready) => {
+    total++;
+    if(!src || seen.has(src)) return;
+    seen.add(src);
+    items.push({ src, label, key, idx, ready });
+  };
+  if(hasNewOptions(p)){
+    const keep = only('optionIndex');
+    p.variants.forEach((v, i) => {
+      if(keep && !keep.has(i)) return;
+      add(v.image || (v.images && v.images[0]), v.match.join(' '), 'o', i, !!v.ready);
+    });
+    const o = p.options;
+    if(o.length === 1 && o[0].name && String(o[0].name).length <= 6) noun = o[0].name;
+  } else if(p.colors && p.colors.length){
+    const keep = only('colorIndex');
+    p.colors.forEach((c, i) => {
+      if(keep && !keep.has(i)) return;
+      add(c.image || (c.images && c.images[0]), c.name, 'c', i, typeof c.ready !== 'undefined' ? !!c.ready : !!p.ready);
+    });
+    noun = 'สี';
+  } else if(p.sizes && p.sizes.length){
+    const keep = only('sizeIndex');
+    p.sizes.forEach((z, i) => {
+      if(keep && !keep.has(i)) return;
+      add(z.image || (z.images && z.images[0]), z.name, 's', i, !!z.ready);
+    });
+  } else return null;
+  return { items, total, noun };
+}
+function cardSwatchHtml(p, narrow){
+  const info = cardSwatchItems(p, narrow);
+  if(!info || info.total < 2) return '<span class="option-badge">เลือกแบบ/สีได้</span>';
+  const label = escAttr(info.total + ' ' + info.noun);
+  if(!info.items.length) return `<span class="option-badge">${label}</span>`;
+  const SHOW_D = 4, SHOW_M = 3; // คอมโชว์ 4 รูป มือถือโชว์ 3 รูป (การ์ดสองคอลัมน์แคบ)
+  const btns = info.items.slice(0, SHOW_D).map((it, i) =>
+    `<button type="button" class="sw-btn${i >= SHOW_M ? ' sw-x' : ''}" data-pid="${escAttr(p.id)}" data-src="${escAttr(it.src)}" data-key="${it.key}" data-idx="${it.idx}" data-ready="${it.ready ? 1 : 0}" aria-pressed="false" aria-label="${escAttr('ดู ' + it.label)}" title="${escAttr(it.label)}" onclick="event.stopPropagation(); cardSwatchPick(this)" onmouseenter="cardSwatchHover(this)"><img src="${escAttr(it.src)}" alt="" loading="lazy" decoding="async" onerror="this.parentElement.style.display='none'"></button>`
+  ).join('');
+  const nD = info.items.length - SHOW_D, nM = info.items.length - SHOW_M;
+  const more = (nD > 0 ? `<span class="sw-more sw-more-d">+${nD}</span>` : '')
+             + (nM > 0 ? `<span class="sw-more sw-more-m">+${nM}</span>` : '');
+  return `<div class="sw-row"><div class="sw-strip" onmouseleave="cardSwatchLeave(this)">${btns}${more}</div></div>`;
+}
+function cardSwatchOrig(card){
+  if(!card._swOrig){
+    const thumb = card.querySelector('.thumb');
+    card._swOrig = { html: thumb ? thumb.innerHTML : '', ready: !!card.querySelector('.badge-ready') };
+  }
+  return card._swOrig;
+}
+function cardSwatchBadge(card, ready){
+  const thumb = card.querySelector('.thumb'); if(!thumb) return;
+  const b = thumb.parentElement.querySelector('.badge-ready');
+  if(ready && !b){
+    const el = document.createElement('span');
+    el.className = 'badge-ready'; el.textContent = 'พร้อมส่ง';
+    thumb.insertAdjacentElement('afterend', el);
+  } else if(!ready && b){ b.remove(); }
+}
+function cardSwatchShow(card, btn){
+  const thumb = card.querySelector('.thumb'); if(!thumb) return;
+  cardSwatchOrig(card);
+  const img = document.createElement('img');
+  img.className = 'sw-in'; img.decoding = 'async'; img.alt = btn.getAttribute('title') || '';
+  img.onerror = () => { thumb.innerHTML = window.iconFallbackFor(btn.dataset.pid); };
+  img.src = btn.dataset.src;
+  thumb.replaceChildren(img);
+  cardSwatchBadge(card, btn.dataset.ready === '1');
+}
+const cardCanHover = () => window.matchMedia && window.matchMedia('(hover: hover)').matches;
+// แตะ/คลิกรูปจิ๋ว: เปลี่ยนรูปหลักค้างไว้ และให้การ์ดนี้เปิดหน้าสินค้าพร้อมเลือกสี/แบบนั้นไว้ให้
+function cardSwatchPick(btn){
+  const card = btn.closest('.card'); if(!card) return;
+  cardSwatchShow(card, btn);
+  card._swCur = { html: card.querySelector('.thumb').innerHTML, ready: btn.dataset.ready === '1' };
+  btn.parentElement.querySelectorAll('.sw-btn').forEach(b => b.setAttribute('aria-pressed', b === btn ? 'true' : 'false'));
+  const idx = +btn.dataset.idx, key = btn.dataset.key, pid = btn.dataset.pid;
+  card.onclick = () => openProductModal(pid, key === 'c' ? idx : null, key === 'o' ? idx : null, key === 's' ? idx : null);
+}
+// คอมเท่านั้น: เอาเมาส์ชี้ = พรีวิว เอาออก = กลับไปรูปที่เลือกไว้ (หรือรูปเดิม)
+function cardSwatchHover(btn){
+  if(!cardCanHover()) return;
+  const card = btn.closest('.card'); if(card) cardSwatchShow(card, btn);
+}
+function cardSwatchLeave(strip){
+  if(!cardCanHover()) return;
+  const card = strip.closest('.card'); if(!card || !card._swOrig) return;
+  const st = card._swCur || card._swOrig;
+  const thumb = card.querySelector('.thumb'); if(!thumb) return;
+  thumb.innerHTML = st.html;
+  cardSwatchBadge(card, st.ready);
+}
 function renderProductCard(p, variant, narrow){
   const colorIndex = variant && variant.colorIndex != null ? variant.colorIndex : null;
   const optionIndex = variant && variant.optionIndex != null ? variant.optionIndex : null;
@@ -1338,7 +1449,7 @@ function renderProductCard(p, variant, narrow){
       const lo = Math.min(...prices), hi = Math.max(...prices);
       priceHtml = (lo !== hi) ? `เริ่มต้น ${fmt(lo)}` : fmt(lo);
     } else {
-      priceHtml = (p.billSelector || hasNewOptions(p)) ? `เริ่มต้น ${fmt(displayPrice(p))}` : fmt(displayPrice(p));
+      priceHtml = (p.billSelector || optionPricesVary(p)) ? `เริ่มต้น ${fmt(displayPrice(p))}` : fmt(displayPrice(p));
     }
   }
   // เดิมการ์ดย่อย (isSplit) จะถือว่าพร้อมส่งเสมอ เพราะ readyVariantsOf() คัดมาแต่ตัวที่พร้อมส่งอยู่แล้ว
@@ -1363,12 +1474,12 @@ function renderProductCard(p, variant, narrow){
         ${favHeartHtml(p, colorIndex, optionIndex, sizeIndex)}
       </div>
       <div class="card-body">
+        ${(!isSplit && hasProductOptions(p)) ? cardSwatchHtml(p, narrow) : ''}
         <h4>${displayName}</h4>
         <p class="desc">${p.desc || ''}</p>
         <div class="price-row">
           <span class="price${PRICES_HIDDEN ? ' price-ask' : ''}">${priceHtml}</span>
         </div>
-        ${(!isSplit && hasProductOptions(p)) ? '<span class="option-badge">เลือกแบบ/สีได้</span>' : ''}
       </div>
     </div>
   `;

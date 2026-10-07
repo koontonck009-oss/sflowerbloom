@@ -355,14 +355,19 @@ async function togglePricesHidden(){
 
 /* ───────────────── รายการสินค้า ───────────────── */
 
+// ราคาทุกแบบเท่ากัน = โชว์ราคาเดียว (ไม่ขึ้นเป็นช่วง 99–99 → "เริ่มต้น 99")
+function priceSpan(prices){
+  const lo = Math.min(...prices), hi = Math.max(...prices);
+  return lo === hi ? baht(lo) : baht(lo) + '–' + baht(hi);
+}
 function priceInfo(p){
   if(Array.isArray(p.variants) && p.variants.length){
     const prices = p.variants.map(v => num(v.price)).filter(Boolean);
-    if(prices.length) return { text: baht(Math.min(...prices)) + '–' + baht(Math.max(...prices)), note: 'ตามตัวเลือก' };
+    if(prices.length) return { text: priceSpan(prices), note: 'ตามตัวเลือก' };
   }
   if(Array.isArray(p.sizes) && p.sizes.length){
     const prices = p.sizes.map(s => num(s.price)).filter(Boolean);
-    if(prices.length) return { text: baht(Math.min(...prices)) + '–' + baht(Math.max(...prices)), note: 'ตามไซซ์' };
+    if(prices.length) return { text: priceSpan(prices), note: 'ตามไซซ์' };
   }
   if(num(p.price)) return { text: baht(p.price), note: 'บาท' };
   return { text: '—', note: 'ยังไม่มีราคา' };
