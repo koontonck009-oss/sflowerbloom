@@ -2747,6 +2747,9 @@ async function loadProducts(){
 
 /* ขั้นตอนหลังได้ข้อมูลสินค้ามาแล้ว ใช้ร่วมกันทั้งทาง Firestore และ products.json */
 function finishLoadingProducts(){
+  // สินค้าที่ซ่อนจากหลังบ้าน (hidden: true) ไม่แสดงบนหน้าร้านเลย — ตัดออกก่อนขั้นตอนอื่นทั้งหมด
+  // ตะกร้าและรายการโปรดที่ค้างสินค้านี้อยู่จะถูกเคลียร์ตามโดย prune ด้านล่างเอง
+  PRODUCTS = PRODUCTS.filter(p => !(p && p.hidden));
   pruneCartAgainstProducts();
   pruneFavoritesAgainstProducts();
   renderNav();

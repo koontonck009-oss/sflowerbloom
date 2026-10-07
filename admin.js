@@ -19,6 +19,9 @@ let draftIndex = -1;     // -1 = สินค้าใหม่
 let filterCat = 'ทั้งหมด';
 let filterFlower = '';   // '' = ทุกชนิด · '__none__' = ช่อดอกไม้ที่ยังไม่ระบุชนิด · '__off__' = ชนิดนอกรายการหน้าร้าน · อื่นๆ = ชื่อชนิด
 let searchTerm = '';
+// มุมมองสินค้า: 'grid' (การ์ดเหมือนหน้าร้าน — ค่าเริ่มต้น) หรือ 'list' (ตาราง) จำค่าที่เลือกไว้ในเบราว์เซอร์
+let viewMode = 'grid';
+try{ if(localStorage.getItem('sfb_admin_view') === 'list') viewMode = 'list'; }catch(_){}
 let confirmResolve = null;
 let listScrollY = 0;
 const selected = new Set();   // ดัชนีสินค้าที่ติ๊กเลือกในตาราง
@@ -378,7 +381,7 @@ function mainImageOf(p){
 }
 
 function allCats(){
-  const set = new Set(catalog.map(p => p.cat).filter(Boolean));
+  const set = new Set(catalog.filter(p => !p.hidden).map(p => p.cat).filter(Boolean));
   return ['ทั้งหมด', ...[...set].sort()];
 }
 
@@ -451,13 +454,73 @@ function variantPanelHtml(p, i){
     </div>`;
 }
 
-function needsFix(p){ return priceInfo(p).text === '—' || !mainImageOf(p); }
+/* ───────────── มุมมองการ์ด (หน้าตาเหมือนหน้าร้าน) ───────────── */
+
+// สถานะพร้อมส่งระดับสินค้า: 'all' = ติ๊กที่สินค้า · 'some' = บางแบบ/สี/ไซซ์พร้อมส่ง · '' = ไม่มี
+function readyStateOf(p){
+  if(p.ready) return 'all';
+  const rows = [...(p.colors || []), ...(p.sizes || []), ...(p.variants || [])];
+  return rows.some(r => r && r.ready) ? 'some' : '';
+}
+
+function cardHtml(p, i, filtering){
+  const pi = priceInfo(p);
+  const vinfo = variantInfoOf(p);
+  const rs = readyStateOf(p);
+  const fs = flowerStateOf(p);
+  const warns = [];
+  if(pi.text === '—') warns.push('<span class="tag tag-warn">ยังไม่มีราคา</span>');
+  if(!mainImageOf(p)) warns.push('<span class="tag tag-warn">ยังไม่มีรูป</span>');
+  if(fs === 'off') warns.push(`<span class="tag tag-warn">⚠ ${esc(String(p.flowerType).trim())}</span>`);
+  if(fs === 'none') warns.push('<span class="tag tag-warn">ยังไม่ระบุชนิด</span>');
+  const isRange = pi.text.includes('–');
+  const priceTxt = pi.text === '—' ? 'ยังไม่มีราคา' : (isRange ? 'เริ่มต้น ' + pi.text.split('–')[0] : pi.text);
+  return `
+    <div class="pcard${selected.has(i) ? ' is-selected' : ''}${p.hidden ? ' is-hidden' : ''}" data-i="${i}">
+      <div class="pc-photo">
+        ${thumbHtml(mainImageOf(p), 'pc-img')}
+        <span class="pc-sel sel-cell"><input type="checkbox" class="sel" data-i="${i}" aria-label="เลือก ${esc(p.name || p.id || '')}"${selected.has(i) ? ' checked' : ''}></span>
+        ${p.hidden ? '<span class="pc-hidden">ซ่อนอยู่</span>' : rs ? `<span class="pc-ready${rs === 'some' ? ' is-some' : ''}">${rs === 'some' ? 'พร้อมส่งบางแบบ' : 'พร้อมส่ง'}</span>` : ''}
+        <details class="menu pc-menu">
+          <summary class="icon-btn" title="เมนูอื่นๆ">⋯</summary>
+          <div class="menu-pop">
+            <button data-act="edit" data-i="${i}">แก้ไข</button>
+            <button data-act="ready-toggle" data-i="${i}">${p.ready ? 'ยกเลิกพร้อมส่ง' : 'ตั้งเป็นพร้อมส่ง'}</button>
+            <button data-act="copy" data-i="${i}">ทำสำเนา</button>
+            <button data-act="hide-toggle" data-i="${i}">${p.hidden ? 'เลิกซ่อน (กลับมาขาย)' : 'ซ่อนจากหน้าร้าน'}</button>
+            <button data-act="up" data-i="${i}" ${filtering || stepVisible(i, -1) < 0 ? 'disabled' : ''}>เลื่อนขึ้น</button>
+            <button data-act="down" data-i="${i}" ${filtering || stepVisible(i, 1) < 0 ? 'disabled' : ''}>เลื่อนลง</button>
+            <button class="is-danger" data-act="del" data-i="${i}">ลบสินค้า</button>
+          </div>
+        </details>
+        <span class="drag-handle pc-drag${filtering ? ' is-disabled' : ''}" draggable="${filtering ? 'false' : 'true'}" data-i="${i}" title="ลากเพื่อเรียงลำดับใหม่">⠿</span>
+      </div>
+      <div class="pc-body">
+        <p class="pc-name">${esc(p.name || '(ยังไม่ตั้งชื่อ)')}</p>
+        <p class="pc-meta"><span>${esc(p.id || '—')}</span>${p.cat ? `<span>${esc(p.cat)}</span>` : ''}</p>
+        <p class="pc-price">${esc(priceTxt)}${priceTxt.startsWith('เริ่มต้น') || pi.text === '—' ? '' : '<small> บาท</small>'}</p>
+        ${vinfo ? `<span class="pc-multi">เลือกได้ ${vinfo.rows.length} ${vinfo.unit}</span>` : ''}
+        ${warns.length ? `<p class="pc-warns">${warns.join('')}</p>` : ''}
+      </div>
+    </div>`;
+}
+
+function applyViewMode(){
+  const grid = viewMode === 'grid';
+  $('productList').classList.toggle('is-grid', grid);
+  $('listCard').classList.toggle('is-grid', grid);
+  document.querySelectorAll('.vs-btn').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === viewMode)));
+}
+
+function needsFix(p){ return !p.hidden && (priceInfo(p).text === '—' || !mainImageOf(p)); }
 
 function visibleProducts(){
   const q = searchTerm.trim().toLowerCase();
   return catalog
     .map((p, i) => ({ p, i }))
-    .filter(({ p }) => filterCat === 'ทั้งหมด' ||
+    // สินค้าที่ซ่อนอยู่จะโผล่เฉพาะแท็บ "ซ่อนอยู่" ส่วนแท็บอื่นเห็นแต่สินค้าที่ยังขาย
+    .filter(({ p }) => filterCat === '__hidden__' ? !!p.hidden : !p.hidden)
+    .filter(({ p }) => filterCat === 'ทั้งหมด' || filterCat === '__hidden__' ||
       (filterCat === '__fix__' ? needsFix(p) : filterCat === '__multi__' ? isMulti(p) : p.cat === filterCat))
     .filter(({ p }) => !q ||
       String(p.name || '').toLowerCase().includes(q) ||
@@ -472,24 +535,33 @@ function renderBulk(rows){
   $('bulkCount').textContent = `เลือกแล้ว ${n} รายการ`;
   const vis = rows.map(r => r.i);
   const all = vis.length > 0 && vis.every(i => selected.has(i));
-  $('selAll').checked = all;
-  $('selAll').indeterminate = !all && vis.some(i => selected.has(i));
+  const some = !all && vis.some(i => selected.has(i));
+  ['selAll', 'selAll2'].forEach(id => { $(id).checked = all; $(id).indeterminate = some; });
+  $('bulkHide').hidden = filterCat === '__hidden__';
+  $('bulkUnhide').hidden = filterCat !== '__hidden__';
   updateCatalogBtn(rows);
 }
 
 function renderList(){
+  applyViewMode();
   selected.forEach(i => { if(i >= catalog.length) selected.delete(i); });
   const fixCount = catalog.filter(needsFix).length;
-  const multiCount = catalog.filter(isMulti).length;
+  const multiCount = catalog.filter(p => !p.hidden && isMulti(p)).length;
+  const hiddenCount = catalog.filter(p => p.hidden).length;
   if(filterCat === '__fix__' && !fixCount) filterCat = 'ทั้งหมด';
   if(filterCat === '__multi__' && !multiCount) filterCat = 'ทั้งหมด';
+  if(filterCat === '__hidden__' && !hiddenCount) filterCat = 'ทั้งหมด';
+  if(!['ทั้งหมด', '__fix__', '__multi__', '__hidden__'].includes(filterCat) && !allCats().includes(filterCat)) filterCat = 'ทั้งหมด';
+  // กลุ่มสินค้าที่กำลังดูอยู่ (แท็บซ่อนอยู่ = เฉพาะที่ซ่อน, แท็บอื่น = เฉพาะที่ยังขาย)
+  const pool = catalog.filter(p => filterCat === '__hidden__' ? p.hidden : !p.hidden);
 
   const tabs = [['ทั้งหมด', 'ทั้งหมด']];
   if(fixCount) tabs.push(['__fix__', `ต้องแก้ไข ${fixCount}`]);
   if(multiCount) tabs.push(['__multi__', `มีหลายแบบ ${multiCount}`]);
   allCats().slice(1).forEach(c => tabs.push([c, c]));
+  if(hiddenCount) tabs.push(['__hidden__', `ซ่อนอยู่ ${hiddenCount}`]);
   $('catChips').innerHTML = tabs.map(([k, l]) =>
-    `<button class="chip${k === filterCat ? ' is-active' : ''}${k === '__fix__' ? ' is-fix' : ''}" data-cat="${esc(k)}">${esc(l)}</button>`
+    `<button class="chip${k === filterCat ? ' is-active' : ''}${k === '__fix__' ? ' is-fix' : ''}${k === '__hidden__' ? ' is-hiddentab' : ''}" data-cat="${esc(k)}">${esc(l)}</button>`
   ).join('');
 
   const cats = [...new Set([...catalog.map(p => p.cat), 'ช่อดอกไม้', 'กระถาง', 'กรอบรูป', 'อื่นๆ'])].filter(Boolean).sort();
@@ -497,7 +569,7 @@ function renderList(){
     cats.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
 
   // ตัวกรองชนิดดอกไม้ — นับจากสินค้าทั้งหมด (ไม่ขึ้นกับแท็บหมวด) ตัวเลือกที่ไม่มีสินค้าเลยจะไม่แสดง
-  const fCount = f => catalog.filter(p => flowerMatchesFilter(p, f)).length;
+  const fCount = f => pool.filter(p => flowerMatchesFilter(p, f)).length;
   const noneCount = fCount('__none__'), offCount = fCount('__off__');
   if(filterFlower === '__none__' && !noneCount) filterFlower = '';
   if(filterFlower === '__off__' && !offCount) filterFlower = '';
@@ -514,12 +586,20 @@ function renderList(){
 
   $('emptyState').hidden = catalog.length > 0;
   $('listCard').hidden = !catalog.length;
-  $('listMeta').textContent = filtering ? `แสดง ${rows.length} จาก ${catalog.length} รายการ` : `ทั้งหมด ${catalog.length} รายการ`;
+  $('listMeta').textContent = filtering ? `แสดง ${rows.length} จาก ${pool.length} รายการ` : `ทั้งหมด ${pool.length} รายการ`;
 
   if(!catalog.length){ $('productList').innerHTML = ''; return; }
   if(!rows.length){
     $('productList').innerHTML =
-      '<div class="empty"><p class="empty-title">ไม่พบสินค้าที่ค้นหา</p><p>ลองเปลี่ยนคำค้นหรือเลือกแท็บอื่น</p></div>';
+      (!pool.length && hiddenCount
+        ? '<div class="empty"><p class="empty-title">ตอนนี้ไม่มีสินค้าที่ขายอยู่</p><p>สินค้าทั้งหมดถูกซ่อนไว้ ดูและเลิกซ่อนได้ที่แท็บ “ซ่อนอยู่”</p></div>'
+        : '<div class="empty"><p class="empty-title">ไม่พบสินค้าที่ค้นหา</p><p>ลองเปลี่ยนคำค้นหรือเลือกแท็บอื่น</p></div>');
+    renderBulk(rows);
+    return;
+  }
+
+  if(viewMode === 'grid'){
+    $('productList').innerHTML = rows.map(({ p, i }) => cardHtml(p, i, filtering)).join('');
     renderBulk(rows);
     return;
   }
@@ -527,6 +607,7 @@ function renderList(){
   $('productList').innerHTML = rows.map(({ p, i }) => {
     const pi = priceInfo(p);
     const warns = [];
+    if(p.hidden) warns.push('<span class="tag tag-hidden">ซ่อนอยู่</span>');
     if(pi.text === '—') warns.push('<span class="tag tag-warn">ยังไม่มีราคา</span>');
     if(!mainImageOf(p)) warns.push('<span class="tag tag-warn">ยังไม่มีรูป</span>');
     const fs = flowerStateOf(p);
@@ -536,7 +617,7 @@ function renderList(){
     const vinfo = variantInfoOf(p);
     const isOpen = !!vinfo && expanded.has(expandKey(p, i));
     return `
-      <div class="tr${selected.has(i) ? ' is-selected' : ''}${isOpen ? ' is-open' : ''}" data-i="${i}">
+      <div class="tr${selected.has(i) ? ' is-selected' : ''}${isOpen ? ' is-open' : ''}${p.hidden ? ' is-hidden' : ''}" data-i="${i}">
         <span class="sel-cell"><input type="checkbox" class="sel" data-i="${i}"${selected.has(i) ? ' checked' : ''}></span>
         <span class="drag-handle${filtering ? ' is-disabled' : ''}" draggable="${filtering ? 'false' : 'true'}" data-i="${i}" title="ลากเพื่อเรียงลำดับใหม่">⠿</span>
         ${thumbHtml(mainImageOf(p), 'row-thumb')}
@@ -553,8 +634,9 @@ function renderList(){
           <div class="menu-pop">
             <button data-act="edit" data-i="${i}">แก้ไข</button>
             <button data-act="copy" data-i="${i}">ทำสำเนา</button>
-            <button data-act="up" data-i="${i}" ${filtering || i === 0 ? 'disabled' : ''}>เลื่อนขึ้น</button>
-            <button data-act="down" data-i="${i}" ${filtering || i === catalog.length - 1 ? 'disabled' : ''}>เลื่อนลง</button>
+            <button data-act="hide-toggle" data-i="${i}">${p.hidden ? 'เลิกซ่อน (กลับมาขาย)' : 'ซ่อนจากหน้าร้าน'}</button>
+            <button data-act="up" data-i="${i}" ${filtering || stepVisible(i, -1) < 0 ? 'disabled' : ''}>เลื่อนขึ้น</button>
+            <button data-act="down" data-i="${i}" ${filtering || stepVisible(i, 1) < 0 ? 'disabled' : ''}>เลื่อนลง</button>
             <button class="is-danger" data-act="del" data-i="${i}">ลบสินค้า</button>
           </div>
         </details>
@@ -602,10 +684,27 @@ async function deleteProduct(i){
   await saveCatalog('ลบแล้ว');
 }
 
+// หาตำแหน่งสินค้าที่ "ยังขายอยู่" ตัวถัดไปในทิศนั้น (ข้ามตัวที่ซ่อน กันกดเลื่อนแล้วไม่เห็นอะไรเปลี่ยน) -1 = ไม่มี
+function stepVisible(i, delta){
+  let j = i + delta;
+  while(j >= 0 && j < catalog.length && catalog[j].hidden) j += delta;
+  return (j < 0 || j >= catalog.length) ? -1 : j;
+}
+
+// ซ่อน/เลิกซ่อนสินค้า — ข้อมูลยังอยู่ครบ แค่หน้าร้านไม่แสดง
+async function toggleHidden(i){
+  selected.clear();
+  const p = catalog[i];
+  if(p.hidden) delete p.hidden; else p.hidden = true;
+  const nowHidden = !!p.hidden;
+  renderList();
+  await saveCatalog(nowHidden ? 'ซ่อนจากหน้าร้านแล้ว (ดูได้ที่แท็บ “ซ่อนอยู่”)' : 'เลิกซ่อนแล้ว สินค้ากลับมาขายบนหน้าร้าน');
+}
+
 async function moveProduct(i, delta){
   selected.clear();
-  const j = i + delta;
-  if(j < 0 || j >= catalog.length) return;
+  const j = stepVisible(i, delta);
+  if(j < 0) return;
   [catalog[i], catalog[j]] = [catalog[j], catalog[i]];
   renderList();
   await saveCatalog();
@@ -807,6 +906,13 @@ function renderMainPanel(){
         <label class="check${hasVars ? ' is-locked' : ''}" style="margin:0">
           <input type="checkbox" ${hasVars ? 'disabled' : 'data-bind="ready" data-type="bool"'}${draft.ready ? ' checked' : ''}>
           <span>${hasVars ? 'พร้อมส่ง — ตั้งแยกในแต่ละแถวของการ์ด “ตัวแปร”' : 'ทำไว้แล้ว พร้อมส่งทันที (ขึ้นป้าย “พร้อมส่ง” ในหน้าร้าน)'}</span>
+        </label>
+      </div>
+
+      <div class="main-row">
+        <label class="check" style="margin:0">
+          <input type="checkbox" data-bind="hidden" data-type="bool"${draft.hidden ? ' checked' : ''}>
+          <span>ซ่อนจากหน้าร้าน (เลิกขายแล้ว) — ข้อมูลยังเก็บไว้ เปิดกลับมาขายได้ทุกเมื่อ</span>
         </label>
       </div>
 
@@ -1734,6 +1840,7 @@ function cleanProduct(p){
   if(num(p.price) > 0) out.price = num(p.price);
   if(str(p.desc)) out.desc = str(p.desc);
   if(p.ready) out.ready = true;
+  if(p.hidden) out.hidden = true;
   if(str(p.image)) out.image = str(p.image);
 
   const imgs = (p.images || []).map(str).filter(Boolean);
@@ -2206,14 +2313,14 @@ async function exportPosters(products, zipBase){
 
 // สินค้าที่จะโหลด: ที่ติ๊กเลือกไว้ ถ้าไม่ได้เลือกใช้ตามตัวกรองที่แสดงอยู่ (ไม่กรองเลย = ทั้งหมด)
 function catalogTargets(){
-  if(selected.size) return [...selected].sort((a, b) => a - b).map(i => catalog[i]).filter(Boolean);
-  return visibleProducts().map(r => r.p);
+  if(selected.size) return [...selected].sort((a, b) => a - b).map(i => catalog[i]).filter(p => p && !p.hidden);
+  return visibleProducts().map(r => r.p).filter(p => !p.hidden);
 }
 
 function updateCatalogBtn(rows){
   const btn = $('catalogBtn');
   if(!btn) return;
-  const n = selected.size || rows.length;
+  const n = selected.size ? [...selected].filter(i => catalog[i] && !catalog[i].hidden).length : rows.filter(r => !r.p.hidden).length;
   btn.textContent = `ดาวน์โหลดแคตตาล็อก (JPG) · ${selected.size ? 'ที่เลือก ' : ''}${n} สินค้า`;
   btn.disabled = !n;
 }
@@ -2263,7 +2370,7 @@ $('productList').addEventListener('click', e => {
   const btn = e.target.closest('[data-act]');
   if(!btn){
     // กดที่ตัวแถวตรงไหนก็ได้ = เปิดแก้ไข (ยกเว้นเมนู/ที่จับลาก/สวิตช์)
-    const row = e.target.closest('.tr');
+    const row = e.target.closest('.tr, .pcard');
     if(row && !e.target.closest('.menu, .drag-handle, .sel-cell, .variant-panel')) openEditor(+row.dataset.i);
     return;
   }
@@ -2285,6 +2392,7 @@ $('productList').addEventListener('click', e => {
   }
   if(btn.dataset.act === 'edit') openEditor(i);
   if(btn.dataset.act === 'copy') duplicateProduct(i);
+  if(btn.dataset.act === 'hide-toggle') toggleHidden(i);
   if(btn.dataset.act === 'del') deleteProduct(i);
   if(btn.dataset.act === 'ready-toggle'){
     const p = catalog[i];
@@ -2309,16 +2417,27 @@ $('productList').addEventListener('change', e => {
   if(!el.classList.contains('sel')) return;
   const i = +el.dataset.i;
   if(el.checked) selected.add(i); else selected.delete(i);
-  el.closest('.tr').classList.toggle('is-selected', el.checked);
+  const holder = el.closest('.tr, .pcard');
+  if(holder) holder.classList.toggle('is-selected', el.checked);
   renderBulk(visibleProducts());
 });
-$('selAll').addEventListener('change', e => {
+['selAll', 'selAll2'].forEach(id => $(id).addEventListener('change', e => {
   visibleProducts().forEach(({ i }) => { if(e.target.checked) selected.add(i); else selected.delete(i); });
   renderList();
-});
+}));
+
+// สลับมุมมอง การ์ด / รายการ (จำไว้ครั้งหน้า)
+document.querySelectorAll('.vs-btn').forEach(b => b.addEventListener('click', () => {
+  if(viewMode === b.dataset.view) return;
+  viewMode = b.dataset.view;
+  try{ localStorage.setItem('sfb_admin_view', viewMode); }catch(_){}
+  renderList();
+}));
 $('bulkClear').addEventListener('click', () => { selected.clear(); renderList(); });
 $('bulkReady').addEventListener('click', () => bulkApply(p => { p.ready = true; }, 'ตั้งพร้อมส่ง'));
 $('bulkUnready').addEventListener('click', () => bulkApply(p => { delete p.ready; }, 'ยกเลิกพร้อมส่ง'));
+$('bulkHide').addEventListener('click', () => bulkApply(p => { p.hidden = true; }, 'ซ่อนจากหน้าร้าน'));
+$('bulkUnhide').addEventListener('click', () => bulkApply(p => { delete p.hidden; }, 'เลิกซ่อน'));
 $('bulkCat').addEventListener('change', e => {
   const cat = e.target.value;
   if(cat) bulkApply(p => { p.cat = cat; }, `ย้ายไปหมวด “${cat}”`);
@@ -2344,38 +2463,42 @@ document.addEventListener('click', e => {
 /* ───────────────── ลากเพื่อเรียงลำดับ (ไอคอน ⠿) — เดสก์ท็อป ───────────────── */
 let dragFromIndex = null;
 function clearDragTargetClasses(){
-  $('productList').querySelectorAll('.tr.drag-target-before, .tr.drag-target-after')
+  $('productList').querySelectorAll('.tr.drag-target-before, .tr.drag-target-after, .pcard.drag-target-before, .pcard.drag-target-after')
     .forEach(r => r.classList.remove('drag-target-before', 'drag-target-after'));
 }
 $('productList').addEventListener('dragstart', e => {
   const handle = e.target.closest('.drag-handle');
   if(!handle || handle.classList.contains('is-disabled')){ e.preventDefault(); return; }
   dragFromIndex = +handle.dataset.i;
-  const row = handle.closest('.tr');
+  const row = handle.closest('.tr, .pcard');
   row.classList.add('is-dragging');
   e.dataTransfer.effectAllowed = 'move';
   e.dataTransfer.setData('text/plain', String(dragFromIndex)); // จำเป็นสำหรับบางเบราว์เซอร์ (Firefox) ถึงจะยอมให้ลากได้
-  if(row) e.dataTransfer.setDragImage(row, 16, row.offsetHeight / 2);
+  if(row) e.dataTransfer.setDragImage(row, 16, row.classList.contains('pcard') ? 16 : row.offsetHeight / 2);
 });
 $('productList').addEventListener('dragover', e => {
   if(dragFromIndex == null) return;
-  const row = e.target.closest('.tr');
+  const row = e.target.closest('.tr, .pcard');
   if(!row) return;
   e.preventDefault(); // จำเป็น ไม่งั้นเบราว์เซอร์จะไม่ยอมให้ drop
   e.dataTransfer.dropEffect = 'move';
   const rect = row.getBoundingClientRect();
-  const before = e.clientY < rect.top + rect.height / 2;
+  const before = row.classList.contains('pcard')
+    ? e.clientX < rect.left + rect.width / 2
+    : e.clientY < rect.top + rect.height / 2;
   clearDragTargetClasses();
   row.classList.add(before ? 'drag-target-before' : 'drag-target-after');
 });
 $('productList').addEventListener('drop', e => {
   if(dragFromIndex == null) return;
-  const row = e.target.closest('.tr');
+  const row = e.target.closest('.tr, .pcard');
   e.preventDefault();
   if(row){
     const overIndex = +row.dataset.i;
     const rect = row.getBoundingClientRect();
-    const before = e.clientY < rect.top + rect.height / 2;
+    const before = row.classList.contains('pcard')
+      ? e.clientX < rect.left + rect.width / 2
+      : e.clientY < rect.top + rect.height / 2;
     let to = before ? overIndex : overIndex + 1;
     if(to > dragFromIndex) to -= 1; // ลบตัวเดิมออกก่อนแล้วค่อยแทรก ตำแหน่งท้ายๆ เลยขยับลง 1
     reorderProduct(dragFromIndex, to);
@@ -2384,7 +2507,7 @@ $('productList').addEventListener('drop', e => {
   dragFromIndex = null;
 });
 $('productList').addEventListener('dragend', () => {
-  $('productList').querySelectorAll('.tr.is-dragging').forEach(r => r.classList.remove('is-dragging'));
+  $('productList').querySelectorAll('.tr.is-dragging, .pcard.is-dragging').forEach(r => r.classList.remove('is-dragging'));
   clearDragTargetClasses();
   dragFromIndex = null;
 });

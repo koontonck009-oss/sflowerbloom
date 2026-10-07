@@ -87,11 +87,24 @@
         <div class="search-wrap"><input type="search" id="searchBox" placeholder="ค้นหาชื่อสินค้า หรือรหัส เช่น s05"></div>
         <select id="flowerFilter" class="bulk-select flower-filter" aria-label="กรองตามชนิดดอกไม้"></select>
         <span class="list-meta" id="listMeta"></span>
+        <label class="grid-selall" id="gridSelAllWrap"><input type="checkbox" id="selAll2"><span>เลือกทั้งหมด</span></label>
+        <div class="view-switch" role="group" aria-label="รูปแบบการแสดงสินค้า">
+          <button type="button" class="vs-btn" id="viewGrid" data-view="grid" aria-pressed="true" title="มุมมองการ์ด">
+            <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><rect x="2" y="2" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="11" y="2" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="2" y="11" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="11" y="11" width="7" height="7" rx="1.5" fill="currentColor"/></svg>
+            <span>การ์ด</span>
+          </button>
+          <button type="button" class="vs-btn" id="viewList" data-view="list" aria-pressed="false" title="มุมมองรายการ">
+            <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><rect x="2" y="3" width="16" height="3" rx="1.2" fill="currentColor"/><rect x="2" y="8.5" width="16" height="3" rx="1.2" fill="currentColor"/><rect x="2" y="14" width="16" height="3" rx="1.2" fill="currentColor"/></svg>
+            <span>รายการ</span>
+          </button>
+        </div>
       </div>
       <div class="bulkbar" id="bulkBar" hidden>
         <b id="bulkCount"></b>
         <button class="btn btn-ghost btn-sm" id="bulkReady">ตั้งเป็นพร้อมส่ง</button>
         <button class="btn btn-ghost btn-sm" id="bulkUnready">ยกเลิกพร้อมส่ง</button>
+        <button class="btn btn-ghost btn-sm" id="bulkHide">ซ่อนจากหน้าร้าน</button>
+        <button class="btn btn-ghost btn-sm" id="bulkUnhide" hidden>เลิกซ่อน</button>
         <select id="bulkCat" class="bulk-select"></select>
         <button class="btn btn-ghost btn-sm is-danger" id="bulkDel">ลบ</button>
         <button class="btn btn-ghost btn-sm" id="bulkClear">ยกเลิกการเลือก</button>
