@@ -2760,26 +2760,34 @@ function currentModalVariant(p){
   if(hasNewOptions(p)){
     const sel = currentOptionSelection(p);
     const v = matchVariant(p, sel);
-    return { label: sel.join(', '), unitPrice: v.price };
+    // บวกราคา/ชื่อของเสริมที่ลูกค้าติ๊กไว้ (เดิมคืนราคาตัวแปรเฉยๆ ทำให้ราคาไม่เปลี่ยนเมื่อเลือกของเสริม)
+    const optAddons = currentAddonSource(p);
+    const optChosen = optAddons ? optAddons.filter(a => modalSelectedAddons.has(a.name)) : [];
+    return {
+      label: [sel.join(', '), ...optChosen.map(a => a.name)].join(' + '),
+      unitPrice: v.price + optChosen.reduce((sum,a) => sum + (+a.price || 0), 0)
+    };
   }
   let label = null, unitPrice = p.price;
   if(p.colors){
     const c = p.colors[resolvedColorIndex(p)];
     label = c.name;
   }
+  let addonSum = 0;
   const addons = currentAddonSource(p);
   if(addons && addons.length){
     const chosen = addons.filter(a => modalSelectedAddons.has(a.name));
     if(chosen.length){
       const names = chosen.map(a => a.name);
       label = label ? [label, ...names].join(' + ') : names.join(' + ');
-      unitPrice += chosen.reduce((sum,a) => sum + a.price, 0);
+      addonSum = chosen.reduce((sum,a) => sum + (+a.price || 0), 0);
+      unitPrice += addonSum;
     }
   }
   if(p.sizes){
     const sv = p.sizes[selectedSizeVariant[p.id]||0];
     label = label ? `${label}, ${sv.name}` : sv.name;
-    unitPrice = sv.price;
+    unitPrice = sv.price + addonSum; // เดิมใช้ sv.price ทับ ทำให้ราคาของเสริมหาย
   }
   return { label, unitPrice };
 }
