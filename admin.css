@@ -1051,3 +1051,46 @@ body.prices-off #posterCard{ display:none !important; }
   .view-switch .vs-btn span{ display:none; }
   .list-tools .grid-selall{ order:5; }
 }
+
+/* ───────── หน้าต่างจัดการหมวดหมู่ / ชนิดดอกไม้ / ขนาด ───────── */
+.om-card{ width:min(560px,100%); }
+.om-tabs{ display:flex; gap:4px; padding:0 24px; border-bottom:1px solid var(--line); }
+.om-tab{ font:inherit; font-size:14.5px; font-weight:600; padding:12px 14px; border:0; background:none; color:var(--ink-2); cursor:pointer; border-bottom:3px solid transparent; margin-bottom:-1px; }
+.om-tab:hover{ color:var(--ink); }
+.om-tab.is-active{ color:var(--brand-dark); border-bottom-color:var(--brand); }
+.om-card .vm-body{ padding-top:14px; padding-bottom:8px; min-height:200px; }
+.om-card .vm-add em{ font-style:normal; }
+.om-note{ margin:0 0 8px; font-size:13px; color:var(--ink-2); }
+.om-catpick{ width:100%; margin-bottom:10px; padding:9px 10px; font-size:14.5px; }
+.om-row{ display:flex; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid var(--line-soft); }
+.om-row input{ flex:1; min-width:0; border:1px solid var(--line); border-radius:8px; padding:9px 10px; font:inherit; font-size:14.5px; }
+.om-row input:focus{ outline:none; border-color:var(--brand); }
+.om-row input:read-only{ background:var(--line-soft); color:var(--ink-2); }
+.om-use{ font-size:12.5px; color:var(--ink-3); white-space:nowrap; }
+.om-ico{ border:0; background:none; cursor:pointer; width:32px; height:32px; border-radius:8px; font-size:13px; color:var(--ink-2); flex:none; }
+.om-ico:hover:not(:disabled){ background:var(--line-soft); }
+.om-ico:disabled{ opacity:.25; cursor:not-allowed; }
+.om-ico.om-del:hover:not(:disabled){ color:var(--danger); }
+.om-empty{ color:var(--ink-3); font-size:14px; padding:14px 0; }
+@media (max-width:520px){
+  .om-use{ display:none; }
+  .om-tabs{ padding:0 12px; }
+}
+
+/* ───────── ปุ่มบนหัวหน้าสินค้า: ปุ่มที่ใช้บ่อยอยู่ข้างนอก ของที่ไม่ใช้ทุกวันอยู่ใน "ขั้นสูง" ───────── */
+.page-actions .btn{ white-space:nowrap; }
+.adv-menu .menu-pop{ min-width:270px; padding:6px; }
+.adv-menu .menu-pop button{ display:block; width:100%; padding:10px 12px; }
+.adv-menu .menu-pop button b{ display:block; font-weight:600; font-size:14px; }
+.adv-menu .menu-pop button small{ display:block; margin-top:2px; font-size:12.5px; color:var(--ink-3); font-weight:400; }
+.adv-menu .menu-pop button.is-danger{ margin-top:6px; border-top:1px solid var(--line); border-radius:0 0 7px 7px; background:#FDF1F1; }
+.adv-menu .menu-pop button.is-danger:hover:not(:disabled){ background:#FAE3E3; }
+.adv-menu .menu-pop button.is-danger small{ color:var(--danger); }
+@media (max-width:760px){
+  .page-head{ flex-direction:column; align-items:stretch; }
+  .page-actions{ display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:8px; }
+  .page-actions #addBtn{ grid-column:1 / -1; order:-1; padding:12px; font-size:15px; }
+  .page-actions .btn{ white-space:normal; line-height:1.25; padding:9px 6px; font-size:13px; text-align:center; }
+  .page-actions .adv-menu > summary{ display:block; }
+  .adv-menu .menu-pop{ min-width:min(270px, calc(100vw - 24px)); }
+}

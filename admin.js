@@ -52,9 +52,9 @@ function sizeTagsOf(p){
   return Array.isArray(p.size) ? p.size : [p.size];
 }
 function sizeTagText(p){ return sizeTagsOf(p).join(', '); }
-// ชนิดดอกไม้ที่หน้าร้านกรองได้ — ต้องตรงกับ FLOWER_TYPES ใน script.js (ไม่รวมปุ่ม "ทั้งหมด") แก้ฝั่งใดฝั่งหนึ่งต้องแก้อีกฝั่งด้วย
+// ชนิดดอกไม้ที่หน้าร้านกรองได้ — อ่านจาก window.FLOWER_TYPES ใน firebase-config.js (แหล่งเดียวกับหน้าร้าน เพิ่มชนิดใหม่แก้ที่นั่นที่เดียว)
 // ใช้ได้กับทุกหมวด — หน้าร้านจะโชว์ตัวกรองชนิดดอกไม้ให้หมวดที่มีสินค้าตั้งค่านี้ไว้ (ช่อดอกไม้โชว์เสมอ)
-const FLOWER_TYPE_TAGS = ['ดอกไม้คละชนิด', 'กุหลาบ', 'ทานตะวัน', 'ทิวลิป', 'ไฮเดรนเยีย', 'เดซี่', 'ลิลลี่', 'เยอบีร่า'];
+const FLOWER_TYPE_TAGS = Array.isArray(window.FLOWER_TYPES) ? window.FLOWER_TYPES.slice() : [];
 // สถานะชนิดดอกไม้ของสินค้า: 'ok' | 'none' (ช่อดอกไม้ที่ยังไม่ระบุ) | 'off' (ค่านอกรายการหน้าร้าน) | 'skip' (หมวดอื่นที่ไม่มีค่า)
 function flowerStateOf(p){
   const t = String(p.flowerType ?? '').trim();
@@ -67,14 +67,40 @@ function flowerMatchesFilter(p, f){
   if(f === '__off__') return flowerStateOf(p) === 'off';
   return String(p.flowerType ?? '').trim() === f;
 }
-// ตัวเลือก "ขนาด/ป้ายกำกับ" ของแต่ละหมวด — ต้องตรงกับ CATEGORY_SIZES ใน script.js ของหน้าร้านทุกตัวอักษร
-// (ไม่รวมปุ่ม "ทั้งหมด") ถ้าแก้ฝั่งใดฝั่งหนึ่ง ต้องแก้อีกฝั่งให้ตรงกันด้วย ไม่งั้นสินค้าจะหลุดจากตัวกรอง
+// ตัวเลือก "ขนาด/ป้ายกำกับ" ของแต่ละหมวด — ค่าด้านล่างเป็นค่าเริ่มต้น ใช้เมื่อยังไม่เคยแก้ในเมนู
+// "⋯ เพิ่มเติม › จัดการหมวดหมู่ / ชนิดดอกไม้ / ขนาด" (ถ้าแก้ในเมนูแล้ว ระบบใช้ค่าที่บันทึกใน Firestore แทน
+// และหน้าร้านอ่านชุดเดียวกัน ไม่ต้องแก้โค้ดสองฝั่งอีก) ตัวแปรนี้ถูกเปลี่ยนค่าในที่เดิมโดย applyShopOptions
 const CATEGORY_SIZE_TAGS = {
   'ช่อดอกไม้': ['เล็ก', 'กลาง', 'ใหญ่', 'ใส่เงิน'],
   'กรอบรูป': ['A5', 'A4'],
   'กระถาง': ['3 นิ้ว', '5 นิ้ว', '9 นิ้ว'],
   'อื่นๆ': ['กลิตเตอร์', 'กล่องดอกไม้', 'ดอกไม้เจ้าสาว', 'ตุ๊กตา', 'มงกุฎ'],
 };
+// หมวดหมู่ที่หน้าร้านแสดง (เรียงตามลำดับแท็บ ไม่รวม "ทั้งหมด") · หมวดหลักที่โค้ดบางจุดอ้างชื่อตรงๆ ห้ามแก้ชื่อ/ลบ
+const CORE_CAT = 'ช่อดอกไม้';
+const SHOP_CATS = ['ช่อดอกไม้', 'กรอบรูป', 'กระถาง', 'อื่นๆ'];
+const DEFAULT_SHOP_OPTIONS = { cats: SHOP_CATS.slice(), flowers: FLOWER_TYPE_TAGS.slice(), sizes: clone(CATEGORY_SIZE_TAGS) };
+function cleanNameList(a, fallback){
+  if(!Array.isArray(a)) return fallback.slice();
+  return [...new Set(a.map(x => String(x ?? '').trim()).filter(x => x && x !== 'ทั้งหมด'))];
+}
+// ใส่ตัวเลือกร้านที่โหลดจาก Firestore (null = ใช้ค่าเริ่มต้น) โดยเปลี่ยนค่าใน array/object เดิม โค้ดส่วนอื่นอ่านต่อได้เลย
+function applyShopOptions(o){
+  const d = DEFAULT_SHOP_OPTIONS;
+  const src = (o && typeof o === 'object') ? o : {};
+  let cats = cleanNameList(src.cats, d.cats);
+  if(!cats.length) cats = d.cats.slice();
+  const flowers = cleanNameList(src.flowers, d.flowers);
+  const sizes = (src.sizes && typeof src.sizes === 'object') ? src.sizes : d.sizes;
+  SHOP_CATS.splice(0, SHOP_CATS.length, ...cats);
+  FLOWER_TYPE_TAGS.splice(0, FLOWER_TYPE_TAGS.length, ...flowers);
+  Object.keys(CATEGORY_SIZE_TAGS).forEach(k => delete CATEGORY_SIZE_TAGS[k]);
+  cats.forEach(c => { const s = cleanNameList(sizes[c], []); if(s.length) CATEGORY_SIZE_TAGS[c] = s; });
+}
+// หมวดที่ให้เลือกในหลังบ้าน: ตามลำดับที่ตั้งไว้ + หมวดเก่าที่มีสินค้าใช้อยู่แต่ไม่อยู่ในรายการ
+function catChoices(){
+  return [...new Set([...SHOP_CATS, ...catalog.map(p => p.cat).filter(Boolean)])];
+}
 // ตัวเลือกของหมวดนั้น (หมวดที่หน้าร้านไม่มีตัวกรองขนาด = array ว่าง)
 function baseSizeTagsFor(cat){ return CATEGORY_SIZE_TAGS[String(cat ?? '').trim()] || []; }
 // ค่านี้หน้าร้านกรองได้จริงในหมวดนี้หรือไม่
@@ -264,9 +290,13 @@ async function loadCatalog(){
       const list = typeof data.json === 'string' ? JSON.parse(data.json) : data.list;
       catalog = Array.isArray(list) ? list : [];
       pricesHidden = data.hidePrices === true;
+      let opts = null;
+      try{ if(typeof data.optionsJson === 'string') opts = JSON.parse(data.optionsJson); }catch(_){ opts = null; }
+      applyShopOptions(opts);
     } else {
       catalog = [];
       pricesHidden = false;
+      applyShopOptions(null);
     }
     applyPricesHiddenUI(true);
     setSaveState(catalog.length ? 'ข้อมูลตรงกับหน้าร้านแล้ว' : 'ยังไม่มีสินค้าในระบบ');
@@ -386,8 +416,8 @@ function mainImageOf(p){
 }
 
 function allCats(){
-  const set = new Set(catalog.filter(p => !p.hidden).map(p => p.cat).filter(Boolean));
-  return ['ทั้งหมด', ...[...set].sort()];
+  const used = new Set(catalog.filter(p => !p.hidden).map(p => p.cat).filter(Boolean));
+  return ['ทั้งหมด', ...SHOP_CATS.filter(c => used.has(c)), ...[...used].filter(c => !SHOP_CATS.includes(c)).sort()];
 }
 
 /* ───────────── สินค้าที่มีหลายแบบ (แสดงในหน้ารายการ) ─────────────
@@ -569,7 +599,7 @@ function renderList(){
     `<button class="chip${k === filterCat ? ' is-active' : ''}${k === '__fix__' ? ' is-fix' : ''}${k === '__hidden__' ? ' is-hiddentab' : ''}" data-cat="${esc(k)}">${esc(l)}</button>`
   ).join('');
 
-  const cats = [...new Set([...catalog.map(p => p.cat), 'ช่อดอกไม้', 'กระถาง', 'กรอบรูป', 'อื่นๆ'])].filter(Boolean).sort();
+  const cats = catChoices();
   $('bulkCat').innerHTML = '<option value="">เปลี่ยนหมวดหมู่เป็น…</option>' +
     cats.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
 
@@ -580,7 +610,8 @@ function renderList(){
   if(filterFlower === '__off__' && !offCount) filterFlower = '';
   if(filterFlower && !['__none__', '__off__'].includes(filterFlower) && !fCount(filterFlower)) filterFlower = '';
   const flowerOpts = [['', 'ชนิดดอกไม้: ทั้งหมด']];
-  FLOWER_TYPE_TAGS.forEach(t => { const n = fCount(t); if(n) flowerOpts.push([t, `${t} (${n})`]); });
+  FLOWER_TYPE_TAGS.map(t => [t, fCount(t)]).filter(([, n]) => n).sort((a, b) => b[1] - a[1]) // มากไปน้อย (จำนวนเท่ากันคงลำดับเดิม)
+    .forEach(([t, n]) => flowerOpts.push([t, `${t} (${n})`]));
   if(noneCount) flowerOpts.push(['__none__', `⚠ ยังไม่ระบุชนิด (${noneCount})`]);
   if(offCount) flowerOpts.push(['__off__', `⚠ ชนิดนอกรายการ (${offCount})`]);
   $('flowerFilter').innerHTML = flowerOpts.map(([v, l]) => `<option value="${esc(v)}"${v === filterFlower ? ' selected' : ''}>${esc(l)}</option>`).join('');
@@ -738,7 +769,7 @@ function nextId(){
 }
 
 function blankProduct(){
-  return { id:nextId(), cat:'ช่อดอกไม้', flowerType:'', size:'', name:'', price:0, desc:'', image:'' };
+  return { id:nextId(), cat: SHOP_CATS[0] || 'ช่อดอกไม้', flowerType:'', size:'', name:'', price:0, desc:'', image:'' };
 }
 
 function priceMode(p){
@@ -850,7 +881,7 @@ function sizeFieldHtml(){
 function renderMainPanel(){
   const mode = priceMode(draft);
   const hasVars = mode !== 'single';
-  const cats = [...new Set([...catalog.map(p => p.cat), 'ช่อดอกไม้', 'กระถาง', 'กรอบรูป', 'อื่นๆ'])].filter(Boolean).sort();
+  const cats = catChoices();
   const curFlower = String(draft.flowerType || '').trim();
   const offFlower = curFlower && !FLOWER_TYPE_TAGS.includes(curFlower);
   const flowers = [...FLOWER_TYPE_TAGS, ...(offFlower ? [curFlower] : [])];
@@ -2326,8 +2357,246 @@ function updateCatalogBtn(rows){
   const btn = $('catalogBtn');
   if(!btn) return;
   const n = selected.size ? [...selected].filter(i => catalog[i] && !catalog[i].hidden).length : rows.filter(r => !r.p.hidden).length;
-  btn.textContent = `ดาวน์โหลดแคตตาล็อก (JPG) · ${selected.size ? 'ที่เลือก ' : ''}${n} สินค้า`;
+  btn.textContent = `🖼 แคตตาล็อก (${selected.size ? 'ที่เลือก ' : ''}${n})`;
+  btn.title = n
+    ? `ดาวน์โหลดภาพแคตตาล็อก (JPG) ของ ${n} สินค้า ${selected.size ? 'ที่ติ๊กเลือกไว้' : 'ตามที่กรองอยู่'}`
+    : 'ไม่มีสินค้าให้ทำแคตตาล็อก';
   btn.disabled = !n;
+}
+
+/* ───────────────── จัดการหมวดหมู่ / ชนิดดอกไม้ / ขนาด ─────────────────
+   เก็บในเอกสารเดียวกับสินค้า (ช่อง optionsJson) หน้าร้านอ่านชุดเดียวกัน
+   แก้ชื่อ = แก้ชื่อในสินค้าที่ใช้ค่านั้นให้ด้วย · ลบได้เฉพาะรายการที่ไม่มีสินค้าใช้อยู่ (รวมสินค้าที่ซ่อนไว้) */
+
+let om = null;   // { tab:'cats'|'flowers'|'sizes', sizeCat:int, cats:[{orig,name,sizes:[{orig,name}]}], flowers:[{orig,name}] }
+
+// ป้ายขนาดทั้งหมดของสินค้า (ระดับสินค้า + ไซซ์ + คู่ผสม)
+function allTagsOf(p){
+  return [
+    ...sizeTagsOf(p),
+    ...(p.sizes || []).map(s => s && s.tag),
+    ...(p.variants || []).map(v => v && v.tag),
+  ].flatMap(v => String(v ?? '').split(',')).map(v => v.trim()).filter(Boolean);
+}
+
+function useCount(kind, name, cat){
+  const n = String(name ?? '').trim();
+  if(!n) return 0;
+  if(kind === 'cats') return catalog.filter(p => String(p.cat ?? '').trim() === n).length;
+  if(kind === 'flowers') return catalog.filter(p => String(p.flowerType ?? '').trim() === n).length;
+  if(!cat) return 0;
+  return catalog.filter(p => String(p.cat ?? '').trim() === cat && allTagsOf(p).includes(n)).length;
+}
+
+function openOptionsModal(){
+  const used = [...new Set(catalog.map(p => String(p.cat ?? '').trim()).filter(Boolean))];
+  const names = [...SHOP_CATS, ...used.filter(c => !SHOP_CATS.includes(c))];
+  om = {
+    tab: 'cats',
+    sizeCat: 0,
+    cats: names.map(n => ({ orig: n, name: n, sizes: (CATEGORY_SIZE_TAGS[n] || []).map(s => ({ orig: s, name: s })) })),
+    flowers: FLOWER_TYPE_TAGS.map(n => ({ orig: n, name: n }))
+  };
+  $('optScrim').hidden = false;
+  renderOptionsModal();
+}
+
+function closeOptionsModal(){
+  $('optScrim').hidden = true;
+  om = null;
+}
+
+function omList(){
+  if(om.tab === 'cats') return om.cats;
+  if(om.tab === 'flowers') return om.flowers;
+  const c = om.cats[om.sizeCat];
+  return c ? c.sizes : [];
+}
+
+function renderOptionsModal(focusIdx){
+  document.querySelectorAll('#optTabs .om-tab').forEach(b => {
+    const on = b.dataset.tab === om.tab;
+    b.classList.toggle('is-active', on);
+    b.setAttribute('aria-selected', String(on));
+  });
+  const kind = om.tab;
+  let head = '';
+  if(kind === 'cats'){
+    $('optAddLabel').textContent = 'เพิ่มหมวดหมู่';
+    head = '<p class="om-note">ลำดับในรายการนี้ = ลำดับแท็บหมวดบนหน้าร้าน · หมวดใหม่ยังไม่มีตัวกรองขนาด (ไปเพิ่มที่แท็บ “ขนาด”)</p>';
+  } else if(kind === 'flowers'){
+    $('optAddLabel').textContent = 'เพิ่มชนิดดอกไม้';
+    head = '<p class="om-note">ตัวกรองบนหน้าร้านและหลังบ้านเรียงตามจำนวนสินค้า มากไปน้อย · ช่องเลือกในหน้าแก้ไขสินค้าเรียงตามรายการนี้</p>';
+  } else {
+    $('optAddLabel').textContent = 'เพิ่มขนาด';
+    if(om.sizeCat >= om.cats.length) om.sizeCat = 0;
+    head = `<select class="bulk-select om-catpick" id="optSizeCat" aria-label="เลือกหมวดหมู่">${om.cats.map((c, i) =>
+      `<option value="${i}"${i === om.sizeCat ? ' selected' : ''}>${esc(c.name.trim() || '(หมวดใหม่ยังไม่ตั้งชื่อ)')}</option>`).join('')}</select>`;
+  }
+  const list = omList();
+  const catOrig = kind === 'sizes' ? (om.cats[om.sizeCat] || {}).orig : null;
+  const rows = list.map((r, i) => {
+    const n = r.orig == null ? 0 : useCount(kind, r.orig, catOrig);
+    const core = kind === 'cats' && r.orig === CORE_CAT;
+    const delOff = core || n > 0;
+    const delTip = core ? 'หมวดหลักของร้าน ลบไม่ได้' : n ? `มีสินค้าใช้อยู่ ${n} ชิ้น ลบไม่ได้` : 'ลบ';
+    return `<div class="om-row" data-i="${i}">
+      <input type="text" value="${esc(r.name)}" maxlength="60" placeholder="ชื่อ" aria-label="ชื่อ"${core ? ' readonly title="หมวดหลักของร้าน แก้ชื่อไม่ได้"' : ''}>
+      ${r.orig != null ? `<span class="om-use">${n ? `ใช้อยู่ ${n} ชิ้น` : 'ยังไม่มีสินค้าใช้'}</span>` : ''}
+      <button type="button" class="om-ico" data-act="up" title="เลื่อนขึ้น" aria-label="เลื่อนขึ้น"${i === 0 ? ' disabled' : ''}>▲</button>
+      <button type="button" class="om-ico" data-act="down" title="เลื่อนลง" aria-label="เลื่อนลง"${i === list.length - 1 ? ' disabled' : ''}>▼</button>
+      <button type="button" class="om-ico om-del" data-act="del" title="${esc(delTip)}" aria-label="ลบ"${delOff ? ' disabled' : ''}>✕</button>
+    </div>`;
+  }).join('');
+  $('optBody').innerHTML = head + (rows || '<p class="om-empty">ยังไม่มีรายการ กด “เพิ่ม” ด้านล่าง</p>');
+  omValidateUI();
+  if(focusIdx != null){
+    const inp = $('optBody').querySelectorAll('.om-row input')[focusIdx];
+    if(inp){ inp.focus(); inp.select(); }
+  }
+}
+
+// คืนข้อความปัญหาแรกที่พบ (ว่าง = บันทึกได้)
+function omProblem(){
+  const check = (arr, label) => {
+    const seen = new Set();
+    for(const r of arr){
+      const n = r.name.trim();
+      if(!n){
+        if(r.orig != null) return `${label}: มีชื่อที่เว้นว่าง — พิมพ์ชื่อ หรือกด ✕ ลบแถวนั้น`;
+        continue;
+      }
+      if(n === 'ทั้งหมด') return `${label}: ใช้ชื่อ “ทั้งหมด” ไม่ได้ (เป็นปุ่มของระบบ)`;
+      if(n.includes(',')) return `${label}: ห้ามมีเครื่องหมายจุลภาค (,) ในชื่อ “${n}”`;
+      if(seen.has(n)) return `${label}: ชื่อ “${n}” ซ้ำกัน`;
+      seen.add(n);
+    }
+    return '';
+  };
+  if(!om.cats.some(c => c.name.trim())) return 'ต้องมีหมวดหมู่อย่างน้อย 1 หมวด';
+  return check(om.cats, 'หมวดหมู่')
+    || check(om.flowers, 'ชนิดดอกไม้')
+    || om.cats.map(c => check(c.sizes, `ขนาดของ “${c.name.trim() || 'หมวดใหม่'}”`)).find(Boolean)
+    || '';
+}
+
+function omValidateUI(){
+  const msg = omProblem();
+  $('optHint').textContent = msg;
+  $('optSave').disabled = !!msg;
+}
+
+function optAddRow(){
+  if(!om) return;
+  if(om.tab === 'sizes' && !om.cats[om.sizeCat]){
+    toast('ยังไม่มีหมวดหมู่ ไปเพิ่มที่แท็บ “หมวดหมู่” ก่อน', true);
+    return;
+  }
+  const list = omList();
+  list.push(om.tab === 'cats' ? { orig: null, name: '', sizes: [] } : { orig: null, name: '' });
+  renderOptionsModal(list.length - 1);
+  $('optBody').scrollTop = $('optBody').scrollHeight;
+}
+
+// เปลี่ยนชื่อในสินค้า (แก้พร้อมกันทีเดียว ไม่ไล่ต่อเป็นทอด จึงสลับชื่อกันได้) คืนจำนวนสินค้าที่ถูกแก้
+function applyRenames(list, catMap, flowerMap, sizeMaps){
+  let changed = 0;
+  list.forEach(p => {
+    let touched = false;
+    const oldCat = String(p.cat ?? '').trim();
+    const m = sizeMaps.get(oldCat);
+    if(m){
+      const ren = s => {
+        const parts = String(s ?? '').split(',').map(x => x.trim());
+        if(!parts.some(x => m.has(x))) return s;
+        touched = true;
+        return parts.map(x => (m.has(x) ? m.get(x) : x)).filter(Boolean).join(', ');
+      };
+      if(Array.isArray(p.size)) p.size = p.size.map(ren);
+      else if(p.size) p.size = ren(p.size);
+      (p.sizes || []).forEach(s => { if(s && s.tag) s.tag = ren(s.tag); });
+      (p.variants || []).forEach(v => { if(v && v.tag) v.tag = ren(v.tag); });
+    }
+    if(catMap.has(oldCat)){ p.cat = catMap.get(oldCat); touched = true; }
+    const f = String(p.flowerType ?? '').trim();
+    if(flowerMap.has(f)){ p.flowerType = flowerMap.get(f); touched = true; }
+    if(touched) changed++;
+  });
+  return changed;
+}
+
+// เขียนตัวเลือกร้าน (และสินค้าที่ถูกแก้ชื่อตาม ถ้ามี) ลง Firestore ในคำสั่งเดียว — สำเร็จพร้อมกันหรือไม่สำเร็จพร้อมกัน
+async function saveOptionsToCloud(opts, nextCatalog){
+  const now = new Date().toISOString();
+  const payload = { optionsJson: JSON.stringify(opts), optionsUpdatedAt: now };
+  if(nextCatalog){
+    const json = JSON.stringify(nextCatalog);
+    if(new Blob([json]).size > FIRESTORE_DOC_LIMIT * 0.9){
+      toast('ข้อมูลสินค้าใหญ่เกินกว่าที่ Firestore เก็บได้ในเอกสารเดียว ยังบันทึกไม่ได้', true);
+      return false;
+    }
+    Object.assign(payload, {
+      json, count: nextCatalog.length, updatedAt: now,
+      updatedBy: fb.auth.currentUser ? fb.auth.currentUser.email : ''
+    });
+  }
+  setSaveState('กำลังบันทึก…', 'is-saving');
+  try{
+    await fb.dbApi.setDoc(catalogRef(), payload, { merge: true });
+    setSaveState('บันทึกแล้ว · หน้าร้านอัปเดตทันที');
+    return true;
+  } catch(err){
+    setSaveState('บันทึกไม่สำเร็จ', 'is-error');
+    toast(err.code === 'permission-denied'
+      ? 'บันทึกไม่ได้: กฎความปลอดภัยของ Firestore ยังไม่อนุญาตให้เพิ่มช่อง optionsJson / optionsUpdatedAt'
+      : 'บันทึกไม่สำเร็จ: ' + (err.code || err.message), true);
+    console.error(err);
+    return false;
+  }
+}
+
+async function saveOptionsModal(){
+  if(!om || omProblem()) return;
+  const clean = arr => arr.map(r => ({ orig: r.orig, name: r.name.trim() })).filter(r => r.name);
+  const cats = om.cats.map(c => ({ orig: c.orig, name: c.name.trim(), sizes: clean(c.sizes) })).filter(c => c.name);
+  const flowers = clean(om.flowers);
+
+  const catMap = new Map(), flowerMap = new Map(), sizeMaps = new Map();
+  cats.forEach(c => {
+    if(c.orig != null && c.orig !== c.name) catMap.set(c.orig, c.name);
+    if(c.orig == null) return;
+    const m = new Map();
+    c.sizes.forEach(s => { if(s.orig != null && s.orig !== s.name) m.set(s.orig, s.name); });
+    if(m.size) sizeMaps.set(c.orig, m);
+  });
+  flowers.forEach(f => { if(f.orig != null && f.orig !== f.name) flowerMap.set(f.orig, f.name); });
+
+  const next = clone(catalog);
+  const changed = applyRenames(next, catMap, flowerMap, sizeMaps);
+  if(changed){
+    const parts = [];
+    catMap.forEach((n, o) => parts.push(`หมวด “${o}” → “${n}”`));
+    flowerMap.forEach((n, o) => parts.push(`ชนิด “${o}” → “${n}”`));
+    sizeMaps.forEach(m => m.forEach((n, o) => parts.push(`ขนาด “${o}” → “${n}”`)));
+    const ok = await askConfirm('แก้ชื่อสินค้าตามด้วย?',
+      `สินค้า ${changed} ชิ้นที่ใช้ชื่อเดิมจะถูกแก้เป็นชื่อใหม่ให้อัตโนมัติ (${parts.join(' · ')})`, 'บันทึก');
+    if(!ok) return;
+  }
+
+  const opts = {
+    cats: cats.map(c => c.name),
+    flowers: flowers.map(f => f.name),
+    sizes: Object.fromEntries(cats.filter(c => c.sizes.length).map(c => [c.name, c.sizes.map(s => s.name)]))
+  };
+  const btn = $('optSave');
+  btn.disabled = true;
+  const ok = await saveOptionsToCloud(opts, changed ? next : null);
+  if(!ok){ btn.disabled = false; return; }
+  applyShopOptions(opts);
+  if(changed) catalog = next;
+  closeOptionsModal();
+  renderList();
+  toast('บันทึกตัวเลือกร้านแล้ว หน้าร้านอัปเดตทันที');
 }
 
 /* ───────────────── ต่อสายเหตุการณ์ทั้งหมด ───────────────── */
@@ -2363,6 +2632,44 @@ $('posterOneBtn').addEventListener('click', () => {
   exportPosters([draft], `${String(draft.id || 'product').replace(/[\\/:*?"<>|\s]+/g, '-')}_catalog`);
 });
 $('progressCancel').addEventListener('click', () => { posterCancel = true; });
+$('optionsBtn').addEventListener('click', openOptionsModal);
+$('optTabs').addEventListener('click', e => {
+  const b = e.target.closest('[data-tab]');
+  if(!b || !om) return;
+  om.tab = b.dataset.tab;
+  renderOptionsModal();
+});
+$('optBody').addEventListener('input', e => {
+  const row = e.target.closest('.om-row');
+  if(!row || !om) return;
+  omList()[+row.dataset.i].name = e.target.value;
+  omValidateUI();
+});
+$('optBody').addEventListener('click', e => {
+  const btn = e.target.closest('[data-act]');
+  if(!btn || !om || btn.disabled) return;
+  const i = +btn.closest('.om-row').dataset.i;
+  const list = omList();
+  if(btn.dataset.act === 'del') list.splice(i, 1);
+  else {
+    const j = btn.dataset.act === 'up' ? i - 1 : i + 1;
+    if(j < 0 || j >= list.length) return;
+    [list[i], list[j]] = [list[j], list[i]];
+  }
+  renderOptionsModal();
+});
+$('optBody').addEventListener('change', e => {
+  if(e.target.id === 'optSizeCat' && om){ om.sizeCat = +e.target.value; renderOptionsModal(); }
+});
+$('optBody').addEventListener('keydown', e => {
+  if(e.key === 'Enter' && e.target.matches('.om-row input')){
+    e.preventDefault();
+    if(e.target.value.trim()) optAddRow();
+  }
+});
+$('optAddRow').addEventListener('click', optAddRow);
+$('optCancel').addEventListener('click', closeOptionsModal);
+$('optSave').addEventListener('click', saveOptionsModal);
 $('importBtn').addEventListener('click', () => $('importFile').click());
 $('importFile').addEventListener('change', e => {
   const f = e.target.files[0];
@@ -2542,6 +2849,7 @@ $('confirmScrim').addEventListener('click', e => { if(e.target === $('confirmScr
 document.addEventListener('keydown', e => {
   if(e.key !== 'Escape') return;
   if(!$('confirmScrim').hidden) closeConfirm(false);
+  else if(!$('optScrim').hidden) closeOptionsModal();
   else if(!$('imgScrim').hidden) closeImgModal();
   else if(!$('varScrim').hidden) closeVarModal();
   else if(!$('editorPage').hidden) closeEditor();

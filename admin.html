@@ -60,12 +60,13 @@
     <div class="page-head">
       <h2>สินค้า</h2>
       <div class="page-actions">
-        <details class="menu">
-          <summary class="btn btn-ghost">⋯ เพิ่มเติม</summary>
+        <button class="btn btn-ghost" id="optionsBtn" title="เพิ่ม แก้ชื่อ เรียงลำดับ หมวดหมู่ ชนิดดอกไม้ และขนาดของร้าน">🏷 หมวดหมู่ / ชนิด / ขนาด</button>
+        <button class="btn btn-ghost" id="catalogBtn" title="ดาวน์โหลดภาพแคตตาล็อก (JPG)">🖼 แคตตาล็อก</button>
+        <details class="menu adv-menu">
+          <summary class="btn btn-ghost">ขั้นสูง ▾</summary>
           <div class="menu-pop">
-            <button id="catalogBtn">ดาวน์โหลดแคตตาล็อก (JPG)</button>
-            <button id="backupBtn">ดาวน์โหลดไฟล์สำรอง</button>
-            <button id="importBtn">นำเข้าจากไฟล์ (เขียนทับทั้งหมด)</button>
+            <button id="backupBtn"><b>ดาวน์โหลดไฟล์สำรองสินค้า</b><small>เก็บสำรองไว้เผื่อข้อมูลหาย</small></button>
+            <button id="importBtn" class="is-danger"><b>นำเข้าจากไฟล์</b><small>⚠ สินค้าเดิมทั้งหมดจะถูกเขียนทับ</small></button>
           </div>
         </details>
         <button class="btn btn-primary" id="addBtn">เพิ่มสินค้า</button>
@@ -174,6 +175,25 @@
       <p class="vm-hint" id="varHint"></p>
       <button type="button" class="vm-btn" id="varCancel">ยกเลิก</button>
       <button type="button" class="vm-btn vm-save" id="varSave" disabled>บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<!-- ───────────── หน้าต่างจัดการหมวดหมู่ / ชนิดดอกไม้ / ขนาด ───────────── -->
+<div class="confirm-scrim" id="optScrim" hidden>
+  <div class="vm-card om-card" role="dialog" aria-modal="true" aria-labelledby="optTitle">
+    <h3 class="vm-title" id="optTitle">จัดการตัวเลือกร้าน</h3>
+    <div class="om-tabs" id="optTabs" role="tablist">
+      <button type="button" class="om-tab is-active" data-tab="cats" role="tab">หมวดหมู่</button>
+      <button type="button" class="om-tab" data-tab="flowers" role="tab">ชนิดดอกไม้</button>
+      <button type="button" class="om-tab" data-tab="sizes" role="tab">ขนาด</button>
+    </div>
+    <div class="vm-body" id="optBody"></div>
+    <button type="button" class="vm-add" id="optAddRow"><span>＋</span> <em id="optAddLabel">เพิ่มหมวดหมู่</em></button>
+    <div class="vm-foot">
+      <p class="vm-hint" id="optHint"></p>
+      <button type="button" class="vm-btn" id="optCancel">ยกเลิก</button>
+      <button type="button" class="vm-btn vm-save" id="optSave">บันทึก</button>
     </div>
   </div>
 </div>

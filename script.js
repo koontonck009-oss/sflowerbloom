@@ -14,7 +14,8 @@ const PAGE_LINK = 'https://m.me/S.Flower.Bloom44';
    จะแสดงราคาก็ต่อเมื่ออ่านเอกสารจาก Firestore ได้สำเร็จ และหลังบ้านไม่ได้เปิดสวิตช์ซ่อนราคาไว้ */
 let PRICES_HIDDEN = true;
 let cloudHidePrices = true;   // ค่าที่อ่านได้ล่าสุดจาก Firestore
-let cloudStamp = null;        // ตราเวลา+สถานะสวิตช์ล่าสุดจาก Firestore
+let cloudStamp = null;        // ตราเวลา+สถานะสวิตช์+เวลาแก้ตัวเลือกร้านล่าสุดจาก Firestore
+let cloudOptions = null;      // ตัวเลือกร้าน (หมวดหมู่/ชนิดดอกไม้/ขนาด) ที่แก้จากหลังบ้าน null = ใช้ค่าเริ่มต้นในไฟล์นี้
 let CATALOG_DOC_STAMP = null; // ตราที่ใช้ตอนโหลดหน้านี้ (null = ไม่ได้ใช้ข้อมูลจาก Firestore)
 const PRICE_ASK_SHORT = 'สอบถามราคาทางเพจ';
 function setPricesHidden(v){
@@ -264,6 +265,8 @@ function parseCartKey(key){
   return i === -1 ? { id:key, color:null } : { id:key.slice(0,i), color:key.slice(i+2) };
 }
 
+// ค่าเริ่มต้นของหมวดหมู่/ขนาด — ถ้าแก้จากหลังบ้าน (เมนู ⋯ เพิ่มเติม › จัดการหมวดหมู่ / ชนิดดอกไม้ / ขนาด)
+// ตอนโหลดจาก Firestore ฟังก์ชัน applyShopOptions ด้านล่างจะเปลี่ยนค่าใน CATS / CATEGORY_SIZES / FLOWER_TYPES ในที่เดิม
 const CATS = ['ทั้งหมด','ช่อดอกไม้','กรอบรูป','กระถาง','อื่นๆ'];
 const CATEGORY_SIZES = {
   'ช่อดอกไม้': ['ทั้งหมด','เล็ก','กลาง','ใหญ่','ใส่เงิน',],
@@ -892,7 +895,25 @@ function setSize(s){
   updateFilterBadge();
 }
 
-const FLOWER_TYPES = ['ทั้งหมด','ดอกไม้คละชนิด','กุหลาบ','ทานตะวัน','ทิวลิป','ไฮเดรนเยีย','เดซี่','ลิลลี่','เยอบีร่า'];
+// รายชนิดอ่านจาก window.FLOWER_TYPES ใน firebase-config.js (แหล่งเดียวกับหลังบ้าน) · ปุ่ม "ทั้งหมด" อยู่หน้าสุดเสมอ
+const FLOWER_TYPES = ['ทั้งหมด', ...(Array.isArray(window.FLOWER_TYPES) ? window.FLOWER_TYPES : [])];
+// ใส่ตัวเลือกร้านจากหลังบ้านทับค่าเริ่มต้น (หมวดหมู่ · ชนิดดอกไม้ · ขนาดของแต่ละหมวด) ปุ่ม "ทั้งหมด" ใส่ให้เองหน้าสุดเสมอ
+function applyShopOptions(o){
+  if(!o || typeof o !== 'object') return;
+  const clean = a => Array.isArray(a)
+    ? [...new Set(a.map(x => String(x ?? '').trim()).filter(x => x && x !== 'ทั้งหมด'))]
+    : null;
+  const cats = clean(o.cats), flowers = clean(o.flowers);
+  if(cats && cats.length) CATS.splice(0, CATS.length, 'ทั้งหมด', ...cats);
+  if(flowers) FLOWER_TYPES.splice(0, FLOWER_TYPES.length, 'ทั้งหมด', ...flowers);
+  if(o.sizes && typeof o.sizes === 'object'){
+    Object.keys(CATEGORY_SIZES).forEach(k => delete CATEGORY_SIZES[k]);
+    CATS.slice(1).forEach(c => {
+      const s = clean(o.sizes[c]);
+      if(s && s.length) CATEGORY_SIZES[c] = ['ทั้งหมด', ...s];
+    });
+  }
+}
 // ชนิดดอกไม้ที่เลือก — เลือกได้หลายชนิดพร้อมกัน (Set ว่าง = ทุกชนิด) ใช้ได้ทุกหมวด ไม่ต้องเลือกหมวดก่อน
 let activeFlowerTypes = new Set();
 function flowerMatches(p, set = activeFlowerTypes){
@@ -900,7 +921,13 @@ function flowerMatches(p, set = activeFlowerTypes){
 }
 // ชนิดดอกไม้ที่มีสินค้าอยู่จริงในขอบเขตที่เลือก (ไม่เลือกหมวด = ทั้งร้าน)
 function flowerTypesInScope(catsSet){
-  return FLOWER_TYPES.slice(1).filter(t => PRODUCTS.some(p => p.flowerType === t && (!catsSet || catsSet.size === 0 || catsSet.has(p.cat))));
+  const inScope = p => !catsSet || catsSet.size === 0 || catsSet.has(p.cat);
+  // เรียงตามจำนวนสินค้าในขอบเขตที่เลือก มากไปน้อย (เท่ากันคงลำดับเดิม)
+  return FLOWER_TYPES.slice(1)
+    .map(t => [t, PRODUCTS.filter(p => p.flowerType === t && inScope(p)).length])
+    .filter(([, n]) => n > 0)
+    .sort((a, b) => b[1] - a[1])
+    .map(([t]) => t);
 }
 // เปลี่ยนหมวดแล้ว ตัดชนิดที่ไม่มีในหมวดใหม่ทิ้ง (ชนิดที่ยังมีอยู่ในหมวดใหม่จะคงไว้)
 function pruneFlowerTypes(flowerSet, catsSet){
@@ -2825,7 +2852,9 @@ async function fetchProductsFromFirestore(){
   if(!snap.exists()) return null;
   const data = snap.data() || {};
   cloudHidePrices = data.hidePrices === true;
-  cloudStamp = String(data.updatedAt || '') + '|' + cloudHidePrices;
+  cloudOptions = null;
+  try{ if(typeof data.optionsJson === 'string') cloudOptions = JSON.parse(data.optionsJson); }catch(_){ cloudOptions = null; }
+  cloudStamp = String(data.updatedAt || '') + '|' + cloudHidePrices + '|' + String(data.optionsUpdatedAt || '');
   const list = typeof data.json === 'string' ? JSON.parse(data.json) : data.list;
   return (Array.isArray(list) && list.length) ? list : null;
 }
@@ -2840,6 +2869,7 @@ async function loadProducts(){
     ]);
     if(fromCloud){
       PRODUCTS = fromCloud;
+      applyShopOptions(cloudOptions);
       setPricesHidden(cloudHidePrices);
       CATALOG_DOC_STAMP = cloudStamp;
       finishLoadingProducts();
