@@ -179,6 +179,13 @@
 
 <div class="product-page" id="productModal">
   <div class="product-page-scroll" id="productPageScroll">
+    <!-- แถบบน (จอคอมเท่านั้น): กลับ · เส้นทางหน้า · ตะกร้า -->
+    <div class="pd-topbar">
+      <button type="button" class="pd-back" onclick="closeProductModal()"><span aria-hidden="true">←</span> กลับไปเลือกสินค้า</button>
+      <nav class="pd-crumbs" id="pdCrumbs" aria-label="เส้นทางหน้า"></nav>
+      <button type="button" class="pd-cart" id="pdCartBtn" onclick="openCart()" aria-label="เปิดตะกร้าสินค้า">🧺 <span>ตะกร้า</span><b class="pd-cart-count is-zero" id="pdCartCount">0</b></button>
+    </div>
+    <div class="pd-layout" id="pdLayout">
     <button type="button" class="pd-close" onclick="closeProductModal()" aria-label="ปิด">✕</button>
     <div class="page-gallery" id="pageGallery">
       <div class="gallery-thumbs" id="galleryThumbs"></div>
@@ -232,7 +239,21 @@
         <button class="add-btn secondary" onclick="addModalToCart()">🧺 ใส่ตะกร้า</button>
         <button class="checkout-btn" onclick="startCheckout(buildModalOrderLines)">สั่งทำสินค้า</button>
       </div>
+      <!-- ข้อมูลการสั่งซื้อ (จอคอมเท่านั้น) ตรงกับ FAQ ด้านล่างของหน้าเว็บ -->
+      <ul class="pd-info" aria-label="ข้อมูลการสั่งซื้อ">
+        <li><span class="pd-info-ic" aria-hidden="true">🌸</span><div><b>ทำตามออเดอร์</b><small>ใช้เวลาทำประมาณ 3–5 วัน</small></div></li>
+        <li><span class="pd-info-ic" aria-hidden="true">📍</span><div><b>นัดรับได้</b><small>ในตัวเมืองนครสวรรค์ และอำเภอพยุหะคีรี</small></div></li>
+        <li><span class="pd-info-ic" aria-hidden="true">📦</span><div><b>ส่งพัสดุ EMS</b><small>ผ่านไปรษณีย์ไทย แพ็กอย่างรัดกุม</small></div></li>
+      </ul>
     </div>
+    </div>
+    <!-- สินค้าแนะนำด้านล่างหน้าสินค้า (มือถือ 6 ชิ้น · จอคอม 8 ชิ้น) -->
+    <section class="pd-related" id="pdRelated" hidden aria-labelledby="pdRelatedTitle">
+      <div class="pd-related-inner">
+        <div class="section-title"><h3 id="pdRelatedTitle">สินค้าอื่นๆ ที่คุณอาจชอบ</h3></div>
+        <div class="grid pd-related-grid" id="pdRelatedGrid"></div>
+      </div>
+    </section>
   </div>
 </div>
 

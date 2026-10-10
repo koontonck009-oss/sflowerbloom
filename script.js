@@ -371,6 +371,7 @@ function toggleFavorite(id, colorIndex, optionIndex, sizeIndex){
   saveFavorites();
   renderCatalog();
   updateModalHeart();
+  if(document.getElementById('productModal').classList.contains('open')) renderRelatedProducts();
 }
 // แบบที่กำลังเลือกอยู่ในหน้าสินค้า (ไว้ผูกหัวใจในหน้าสินค้ากับแบบนั้น) — null = ยังเลือกไม่ครบ/ไม่มีแบบ
 function currentVariantRef(p){
@@ -1962,6 +1963,8 @@ function cartTotal(){
 function updateCartUI(){
   saveCart();
   document.getElementById('cartBadge').textContent = cartCount();
+  const pdCount = document.getElementById('pdCartCount'); // ตัวเลขบนปุ่มตะกร้าในแถบบนของหน้าสินค้า (จอคอม)
+  if(pdCount){ const n = cartCount(); pdCount.textContent = n; pdCount.classList.toggle('is-zero', !n); }
   const wrap = document.getElementById('drawerItems');
   const entries = Object.entries(cart);
   if(!entries.length){
@@ -2589,13 +2592,20 @@ document.addEventListener('keydown', function(e){
 // colorIndex/optionIndex/sizeIndex (optional): มาจากการ์ดย่อยที่แตกตามสี/ตัวเลือก/ขนาด
 // ในโซน "สินค้าแนะนำ" — เปิดหน้าสินค้าพร้อม pre-select ตัวเลือกนั้นทันที ลูกค้าจะไม่เจอ
 // ตัวเลือกอื่นก่อนตัวที่กดเข้ามาจากการ์ดนั้น
+// จอคอม: กดการ์ด "สินค้าอื่นๆ ที่คุณอาจชอบ" ในหน้าสินค้า = สลับสินค้าในหน้าเดิม (ไม่ซ้อนประวัติ ปุ่มกลับยังกลับไปหน้ารายการตรงเดิม)
+// pdFromRelated: ตั้งโดยตัวดักคลิกด้านล่างก่อน onclick ของการ์ดทำงาน — สินค้าแนะนำไม่ผูกกับตัวกรองหน้ารายการ
+let pdFromRelated = false;
+function pdIsDesktop(){ return !!(window.matchMedia && window.matchMedia('(min-width:860px)').matches); }
 function openProductModal(id, colorIndex, optionIndex, sizeIndex){
+  const page = document.getElementById('productModal');
+  const wasOpen = page.classList.contains('open');
+  const fromRelated = pdFromRelated; pdFromRelated = false;
   modalProductId = id;
   modalQty = 1;
   modalImgIndex = 0;
   modalSelectedAddons = new Set();
   const p = PRODUCTS.find(x=>x.id===id);
-  modalAllowedVariants = (colorIndex == null && optionIndex == null && sizeIndex == null && cardNarrowByProduct[id])
+  modalAllowedVariants = (!fromRelated && colorIndex == null && optionIndex == null && sizeIndex == null && cardNarrowByProduct[id])
     ? new Set(cardNarrowByProduct[id]) : null;
   modalBills = p && p.billSelector ? (p.minBills||1) : 1;
   if(p && p.colors && colorIndex != null){
@@ -2607,19 +2617,58 @@ function openProductModal(id, colorIndex, optionIndex, sizeIndex){
   }
   if(p && p.sizes && sizeIndex != null){
     selectedSizeVariant[id] = sizeIndex;
-  } else if(p && p.sizes && colorIndex == null && optionIndex == null && cardNarrowSizesByProduct[id] && cardNarrowSizesByProduct[id].length){
+  } else if(p && p.sizes && !fromRelated && colorIndex == null && optionIndex == null && cardNarrowSizesByProduct[id] && cardNarrowSizesByProduct[id].length){
     // เปิดจากการ์ดที่ตัวกรองบีบเหลือบางไซซ์ — เริ่มที่ไซซ์ราคาถูกสุดที่ผ่านกรอง ไม่ใช่ไซซ์แรก (ที่อาจเป็นช่อปกติ)
     selectedSizeVariant[id] = cardNarrowSizesByProduct[id].reduce((best, i) => (p.sizes[i].price < p.sizes[best].price ? i : best));
   }
   renderModal();
-  const page = document.getElementById('productModal');
+  renderRelatedProducts();
   page.classList.add('open');
   const scrollArea = document.getElementById('productPageScroll');
   if(scrollArea) scrollArea.scrollTop = 0;
   document.body.style.overflow = 'hidden';
-  history.pushState({ productPage:true }, '', '#product');
+  if(wasOpen){
+    // สลับสินค้าในหน้าเดิม: แทนที่ประวัติเดิม (ไม่ push เพิ่ม) แล้วเล่นแอนิเมชันจางเข้า
+    history.replaceState({ productPage:true }, '', '#product');
+    const lay = document.getElementById('pdLayout');
+    if(lay){ lay.classList.remove('pd-swap'); void lay.offsetWidth; lay.classList.add('pd-swap'); }
+  } else {
+    history.pushState({ productPage:true }, '', '#product');
+  }
   updateChatFabVisibility();
 }
+
+/* ---------- สินค้าอื่นๆ ที่คุณอาจชอบ (ใต้หน้าสินค้า: จอคอม 8 ชิ้น · มือถือ 6 ชิ้น) ----------
+   ลำดับความใกล้เคียง: หมวดเดียวกัน+ชนิดดอกไม้เดียวกัน → หมวดเดียวกัน → หมวดอื่น
+   แต่ละกลุ่มเรียงตามราคาที่ใกล้สินค้านี้ที่สุด · เรียงแบบคงที่ ไม่สุ่ม */
+function relatedProductsFor(p, limit){
+  const price = Number(displayPrice(p)) || 0;
+  const diff = x => Math.abs((Number(displayPrice(x)) || 0) - price);
+  const byNear = arr => arr.slice().sort((a, b) => diff(a) - diff(b));
+  const pool = PRODUCTS.filter(x => x.id !== p.id);
+  const sameCat = pool.filter(x => x.cat === p.cat);
+  const tier1 = p.flowerType ? sameCat.filter(x => x.flowerType === p.flowerType) : [];
+  const t1 = new Set(tier1.map(x => x.id));
+  const tier2 = sameCat.filter(x => !t1.has(x.id));
+  const tier3 = pool.filter(x => x.cat !== p.cat);
+  return [...byNear(tier1), ...byNear(tier2), ...byNear(tier3)].slice(0, limit);
+}
+function renderRelatedProducts(){
+  const sec = document.getElementById('pdRelated');
+  const grid = document.getElementById('pdRelatedGrid');
+  if(!sec || !grid) return;
+  const p = PRODUCTS.find(x => x.id === modalProductId);
+  const list = p ? relatedProductsFor(p, pdIsDesktop() ? 8 : 6) : [];
+  grid.innerHTML = list.map(x => renderProductCard(x)).join('');
+  sec.hidden = !list.length;
+}
+// ดักคลิกก่อนที่ onclick ของการ์ดจะทำงาน (เฟสดักจับ) แล้วคืนค่าทันทีหลังเหตุการณ์จบ — คลิกหัวใจ/รูปจิ๋วที่ไม่เปิดสินค้าจึงไม่ค้างค่า
+document.addEventListener('click', function(e){
+  if(e.target && e.target.closest && e.target.closest('#pdRelatedGrid')){
+    pdFromRelated = true;
+    setTimeout(() => { pdFromRelated = false; }, 0);
+  }
+}, true);
 function closeProductModal(fromPopState){
   const page = document.getElementById('productModal');
   if(!page.classList.contains('open')) return;
@@ -2663,6 +2712,15 @@ function renderModal(){
   document.getElementById('modalName').textContent = p.name;
   const modalCatEl = document.getElementById('modalCat');
   if(modalCatEl) modalCatEl.textContent = p.cat || '';
+  const crumbs = document.getElementById('pdCrumbs'); // แถบบนจอคอม: สินค้า › หมวด › ชื่อสินค้า
+  if(crumbs){
+    const mk = (tag, text, cls) => { const el = document.createElement(tag); el.textContent = text; if(cls) el.className = cls; return el; };
+    const home = mk('button', 'สินค้า'); home.type = 'button'; home.onclick = () => closeProductModal();
+    crumbs.textContent = '';
+    crumbs.append(home);
+    if(p.cat) crumbs.append(mk('span', '›', 'pd-sep'), mk('span', p.cat));
+    crumbs.append(mk('span', '›', 'pd-sep'), mk('b', p.name));
+  }
   updateModalHeart();
   document.getElementById('modalDesc').textContent = p.desc;
   document.getElementById('modalQty').textContent = modalQty;
@@ -2780,7 +2838,7 @@ function updateModalPriceDisplay(){
   // มือถือ: "฿249 / ช่อ × 2 = ฿498" (.pd-mx)   คอม: ราคาต่อช่อซ้าย + "ยอดรวม" ขวา (.pd-total) — CSS สลับให้
   priceEl.innerHTML = `${fmt(unitPrice)} <span style="font-size:13px; font-weight:500; color:var(--plum);">/ ช่อ</span>` +
     (modalQty > 1 ? `<span class="pd-mx"> × ${modalQty} = <strong>${fmt(lineTotal)}</strong></span>` : '') +
-    `<span class="pd-total"><span class="pd-total-label">ยอดรวม</span><b>${fmt(lineTotal)}</b></span>`;
+    (modalQty > 1 ? `<span class="pd-total"><span class="pd-total-label">ยอดรวม</span><b>${fmt(lineTotal)}</b></span>` : '');
 }
 function currentModalVariant(p){
   if(p.billSelector) return { label:`ใส่ธนบัตร ${modalBills} ใบ`, unitPrice: unitPriceFor(p, modalBills) };
@@ -2829,7 +2887,7 @@ function addModalToCart(){
   else cart[key] = { qty:modalQty, unitPrice, label };
   updateCartUI();
   showToast('เพิ่มลงตะกร้าแล้ว 🌸');
-  closeProductModal();
+  if(!pdIsDesktop()) closeProductModal(); // จอคอมอยู่หน้าเดิมต่อ จะได้ดูสินค้าแนะนำ/เพิ่มชิ้นอื่นได้ (ตัวเลขตะกร้าบนแถบบนอัปเดตเอง)
 }
 
 /* ---------- โหลดข้อมูลสินค้าจาก products.json ----------
