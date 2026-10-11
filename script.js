@@ -197,7 +197,7 @@ function isMoneyVariant(v){
   return v.tag === 'ใส่เงิน' || (v.match || []).some(m => String(m).indexOf('ใส่เงิน') !== -1);
 }
 function coverVariantOf(p){
-  const all = p.variants;
+  const all = modalVariantsOf(p);
   const plain = all.filter(v => !isMoneyVariant(v));
   const pool = plain.length ? plain : all;
   return pool.reduce((a,b) => (b.price < a.price ? b : a));
@@ -2464,7 +2464,8 @@ let modalSelectedAddons = new Set(); // ชื่อตัวเลือกเ�
 // gallery/thumbnails simply don't appear when there's only one photo.
 function currentGalleryImages(p){
   if(hasNewOptions(p)){
-    const v = currentVariant(p);
+    // ยังไม่ได้เลือกตัวเลือกใดเลย = รูปแรกของแกลเลอรีใช้แบบปกติราคาถูกสุด (เหมือนรูปปกบนการ์ด) ไม่ใช่แถวแรกของลิสต์
+    const v = currentOptionSelection(p).every(x => x == null) ? coverVariantOf(p) : currentVariant(p);
     if(v){
       if(v.images && v.images.length) return v.images;
       if(v.image) return [v.image];
