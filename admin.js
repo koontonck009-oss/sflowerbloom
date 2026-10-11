@@ -1042,6 +1042,122 @@ function variantFor(combo){
     Array.isArray(v.match) && v.match.length === combo.length && v.match.every((m, i) => m === combo[i]));
 }
 
+
+/* ───────── ตารางค่าตัวเลือก: ค้นหา · แก้หลายแถว · แถวละบรรทัด ───────── */
+
+let comboQuery = '';
+let comboQueryFor = null;   // ผูกคำค้นกับสินค้าที่กำลังแก้ ถ้าเปลี่ยนสินค้าให้ล้างคำค้น
+
+function comboQ(){
+  if(comboQueryFor !== draft){ comboQueryFor = draft; comboQuery = ''; }
+  return comboQuery.trim().toLowerCase();
+}
+function comboMatches(c, v){
+  const q = comboQ();
+  if(!q) return true;
+  return (c.join(' ') + ' ' + (v ? (v.image || '') : '')).toLowerCase().includes(q);
+}
+function comboMoreLabel(v){
+  const n = v ? (v.images || []).filter(x => String(x || '').trim()).length : 0;
+  return n ? `📷 +${n}` : '📷 เพิ่ม';
+}
+
+function comboToolsHtml(combos){
+  const tags = comboTagChoices(draft.cat, '');
+  return `
+    <div class="combo-tools">
+      <input type="search" id="comboSearch" value="${esc(comboQuery)}" placeholder="ค้นหาในตัวเลือก เช่น ขาว หรือ Birthday" autocomplete="off">
+      <span class="combo-vis" id="comboVis"></span>
+    </div>
+    <div class="combo-bulk">
+      <span class="cb-label">ทำกับแถวที่แสดงอยู่</span>
+      <button type="button" class="btn btn-ghost btn-sm" data-cb="sell-on">ขายทั้งหมด</button>
+      <button type="button" class="btn btn-ghost btn-sm" data-cb="sell-off">ปิดขายทั้งหมด</button>
+      <button type="button" class="btn btn-ghost btn-sm" data-cb="ready-on">พร้อมส่งทั้งหมด</button>
+      <button type="button" class="btn btn-ghost btn-sm" data-cb="ready-off">ยกเลิกพร้อมส่ง</button>
+      <span class="cb-set"><input type="number" id="cbPrice" min="0" step="1" placeholder="ราคา"><button type="button" class="btn btn-ghost btn-sm" data-cb="price">ตั้งราคา</button></span>
+      <span class="cb-set"><select id="cbTag">${tags.map(([val, label]) => `<option value="${esc(val)}">${esc(label)}</option>`).join('')}</select><button type="button" class="btn btn-ghost btn-sm" data-cb="tag">ตั้งขนาด</button></span>
+    </div>`;
+}
+
+function comboRowHtml(c, ci){
+  const v = variantFor(c);
+  const filtered = comboMatches(c, v) ? '' : ' is-filtered';
+  return `
+              <tbody class="combo-item${v ? '' : ' is-off'}${filtered}" data-ci="${ci}">
+                <tr>
+                  <td class="c-sell"><input type="checkbox" data-act="toggle-combo" data-ci="${ci}"${v ? ' checked' : ''} aria-label="ขาย"></td>
+                  <td class="c-ready"><label><input type="checkbox" data-combo-ready="${ci}"${v && v.ready ? ' checked' : ''}${v ? '' : ' disabled'}><span class="c-lbl">พร้อมส่ง</span></label></td>
+                  <td class="c-thumb"><button type="button" class="combo-thumb" data-combo-path="${ci}" title="กดเพื่อเปลี่ยนรูปหลัก / แก้พาธ"${v ? '' : ' disabled'}>${thumbHtml(v ? v.image : '', 'combo-thumb-img')}</button></td>
+                  <td class="combo-combo">${c.map(esc).join(' · ')}</td>
+                  <td class="c-price"><input type="number" min="0" step="1" data-combo-price="${ci}" value="${v ? (num(v.price) || '') : ''}" placeholder="${v ? 'ราคา' : 'ไม่ขาย'}" aria-label="ราคา"></td>
+                  <td class="c-tag"><select data-combo-tag="${ci}"${v ? '' : ' disabled'}>${comboTagChoices(draft.cat, v && v.tag).map(([val, label]) => `<option value="${esc(val)}"${(v && v.tag || '') === val ? ' selected' : ''}>${esc(label)}</option>`).join('')}</select></td>
+                  <td class="c-more"><button type="button" class="btn btn-ghost btn-sm combo-more" data-combo-more="${ci}"${v ? '' : ' disabled'} title="รูปเพิ่มเติมที่ลูกค้าเห็นต่อจากรูปหลัก">${comboMoreLabel(v)}</button></td>
+                </tr>
+                <tr class="combo-imgrow" hidden>
+                  <td colspan="7">
+                    <label class="combo-pathlabel"><span>พาธรูปหลัก</span>
+                      <input type="text" data-combo-image="${ci}" value="${v ? esc(v.image || '') : ''}" placeholder="images/…" autocomplete="off"${v ? '' : ' disabled'}>
+                    </label>
+                  </td>
+                </tr>
+              </tbody>`;
+}
+
+function updateComboVis(){
+  const items = [...document.querySelectorAll('#panelPrice .combo-item')];
+  const shown = items.filter(t => !t.classList.contains('is-filtered')).length;
+  const el = $('comboVis');
+  if(el) el.textContent = comboQ() ? `แสดง ${shown} จาก ${items.length} แถว` : `ทั้งหมด ${items.length} แถว`;
+}
+
+function applyComboFilter(){
+  const combos = comboList(draft.options);
+  document.querySelectorAll('#panelPrice .combo-item').forEach(t => {
+    const c = combos[+t.dataset.ci];
+    t.classList.toggle('is-filtered', !comboMatches(c, variantFor(c)));
+  });
+  updateComboVis();
+}
+
+async function comboBulk(kind){
+  if(!draft) return;
+  const combos = comboList(draft.options);
+  const vis = combos.map((c, ci) => ({ c, ci, v: variantFor(c) })).filter(x => comboMatches(x.c, x.v));
+  if(!vis.length){ toast('ไม่มีแถวที่แสดงอยู่', true); return; }
+  draft.variants = draft.variants || [];
+  const sellable = vis.filter(x => x.v);
+
+  if(kind === 'sell-on'){
+    let n = 0;
+    vis.forEach(x => { if(!x.v){ draft.variants.push({ match: x.c.slice(), price: 0, image: '' }); n++; } });
+    toast(n ? `เปิดขาย ${n} แถว (อย่าลืมใส่ราคา)` : 'ทุกแถวที่แสดงเปิดขายอยู่แล้ว');
+  } else if(kind === 'sell-off'){
+    if(!sellable.length){ toast('ไม่มีแถวที่เปิดขายอยู่'); return; }
+    const ok = await askConfirm('ปิดขายทั้งหมด', `ปิดขาย ${sellable.length} แถวที่แสดงอยู่ ราคา รูป และพร้อมส่งของแถวเหล่านี้จะหายไป ทำต่อไหม`, 'ปิดขาย');
+    if(!ok) return;
+    const drop = new Set(sellable.map(x => x.v));
+    draft.variants = draft.variants.filter(v => !drop.has(v));
+  } else if(kind === 'ready-on' || kind === 'ready-off'){
+    if(!sellable.length){ toast('ไม่มีแถวที่เปิดขายในรายการที่แสดง', true); return; }
+    sellable.forEach(x => { if(kind === 'ready-on') x.v.ready = true; else delete x.v.ready; });
+    toast(`${kind === 'ready-on' ? 'ตั้งพร้อมส่ง' : 'ยกเลิกพร้อมส่ง'} ${sellable.length} แถว`);
+  } else if(kind === 'price'){
+    const price = num($('cbPrice').value);
+    if(price <= 0){ toast('ใส่ราคาก่อน', true); $('cbPrice').focus(); return; }
+    if(!sellable.length){ toast('ไม่มีแถวที่เปิดขายในรายการที่แสดง', true); return; }
+    sellable.forEach(x => { x.v.price = price; });
+    toast(`ตั้งราคา ${price} บาท ให้ ${sellable.length} แถว`);
+  } else if(kind === 'tag'){
+    const tag = $('cbTag').value;
+    if(!sellable.length){ toast('ไม่มีแถวที่เปิดขายในรายการที่แสดง', true); return; }
+    sellable.forEach(x => { if(tag) x.v.tag = tag; else delete x.v.tag; });
+    toast(`ตั้งขนาดให้ ${sellable.length} แถว`);
+  }
+  renderPricePanel();
+  updateSummaries();
+}
+
 function colorsBlockHtml(){
   const colors = draft.colors || [];
   return `
@@ -1195,33 +1311,21 @@ function renderPricePanel(){
       <div class="group">
         <div class="group-head"><h3>ราคา รูป และสถานะของแต่ละค่า</h3></div>
         <p class="group-note">ติ๊ก “ขาย” เฉพาะแบบที่ทำขายจริง ที่ไม่ติ๊กจะถูกปิดไม่ให้ลูกค้ากดเลือกในหน้าร้าน — เปิดขายอยู่ <span id="comboCount">${sellable}</span> จาก ${combos.length} แบบ</p>
+        ${comboToolsHtml(combos)}
         <div class="combo-scroll">
           <table class="combo-table">
             <thead>
               <tr>
-                <th style="width:34px">ขาย</th>
-                <th style="width:80px">พร้อมส่ง</th>
+                <th class="c-sell">ขาย</th>
+                <th class="c-ready">พร้อมส่ง</th>
+                <th class="c-thumb">รูป</th>
                 <th>ค่าตัวเลือก</th>
-                <th style="width:104px">ราคา</th>
-                <th style="width:200px">รูปสินค้า</th>
-                <th style="width:130px">ตัวกรองขนาด</th>
+                <th class="c-price">ราคา</th>
+                <th class="c-tag">ตัวกรองขนาด</th>
+                <th class="c-more">แกลเลอรี</th>
               </tr>
             </thead>
-            <tbody>
-              ${combos.map((c, ci) => {
-                const v = variantFor(c);
-                return `
-                <tr class="${v ? '' : 'is-off'}">
-                  <td><input type="checkbox" data-act="toggle-combo" data-ci="${ci}"${v ? ' checked' : ''}></td>
-                  <td style="text-align:center"><input type="checkbox" data-combo-ready="${ci}"${v && v.ready ? ' checked' : ''}${v ? '' : ' disabled'}></td>
-                  <td class="combo-combo">${c.map(esc).join(' · ')}</td>
-                  <td><input type="number" min="0" step="1" data-combo-price="${ci}" value="${v ? (num(v.price) || '') : ''}"${v ? '' : ' disabled'}></td>
-                  <td><input type="text" data-combo-image="${ci}" value="${v ? esc(v.image || '') : ''}" placeholder="รูปหลัก images/…"${v ? '' : ' disabled'}>
-                    <button type="button" class="btn btn-ghost btn-sm combo-more" data-combo-more="${ci}"${v ? '' : ' disabled'}>${v && (v.images || []).length ? 'รูปเพิ่มเติม ' + v.images.length : '+ รูปเพิ่มเติม'}</button></td>
-                  <td><select data-combo-tag="${ci}"${v ? '' : ' disabled'}>${comboTagChoices(draft.cat, v && v.tag).map(([val, label]) => `<option value="${esc(val)}"${(v && v.tag || '') === val ? ' selected' : ''}>${esc(label)}</option>`).join('')}</select></td>
-                </tr>`;
-              }).join('')}
-            </tbody>
+            ${combos.map((c, ci) => comboRowHtml(c, ci)).join('')}
           </table>
         </div>
       </div>` : ''}
@@ -1231,6 +1335,7 @@ function renderPricePanel(){
   }
 
   $('panelPrice').innerHTML = body;
+  if(mode === 'options') updateComboVis();
 }
 
 /* --- แท็บ 4: ของเสริม --- */
@@ -1328,7 +1433,14 @@ function onDraftInput(e){
 
   if(el.dataset.comboPrice != null){
     const combo = comboList(draft.options)[+el.dataset.comboPrice];
-    const v = variantFor(combo);
+    let v = variantFor(combo);
+    // พิมพ์ราคาในแถวที่ปิดขาย = เปิดขายแถวนั้นให้เลย
+    if(!v && num(el.value) > 0){
+      const cb = el.closest('tbody').querySelector('[data-act="toggle-combo"]');
+      cb.checked = true;
+      onComboToggle({ target: cb });
+      v = variantFor(combo);
+    }
     if(v) v.price = num(el.value);
     return;
   }
@@ -1336,7 +1448,18 @@ function onDraftInput(e){
   if(el.dataset.comboImage != null){
     const combo = comboList(draft.options)[+el.dataset.comboImage];
     const v = variantFor(combo);
+    // พาธบนเว็บต้องใช้ / (ไม่ใช่ \ ของ Windows)
+    if(el.value.includes('\\')){
+      const pos = el.selectionStart;
+      el.value = el.value.replace(/\\/g, '/');
+      try{ el.setSelectionRange(pos, pos); }catch(_){}
+    }
     if(v) v.image = el.value;
+    const img = el.closest('tbody').querySelector('.combo-thumb-img');
+    if(img){
+      const s = el.value.trim();
+      if(s){ img.classList.remove('is-missing'); img.src = s; } else { img.removeAttribute('src'); img.classList.add('is-missing'); }
+    }
     return;
   }
 
@@ -1874,19 +1997,26 @@ function onComboToggle(e){
   }
 
   // แก้เฉพาะแถวนั้นแถวเดียว ไม่วาดตารางใหม่ทั้งตาราง คนกรอกจะได้ไม่เสียตำแหน่งที่พิมพ์ค้างไว้
-  const tr = el.closest('tr');
-  const priceInput = tr.querySelector('input[type="number"]');
-  const imageInput = tr.querySelector('input[type="text"]');
+  const tr = el.closest('tbody');
+  const priceInput = tr.querySelector('[data-combo-price]');
+  const imageInput = tr.querySelector('[data-combo-image]');
   const readyInput = tr.querySelector('[data-combo-ready]');
   const tagSelect = tr.querySelector('[data-combo-tag]');
   const moreBtn = tr.querySelector('[data-combo-more]');
-  if(moreBtn){ moreBtn.disabled = !el.checked; if(!el.checked) moreBtn.textContent = '+ รูปเพิ่มเติม'; }
+  const pathBtn = tr.querySelector('[data-combo-path]');
   tr.classList.toggle('is-off', !el.checked);
-  priceInput.disabled = imageInput.disabled = readyInput.disabled = tagSelect.disabled = !el.checked;
-  if(!el.checked){ priceInput.value = ''; imageInput.value = ''; readyInput.checked = false; tagSelect.value = ''; }
+  imageInput.disabled = readyInput.disabled = tagSelect.disabled = moreBtn.disabled = pathBtn.disabled = !el.checked;
+  priceInput.placeholder = el.checked ? 'ราคา' : 'ไม่ขาย';
+  if(!el.checked){
+    priceInput.value = ''; imageInput.value = ''; readyInput.checked = false; tagSelect.value = '';
+    const th = tr.querySelector('.combo-thumb-img');
+    if(th){ th.removeAttribute('src'); th.classList.add('is-missing'); }
+    tr.querySelector('.combo-imgrow').hidden = true;
+  }
+  moreBtn.textContent = comboMoreLabel(variantFor(comboList(draft.options)[+el.dataset.ci]));
   const counter = $('comboCount');
   if(counter) counter.textContent = draft.variants.length;
-  if(el.checked) priceInput.focus();
+  if(el.checked && document.activeElement !== priceInput) priceInput.focus();
 }
 
 /* ───────────────── ตรวจสอบและบันทึกสินค้า ───────────────── */
@@ -1997,7 +2127,7 @@ function cleanProduct(p){
       .map(o => ({ name: str(o.name), values: o.values.map(str).filter(Boolean) }));
     out.variants = (p.variants || []).filter(v => (v.match || []).length === out.options.length).map(v => {
       const o = { match: (v.match || []).map(str), price: num(v.price) };
-      { const all = imgsOf(v); if(all.length) o.image = all[0]; if(all.length > 1) o.images = all; }
+      { const all = imgsOf(v).map(s => String(s).replace(/\\/g, '/')); if(all.length) o.image = all[0]; if(all.length > 1) o.images = all; }
       if(str(v.tag)) o.tag = str(v.tag);
       if(v.ready) o.ready = true;
       return o;
@@ -2905,6 +3035,22 @@ drawerBody.addEventListener('change', e => {
 });
 drawerBody.addEventListener('click', onDraftClick);
 drawerBody.addEventListener('click', e => { const b = e.target.closest('[data-combo-more]'); if(b && !b.disabled) openImgModal(+b.dataset.comboMore); });
+drawerBody.addEventListener('click', e => {
+  const p = e.target.closest('[data-combo-path]');
+  if(p && !p.disabled){
+    const row = p.closest('tbody').querySelector('.combo-imgrow');
+    row.hidden = !row.hidden;
+    if(!row.hidden) row.querySelector('input').focus();
+    return;
+  }
+  const cb = e.target.closest('[data-cb]');
+  if(cb) comboBulk(cb.dataset.cb);
+});
+drawerBody.addEventListener('input', e => {
+  if(e.target.id !== 'comboSearch') return;
+  comboQueryFor = draft; comboQuery = e.target.value;
+  applyComboFilter();
+});
 drawerBody.addEventListener('click', updateSummaries);
 drawerBody.addEventListener('input', updateSummaries);
 drawerBody.addEventListener('change', updateSummaries);

@@ -456,18 +456,101 @@ button,input,select,textarea{ font-family:inherit; font-size:inherit; color:inhe
   text-align:left; font-weight:600; color:var(--ink-2);
   font-size:12.5px; padding:6px 8px;
   border-bottom:1px solid var(--line);
+  position:sticky; top:0; background:var(--panel); z-index:1;
 }
-.combo-table td{ padding:7px 8px; border-bottom:1px solid var(--line-soft); vertical-align:middle; }
-.combo-table tr.is-off td{ opacity:.45; }
+.combo-table td{ padding:6px 8px; border-bottom:1px solid var(--line-soft); vertical-align:middle; }
+.combo-table .c-sell{ width:44px; text-align:center; }
+.combo-table .c-ready{ width:70px; text-align:center; }
+.combo-table .c-thumb{ width:56px; }
+.combo-table .c-price{ width:108px; }
+.combo-table .c-tag{ width:150px; }
+.combo-table .c-more{ width:84px; }
+.c-lbl{ display:none; }
+.c-ready label{ display:inline-flex; align-items:center; gap:6px; cursor:pointer; }
+
+.combo-item:hover > tr:first-child{ background:#FAF7F9; }
+.combo-item.is-filtered{ display:none; }
+/* แถวที่ปิดขาย: ยังอ่านชื่อออก แค่ลดความเด่น */
+.combo-item.is-off .combo-combo{ color:var(--ink-2); font-weight:500; }
+.combo-item.is-off .combo-thumb,
+.combo-item.is-off .c-ready,
+.combo-item.is-off .c-tag,
+.combo-item.is-off .c-more{ opacity:.45; }
+.combo-item.is-off .c-price input{ background:var(--line-soft); }
+.combo-item.is-off .c-price input::placeholder{ color:var(--ink-3); }
+
+.combo-thumb{
+  display:block; width:46px; height:46px; padding:0; border:1px solid var(--line);
+  border-radius:9px; overflow:hidden; background:var(--line-soft); cursor:pointer;
+}
+.combo-thumb:disabled{ cursor:default; }
+.combo-thumb:not(:disabled):hover{ border-color:var(--brand); }
+.combo-thumb-img{ width:100%; height:100%; object-fit:cover; display:block; }
+.combo-thumb-img.is-missing{
+  background:repeating-linear-gradient(45deg, var(--line-soft), var(--line-soft) 6px, #fff 6px, #fff 12px);
+}
+.combo-imgrow td{ background:#FAF7F9; padding:8px 12px; }
+.combo-pathlabel{ display:flex; align-items:center; gap:10px; font-size:12.5px; color:var(--ink-2); }
+.combo-pathlabel span{ flex:none; }
+
 .combo-table input[type="number"]{
-  width:92px; border:1px solid var(--line); border-radius:7px; padding:6px 8px;
+  width:100%; border:1px solid var(--line); border-radius:7px; padding:7px 8px;
   font-variant-numeric:tabular-nums;
 }
 .combo-table input[type="text"]{ width:100%; border:1px solid var(--line); border-radius:7px; padding:6px 8px; }
-.combo-table select{ width:100%; border:1px solid var(--line); border-radius:7px; padding:6px 8px; background:#fff; font:inherit; }
+.combo-table select{ width:100%; border:1px solid var(--line); border-radius:7px; padding:7px 8px; background:#fff; font:inherit; }
 .combo-table input[type="checkbox"]{ width:18px; height:18px; accent-color:var(--brand); }
 .combo-combo{ font-weight:600; }
+.combo-table .combo-more{ margin:0; width:100%; white-space:nowrap; padding:6px 8px; }
 .combo-scroll{ overflow-x:auto; }
+
+/* แถบค้นหา + แก้หลายแถว */
+.combo-tools{ display:flex; align-items:center; gap:12px; margin:10px 0 8px; }
+.combo-tools input[type="search"]{
+  flex:1; min-width:0; border:1px solid var(--line); border-radius:8px; padding:8px 12px; font:inherit;
+}
+.combo-vis{ font-size:12.5px; color:var(--ink-2); white-space:nowrap; }
+.combo-bulk{
+  display:flex; flex-wrap:wrap; align-items:center; gap:8px;
+  padding:10px 12px; margin-bottom:10px;
+  background:var(--brand-soft); border-radius:10px;
+}
+.cb-label{ font-size:12.5px; font-weight:600; color:var(--brand-dark); margin-right:4px; }
+.cb-set{ display:inline-flex; gap:6px; align-items:center; }
+.cb-set input, .cb-set select{
+  border:1px solid var(--line); border-radius:7px; padding:5px 8px; background:#fff; font:inherit; font-size:13px;
+}
+.cb-set input{ width:84px; }
+.cb-set select{ max-width:150px; }
+
+@media (max-width:760px){
+  .combo-tools{ flex-wrap:wrap; }
+  .combo-tools input[type="search"]{ font-size:16px; flex:1 1 100%; }
+  .combo-bulk .cb-set{ flex:1 1 100%; }
+  .cb-set input{ flex:0 0 96px; font-size:16px; }
+  .cb-set select{ flex:1; max-width:none; font-size:16px; }
+  .combo-table, .combo-table tbody, .combo-table tr, .combo-table td{ display:block; width:auto; }
+  .combo-table thead{ display:none; }
+  .combo-item{ border:1px solid var(--line); border-radius:12px; padding:10px; margin-bottom:10px; }
+  .combo-item > tr:first-child{
+    display:grid; gap:8px 10px; align-items:center;
+    grid-template-columns:32px 56px 1fr 1fr;
+    grid-template-areas:"sell thumb name name" "ready ready price price" "tag tag tag more";
+  }
+  .combo-table td{ padding:0; border:0; }
+  .combo-table .c-sell, .combo-table .c-ready, .combo-table .c-thumb,
+  .combo-table .c-price, .combo-table .c-tag, .combo-table .c-more{ width:auto; }
+  .combo-table .c-sell{ grid-area:sell; }
+  .combo-table .c-thumb{ grid-area:thumb; }
+  .combo-table .combo-combo{ grid-area:name; }
+  .combo-table .c-ready{ grid-area:ready; text-align:left; }
+  .combo-table .c-price{ grid-area:price; }
+  .combo-table .c-tag{ grid-area:tag; }
+  .combo-table .c-more{ grid-area:more; }
+  .c-lbl{ display:inline; font-size:13px; }
+  .combo-imgrow td{ margin-top:8px; border-radius:8px; }
+  .combo-pathlabel{ flex-direction:column; align-items:stretch; gap:4px; }
+}
 
 .value-chips{ display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
 .value-chip{
