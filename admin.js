@@ -1533,7 +1533,7 @@ function renderVarModal(focus){
       <div class="vm-vals">
         <span class="vm-label">ค่าตัวเลือก</span>
         <div class="vm-chips">
-          ${r.values.map((v, vi) => `<span class="vm-chip">${esc(v)}<button type="button" data-vm-rmval="${i}" data-vi="${vi}" aria-label="ลบ ${esc(v)}">✕</button></span>`).join('')}
+          ${r.values.map((v, vi) => `<span class="vm-chip" data-vm-chip="${i}" data-vi="${vi}" title="${r.values.length > 1 ? 'ลากเพื่อเรียงลำดับ (จอสัมผัส: กดค้างแล้วลาก)' : ''}">${esc(v)}<button type="button" data-vm-rmval="${i}" data-vi="${vi}" aria-label="ลบ ${esc(v)}">✕</button></span>`).join('')}
         </div>
         <input type="text" class="vm-newval" data-vm-newval="${i}" value="${esc(r.pending || '')}" placeholder="${r.values.length ? '' : 'ค่าตัวเลือก'}" autocomplete="off">
         <small>กด Enter เพื่อเพิ่มค่า</small>
@@ -1692,6 +1692,77 @@ $('varBody').addEventListener('drop', e => {
   vm.rows.splice(to, 0, moved);
   renderVarModal();
 });
+
+// ลากเรียงลำดับ "ค่า" (ชิป) ภายในตัวเลือกเดียวกัน — เมาส์ลากได้เลย · จอสัมผัสกดค้างแล้วลาก
+(function(){
+  const body = $('varBody');
+  let drag = null;
+  const MARKS = ['is-dragging', 'is-over-before', 'is-over-after'];
+  function clearMarks(){ body.querySelectorAll('.vm-chip.is-dragging,.vm-chip.is-over-before,.vm-chip.is-over-after').forEach(c => c.classList.remove(...MARKS)); }
+  function endDrag(){
+    if(drag && drag.timer) clearTimeout(drag.timer);
+    clearMarks();
+    document.body.classList.remove('vm-chip-dragging');
+    drag = null;
+  }
+  function startDrag(){
+    if(!drag || drag.active) return;
+    drag.active = true;
+    drag.chip.classList.add('is-dragging');
+    document.body.classList.add('vm-chip-dragging');
+    try{ drag.chip.setPointerCapture(drag.id); }catch(_){}
+  }
+  function targetAt(x, y){
+    const el = document.elementFromPoint(x, y);
+    const chip = el && el.closest ? el.closest('.vm-chip[data-vm-chip]') : null;
+    if(!chip || +chip.dataset.vmChip !== drag.row) return null;
+    const r = chip.getBoundingClientRect();
+    return { vi: +chip.dataset.vi, after: x > r.left + r.width / 2, chip };
+  }
+  body.addEventListener('pointerdown', e => {
+    if(!vm) return;
+    const chip = e.target.closest('.vm-chip[data-vm-chip]');
+    if(!chip || e.target.closest('button')) return;
+    if(e.pointerType === 'mouse' && e.button !== 0) return;
+    const row = +chip.dataset.vmChip;
+    if(vm.rows[row].values.length < 2) return;
+    drag = { row, vi: +chip.dataset.vi, chip, id: e.pointerId, x: e.clientX, y: e.clientY,
+             touch: e.pointerType !== 'mouse', active: false, timer: null, target: null };
+    if(drag.touch) drag.timer = setTimeout(startDrag, 350);
+  });
+  document.addEventListener('pointermove', e => {
+    if(!drag || e.pointerId !== drag.id) return;
+    const moved = Math.hypot(e.clientX - drag.x, e.clientY - drag.y);
+    if(!drag.active){
+      if(drag.touch){ if(moved > 8) endDrag(); return; }   // ขยับก่อนกดค้างครบเวลา = ไม่ใช่การลาก
+      if(moved < 4) return;
+      startDrag();
+    }
+    e.preventDefault();
+    clearMarks();
+    drag.chip.classList.add('is-dragging');
+    const t = targetAt(e.clientX, e.clientY);
+    drag.target = t;
+    if(t && t.vi !== drag.vi) t.chip.classList.add(t.after ? 'is-over-after' : 'is-over-before');
+  });
+  document.addEventListener('pointerup', e => {
+    if(!drag || e.pointerId !== drag.id) return;
+    const d = drag, wasActive = d.active, t = d.target;
+    endDrag();
+    if(!wasActive || !t || !vm) return;
+    let to = t.vi + (t.after ? 1 : 0);
+    if(to > d.vi) to--;
+    if(to === d.vi) return;
+    readVarModalInputs();
+    const vals = vm.rows[d.row].values;
+    const [moved] = vals.splice(d.vi, 1);
+    vals.splice(to, 0, moved);
+    renderVarModal();
+  });
+  document.addEventListener('pointercancel', e => { if(drag && e.pointerId === drag.id) endDrag(); });
+  // ไม่ให้เลือกข้อความ/เปิดเมนูค้างตอนกดค้างบนชิป
+  body.addEventListener('contextmenu', e => { if(drag && drag.active) e.preventDefault(); });
+})();
 
 $('varAddRow').addEventListener('click', () => {
   readVarModalInputs();

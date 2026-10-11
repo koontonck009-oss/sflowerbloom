@@ -912,6 +912,14 @@ body.prices-off #posterCard{ display:none !important; }
 .vm-chip{ display:inline-flex; align-items:center; gap:8px; background:#E4E1E3; border-radius:999px; padding:7px 8px 7px 16px; font-size:14px; }
 .vm-chip button{ border:none; cursor:pointer; width:20px; height:20px; border-radius:50%; background:#6b6468; color:#fff; font-size:11px; line-height:1; padding:0; }
 .vm-chip button:hover{ background:var(--danger); }
+/* ลากเรียงลำดับค่าตัวเลือก (ชิป) */
+.vm-chip[data-vm-chip]{ position:relative; cursor:grab; user-select:none; -webkit-user-select:none; touch-action:none; }
+.vm-chip.is-dragging{ opacity:.55; cursor:grabbing; box-shadow:0 2px 8px rgba(0,0,0,.18); }
+.vm-chip.is-over-before::before,
+.vm-chip.is-over-after::after{ content:''; position:absolute; top:-2px; bottom:-2px; width:3px; border-radius:2px; background:var(--plum, #4a1f3a); }
+.vm-chip.is-over-before::before{ left:-6px; }
+.vm-chip.is-over-after::after{ right:-6px; }
+body.vm-chip-dragging, body.vm-chip-dragging *{ cursor:grabbing !important; user-select:none; }
 .vm-del{ border:none; background:none; cursor:pointer; font-size:20px; padding:18px 0 0; color:var(--ink-2); }
 .vm-del:hover:not(:disabled){ color:var(--danger); }
 .vm-del:disabled{ opacity:.25; cursor:not-allowed; }
