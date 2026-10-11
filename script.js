@@ -49,7 +49,8 @@ function renderThumb(p, variantLabel){
       const sel = variantLabel.split(', ');
       v = matchVariant(p, sel);
     } else {
-      v = currentVariant(p);
+      // ยังไม่ได้เลือกตัวเลือกใดเลย = รูปปก ใช้แบบปกติราคาถูกสุด ไม่ใช่แถวแรกของลิสต์
+      v = currentOptionSelection(p).every(x => x == null) ? coverVariantOf(p) : currentVariant(p);
     }
     src = (v && (v.image || (v.images && v.images[0]))) || p.image || (p.images && p.images[0]) || null;
     alt = p.name + (v ? ' ' + v.match.join(' ') : '');
@@ -189,6 +190,17 @@ function matchVariant(p, selection){
   if(exact) return exact;
   const pool = modalVariantsOf(p);
   return pool === p.variants ? p.variants[0] : pool.reduce((a,b) => (b.price < a.price ? b : a));
+}
+// รูปปกการ์ด/รูปค้นหา ตอนลูกค้ายังไม่ได้เลือกอะไร: ใช้แบบที่ราคาถูกสุดและไม่ใช่ "ใส่เงิน" (ถ้าราคาเท่ากันใช้แบบที่อยู่ก่อน)
+// ไม่ว่าลำดับตัวแปรในหลังบ้านจะเรียงยังไง ช่อใส่เงินจะไม่ขึ้นเป็นปกเอง (ถ้าสินค้ามีแต่แบบใส่เงินก็ใช้ตัวที่ถูกสุดของทั้งหมด)
+function isMoneyVariant(v){
+  return v.tag === 'ใส่เงิน' || (v.match || []).some(m => String(m).indexOf('ใส่เงิน') !== -1);
+}
+function coverVariantOf(p){
+  const all = p.variants;
+  const plain = all.filter(v => !isMoneyVariant(v));
+  const pool = plain.length ? plain : all;
+  return pool.reduce((a,b) => (b.price < a.price ? b : a));
 }
 // เช็คว่าค่านี้ "เลือกได้" ไหมถ้าจะตั้งมิติ optIndex เป็น value โดยพิจารณาจากตัวเลือกมิติอื่นที่เลือกไว้แล้ว
 // (มิติที่ยังไม่ได้เลือก sel[i]==null ถือเป็น "อะไรก็ได้" ไม่จำกัด) ใช้ตัดสินว่าปุ่มไหนควรเป็นสีเทา (ปิด)
