@@ -2731,7 +2731,7 @@ function renderComboThumb(prod){
   if(prod) box.innerHTML = thumbHtml(mainImageOf(prod), 'rv-opt-img');
 }
 
-function comboMatches(){
+function rvComboMatches(){
   // เพิ่งกดเปิดโดยยังไม่พิมพ์ → โชว์ทั้งหมด · พิมพ์แล้ว → กรองตามรหัส/ชื่อ ทุกคำที่พิมพ์ต้องเจอ
   const q = rvCombo.typed ? $('revProd').value.trim().toLowerCase() : '';
   const words = q.split(/\s+/).filter(Boolean);
@@ -2751,7 +2751,7 @@ function renderCombo(){
   box.hidden = !rvCombo.open;
   if(!rvCombo.open) return;
   const cur = resolveReviewProduct($('revProd').value);
-  rvCombo.list = comboMatches();
+  rvCombo.list = rvComboMatches();
   if(rvCombo.active >= rvCombo.list.length) rvCombo.active = rvCombo.list.length - 1;
   box.innerHTML = rvCombo.list.length
     ? rvCombo.list.map((p, i) => `<div class="rv-opt${i === rvCombo.active ? ' is-active' : ''}${cur && cur.id === p.id ? ' is-current' : ''}" role="option" id="rvOpt${i}" data-i="${i}" aria-selected="${!!(cur && cur.id === p.id)}">

@@ -864,24 +864,6 @@ main{padding:18px 3vw 80px;}
 .add-btn:hover{background:var(--sage-dark);}
 .add-btn:active{transform:scale(.96);}
 .add-btn.added{background:var(--rose);}
-.card-actions{display:flex; gap:8px; margin-top:10px; align-items:stretch;}
-.buy-now-btn{
-  flex:1; border:none; background:var(--sage); color:#fff;
-  padding:11px 8px; border-radius:999px; font-weight:700; font-size:14px;
-  cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;
-  transition:background .15s ease, transform .1s ease; font-family:'Kanit';
-  box-shadow:0 6px 14px rgba(246,33,136,0.45);
-}
-.buy-now-btn:hover{background:var(--sage-dark);}
-.buy-now-btn:active{transform:scale(.96);}
-.cart-icon-btn{
-  flex-shrink:0; width:40px; height:40px; border:1.5px solid var(--line); background:#fff; color:var(--sage);
-  border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center;
-  font-size:16px; transition:all .15s ease;
-}
-.cart-icon-btn:hover{background:var(--cream); border-color:var(--sage);}
-.cart-icon-btn:active{transform:scale(.9);}
-.cart-icon-btn.added{background:var(--sage); color:#fff; border-color:var(--sage);}
 
 /* ---------- Cart drawer ---------- */
 .overlay{
@@ -1560,7 +1542,6 @@ main{padding:18px 3vw 80px;}
   font-family:'Kanit'; font-weight:700; font-size:17px; color:var(--rose-dark);
 }
 .total-line.grand span:first-child{font-family:'Kanit'; font-weight:700; font-size:14px; color:var(--plum);}
-.total-line .approx-note{font-family:'Kanit'; font-weight:400; font-size:11px; color:#8a7680;}
 
 footer{
   text-align:center; padding:26px 6vw 40px; font-size:13px; color:#8a7680;

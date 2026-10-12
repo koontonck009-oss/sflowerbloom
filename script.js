@@ -976,11 +976,6 @@ function setDraftSortOrder(order){
   filterDraft.sortOrder = (filterDraft.sortOrder === order) ? 'none' : order;
   renderFilterSheetBody();
 }
-function applySortOrder(arr){
-  if(activeSortOrder === 'asc') return arr.slice().sort((a,b)=> displayPrice(a)-displayPrice(b));
-  if(activeSortOrder === 'desc') return arr.slice().sort((a,b)=> displayPrice(b)-displayPrice(a));
-  return arr;
-}
 // ลากแถบเลื่อนราคา (ใช้ทั้ง sidebar ที่ apply ทันที และ sheet มือถือที่ staged ไว้ก่อน)
 // อัปเดตเฉพาะ DOM ของแถบเลื่อนเอง ไม่ re-render ทั้งแผงตัวกรอง เพื่อไม่ให้การลากสะดุด
 function onPriceSliderInput(mode, which, rawVal){
@@ -1935,31 +1930,6 @@ async function downloadCatalogImages(){
   }
 }
 
-function addToCart(id){
-  if(PRICES_HIDDEN) return;
-  const p = PRODUCTS.find(x=>x.id===id);
-  if(!p) return;
-  if(p.billSelector){ openProductModal(id); return; }
-  // สินค้าระบบ options ใหม่มีหลายมิติให้เลือกครบก่อนถึงจะสรุปราคาได้ — เปิดหน้ารายละเอียดให้เลือกแทนการเพิ่มจากการ์ดตรงๆ
-  if(hasNewOptions(p)){ openProductModal(id); return; }
-  let label = null, price = p.price;
-  if(p.colors){ label = p.colors[resolvedColorIndex(p)].name; }
-  if(p.sizes){
-    const sv = p.sizes[selectedSizeVariant[id]||0];
-    label = label ? `${label}, ${sv.name}` : sv.name;
-    price = sv.price;
-  }
-  const key = cartKeyOf(id, label);
-  if(cart[key]) cart[key].qty += 1;
-  else cart[key] = { qty:1, unitPrice:price, label };
-  updateCartUI();
-  showToast('เพิ่มลงตะกร้าแล้ว 🌸');
-  const btn = document.getElementById('add-'+id);
-  if(btn){
-    btn.classList.add('added'); btn.textContent = '✓';
-    setTimeout(()=>{ btn.classList.remove('added'); btn.textContent='🧺'; }, 900);
-  }
-}
 function changeQty(key, delta){
   if(!cart[key]) return;
   cart[key].qty += delta;
@@ -2070,29 +2040,6 @@ function buildModalOrderLines(){
   const result = { lines, items, subtotal: lineTotal };
   closeProductModal();
   return result;
-}
-function buildSingleProductLines(id){
-  const p = PRODUCTS.find(x=>x.id===id);
-  if(!p) return null;
-  let label = null, price = p.price;
-  if(hasNewOptions(p)){
-    const sel = currentOptionSelection(p);
-    label = sel.join(', ');
-    price = matchVariant(p, sel).price;
-  } else {
-    if(p.colors){ label = p.colors[resolvedColorIndex(p)].name; }
-    if(p.sizes){
-      const sv = p.sizes[selectedSizeVariant[id]||0];
-      label = label ? `${label}, ${sv.name}` : sv.name;
-      price = sv.price;
-    }
-  }
-  const lines = [`• ${p.name}${label ? ` (${label})` : ''} x1 = ${fmt(price)}`];
-  const items = [{ id:p.id, name:p.name, label:label||'', qty:1, unitPrice:price, lineTotal:price }];
-  return { lines, items, subtotal: price };
-}
-function quickOrder(id){
-  startCheckout(() => buildSingleProductLines(id));
 }
 function startCheckout(builderFn){
   if(PRICES_HIDDEN) return;
