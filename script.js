@@ -14,6 +14,7 @@ const PAGE_LINK = 'https://m.me/S.Flower.Bloom44';
    จะแสดงราคาก็ต่อเมื่ออ่านเอกสารจาก Firestore ได้สำเร็จ และหลังบ้านไม่ได้เปิดสวิตช์ซ่อนราคาไว้ */
 let PRICES_HIDDEN = true;
 let cloudHidePrices = true;   // ค่าที่อ่านได้ล่าสุดจาก Firestore
+let REVIEW_TAGS = {};         // ป้ายสินค้าของรูปรีวิว { 'review12.jpg': ['s13'] } จากหลังบ้าน (ช่อง reviewsJson) — ว่าง = รีวิวไม่ผูกสินค้า
 let cloudStamp = null;        // ตราเวลา+สถานะสวิตช์+เวลาแก้ตัวเลือกร้านล่าสุดจาก Firestore
 let cloudOptions = null;      // ตัวเลือกร้าน (หมวดหมู่/ชนิดดอกไม้/ขนาด) ที่แก้จากหลังบ้าน null = ใช้ค่าเริ่มต้นในไฟล์นี้
 let CATALOG_DOC_STAMP = null; // ตราที่ใช้ตอนโหลดหน้านี้ (null = ไม่ได้ใช้ข้อมูลจาก Firestore)
@@ -2462,7 +2463,7 @@ let modalSelectedAddons = new Set(); // ชื่อตัวเลือกเ�
 // Falls back to the selected color's own image, then the product-level images/image.
 // Existing products with just one "image" keep working unchanged — the
 // gallery/thumbnails simply don't appear when there's only one photo.
-function currentGalleryImages(p){
+function productPhotoList(p){
   if(hasNewOptions(p)){
     // ยังไม่ได้เลือกตัวเลือกใดเลย = รูปแรกของแกลเลอรีใช้แบบปกติราคาถูกสุด (เหมือนรูปปกบนการ์ด) ไม่ใช่แถวแรกของลิสต์
     const v = currentOptionSelection(p).every(x => x == null) ? coverVariantOf(p) : currentVariant(p);
@@ -2500,6 +2501,22 @@ function currentGalleryImages(p){
   if(p.image) return [p.image];
   return [];
 }
+/* รูปรีวิวลูกค้าที่หลังบ้านผูกกับสินค้านี้ (เรียงรูปล่าสุดก่อน) — ต่อท้ายแกลเลอรีเท่านั้น
+   ไม่ใช่รูปปก/รูปในตะกร้า/ภาพแคตตาล็อก เพราะฟังก์ชันเหล่านั้นอ่านจาก image/images ของสินค้าโดยตรง */
+function reviewKeyOf(src){ return String(src || '').split('/').pop(); }
+function reviewNumOf(key){ const m = /(\d+)/.exec(key); return m ? +m[1] : 0; }
+function reviewPhotosOf(p){
+  if(!p) return [];
+  return Object.keys(REVIEW_TAGS)
+    .filter(k => REVIEW_TAGS[k].includes(p.id))
+    .sort((a, b) => reviewNumOf(b) - reviewNumOf(a))
+    .map(k => 'images/reviews/' + k);
+}
+function currentGalleryImages(p){
+  const base = productPhotoList(p);
+  const rv = reviewPhotosOf(p).filter(src => !base.includes(src));
+  return rv.length ? base.concat(rv) : base;
+}
 // Small round preview photo inside a choice chip (desktop only — hidden by CSS on mobile).
 // Works for anything with .image / .images[0] (colors, sizes, addons); no photo → no thumbnail.
 function chipThumb(o){
@@ -2522,8 +2539,9 @@ function renderModalThumbs(p){
     wrap.innerHTML = '';
     return;
   }
+  const rvSet = new Set(reviewPhotosOf(p));
   wrap.innerHTML = imgs.map((src, i) => `
-    <button type="button" class="gallery-thumb ${i===modalImgIndex?'active':''}" onclick="setModalImgIndex(${i})" aria-label="ดูรูปที่ ${i+1}">
+    <button type="button" class="gallery-thumb ${i===modalImgIndex?'active':''}${rvSet.has(src)?' is-review':''}" onclick="setModalImgIndex(${i})" aria-label="${rvSet.has(src)?'ดูรูปรีวิวลูกค้า':'ดูรูปที่ '+(i+1)}">
       <img src="${src}" alt="${p.name} มุมที่ ${i+1}" loading="lazy" decoding="async" onerror="this.closest('.gallery-thumb').style.display='none'">
     </button>
   `).join('');
@@ -2721,6 +2739,8 @@ function renderModal(){
   const mainSrc = imgs[modalImgIndex] || '';
   if(mainImgEl && mainSrc !== lastModalImgSrc) mainImgEl.classList.add('pd-fade');
   lastModalImgSrc = mainSrc;
+  const rvTag = document.getElementById('modalReviewTag'); // ป้าย "รีวิวจากลูกค้า" บนรูปหลัก เมื่อกำลังดูรูปรีวิว
+  if(rvTag) rvTag.hidden = !(mainSrc && reviewPhotosOf(p).includes(mainSrc));
   renderModalThumbs(p);
   document.getElementById('modalName').textContent = p.name;
   const modalCatEl = document.getElementById('modalCat');
@@ -2925,7 +2945,17 @@ async function fetchProductsFromFirestore(){
   cloudHidePrices = data.hidePrices === true;
   cloudOptions = null;
   try{ if(typeof data.optionsJson === 'string') cloudOptions = JSON.parse(data.optionsJson); }catch(_){ cloudOptions = null; }
-  cloudStamp = String(data.updatedAt || '') + '|' + cloudHidePrices + '|' + String(data.optionsUpdatedAt || '');
+  REVIEW_TAGS = {};
+  try{
+    const raw = typeof data.reviewsJson === 'string' ? JSON.parse(data.reviewsJson) : null;
+    if(raw && typeof raw === 'object'){
+      Object.keys(raw).forEach(k => {
+        const ids = (Array.isArray(raw[k]) ? raw[k] : [raw[k]]).map(x => String(x ?? '').trim()).filter(Boolean);
+        if(ids.length) REVIEW_TAGS[k] = ids;
+      });
+    }
+  }catch(_){ REVIEW_TAGS = {}; }
+  cloudStamp = String(data.updatedAt || '') + '|' + cloudHidePrices + '|' + String(data.optionsUpdatedAt || '') + '|' + String(data.reviewsUpdatedAt || '');
   const list = typeof data.json === 'string' ? JSON.parse(data.json) : data.list;
   return (Array.isArray(list) && list.length) ? list : null;
 }
@@ -3141,13 +3171,29 @@ function initReviewAutoScroll(){
 }
 
 /* ---------- "ดูรีวิวทั้งหมด": กดที่ตัวเลขจำนวนรีวิว เปิด grid เต็มจอ ---------- */
+// สินค้าที่หลังบ้านผูกกับรูปรีวิวนี้ (เฉพาะสินค้าที่ยังแสดงบนหน้าร้าน)
+function reviewProductsOf(src){
+  return (REVIEW_TAGS[reviewKeyOf(src)] || []).map(id => PRODUCTS.find(p => p.id === id)).filter(Boolean);
+}
+function reviewGridTag(src){
+  const p = reviewProductsOf(src)[0];
+  return p ? `<span class="review-grid-tag">${escapeHtmlText(p.name)}</span>` : '';
+}
+function escapeHtmlText(t){
+  return String(t ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function openProductFromReview(id){
+  closeReviewLightbox();
+  if(document.getElementById('reviewsAllModal').classList.contains('open')) closeReviewsAll();
+  openProductModal(id);
+}
 function renderReviewsAllGrid(){
   const grid = document.getElementById('reviewsAllGrid');
   const countEl = document.getElementById('reviewsAllCount');
   if(countEl) countEl.textContent = `${REVIEWS_ALL_SORTED.length} รูป`;
   grid.innerHTML = REVIEWS_ALL_SORTED.map((src, i) => `
     <div class="review-grid-photo" onclick="openReviewLightbox(REVIEWS_ALL_SORTED, ${i})">
-      <img src="${src}" alt="รีวิวจากลูกค้า" loading="lazy" decoding="async" onerror="this.closest('.review-grid-photo').style.display='none'">
+      <img src="${src}" alt="รีวิวจากลูกค้า" loading="lazy" decoding="async" onerror="this.closest('.review-grid-photo').style.display='none'">${reviewGridTag(src)}
     </div>`).join('');
 }
 function openReviewsAll(){
@@ -3176,6 +3222,12 @@ function showLightboxImage(){
   document.getElementById('reviewLightboxImg').src = src;
   const counter = document.getElementById('reviewLightboxCounter');
   if(counter) counter.textContent = `${currentLightboxIndex + 1} / ${currentLightboxList.length}`;
+  const prodBox = document.getElementById('reviewLightboxProd'); // ปุ่ม "ดูสินค้านี้" ของรูปที่ผูกสินค้าไว้
+  if(prodBox){
+    const prods = reviewProductsOf(src).slice(0, 2);
+    prodBox.innerHTML = prods.map(p => `<button type="button" onclick="openProductFromReview(${JSON.stringify(p.id).replace(/"/g, '&quot;')})">ดูสินค้านี้: ${escapeHtmlText(p.name)} ›</button>`).join('');
+    prodBox.hidden = !prods.length;
+  }
   const showNav = currentLightboxList.length > 1;
   document.querySelectorAll('.review-lightbox-nav').forEach(btn => btn.style.display = showNav ? 'flex' : 'none');
 }

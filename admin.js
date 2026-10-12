@@ -13,6 +13,7 @@ const FIRESTORE_DOC_LIMIT = 1048576; // 1 MB ต่อเอกสาร
 
 let fb = null;           // { auth, db, authApi, dbApi }
 let catalog = [];        // รายการสินค้าทั้งหมด
+let reviewTags = {};      // ป้ายสินค้าของรูปรีวิว { 'review12.jpg': ['s13'] } เก็บในเอกสารเดียวกับสินค้า (ช่อง reviewsJson)
 let pricesHidden = false; // สวิตช์ "ซ่อนราคาบนหน้าร้าน" (เก็บในเอกสาร catalog/products ช่อง hidePrices)
 let draft = null;        // สินค้าที่กำลังแก้ไขอยู่
 let draftIndex = -1;     // -1 = สินค้าใหม่
@@ -293,7 +294,9 @@ async function loadCatalog(){
       let opts = null;
       try{ if(typeof data.optionsJson === 'string') opts = JSON.parse(data.optionsJson); }catch(_){ opts = null; }
       applyShopOptions(opts);
+      reviewTags = parseReviewTags(data.reviewsJson);
     } else {
+      reviewTags = {};
       catalog = [];
       pricesHidden = false;
       applyShopOptions(null);
@@ -816,6 +819,8 @@ function updateSummaries(){
   if(auto) auto.textContent = (derivedSizeTags(draft) || []).join(', ') || 'ยังไม่ได้ตั้ง';
   $('sumPrice').textContent = price;
   $('sumMedia').textContent = media;
+  if(reviewPanelFor !== String(draft.id || '')) renderReviewsPanel();
+  $('sumReviews').textContent = draft.id ? (reviewKeysOf(draft.id).length ? reviewKeysOf(draft.id).length + ' รูป' : 'ยังไม่มี (ไม่บังคับ)') : '';
   $('sumAddons').textContent = na ? na + ' รายการ' : 'ไม่มี (ไม่บังคับ)';
 
   // ตัวอย่างการ์ดที่ลูกค้าเห็น
@@ -837,6 +842,7 @@ function renderAllPanels(){
   renderPricePanel();
   renderAddonsPanel();
   renderMediaPanel();
+  renderReviewsPanel();
 }
 
 /* --- การ์ด 1: ข้อมูลสินค้า (ชื่อ · หมวด · ชนิด · ขนาด · รายละเอียด · พร้อมส่ง · ราคา · รหัส) --- */
@@ -2152,12 +2158,21 @@ async function saveDraft(){
   box.hidden = true;
 
   const cleaned = cleanProduct(draft);
+  const oldId = draftIndex < 0 ? '' : String(catalog[draftIndex].id || '');
   if(draftIndex < 0) catalog.push(cleaned);
   else catalog[draftIndex] = cleaned;
 
   renderList();
   const ok = await saveCatalog(draftIndex < 0 ? 'เพิ่มสินค้าแล้ว' : 'บันทึกการแก้ไขแล้ว');
-  if(ok) closeEditor();
+  if(ok){
+    // เปลี่ยนรหัสสินค้า → ย้ายป้ายรูปรีวิวตามไปด้วย ไม่งั้นรีวิวจะหลุดจากสินค้านี้
+    if(oldId && cleaned.id !== oldId && Object.values(reviewTags).some(ids => ids.includes(oldId))){
+      const next = clone(reviewTags);
+      Object.keys(next).forEach(k => { next[k] = next[k].map(id => id === oldId ? cleaned.id : id); });
+      await persistReviewTags(next);
+    }
+    closeEditor();
+  }
 }
 
 /* ───────────────── นำเข้า / สำรองข้อมูล ───────────────── */
@@ -2565,6 +2580,258 @@ function updateCatalogBtn(rows){
   btn.disabled = !n;
 }
 
+/* ───────────────── รูปรีวิวลูกค้า ─────────────────
+   ไฟล์รูปยังอยู่ที่ images/reviews/reviewN.jpg เหมือนเดิม (หน้าร้านหาเองตามเลขไฟล์)
+   หลังบ้านเก็บแค่ "ป้ายสินค้า" ของแต่ละรูป ในช่อง reviewsJson ของเอกสารเดียวกับสินค้า
+   หน้าร้านเลยได้ป้ายมาพร้อมสินค้า ไม่ต้องอ่าน Firestore เพิ่ม — รูปที่ไม่ผูกสินค้ายังแสดงในแถบรีวิวเหมือนเดิม */
+
+const REVIEW_DIR = 'images/reviews/';
+const REVIEW_MAX = 200, REVIEW_BATCH = 20;
+let rvm = null;            // { files:[], tags:{}, sel:Set, filter:'all'|'none'|'tagged'|'prod', loading, dirty }
+let reviewPanelFor = null; // รหัสสินค้าที่การ์ด "รูปรีวิวลูกค้า" ในหน้าแก้ไขแสดงอยู่
+
+function parseReviewTags(raw){
+  const out = {};
+  try{
+    const o = typeof raw === 'string' ? JSON.parse(raw) : null;
+    if(o && typeof o === 'object') Object.keys(o).forEach(k => {
+      const ids = (Array.isArray(o[k]) ? o[k] : [o[k]]).map(x => String(x ?? '').trim()).filter(Boolean);
+      if(ids.length) out[k] = ids;
+    });
+  }catch(_){}
+  return out;
+}
+function reviewNum(k){ const m = /(\d+)/.exec(k); return m ? +m[1] : 0; }
+function reviewKeysOf(id){
+  const t = String(id || '').trim();
+  if(!t) return [];
+  return Object.keys(reviewTags).filter(k => reviewTags[k].includes(t)).sort((a, b) => reviewNum(b) - reviewNum(a));
+}
+function probeImage(src){
+  return new Promise(res => { const im = new Image(); im.onload = () => res(true); im.onerror = () => res(false); im.src = src; });
+}
+// หาไฟล์ review1.jpg, review2.jpg, … ที่มีอยู่จริง (วิธีเดียวกับหน้าร้าน: ทีละชุด หยุดเมื่อทั้งชุดไม่มีไฟล์)
+async function scanReviewFiles(){
+  const found = [];
+  for(let start = 1; start <= REVIEW_MAX; start += REVIEW_BATCH){
+    const nums = Array.from({ length: Math.min(REVIEW_BATCH, REVIEW_MAX - start + 1) }, (_, i) => start + i);
+    const ok = await Promise.all(nums.map(n => probeImage(`${REVIEW_DIR}review${n}.jpg`)));
+    const hit = nums.filter((n, i) => ok[i]);
+    found.push(...hit);
+    if(!hit.length) break;
+  }
+  return found.map(n => `review${n}.jpg`).reverse(); // ใหม่สุดก่อน
+}
+
+async function persistReviewTags(next){
+  const clean = {};
+  Object.keys(next).sort((a, b) => reviewNum(a) - reviewNum(b)).forEach(k => { if(next[k] && next[k].length) clean[k] = next[k]; });
+  setSaveState('กำลังบันทึก…', 'is-saving');
+  try{
+    await fb.dbApi.setDoc(catalogRef(), {
+      reviewsJson: JSON.stringify(clean),
+      reviewsUpdatedAt: new Date().toISOString()
+    }, { merge: true });
+    reviewTags = clean;
+    setSaveState('บันทึกแล้ว · หน้าร้านอัปเดตทันที');
+    return true;
+  } catch(err){
+    setSaveState('บันทึกไม่สำเร็จ', 'is-error');
+    toast(err.code === 'permission-denied'
+      ? 'บันทึกไม่ได้: กฎความปลอดภัยของ Firestore ยังไม่อนุญาตให้เพิ่มช่อง reviewsJson / reviewsUpdatedAt'
+      : 'บันทึกไม่สำเร็จ: ' + (err.code || err.message), true);
+    console.error(err);
+    return false;
+  }
+}
+
+// ข้อความที่พิมพ์ในช่องสินค้า → สินค้า (รหัสตรงเป๊ะก่อน แล้วค่อยชื่อ) · ตัวเลือกใน datalist หน้าตาเป็น "รหัส · ชื่อ"
+function resolveReviewProduct(text){
+  const t = String(text || '').trim();
+  if(!t) return null;
+  const head = t.split(' · ')[0].trim().toLowerCase();
+  return catalog.find(p => String(p.id || '').toLowerCase() === head)
+      || catalog.find(p => String(p.name || '').trim().toLowerCase() === t.toLowerCase())
+      || null;
+}
+
+/* ───────── ช่องเลือกสินค้า (มีรูป) ─────────
+   แทน datalist ของเบราว์เซอร์ซึ่งใส่รูปไม่ได้ · ค่าในช่องยังเป็น "รหัส · ชื่อ" เหมือนเดิม
+   จึงใช้ resolveReviewProduct ตัวเดิมได้เลย */
+const rvCombo = { open: false, typed: false, active: -1, list: [] };
+
+function renderComboThumb(prod){
+  const box = $('revComboThumb');
+  if(!box) return;
+  box.hidden = !prod;
+  $('revProd').classList.toggle('has-thumb', !!prod);
+  if(prod) box.innerHTML = thumbHtml(mainImageOf(prod), 'rv-opt-img');
+}
+
+function comboMatches(){
+  // เพิ่งกดเปิดโดยยังไม่พิมพ์ → โชว์ทั้งหมด · พิมพ์แล้ว → กรองตามรหัส/ชื่อ ทุกคำที่พิมพ์ต้องเจอ
+  const q = rvCombo.typed ? $('revProd').value.trim().toLowerCase() : '';
+  const words = q.split(/\s+/).filter(Boolean);
+  const list = catalog.filter(p => {
+    if(!words.length) return true;
+    const hay = ((p.id || '') + ' ' + (p.name || '')).toLowerCase();
+    return words.every(w => hay.includes(w));
+  });
+  // รหัสที่ขึ้นต้นตรงกับที่พิมพ์ มาก่อน
+  if(q) list.sort((a, b) => (String(b.id || '').toLowerCase().startsWith(q) ? 1 : 0) - (String(a.id || '').toLowerCase().startsWith(q) ? 1 : 0));
+  return list;
+}
+
+function renderCombo(){
+  const box = $('revOpts');
+  $('revProd').setAttribute('aria-expanded', rvCombo.open ? 'true' : 'false');
+  box.hidden = !rvCombo.open;
+  if(!rvCombo.open) return;
+  const cur = resolveReviewProduct($('revProd').value);
+  rvCombo.list = comboMatches();
+  if(rvCombo.active >= rvCombo.list.length) rvCombo.active = rvCombo.list.length - 1;
+  box.innerHTML = rvCombo.list.length
+    ? rvCombo.list.map((p, i) => `<div class="rv-opt${i === rvCombo.active ? ' is-active' : ''}${cur && cur.id === p.id ? ' is-current' : ''}" role="option" id="rvOpt${i}" data-i="${i}" aria-selected="${!!(cur && cur.id === p.id)}">
+        ${thumbHtml(mainImageOf(p), 'rv-opt-img')}
+        <span class="rv-opt-text"><b class="rv-opt-id">${esc(p.id || '')}</b><span class="rv-opt-name">${esc(p.name || '')}${p.hidden ? ' <i class="rv-opt-tag">ซ่อนอยู่</i>' : ''}</span></span>
+      </div>`).join('')
+    : '<p class="rv-opt-empty">ไม่พบสินค้าที่ตรงกับที่พิมพ์ · ลองพิมพ์แค่รหัส เช่น s13</p>';
+  if(rvCombo.active >= 0){
+    const el = $('rvOpt' + rvCombo.active);
+    if(el){ el.scrollIntoView({ block: 'nearest' }); $('revProd').setAttribute('aria-activedescendant', el.id); }
+  } else $('revProd').removeAttribute('aria-activedescendant');
+}
+
+function comboOpen(typed){
+  rvCombo.open = true; rvCombo.typed = !!typed; rvCombo.active = -1;
+  renderCombo();
+}
+function comboClose(){
+  if(!rvCombo.open) return;
+  rvCombo.open = false; renderCombo();
+}
+function comboPick(i){
+  const p = rvCombo.list[i];
+  if(!p) return;
+  $('revProd').value = `${p.id} · ${p.name || ''}`;
+  rvCombo.open = false; rvCombo.typed = false;
+  renderCombo();
+  if(rvm) renderReviewsModal();
+}
+
+async function openReviewsModal(productId){
+  rvm = { files: [], tags: clone(reviewTags), sel: new Set(), filter: 'all', loading: true, dirty: false };
+  rvCombo.open = false; rvCombo.typed = false;
+  const prod = productId ? catalog.find(p => p.id === productId) : null;
+  $('revProd').value = prod ? `${prod.id} · ${prod.name || ''}` : '';
+  if(prod) rvm.filter = 'prod';
+  $('revScrim').hidden = false;
+  renderReviewsModal();
+  rvm.files = await scanReviewFiles();
+  if(!rvm) return; // ปิดหน้าต่างไปก่อนสแกนเสร็จ
+  rvm.loading = false;
+  renderReviewsModal();
+}
+
+async function closeReviewsModal(force){
+  if(!rvm) return;
+  if(rvm.dirty && !force){
+    const ok = await askConfirm('ยังไม่ได้บันทึก', 'การผูกรูปรีวิวที่แก้ไว้จะหายไป ปิดเลยไหม?', 'ปิดโดยไม่บันทึก');
+    if(!ok) return;
+  }
+  comboClose();
+  $('revScrim').hidden = true;
+  rvm = null;
+}
+
+function reviewVisibleKeys(){
+  const prod = resolveReviewProduct($('revProd').value);
+  return rvm.files.filter(k => {
+    const ids = rvm.tags[k] || [];
+    if(rvm.filter === 'none') return !ids.length;
+    if(rvm.filter === 'tagged') return ids.length > 0;
+    if(rvm.filter === 'prod') return !!prod && ids.includes(prod.id);
+    return true;
+  });
+}
+
+function renderReviewsModal(){
+  if(!rvm) return;
+  const prod = resolveReviewProduct($('revProd').value);
+  renderComboThumb(prod);
+  const nNone = rvm.files.filter(k => !(rvm.tags[k] || []).length).length;
+  const nProd = prod ? rvm.files.filter(k => (rvm.tags[k] || []).includes(prod.id)).length : 0;
+  if(rvm.filter === 'prod' && !prod) rvm.filter = 'all';
+  const chips = [['all', `ทั้งหมด (${rvm.files.length})`], ['none', `ยังไม่ผูก (${nNone})`], ['tagged', `ผูกแล้ว (${rvm.files.length - nNone})`]];
+  if(prod) chips.push(['prod', `ของ ${prod.id} (${nProd})`]);
+  $('revFilter').innerHTML = chips.map(([k, t]) => `<button type="button" class="rv-chip${rvm.filter === k ? ' is-on' : ''}" data-rv-filter="${k}">${esc(t)}</button>`).join('');
+
+  const keys = reviewVisibleKeys();
+  $('revGrid').innerHTML = rvm.loading
+    ? '<p class="rv-empty">กำลังตรวจหารูปในโฟลเดอร์ images/reviews …</p>'
+    : keys.length ? keys.map(k => {
+        const ids = rvm.tags[k] || [];
+        const bad = ids.filter(id => !catalog.some(p => p.id === id));
+        const label = !ids.length ? '<span class="rv-label is-none">ยังไม่ผูกสินค้า</span>'
+          : `<span class="rv-label${bad.length ? ' is-bad' : ''}">${esc(ids.join(', '))}${bad.length ? ' (ไม่พบสินค้า)' : ''}</span>`;
+        return `<button type="button" class="rv-tile${rvm.sel.has(k) ? ' is-sel' : ''}" data-rv-key="${esc(k)}" title="${esc(k)}">
+          <img src="${REVIEW_DIR}${esc(k)}" alt="" loading="lazy" decoding="async">
+          <span class="rv-check">${rvm.sel.has(k) ? '✓' : ''}</span>
+          <a class="rv-zoom" href="${REVIEW_DIR}${esc(k)}" target="_blank" rel="noopener" title="เปิดดูรูปใหญ่" data-rv-zoom>⤢</a>
+          ${label}
+        </button>`;
+      }).join('')
+    : `<p class="rv-empty">${rvm.files.length ? 'ไม่มีรูปในตัวกรองนี้' : 'ไม่พบรูปรีวิวใน images/reviews/ (ตั้งชื่อ review1.jpg, review2.jpg, …)'}</p>`;
+
+  const nSel = rvm.sel.size;
+  $('revCount').textContent = nSel ? `เลือกอยู่ ${nSel} รูป` : '';
+  $('revAssign').disabled = !(nSel && prod);
+  $('revUntag').disabled = !nSel || ![...rvm.sel].some(k => (rvm.tags[k] || []).length);
+  $('revSave').disabled = !rvm.dirty;
+  $('revHint').textContent = $('revProd').value.trim() && !prod ? 'ไม่พบสินค้านี้ — กดที่ช่องแล้วเลือกจากรายการที่มีรูป' : '';
+}
+
+function reviewAssign(){
+  const prod = resolveReviewProduct($('revProd').value);
+  if(!rvm || !prod || !rvm.sel.size) return;
+  rvm.sel.forEach(k => { rvm.tags[k] = [prod.id]; });
+  rvm.sel.clear(); rvm.dirty = true;
+  renderReviewsModal();
+}
+function reviewUntag(){
+  if(!rvm || !rvm.sel.size) return;
+  rvm.sel.forEach(k => { delete rvm.tags[k]; });
+  rvm.sel.clear(); rvm.dirty = true;
+  renderReviewsModal();
+}
+async function saveReviewsModal(){
+  if(!rvm || !rvm.dirty) return;
+  $('revSave').disabled = true;
+  const ok = await persistReviewTags(rvm.tags);
+  if(!ok){ $('revSave').disabled = false; return; }
+  toast('บันทึกรูปรีวิวแล้ว');
+  closeReviewsModal(true);
+  if(draft){ reviewPanelFor = null; renderReviewsPanel(); updateSummaries(); }
+}
+
+// การ์ด "รูปรีวิวลูกค้า" ในหน้าแก้ไขสินค้า
+function renderReviewsPanel(){
+  const box = $('panelReviews');
+  if(!box || !draft) return;
+  const id = String(draft.id || '').trim();
+  reviewPanelFor = String(draft.id || '');
+  const keys = reviewKeysOf(id);
+  box.innerHTML = `
+    <div class="rv-panel">
+      ${keys.slice(0, 8).map(k => `<img class="rv-mini" src="${REVIEW_DIR}${esc(k)}" alt="" loading="lazy">`).join('')}
+      ${keys.length > 8 ? `<span class="field-hint" style="margin:0">+${keys.length - 8}</span>` : ''}
+      <button type="button" class="btn btn-ghost" data-act="manage-reviews"${id ? '' : ' disabled'}>${keys.length ? 'จัดการรูปรีวิวของสินค้านี้' : 'เลือกรูปรีวิวให้สินค้านี้'}</button>
+      <p class="rv-panel-note">${id
+        ? 'รูปรีวิวจะต่อท้ายแกลเลอรีของสินค้านี้บนหน้าร้าน (ไม่เป็นรูปปกและไม่อยู่ในภาพแคตตาล็อก) · บันทึกแยกจากปุ่ม “บันทึกสินค้า”'
+        : 'ใส่รหัสสินค้าในการ์ด “ข้อมูลสินค้า” ก่อน จึงจะเลือกรูปรีวิวได้'}</p>
+    </div>`;
+}
+
 /* ───────────────── จัดการหมวดหมู่ / ชนิดดอกไม้ / ขนาด ─────────────────
    เก็บในเอกสารเดียวกับสินค้า (ช่อง optionsJson) หน้าร้านอ่านชุดเดียวกัน
    แก้ชื่อ = แก้ชื่อในสินค้าที่ใช้ค่านั้นให้ด้วย · ลบได้เฉพาะรายการที่ไม่มีสินค้าใช้อยู่ (รวมสินค้าที่ซ่อนไว้) */
@@ -2834,6 +3101,74 @@ $('posterOneBtn').addEventListener('click', () => {
 });
 $('progressCancel').addEventListener('click', () => { posterCancel = true; });
 $('optionsBtn').addEventListener('click', openOptionsModal);
+$('reviewsBtn').addEventListener('click', () => openReviewsModal());
+$('panelReviews').addEventListener('click', e => {
+  if(e.target.closest('[data-act="manage-reviews"]') && draft && String(draft.id || '').trim()) openReviewsModal(String(draft.id).trim());
+});
+$('revFilter').addEventListener('click', e => {
+  const b = e.target.closest('[data-rv-filter]');
+  if(b && rvm){ rvm.filter = b.dataset.rvFilter; renderReviewsModal(); }
+});
+$('revGrid').addEventListener('click', e => {
+  if(e.target.closest('[data-rv-zoom]')) return; // ลิงก์เปิดรูปใหญ่ ไม่ต้องสลับการเลือก
+  const t = e.target.closest('[data-rv-key]');
+  if(!t || !rvm) return;
+  const k = t.dataset.rvKey;
+  if(rvm.sel.has(k)) rvm.sel.delete(k); else rvm.sel.add(k);
+  renderReviewsModal();
+});
+$('revProd').addEventListener('input', () => {
+  rvCombo.typed = true; rvCombo.open = true; rvCombo.active = -1;
+  renderCombo(); renderReviewsModal();
+});
+$('revProd').addEventListener('focus', () => { $('revProd').select(); comboOpen(false); });
+$('revProd').addEventListener('click', () => { if(!rvCombo.open) comboOpen(false); });
+$('revProd').addEventListener('keydown', e => {
+  if(e.key === 'ArrowDown' || e.key === 'ArrowUp'){
+    e.preventDefault();
+    if(!rvCombo.open){ comboOpen(false); return; }
+    const n = rvCombo.list.length;
+    if(!n) return;
+    rvCombo.active = e.key === 'ArrowDown' ? (rvCombo.active + 1) % n : (rvCombo.active - 1 + n) % n;
+    renderCombo();
+  } else if(e.key === 'Enter'){
+    if(rvCombo.open){
+      e.preventDefault();
+      if(rvCombo.active < 0 && rvCombo.list.length === 1) rvCombo.active = 0;   // เหลือผลเดียว → เลือกให้เลย
+      if(rvCombo.active >= 0) comboPick(rvCombo.active); else comboClose();
+    }
+  } else if(e.key === 'Escape'){
+    if(rvCombo.open){ e.stopPropagation(); comboClose(); }   // ปิดแค่รายการ ไม่ปิดทั้งหน้าต่าง
+  } else if(e.key === 'Tab'){
+    comboClose();
+  }
+});
+$('revComboBtn').addEventListener('mousedown', e => e.preventDefault());
+$('revComboBtn').addEventListener('click', () => {
+  if(rvCombo.open) comboClose(); else { $('revProd').focus(); comboOpen(false); }
+});
+$('revOpts').addEventListener('mousedown', e => e.preventDefault());   // กันช่องเสียโฟกัสก่อนคลิกถูกนับ
+$('revOpts').addEventListener('click', e => {
+  const o = e.target.closest('[data-i]');
+  if(o) comboPick(+o.dataset.i);
+});
+$('revOpts').addEventListener('mousemove', e => {
+  const o = e.target.closest('[data-i]');
+  if(o && +o.dataset.i !== rvCombo.active){
+    const prev = $('rvOpt' + rvCombo.active); if(prev) prev.classList.remove('is-active');
+    rvCombo.active = +o.dataset.i; o.classList.add('is-active');
+  }
+});
+document.addEventListener('mousedown', e => {
+  if(rvCombo.open && !e.target.closest('#revCombo')) comboClose();
+});
+$('revAssign').addEventListener('click', reviewAssign);
+$('revUntag').addEventListener('click', reviewUntag);
+$('revSelAll').addEventListener('click', () => { if(rvm){ reviewVisibleKeys().forEach(k => rvm.sel.add(k)); renderReviewsModal(); } });
+$('revSelNone').addEventListener('click', () => { if(rvm){ rvm.sel.clear(); renderReviewsModal(); } });
+$('revCancel').addEventListener('click', () => closeReviewsModal());
+$('revSave').addEventListener('click', saveReviewsModal);
+$('revScrim').addEventListener('click', e => { if(e.target === $('revScrim')) closeReviewsModal(); });
 $('optTabs').addEventListener('click', e => {
   const b = e.target.closest('[data-tab]');
   if(!b || !om) return;
@@ -3066,6 +3401,7 @@ $('confirmScrim').addEventListener('click', e => { if(e.target === $('confirmScr
 document.addEventListener('keydown', e => {
   if(e.key !== 'Escape') return;
   if(!$('confirmScrim').hidden) closeConfirm(false);
+  else if(!$('revScrim').hidden) closeReviewsModal();
   else if(!$('optScrim').hidden) closeOptionsModal();
   else if(!$('imgScrim').hidden) closeImgModal();
   else if(!$('varScrim').hidden) closeVarModal();

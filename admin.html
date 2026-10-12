@@ -61,6 +61,7 @@
       <h2>สินค้า</h2>
       <div class="page-actions">
         <button class="btn btn-ghost" id="optionsBtn" title="เพิ่ม แก้ชื่อ เรียงลำดับ หมวดหมู่ ชนิดดอกไม้ และขนาดของร้าน">🏷 หมวดหมู่ / ชนิด / ขนาด</button>
+        <button class="btn btn-ghost" id="reviewsBtn" title="ผูกรูปรีวิวลูกค้ากับสินค้า ให้ไปโผล่ในแกลเลอรีของสินค้านั้น">⭐ รีวิวลูกค้า</button>
         <button class="btn btn-ghost" id="catalogBtn" title="ดาวน์โหลดภาพแคตตาล็อก (JPG)">🖼 แคตตาล็อก</button>
         <details class="menu adv-menu">
           <summary class="btn btn-ghost">ขั้นสูง ▾</summary>
@@ -142,6 +143,7 @@
           <div class="ed-card"><div class="card-head"><h3>ตัวแปร</h3><small id="sumPrice"></small></div><div class="card-body" id="panelPrice"></div></div>
           <div class="ed-card"><div class="card-head"><h3>ของเสริม</h3><small id="sumAddons"></small></div><div class="card-body" id="panelAddons"></div></div>
           <div class="ed-card"><div class="card-head"><h3>รูปสินค้า</h3><small id="sumMedia"></small></div><div class="card-body" id="panelMedia"></div></div>
+          <div class="ed-card"><div class="card-head"><h3>รูปรีวิวลูกค้า</h3><small id="sumReviews"></small></div><div class="card-body" id="panelReviews"></div></div>
         </div>
         <div class="ed-side">
           <div class="ed-card" id="posterCard">
@@ -194,6 +196,37 @@
       <p class="vm-hint" id="optHint"></p>
       <button type="button" class="vm-btn" id="optCancel">ยกเลิก</button>
       <button type="button" class="vm-btn vm-save" id="optSave">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<!-- ───────────── หน้าต่างผูกรูปรีวิวลูกค้ากับสินค้า ───────────── -->
+<div class="confirm-scrim" id="revScrim" hidden>
+  <div class="vm-card rv-card" role="dialog" aria-modal="true" aria-labelledby="revTitle">
+    <h3 class="vm-title" id="revTitle">รูปรีวิวลูกค้า</h3>
+    <div class="rv-tools">
+      <div class="rv-filter" id="revFilter"></div>
+      <div class="rv-assign">
+        <div class="rv-combo" id="revCombo">
+          <span class="rv-combo-thumb" id="revComboThumb" hidden></span>
+          <input type="text" id="revProd" placeholder="กดเลือกสินค้า หรือพิมพ์รหัส/ชื่อ เช่น s13" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="revOpts" aria-autocomplete="list">
+          <button type="button" class="rv-combo-btn" id="revComboBtn" tabindex="-1" aria-label="เปิดรายการสินค้า"></button>
+          <div class="rv-opts" id="revOpts" role="listbox" hidden></div>
+        </div>
+        <button type="button" class="btn btn-primary btn-sm" id="revAssign" disabled>ผูกที่เลือกกับสินค้านี้</button>
+        <button type="button" class="btn btn-ghost btn-sm" id="revUntag" disabled>เอาป้ายออก</button>
+      </div>
+      <div class="rv-sel">
+        <button type="button" class="rv-link" id="revSelAll">เลือกทั้งหมดที่แสดง</button>
+        <button type="button" class="rv-link" id="revSelNone">ล้างการเลือก</button>
+        <span class="rv-count" id="revCount"></span>
+      </div>
+    </div>
+    <div class="vm-body rv-body"><div class="rv-grid" id="revGrid"></div></div>
+    <div class="vm-foot">
+      <p class="vm-hint" id="revHint"></p>
+      <button type="button" class="vm-btn" id="revCancel">ปิด</button>
+      <button type="button" class="vm-btn vm-save" id="revSave" disabled>บันทึก</button>
     </div>
   </div>
 </div>

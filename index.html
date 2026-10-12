@@ -116,6 +116,7 @@
   <button class="review-lightbox-nav prev" onclick="event.stopPropagation(); navReviewLightbox(-1);" aria-label="รูปก่อนหน้า">‹</button>
   <img id="reviewLightboxImg" src="" alt="รีวิวลูกค้า" onclick="event.stopPropagation();">
   <button class="review-lightbox-nav next" onclick="event.stopPropagation(); navReviewLightbox(1);" aria-label="รูปถัดไป">›</button>
+  <div class="review-lightbox-prod" id="reviewLightboxProd" hidden onclick="event.stopPropagation();"></div>
   <div class="review-lightbox-counter" id="reviewLightboxCounter"></div>
 </div>
 
@@ -194,6 +195,7 @@
         <div class="page-img" id="modalImg"></div>
         <button type="button" class="pd-heart-img" id="modalFavHeartImg" onclick="toggleModalFavorite()" aria-label="บันทึกไว้ในรายการโปรด">♡</button>
         <div class="pd-img-badges" id="modalImgBadges"></div>
+        <span class="pd-review-tag" id="modalReviewTag" hidden>📷 รีวิวจากลูกค้า</span>
       </div>
     </div>
     <div class="page-body">
