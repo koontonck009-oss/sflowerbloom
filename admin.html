@@ -204,33 +204,59 @@
 <div class="confirm-scrim" id="revScrim" hidden>
   <div class="vm-card rv-card" role="dialog" aria-modal="true" aria-labelledby="revTitle">
     <h3 class="vm-title" id="revTitle">รูปรีวิวลูกค้า</h3>
-    <div class="rv-tools">
-      <div class="rv-filter" id="revFilter"></div>
-      <div class="rv-assign">
-        <div class="rv-combo" id="revCombo">
-          <span class="rv-combo-thumb" id="revComboThumb" hidden></span>
-          <input type="text" id="revProd" placeholder="กดเลือกสินค้า หรือพิมพ์รหัส/ชื่อ เช่น s13" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="revOpts" aria-autocomplete="list">
-          <button type="button" class="rv-combo-btn" id="revComboBtn" tabindex="-1" aria-label="เปิดรายการสินค้า"></button>
-          <div class="rv-opts" id="revOpts" role="listbox" hidden></div>
+    <div class="rv-tabs" id="revTabs" role="tablist"></div>
+    <div class="vm-body rv-body">
+
+      <!-- โหมดผูกทีละรูป -->
+      <div id="revTagView">
+        <div class="rv-tag" id="revTagMain" hidden>
+          <div class="rv-stage" id="revStage"></div>
+          <div class="rv-side">
+            <div>
+              <p class="rv-step" id="revStep"></p>
+              <h4 class="rv-q">รูปนี้คือสินค้าอะไร?</h4>
+              <p class="rv-sub">พิมพ์รหัสหรือชื่อสินค้า แล้วกดเลือก — ระบบจะไปรูปถัดไปให้เอง</p>
+            </div>
+            <div class="rv-combo" id="revCombo">
+              <span class="rv-combo-thumb" id="revComboThumb" hidden></span>
+              <input type="text" id="revProd" placeholder="พิมพ์รหัส/ชื่อสินค้า เช่น s13" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="revOpts" aria-autocomplete="list">
+              <button type="button" class="rv-combo-btn" id="revComboBtn" tabindex="-1" aria-label="เปิดรายการสินค้า"></button>
+              <div class="rv-opts" id="revOpts" role="listbox" hidden></div>
+            </div>
+            <div id="revRecent"></div>
+            <div id="revCurTag"></div>
+            <div class="rv-actions">
+              <button type="button" class="btn btn-ghost btn-sm" id="revUndo">↶ ย้อนกลับ</button>
+              <button type="button" class="btn btn-ghost btn-sm" id="revSkip">ข้ามรูปนี้</button>
+            </div>
+          </div>
         </div>
-        <button type="button" class="btn btn-primary btn-sm" id="revAssign" disabled>ผูกที่เลือกกับสินค้านี้</button>
-        <button type="button" class="btn btn-ghost btn-sm" id="revUntag" disabled>เอาป้ายออก</button>
+        <div id="revDone" hidden></div>
       </div>
-      <div class="rv-assign">
-        <input type="text" id="revPath" class="rv-path" placeholder="เพิ่มรูปด้วย path เช่น images/reviews/abc.jpg" autocomplete="off" spellcheck="false" style="flex:1;min-width:0">
-        <button type="button" class="btn btn-ghost btn-sm" id="revPathAdd">+ เพิ่มรูป</button>
-        <button type="button" class="btn btn-ghost btn-sm" id="revRemove" disabled title="นำรูปที่เพิ่มด้วย path ออกจากรายการ (ไม่ลบไฟล์จริง)">นำออกจากรายการ</button>
-      </div>
-      <div class="rv-sel">
-        <button type="button" class="rv-link" id="revSelAll">เลือกทั้งหมดที่แสดง</button>
-        <button type="button" class="rv-link" id="revSelNone">ล้างการเลือก</button>
-        <span class="rv-count" id="revCount"></span>
+
+      <!-- โหมดดูทั้งหมด -->
+      <div id="revAllView" hidden>
+        <div id="revCtx"></div>
+        <div class="rv-filter" id="revFilter"></div>
+        <div class="rv-grid" id="revGrid"></div>
       </div>
     </div>
-    <div class="vm-body rv-body"><div class="rv-grid" id="revGrid"></div></div>
+
+    <details class="rv-adv" id="revAdv">
+      <summary>ขั้นสูง (สำหรับผู้ดูแลระบบ)</summary>
+      <div class="rv-adv-body">
+        <div class="rv-adv-row">
+          <input type="text" id="revPath" class="rv-path" placeholder="เพิ่มรูปด้วย path เช่น images/reviews/abc.jpg" autocomplete="off" spellcheck="false">
+          <button type="button" class="btn btn-ghost btn-sm" id="revPathAdd">+ เพิ่มรูป</button>
+        </div>
+        <div class="rv-adv-row">
+          <button type="button" class="btn btn-ghost btn-sm" id="revExport" title="ดาวน์โหลดรายชื่อรูปทั้งหมดเป็น list.json แล้วนำไปวางที่ images/reviews/">⬇ ดาวน์โหลด list.json</button>
+          <span class="rv-adv-note">ใช้เมื่อเพิ่มรูปใหม่เข้าโฟลเดอร์ images/reviews/ แล้วอยากให้หน้าร้านเห็นรูปนั้นด้วย</span>
+        </div>
+      </div>
+    </details>
     <div class="vm-foot">
       <p class="vm-hint" id="revHint"></p>
-      <button type="button" class="vm-btn" id="revExport" title="ดาวน์โหลดรายชื่อรูปทั้งหมดเป็น list.json แล้วนำไปวางที่ images/reviews/">⬇ list.json</button>
       <button type="button" class="vm-btn" id="revCancel">ปิด</button>
       <button type="button" class="vm-btn vm-save" id="revSave" disabled>บันทึก</button>
     </div>
