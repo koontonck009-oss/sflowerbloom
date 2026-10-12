@@ -216,6 +216,11 @@
         <button type="button" class="btn btn-primary btn-sm" id="revAssign" disabled>ผูกที่เลือกกับสินค้านี้</button>
         <button type="button" class="btn btn-ghost btn-sm" id="revUntag" disabled>เอาป้ายออก</button>
       </div>
+      <div class="rv-assign">
+        <input type="text" id="revPath" class="rv-path" placeholder="เพิ่มรูปด้วย path เช่น images/reviews/abc.jpg" autocomplete="off" spellcheck="false" style="flex:1;min-width:0">
+        <button type="button" class="btn btn-ghost btn-sm" id="revPathAdd">+ เพิ่มรูป</button>
+        <button type="button" class="btn btn-ghost btn-sm" id="revRemove" disabled title="นำรูปที่เพิ่มด้วย path ออกจากรายการ (ไม่ลบไฟล์จริง)">นำออกจากรายการ</button>
+      </div>
       <div class="rv-sel">
         <button type="button" class="rv-link" id="revSelAll">เลือกทั้งหมดที่แสดง</button>
         <button type="button" class="rv-link" id="revSelNone">ล้างการเลือก</button>

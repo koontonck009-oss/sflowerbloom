@@ -2503,14 +2503,28 @@ function productPhotoList(p){
 }
 /* รูปรีวิวลูกค้าที่หลังบ้านผูกกับสินค้านี้ (เรียงรูปล่าสุดก่อน) — ต่อท้ายแกลเลอรีเท่านั้น
    ไม่ใช่รูปปก/รูปในตะกร้า/ภาพแคตตาล็อก เพราะฟังก์ชันเหล่านั้นอ่านจาก image/images ของสินค้าโดยตรง */
-function reviewKeyOf(src){ return String(src || '').split('/').pop(); }
-function reviewNumOf(key){ const m = /(\d+)/.exec(key); return m ? +m[1] : 0; }
+function reviewKeyOf(src){
+  let s = String(src || '');
+  try{ s = decodeURIComponent(s); }catch(_){}
+  return s;
+}
+// คีย์ที่มี / = path เต็มที่เพิ่มจากหลังบ้าน · คีย์ไม่มี / = ชื่อไฟล์ใน images/reviews/
+function reviewSrcOf(k){
+  return k.includes('/') ? k.replace(/[#?%]/g, c => encodeURIComponent(c)) : 'images/reviews/' + k;
+}
+// ป้ายสินค้าของรูปรีวิว (ลองทั้ง path เต็ม และชื่อไฟล์เฉยๆ ถ้าอยู่ใน images/reviews/)
+function reviewTagIdsOf(src){
+  const full = reviewKeyOf(src);
+  const plain = full.startsWith('images/reviews/') ? full.slice('images/reviews/'.length) : full;
+  return [...new Set([...(REVIEW_TAGS[full] || []), ...(REVIEW_TAGS[plain] || [])])];
+}
+function reviewNumOf(key){ if(key.includes('/')) return 1e9; const m = /(\d+)/.exec(key); return m ? +m[1] : 0; }
 function reviewPhotosOf(p){
   if(!p) return [];
   return Object.keys(REVIEW_TAGS)
     .filter(k => REVIEW_TAGS[k].includes(p.id))
     .sort((a, b) => reviewNumOf(b) - reviewNumOf(a))
-    .map(k => 'images/reviews/' + k);
+    .map(reviewSrcOf);
 }
 function currentGalleryImages(p){
   const base = productPhotoList(p);
@@ -2951,7 +2965,7 @@ async function fetchProductsFromFirestore(){
     if(raw && typeof raw === 'object'){
       Object.keys(raw).forEach(k => {
         const ids = (Array.isArray(raw[k]) ? raw[k] : [raw[k]]).map(x => String(x ?? '').trim()).filter(Boolean);
-        if(ids.length) REVIEW_TAGS[k] = ids;
+        if(ids.length || k.includes('/')) REVIEW_TAGS[k] = ids; // คีย์ที่เป็น path เต็ม = รูปที่เพิ่มจากหลังบ้านด้วย path (ผูกสินค้าหรือไม่ก็ได้)
       });
     }
   }catch(_){ REVIEW_TAGS = {}; }
@@ -3009,7 +3023,7 @@ function finishLoadingProducts(){
   updateCartUI();
   loadSavedFbName();
 }
-loadProducts();
+const PRODUCTS_LOADED = loadProducts().catch(() => {});
 
 /* ลูกค้ากลับมาที่แท็บ: เช็คว่าหลังบ้านเปิด/ปิดสวิตช์ราคา หรือแก้ข้อมูลสินค้าไปหรือยัง ถ้าเปลี่ยนให้โหลดหน้าใหม่
    (กันลูกค้าที่เปิดหน้าค้างไว้เห็นราคาเก่า) เช็คเฉพาะตอนที่หน้านี้ใช้ข้อมูลจาก Firestore และไม่เช็คถี่เกิน 30 วินาที */
@@ -3074,6 +3088,12 @@ async function scanReviewsFallback(){
 }
 async function loadReviews(){
   const found = (await loadReviewList()) || (await scanReviewsFallback());
+  // รูปที่เพิ่มจากหลังบ้านด้วย path (เก็บใน REVIEW_TAGS คีย์ที่มี /) — ต้องรอข้อมูลจาก Firestore โหลดเสร็จก่อน
+  try{ await PRODUCTS_LOADED; }catch(_){}
+  Object.keys(REVIEW_TAGS).filter(k => k.includes('/')).forEach(k => {
+    const src = reviewSrcOf(k);
+    if(!found.includes(src)) found.push(src); // ต่อท้าย = นับเป็นรูปใหม่สุด
+  });
   if(!found.length) return;
   renderReviews(found);
 }
@@ -3190,7 +3210,7 @@ function initReviewAutoScroll(){
 /* ---------- "ดูรีวิวทั้งหมด": กดที่ตัวเลขจำนวนรีวิว เปิด grid เต็มจอ ---------- */
 // สินค้าที่หลังบ้านผูกกับรูปรีวิวนี้ (เฉพาะสินค้าที่ยังแสดงบนหน้าร้าน)
 function reviewProductsOf(src){
-  return (REVIEW_TAGS[reviewKeyOf(src)] || []).map(id => PRODUCTS.find(p => p.id === id)).filter(Boolean);
+  return reviewTagIdsOf(src).map(id => PRODUCTS.find(p => p.id === id)).filter(Boolean);
 }
 function reviewGridTag(src){
   const p = reviewProductsOf(src)[0];

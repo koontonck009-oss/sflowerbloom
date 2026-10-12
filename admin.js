@@ -2596,12 +2596,21 @@ function parseReviewTags(raw){
     const o = typeof raw === 'string' ? JSON.parse(raw) : null;
     if(o && typeof o === 'object') Object.keys(o).forEach(k => {
       const ids = (Array.isArray(o[k]) ? o[k] : [o[k]]).map(x => String(x ?? '').trim()).filter(Boolean);
-      if(ids.length) out[k] = ids;
+      if(ids.length || k.includes('/')) out[k] = ids; // คีย์ที่มี / = รูปที่เพิ่มด้วย path (ไม่ผูกสินค้าก็เก็บไว้)
     });
   }catch(_){}
   return out;
 }
-function reviewNum(k){ const m = /(\d+)/.exec(k); return m ? +m[1] : 0; }
+function reviewNum(k){ if(String(k).includes('/')) return 1e9; const m = /(\d+)/.exec(k); return m ? +m[1] : 0; } // รูปที่เพิ่มด้วย path ถือว่าใหม่สุด
+// src ของรูป: คีย์ที่มี / = path เต็ม · ไม่มี = ชื่อไฟล์ใน images/reviews/
+function reviewSrc(k){ return String(k).includes('/') ? String(k).replace(/[#?%]/g, c => encodeURIComponent(c)) : REVIEW_DIR + k; }
+// ทำ path ที่กรอกให้เป็นรูปแบบเดียวกัน: ตัด ./ และ / หน้าสุด, \ → /, ชื่อไฟล์เฉยๆ = อยู่ใน images/reviews/
+function normalizeReviewPath(raw){
+  let s = String(raw || '').trim().replace(/^["']+|["']+$/g, '').replace(/\\/g, '/').replace(/^(\.\/)+/, '').replace(/^\/+/, '');
+  if(!s) return '';
+  if(!s.includes('/')) s = REVIEW_DIR + s;
+  return s;
+}
 function reviewKeysOf(id){
   const t = String(id || '').trim();
   if(!t) return [];
@@ -2632,7 +2641,38 @@ async function scanReviewFiles(){
   }
   const scanned = found.map(n => `review${n}.jpg`);
   const listed = await fetchReviewListNames();
-  return [...new Set([...listed, ...scanned])].sort((a, b) => reviewNum(b) - reviewNum(a)); // ใหม่สุดก่อน
+  const custom = Object.keys(reviewTags).filter(k => k.includes('/')).reverse(); // รูปที่เพิ่มด้วย path (เพิ่มล่าสุดก่อน)
+  return [...new Set([...custom, ...listed, ...scanned])].sort((a, b) => reviewNum(b) - reviewNum(a)); // ใหม่สุดก่อน
+}
+// เพิ่มรูปรีวิวด้วย path (เหมือนช่อง path รูปสินค้า) — ตรวจก่อนว่าเปิดรูปได้จริง
+async function reviewAddPath(){
+  if(!rvm) return;
+  const inp = $('revPath');
+  const key = normalizeReviewPath(inp.value);
+  if(!key){ toast('พิมพ์ path รูปก่อน เช่น images/reviews/abc.jpg', true); return; }
+  if(!/\.(jpe?g|png|webp|gif|avif)$/i.test(key)){ toast('path ต้องลงท้ายด้วยนามสกุลรูป เช่น .jpg .png .webp', true); return; }
+  const plain = key.startsWith(REVIEW_DIR) && !key.slice(REVIEW_DIR.length).includes('/') ? key.slice(REVIEW_DIR.length) : null;
+  if(rvm.files.includes(key) || (plain && rvm.files.includes(plain))){ toast('รูปนี้มีอยู่ในรายการแล้ว', true); return; }
+  $('revPathAdd').disabled = true;
+  const ok = await probeImage(reviewSrc(key));
+  $('revPathAdd').disabled = false;
+  if(!rvm) return;
+  if(!ok){ toast('เปิดรูปที่ path นี้ไม่ได้ — เช็คชื่อไฟล์/ตัวพิมพ์เล็กใหญ่ และว่าอัปโหลดขึ้นเว็บแล้ว', true); return; }
+  rvm.files.unshift(key);
+  rvm.tags[key] = rvm.tags[key] || [];
+  rvm.sel.add(key);
+  rvm.dirty = true;
+  inp.value = '';
+  renderReviewsModal();
+}
+function reviewRemovePaths(){
+  if(!rvm) return;
+  const gone = [...rvm.sel].filter(k => k.includes('/'));
+  if(!gone.length) return;
+  rvm.files = rvm.files.filter(k => !gone.includes(k));
+  gone.forEach(k => { delete rvm.tags[k]; rvm.sel.delete(k); });
+  rvm.dirty = true;
+  renderReviewsModal();
 }
 // ดาวน์โหลด list.json จากรูปที่หลังบ้านเห็นอยู่ตอนนี้ → เอาไปวางทับที่ images/reviews/list.json
 function exportReviewList(){
@@ -2648,7 +2688,7 @@ function exportReviewList(){
 
 async function persistReviewTags(next){
   const clean = {};
-  Object.keys(next).sort((a, b) => reviewNum(a) - reviewNum(b)).forEach(k => { if(next[k] && next[k].length) clean[k] = next[k]; });
+  Object.keys(next).sort((a, b) => reviewNum(a) - reviewNum(b)).forEach(k => { if(next[k] && (next[k].length || k.includes('/'))) clean[k] = next[k]; });
   setSaveState('กำลังบันทึก…', 'is-saving');
   try{
     await fb.dbApi.setDoc(catalogRef(), {
@@ -2798,9 +2838,9 @@ function renderReviewsModal(){
         const label = !ids.length ? '<span class="rv-label is-none">ยังไม่ผูกสินค้า</span>'
           : `<span class="rv-label${bad.length ? ' is-bad' : ''}">${esc(ids.join(', '))}${bad.length ? ' (ไม่พบสินค้า)' : ''}</span>`;
         return `<button type="button" class="rv-tile${rvm.sel.has(k) ? ' is-sel' : ''}" data-rv-key="${esc(k)}" title="${esc(k)}">
-          <img src="${REVIEW_DIR}${esc(k)}" alt="" loading="lazy" decoding="async">
+          <img src="${esc(reviewSrc(k))}" alt="" loading="lazy" decoding="async">
           <span class="rv-check">${rvm.sel.has(k) ? '✓' : ''}</span>
-          <a class="rv-zoom" href="${REVIEW_DIR}${esc(k)}" target="_blank" rel="noopener" title="เปิดดูรูปใหญ่" data-rv-zoom>⤢</a>
+          <a class="rv-zoom" href="${esc(reviewSrc(k))}" target="_blank" rel="noopener" title="เปิดดูรูปใหญ่" data-rv-zoom>⤢</a>
           ${label}
         </button>`;
       }).join('')
@@ -2811,6 +2851,7 @@ function renderReviewsModal(){
   $('revAssign').disabled = !(nSel && prod);
   $('revUntag').disabled = !nSel || ![...rvm.sel].some(k => (rvm.tags[k] || []).length);
   $('revSave').disabled = !rvm.dirty;
+  $('revRemove').disabled = ![...rvm.sel].some(k => k.includes('/'));
   $('revHint').textContent = $('revProd').value.trim() && !prod ? 'ไม่พบสินค้านี้ — กดที่ช่องแล้วเลือกจากรายการที่มีรูป' : '';
 }
 
@@ -2823,7 +2864,7 @@ function reviewAssign(){
 }
 function reviewUntag(){
   if(!rvm || !rvm.sel.size) return;
-  rvm.sel.forEach(k => { delete rvm.tags[k]; });
+  rvm.sel.forEach(k => { if(k.includes('/')) rvm.tags[k] = []; else delete rvm.tags[k]; }); // รูป path เก็บไว้ในรายการ แค่เอาป้ายออก
   rvm.sel.clear(); rvm.dirty = true;
   renderReviewsModal();
 }
@@ -2846,7 +2887,7 @@ function renderReviewsPanel(){
   const keys = reviewKeysOf(id);
   box.innerHTML = `
     <div class="rv-panel">
-      ${keys.slice(0, 8).map(k => `<img class="rv-mini" src="${REVIEW_DIR}${esc(k)}" alt="" loading="lazy">`).join('')}
+      ${keys.slice(0, 8).map(k => `<img class="rv-mini" src="${esc(reviewSrc(k))}" alt="" loading="lazy">`).join('')}
       ${keys.length > 8 ? `<span class="field-hint" style="margin:0">+${keys.length - 8}</span>` : ''}
       <button type="button" class="btn btn-ghost" data-act="manage-reviews"${id ? '' : ' disabled'}>${keys.length ? 'จัดการรูปรีวิวของสินค้านี้' : 'เลือกรูปรีวิวให้สินค้านี้'}</button>
       <p class="rv-panel-note">${id
@@ -3192,6 +3233,9 @@ $('revSelNone').addEventListener('click', () => { if(rvm){ rvm.sel.clear(); rend
 $('revCancel').addEventListener('click', () => closeReviewsModal());
 $('revSave').addEventListener('click', saveReviewsModal);
 $('revExport').addEventListener('click', exportReviewList);
+$('revPathAdd').addEventListener('click', reviewAddPath);
+$('revPath').addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); reviewAddPath(); } });
+$('revRemove').addEventListener('click', reviewRemovePaths);
 $('revScrim').addEventListener('click', e => { if(e.target === $('revScrim')) closeReviewsModal(); });
 $('optTabs').addEventListener('click', e => {
   const b = e.target.closest('[data-tab]');
