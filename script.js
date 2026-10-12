@@ -3041,23 +3041,40 @@ function checkImageExists(src){
     img.src = src;
   });
 }
-async function loadReviews(){
-  // เช็คทีละ batch (เรียงเลขไฟล์น้อยไปมาก) แล้วหยุดทันทีที่เจอ batch ที่ไม่มีไฟล์เลยสักไฟล์เดียว —
-  // เพราะไฟล์รีวิวตั้งชื่อเรียงเลขต่อเนื่องไม่มีช่องว่าง (ดูคอมเมนต์ด้านบน) ถ้ามีรีวิวแค่ 15 รูป
-  // ก็จะเช็คแค่ batch แรก (20 ไฟล์) แล้วหยุด แทนที่จะยิง 200 request ทุกครั้ง
+// อ่านรายชื่อไฟล์จาก images/reviews/list.json (รูปแบบ ["review1.jpg","review131.jpg", ...])
+// คืน null ถ้าไม่มีไฟล์/อ่านไม่ได้ เพื่อให้ถอยไปใช้การสแกนเลขไฟล์แบบเดิม
+async function loadReviewList(){
+  try{
+    const res = await fetch('images/reviews/list.json', { cache: 'no-cache' });
+    if(!res.ok) return null;
+    const arr = await res.json();
+    if(!Array.isArray(arr)) return null;
+    const names = arr.map(x => String(x || '').trim()).filter(n => n && !/[\\/]/.test(n));
+    if(!names.length) return null;
+    names.sort((x, y) => x.localeCompare(y, 'en', { numeric: true })); // เก่า → ใหม่ (เลขน้อย → มาก)
+    return [...new Set(names)].map(n => `images/reviews/${encodeURIComponent(n)}`);
+  }catch(_){ return null; }
+}
+// วิธีสำรอง: เดาชื่อ review1.jpg, review2.jpg, … ทีละชุด หยุดเมื่อว่างติดกัน 3 ชุด (60 เลข)
+async function scanReviewsFallback(){
   const found = [];
+  let emptyStreak = 0;
   for(let start = 1; start <= MAX_REVIEWS; start += REVIEW_BATCH_SIZE){
     const end = Math.min(start + REVIEW_BATCH_SIZE - 1, MAX_REVIEWS);
     const checks = [];
     for(let i = start; i <= end; i++){
       checks.push(checkImageExists(`images/reviews/review${i}.jpg`));
     }
-    const results = await Promise.all(checks);
-    const batchFound = results.filter(Boolean);
+    const batchFound = (await Promise.all(checks)).filter(Boolean);
     found.push(...batchFound);
-    if(batchFound.length === 0) break;
+    emptyStreak = batchFound.length ? 0 : emptyStreak + 1;
+    if(emptyStreak >= 3) break;
   }
-  if(found.length === 0) return;
+  return found;
+}
+async function loadReviews(){
+  const found = (await loadReviewList()) || (await scanReviewsFallback());
+  if(!found.length) return;
   renderReviews(found);
 }
 let REVIEWS = []; // ลำดับสุ่ม — ใช้กับแถบพรีวิวหน้าแรก

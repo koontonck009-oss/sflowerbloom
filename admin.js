@@ -2610,17 +2610,40 @@ function reviewKeysOf(id){
 function probeImage(src){
   return new Promise(res => { const im = new Image(); im.onload = () => res(true); im.onerror = () => res(false); im.src = src; });
 }
-// หาไฟล์ review1.jpg, review2.jpg, … ที่มีอยู่จริง (วิธีเดียวกับหน้าร้าน: ทีละชุด หยุดเมื่อทั้งชุดไม่มีไฟล์)
+// รายชื่อรูปรีวิว = ไฟล์ใน images/reviews/list.json + ไฟล์ที่สแกนเจอ (review1.jpg … ทนช่องว่างได้ 3 ชุด)
+async function fetchReviewListNames(){
+  try{
+    const res = await fetch(REVIEW_DIR + 'list.json', { cache: 'no-store' });
+    if(!res.ok) return [];
+    const arr = await res.json();
+    return Array.isArray(arr) ? arr.map(x => String(x || '').trim()).filter(n => n && !/[\\/]/.test(n)) : [];
+  }catch(_){ return []; }
+}
 async function scanReviewFiles(){
   const found = [];
+  let emptyStreak = 0;
   for(let start = 1; start <= REVIEW_MAX; start += REVIEW_BATCH){
     const nums = Array.from({ length: Math.min(REVIEW_BATCH, REVIEW_MAX - start + 1) }, (_, i) => start + i);
     const ok = await Promise.all(nums.map(n => probeImage(`${REVIEW_DIR}review${n}.jpg`)));
     const hit = nums.filter((n, i) => ok[i]);
     found.push(...hit);
-    if(!hit.length) break;
+    emptyStreak = hit.length ? 0 : emptyStreak + 1;
+    if(emptyStreak >= 3) break;
   }
-  return found.map(n => `review${n}.jpg`).reverse(); // ใหม่สุดก่อน
+  const scanned = found.map(n => `review${n}.jpg`);
+  const listed = await fetchReviewListNames();
+  return [...new Set([...listed, ...scanned])].sort((a, b) => reviewNum(b) - reviewNum(a)); // ใหม่สุดก่อน
+}
+// ดาวน์โหลด list.json จากรูปที่หลังบ้านเห็นอยู่ตอนนี้ → เอาไปวางทับที่ images/reviews/list.json
+function exportReviewList(){
+  if(!rvm || !rvm.files.length){ alert('ยังไม่พบรูปรีวิว'); return; }
+  const names = rvm.files.slice().sort((a, b) => reviewNum(a) - reviewNum(b));
+  const blob = new Blob([JSON.stringify(names, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'list.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
 
 async function persistReviewTags(next){
@@ -3168,6 +3191,7 @@ $('revSelAll').addEventListener('click', () => { if(rvm){ reviewVisibleKeys().fo
 $('revSelNone').addEventListener('click', () => { if(rvm){ rvm.sel.clear(); renderReviewsModal(); } });
 $('revCancel').addEventListener('click', () => closeReviewsModal());
 $('revSave').addEventListener('click', saveReviewsModal);
+$('revExport').addEventListener('click', exportReviewList);
 $('revScrim').addEventListener('click', e => { if(e.target === $('revScrim')) closeReviewsModal(); });
 $('optTabs').addEventListener('click', e => {
   const b = e.target.closest('[data-tab]');
