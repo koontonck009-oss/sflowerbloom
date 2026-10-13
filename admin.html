@@ -42,35 +42,46 @@
 <!-- ───────────── หน้าจัดการสินค้า ───────────── -->
 <div class="app" id="app" hidden>
 
-  <header class="topbar">
-    <div class="topbar-left">
+  <!-- ───── เมนูด้านซ้าย ───── -->
+  <aside class="sidebar" id="sidebar" aria-label="เมนูหลัก">
+    <div class="sb-brand">
       <img src="images/logo.png?v=2" alt="" class="topbar-logo">
-      <div>
-        <h1>จัดการสินค้า</h1>
-        <p class="save-state" id="saveState">พร้อมใช้งาน</p>
-      </div>
+      <div><b>S.Flower Bloom</b><span>ระบบจัดการสินค้า</span></div>
     </div>
-    <div class="topbar-right">
-      <a class="btn btn-ghost" href="index.html" target="_blank" rel="noopener">ดูหน้าร้าน</a>
-      <button class="btn btn-ghost" id="logoutBtn">ออกจากระบบ</button>
+    <nav class="sb-nav">
+      <span class="sb-label">จัดการร้าน</span>
+      <a class="sb-item is-active" href="#" id="navProducts" aria-current="page"><svg class="sb-ico" viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7l7-4 7 4v8l-7 4-7-4V7z"/><path d="M3 7l7 4 7-4M10 11v8"/></svg><span>สินค้า</span></a>
+      <button type="button" class="sb-item" id="optionsBtn" title="เพิ่ม แก้ชื่อ เรียงลำดับ หมวดหมู่ ชนิดดอกไม้ และขนาดของร้าน"><svg class="sb-ico" viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3h6l8 8-6 6-8-8V3z"/><circle cx="6.5" cy="6.5" r="1"/></svg><span>หมวดหมู่ / ชนิด / ขนาด</span></button>
+      <button type="button" class="sb-item" id="reviewsBtn" title="ผูกรูปรีวิวลูกค้ากับสินค้า ให้ไปโผล่ในแกลเลอรีของสินค้านั้น"><svg class="sb-ico" viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 2.5l2.3 4.7 5.2.7-3.8 3.6.9 5.1L10 14.1 5.4 16.6l.9-5.1L2.5 7.9l5.2-.7L10 2.5z"/></svg><span>รีวิวลูกค้า</span></button>
+      <button type="button" class="sb-item" id="catalogBtn" title="ดาวน์โหลดภาพแคตตาล็อก (JPG)"><svg class="sb-ico" viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="14" height="14" rx="2"/><circle cx="7.5" cy="7.5" r="1.3"/><path d="M17 13l-4-4-7 8"/></svg><span id="catalogLabel">แคตตาล็อก</span></button>
+      <span class="sb-label">ข้อมูล</span>
+      <button type="button" class="sb-item" id="backupBtn" title="เก็บสำรองไว้เผื่อข้อมูลหาย"><svg class="sb-ico" viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3v10M6 9l4 4 4-4M4 16h12"/></svg><span>ดาวน์โหลดไฟล์สำรอง</span></button>
+      <button type="button" class="sb-item is-danger" id="importBtn" title="สินค้าเดิมทั้งหมดจะถูกเขียนทับ"><svg class="sb-ico" viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13V3M6 7l4-4 4 4M4 16h12"/></svg><span>นำเข้าจากไฟล์</span></button>
+    </nav>
+    <div class="sb-foot">
+      <p class="save-state" id="saveState">พร้อมใช้งาน</p>
+      <a class="sb-item" href="index.html" target="_blank" rel="noopener"><svg class="sb-ico" viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 4H4v12h12v-4M11 3h6v6M17 3l-8 8"/></svg><span>ดูหน้าร้าน</span></a>
+      <button type="button" class="sb-item" id="logoutBtn"><svg class="sb-ico" viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 4H4v12h4M12 6l4 4-4 4M16 10H8"/></svg><span>ออกจากระบบ</span></button>
     </div>
+  </aside>
+  <div class="sb-scrim" id="sbScrim"></div>
+
+  <div class="app-main">
+
+  <!-- แถบบนสำหรับมือถือ/จอแคบ (จอใหญ่ซ่อนไว้) -->
+  <header class="topbar">
+    <button type="button" class="icon-btn menu-toggle" id="menuBtn" aria-label="เปิดเมนู">☰</button>
+    <h1>จัดการสินค้า</h1>
   </header>
 
   <main class="page">
     <div class="page-head">
-      <h2>สินค้า</h2>
+      <div>
+        <h2>สินค้า</h2>
+        <p class="page-sub">เพิ่ม แก้ไข และจัดการสินค้าทั้งหมดของร้านในที่เดียว</p>
+      </div>
       <div class="page-actions">
-        <button class="btn btn-ghost" id="optionsBtn" title="เพิ่ม แก้ชื่อ เรียงลำดับ หมวดหมู่ ชนิดดอกไม้ และขนาดของร้าน">🏷 หมวดหมู่ / ชนิด / ขนาด</button>
-        <button class="btn btn-ghost" id="reviewsBtn" title="ผูกรูปรีวิวลูกค้ากับสินค้า ให้ไปโผล่ในแกลเลอรีของสินค้านั้น">⭐ รีวิวลูกค้า</button>
-        <button class="btn btn-ghost" id="catalogBtn" title="ดาวน์โหลดภาพแคตตาล็อก (JPG)">🖼 แคตตาล็อก</button>
-        <details class="menu adv-menu">
-          <summary class="btn btn-ghost">ขั้นสูง ▾</summary>
-          <div class="menu-pop">
-            <button id="backupBtn"><b>ดาวน์โหลดไฟล์สำรองสินค้า</b><small>เก็บสำรองไว้เผื่อข้อมูลหาย</small></button>
-            <button id="importBtn" class="is-danger"><b>นำเข้าจากไฟล์</b><small>⚠ สินค้าเดิมทั้งหมดจะถูกเขียนทับ</small></button>
-          </div>
-        </details>
-        <button class="btn btn-primary" id="addBtn">เพิ่มสินค้า</button>
+        <button class="btn btn-primary" id="addBtn">+ เพิ่มสินค้า</button>
         <input type="file" id="importFile" accept=".json,application/json" hidden>
       </div>
     </div>
@@ -163,6 +174,8 @@
         </div>
       </div>
     </section>
+
+  </div><!-- /.app-main -->
 </div>
 
 <!-- ───────────── ตัวแก้ไขสินค้า ───────────── -->
@@ -204,57 +217,25 @@
 <div class="confirm-scrim" id="revScrim" hidden>
   <div class="vm-card rv-card" role="dialog" aria-modal="true" aria-labelledby="revTitle">
     <h3 class="vm-title" id="revTitle">รูปรีวิวลูกค้า</h3>
-    <div class="rv-tabs" id="revTabs" role="tablist"></div>
+    <div class="rv-addbar"><button type="button" class="btn btn-ghost btn-sm" id="revAddOpen">＋ เพิ่มรูปรีวิวใหม่</button><span class="rv-adv-note">เอารูปไปวางใน images/reviews/ แล้วมาเพิ่มที่นี่</span></div>
+    <div class="rv-addpanel" id="revAddPanel" hidden>
+      <p class="rv-add-help">วางชื่อไฟล์รูปที่เอาไปไว้ใน <b>images/reviews/</b> แล้ว — <b>หนึ่งบรรทัดต่อหนึ่งรูป</b> (เช่น abc.jpg) · ต้องอัปโหลดเว็บขึ้นไปแล้วก่อน ระบบจะตรวจว่าเปิดรูปได้จริง</p>
+      <textarea id="revAddText" rows="4" spellcheck="false" placeholder="review201.jpg&#10;review202.jpg&#10;รีวิวใหม่.jpg"></textarea>
+      <div class="rv-adv-row"><button type="button" class="btn btn-primary btn-sm" id="revAddGo">ตรวจและเพิ่ม</button><button type="button" class="btn btn-ghost btn-sm" id="revAddClose">ซ่อนช่องนี้</button></div>
+      <div id="revAddOut"></div>
+    </div>
     <div class="vm-body rv-body">
 
-      <!-- โหมดผูกทีละรูป -->
-      <div id="revTagView">
-        <div class="rv-tag" id="revTagMain" hidden>
-          <div class="rv-stage" id="revStage"></div>
-          <div class="rv-side">
-            <div>
-              <p class="rv-step" id="revStep"></p>
-              <h4 class="rv-q">รูปนี้คือสินค้าอะไร?</h4>
-              <p class="rv-sub">พิมพ์รหัสหรือชื่อสินค้า แล้วกดเลือก — ระบบจะไปรูปถัดไปให้เอง</p>
-            </div>
-            <div class="rv-combo" id="revCombo">
-              <span class="rv-combo-thumb" id="revComboThumb" hidden></span>
-              <input type="text" id="revProd" placeholder="พิมพ์รหัส/ชื่อสินค้า เช่น s13" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="revOpts" aria-autocomplete="list">
-              <button type="button" class="rv-combo-btn" id="revComboBtn" tabindex="-1" aria-label="เปิดรายการสินค้า"></button>
-              <div class="rv-opts" id="revOpts" role="listbox" hidden></div>
-            </div>
-            <div id="revRecent"></div>
-            <div id="revCurTag"></div>
-            <div class="rv-actions">
-              <button type="button" class="btn btn-ghost btn-sm" id="revUndo">↶ ย้อนกลับ</button>
-              <button type="button" class="btn btn-ghost btn-sm" id="revSkip">ข้ามรูปนี้</button>
-            </div>
-          </div>
-        </div>
-        <div id="revDone" hidden></div>
-      </div>
-
-      <!-- โหมดดูทั้งหมด -->
-      <div id="revAllView" hidden>
+      <!-- กริดรูปรีวิวทั้งหมด -->
+      <div id="revAllView">
+        <div class="rv-summary" id="revSummary"></div>
+        <input type="search" id="revSearch" class="rv-search" placeholder="🔍 ค้นหาชื่อไฟล์ เช่น review20" autocomplete="off" spellcheck="false">
         <div id="revCtx"></div>
         <div class="rv-filter" id="revFilter"></div>
         <div class="rv-grid" id="revGrid"></div>
       </div>
     </div>
 
-    <details class="rv-adv" id="revAdv">
-      <summary>ขั้นสูง (สำหรับผู้ดูแลระบบ)</summary>
-      <div class="rv-adv-body">
-        <div class="rv-adv-row">
-          <input type="text" id="revPath" class="rv-path" placeholder="เพิ่มรูปด้วย path เช่น images/reviews/abc.jpg" autocomplete="off" spellcheck="false">
-          <button type="button" class="btn btn-ghost btn-sm" id="revPathAdd">+ เพิ่มรูป</button>
-        </div>
-        <div class="rv-adv-row">
-          <button type="button" class="btn btn-ghost btn-sm" id="revExport" title="ดาวน์โหลดรายชื่อรูปทั้งหมดเป็น list.json แล้วนำไปวางที่ images/reviews/">⬇ ดาวน์โหลด list.json</button>
-          <span class="rv-adv-note">ใช้เมื่อเพิ่มรูปใหม่เข้าโฟลเดอร์ images/reviews/ แล้วอยากให้หน้าร้านเห็นรูปนั้นด้วย</span>
-        </div>
-      </div>
-    </details>
     <div class="vm-foot">
       <p class="vm-hint" id="revHint"></p>
       <button type="button" class="vm-btn" id="revCancel">ปิด</button>

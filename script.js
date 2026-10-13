@@ -14,6 +14,7 @@ const PAGE_LINK = 'https://m.me/S.Flower.Bloom44';
    จะแสดงราคาก็ต่อเมื่ออ่านเอกสารจาก Firestore ได้สำเร็จ และหลังบ้านไม่ได้เปิดสวิตช์ซ่อนราคาไว้ */
 let PRICES_HIDDEN = true;
 let cloudHidePrices = true;   // ค่าที่อ่านได้ล่าสุดจาก Firestore
+let REVIEW_HIDDEN = new Set(); // รูปรีวิวที่ร้านลบออกจากเว็บ (ซ่อน) จากหลังบ้าน — ไม่แสดงในแถบรีวิว/รีวิวทั้งหมด/แกลเลอรีสินค้า
 let REVIEW_TAGS = {};         // ป้ายสินค้าของรูปรีวิว { 'review12.jpg': ['s13'] } จากหลังบ้าน (ช่อง reviewsJson) — ว่าง = รีวิวไม่ผูกสินค้า
 let cloudStamp = null;        // ตราเวลา+สถานะสวิตช์+เวลาแก้ตัวเลือกร้านล่าสุดจาก Firestore
 let cloudOptions = null;      // ตัวเลือกร้าน (หมวดหมู่/ชนิดดอกไม้/ขนาด) ที่แก้จากหลังบ้าน null = ใช้ค่าเริ่มต้นในไฟล์นี้
@@ -2465,11 +2466,18 @@ function reviewTagIdsOf(src){
   const plain = full.startsWith('images/reviews/') ? full.slice('images/reviews/'.length) : full;
   return [...new Set([...(REVIEW_TAGS[full] || []), ...(REVIEW_TAGS[plain] || [])])];
 }
+// รูปนี้ถูกลบออกจากเว็บไหม (ลองทั้ง path เต็ม และชื่อไฟล์เฉยๆ ถ้าอยู่ใน images/reviews/)
+function isReviewHidden(srcOrKey){
+  if(!REVIEW_HIDDEN.size) return false;
+  const full = reviewKeyOf(srcOrKey);
+  const plain = full.startsWith('images/reviews/') ? full.slice('images/reviews/'.length) : full;
+  return REVIEW_HIDDEN.has(full) || REVIEW_HIDDEN.has(plain);
+}
 function reviewNumOf(key){ if(key.includes('/')) return 1e9; const m = /(\d+)/.exec(key); return m ? +m[1] : 0; }
 function reviewPhotosOf(p){
   if(!p) return [];
   return Object.keys(REVIEW_TAGS)
-    .filter(k => REVIEW_TAGS[k].includes(p.id))
+    .filter(k => REVIEW_TAGS[k].includes(p.id) && !isReviewHidden(k))
     .sort((a, b) => reviewNumOf(b) - reviewNumOf(a))
     .map(reviewSrcOf);
 }
@@ -2907,15 +2915,18 @@ async function fetchProductsFromFirestore(){
   cloudOptions = null;
   try{ if(typeof data.optionsJson === 'string') cloudOptions = JSON.parse(data.optionsJson); }catch(_){ cloudOptions = null; }
   REVIEW_TAGS = {};
+  REVIEW_HIDDEN = new Set();
   try{
     const raw = typeof data.reviewsJson === 'string' ? JSON.parse(data.reviewsJson) : null;
     if(raw && typeof raw === 'object'){
+      if(Array.isArray(raw.__hidden)) REVIEW_HIDDEN = new Set(raw.__hidden.map(x => String(x || '').trim()).filter(Boolean));
       Object.keys(raw).forEach(k => {
+        if(k === '__hidden') return;
         const ids = (Array.isArray(raw[k]) ? raw[k] : [raw[k]]).map(x => String(x ?? '').trim()).filter(Boolean);
         if(ids.length || k.includes('/')) REVIEW_TAGS[k] = ids; // คีย์ที่เป็น path เต็ม = รูปที่เพิ่มจากหลังบ้านด้วย path (ผูกสินค้าหรือไม่ก็ได้)
       });
     }
-  }catch(_){ REVIEW_TAGS = {}; }
+  }catch(_){ REVIEW_TAGS = {}; REVIEW_HIDDEN = new Set(); }
   cloudStamp = String(data.updatedAt || '') + '|' + cloudHidePrices + '|' + String(data.optionsUpdatedAt || '') + '|' + String(data.reviewsUpdatedAt || '');
   const list = typeof data.json === 'string' ? JSON.parse(data.json) : data.list;
   return (Array.isArray(list) && list.length) ? list : null;
@@ -3041,8 +3052,9 @@ async function loadReviews(){
     const src = reviewSrcOf(k);
     if(!found.includes(src)) found.push(src); // ต่อท้าย = นับเป็นรูปใหม่สุด
   });
-  if(!found.length) return;
-  renderReviews(found);
+  const shown = found.filter(src => !isReviewHidden(src)); // ตัดรูปที่ร้านลบออกจากเว็บแล้ว
+  if(!shown.length) return;
+  renderReviews(shown);
 }
 let REVIEWS = []; // ลำดับสุ่ม — ใช้กับแถบพรีวิวหน้าแรก
 let REVIEWS_ALL_SORTED = []; // เรียงจากรูปล่าสุด (เลขไฟล์มากสุด) ไปเก่าสุด — ใช้กับหน้าดูรีวิวทั้งหมด

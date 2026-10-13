@@ -1284,3 +1284,123 @@ body.vm-chip-dragging, body.vm-chip-dragging *{ cursor:grabbing !important; user
   .rv-q{ font-size:20px; }
   .rv-adv{ padding:0 16px; }
 }
+/* รูปรีวิว: เพิ่มหลายรูป + ลบ/กู้คืน */
+.rv-addbar{ display:flex; flex-wrap:wrap; align-items:center; gap:10px; padding:10px 24px 0; }
+.rv-addpanel{ margin:10px 24px 0; padding:12px 14px; border:1px solid var(--line); border-radius:10px; background:var(--line-soft); display:flex; flex-direction:column; gap:8px; }
+.rv-addpanel textarea{ width:100%; box-sizing:border-box; border:1px solid var(--line); border-radius:8px; padding:8px 10px; font:inherit; font-size:14px; resize:vertical; background:var(--panel); }
+.rv-add-help{ margin:0; font-size:13px; color:var(--ink-2); }
+.rv-add-ok{ margin:4px 0 0; font-size:13px; font-weight:600; color:#1F7A3D; }
+.rv-add-note{ margin:4px 0 0; font-size:13px; color:var(--ink-3); word-break:break-all; }
+.rv-add-err{ margin:4px 0 0; font-size:13px; color:#B3261E; word-break:break-all; }
+.rv-add-thumbs{ display:flex; flex-wrap:wrap; gap:6px; }
+.rv-add-thumbs img{ width:48px; height:48px; object-fit:cover; border-radius:6px; background:var(--line-soft); }
+.rv-del{ position:absolute; top:36px; right:6px; width:24px; height:24px; border-radius:50%; background:rgba(0,0,0,.5); color:#fff; font-size:12px; line-height:24px; text-align:center; opacity:0; transition:opacity .12s, background .12s; }
+.rv-tile:hover .rv-del, .rv-tile:focus-within .rv-del{ opacity:1; }
+.rv-del:hover{ background:#B3261E; }
+@media (hover:none){ .rv-del{ opacity:1; } }
+.rv-tile.is-hidden img{ opacity:.35; filter:grayscale(1); }
+.rv-restore{ position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); padding:6px 12px; border-radius:999px; background:var(--brand); color:#fff; font-size:13px; font-weight:600; white-space:nowrap; }
+@media (max-width:640px){ .rv-addbar{ padding:10px 12px 0; } .rv-addpanel{ margin:10px 12px 0; } }
+
+/* รูปรีวิว: สรุปสถานะ · ค้นหา · ชื่อไฟล์บนรูป */
+.rv-summary{ display:flex; flex-wrap:wrap; align-items:center; gap:6px 14px; margin:0 0 10px; font-size:13.5px; color:var(--ink-2); }
+.rv-summary .is-ok b{ color:#1F7A3D; }
+.rv-summary .is-warn{ color:#B26A00; font-weight:600; }
+.rv-summary .btn{ margin-left:auto; }
+.rv-search{ width:100%; box-sizing:border-box; border:1px solid var(--line); border-radius:8px; padding:8px 12px; font:inherit; font-size:14px; margin:0 0 10px; background:var(--panel); }
+.rv-label .rv-fn{ display:block; overflow:hidden; text-overflow:ellipsis; }
+.rv-label small{ display:block; font-size:11px; font-weight:500; opacity:.85; overflow:hidden; text-overflow:ellipsis; }
+.rv-badge{ position:absolute; top:6px; left:6px; max-width:calc(100% - 44px); padding:2px 7px; border-radius:999px; background:#FFF1D6; color:#8A5200; font-size:11px; font-weight:600; line-height:1.5; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.rv-tile.is-sel .rv-badge{ top:34px; }
+
+/* หน้าต่างรูปรีวิว: จอเตี้ยก็ต้องเห็นปุ่ม บันทึก/ปิด เสมอ
+   (เดิมพื้นที่กริดบังคับสูงขั้นต่ำ 68vh เลยดันส่วนท้ายหลุดกรอบ) → ให้เฉพาะกริดเลื่อนได้ ส่วนหัว/ท้ายอยู่กับที่ */
+.rv-card{ height:min(92vh,860px); max-height:92vh; }
+.rv-card .vm-title, .rv-card .rv-addbar, .rv-card .rv-addpanel, .rv-card .rv-adv, .rv-card .vm-foot{ flex:0 0 auto; }
+.rv-card .rv-body{ flex:1 1 0; min-height:0; padding-top:14px; padding-bottom:14px; overflow-y:auto; }
+.rv-card .vm-title{ padding:14px 24px; }
+.rv-addpanel{ max-height:38vh; overflow-y:auto; }
+.rv-card .rv-adv summary{ padding:8px 0; }
+@media (max-height:700px){
+  .rv-card .vm-title{ padding:10px 24px; font-size:18px; }
+  .rv-addbar{ padding-top:6px; }
+  .rv-card .vm-foot{ padding-top:8px; padding-bottom:8px; }
+}
+@media (max-width:760px){ .rv-card .vm-title{ padding:12px 16px; } }
+
+/* =========================================================
+   Redesign ขั้น 1: เมนูซ้าย (sidebar) + พื้นที่เนื้อหาเต็มจอ
+   ========================================================= */
+:root{ --sb-w:252px; }
+
+.sidebar{
+  position:fixed; top:0; left:0; bottom:0; width:var(--sb-w); z-index:40;
+  display:flex; flex-direction:column; gap:6px;
+  padding:16px 12px 14px;
+  background:var(--panel); border-right:1px solid var(--line);
+  overflow-y:auto;
+}
+.sb-brand{ display:flex; align-items:center; gap:11px; padding:4px 8px 14px; border-bottom:1px solid var(--line-soft); margin-bottom:8px; }
+.sb-brand .topbar-logo{ width:38px; height:38px; }
+.sb-brand div{ display:flex; flex-direction:column; min-width:0; line-height:1.3; }
+.sb-brand b{ font-size:15.5px; font-weight:600; }
+.sb-brand span{ font-size:12.5px; color:var(--ink-3); }
+
+.sb-nav{ display:flex; flex-direction:column; gap:2px; flex:1; }
+.sb-label{ margin:14px 10px 4px; font-size:11.5px; font-weight:600; letter-spacing:.04em; color:var(--ink-3); }
+.sb-label:first-child{ margin-top:2px; }
+
+.sb-item{
+  display:flex; align-items:center; gap:11px; width:100%;
+  padding:9px 11px; border:0; border-radius:8px; background:none;
+  font:inherit; font-size:14.5px; font-weight:500; text-align:left; text-decoration:none;
+  color:var(--ink-2); cursor:pointer;
+}
+.sb-item:hover:not(:disabled){ background:var(--line-soft); color:var(--ink); }
+.sb-item:disabled{ color:var(--ink-3); cursor:default; opacity:.7; }
+.sb-item .sb-ico{ flex:none; color:var(--ink-3); }
+.sb-item:hover:not(:disabled) .sb-ico{ color:var(--ink-2); }
+.sb-item span{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.sb-item.is-active{ background:var(--brand-soft); color:var(--brand-dark); font-weight:600; }
+.sb-item.is-active .sb-ico{ color:var(--brand); }
+.sb-item.is-danger{ color:var(--danger); }
+.sb-item.is-danger .sb-ico{ color:var(--danger); }
+.sb-item.is-danger:hover:not(:disabled){ background:#FDF1F1; }
+
+.sb-foot{ display:flex; flex-direction:column; gap:2px; padding-top:10px; border-top:1px solid var(--line-soft); }
+.sb-foot .save-state{ padding:0 11px 8px; white-space:normal; }
+
+.app-main{ margin-left:var(--sb-w); min-width:0; }
+.sb-scrim{ display:none; }
+
+/* จอใหญ่: ซ่อนแถบบนเดิม (ย้ายเมนูมาไว้ซ้ายแล้ว) */
+.app .topbar{ display:none; }
+.menu-toggle{ width:40px; height:40px; font-size:20px; border:1px solid var(--line); background:var(--panel); flex:none; }
+
+/* เนื้อหากว้างขึ้น */
+.page{ max-width:1320px; padding:28px 32px 80px; }
+.page-head{ align-items:flex-end; margin-bottom:18px; }
+.page-head h2{ font-size:24px; line-height:1.2; }
+.page-sub{ margin:4px 0 0; font-size:14px; color:var(--ink-2); }
+.page-actions .btn-primary{ padding:9px 18px; font-size:14.5px; }
+
+/* หน้าแก้ไขสินค้าเต็มจอ: ซ่อนเมนูซ้ายไว้เหมือนเดิม */
+.app.is-editing .sidebar, .app.is-editing .sb-scrim{ display:none; }
+.app.is-editing .app-main{ margin-left:0; }
+
+/* จอแคบ/มือถือ: เมนูซ้ายเลื่อนออกมาเป็นลิ้นชัก */
+@media (max-width:900px){
+  .app:not(.is-editing) .topbar{
+    display:flex; align-items:center; justify-content:flex-start; gap:12px;
+    padding:10px 14px;
+  }
+  .app:not(.is-editing) .topbar h1{ font-size:16.5px; margin:0; }
+  .sidebar{ transform:translateX(-100%); transition:transform .2s ease; box-shadow:none; }
+  .app.nav-open .sidebar{ transform:none; box-shadow:var(--shadow-lg); }
+  .app.nav-open .sb-scrim{ display:block; position:fixed; inset:0; z-index:35; background:rgba(36,28,32,.35); }
+  .app-main{ margin-left:0; }
+  .page{ padding:16px 14px 60px; }
+  .page-head h2{ font-size:20px; }
+  .page-sub{ display:none; }
+}
+@media (prefers-reduced-motion: reduce){ .sidebar{ transition:none; } }
