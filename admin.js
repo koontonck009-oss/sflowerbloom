@@ -2209,8 +2209,13 @@ async function importFromFile(file){
   await saveCatalog(`นำเข้าสินค้า ${list.length} รายการแล้ว`);
 }
 
-function downloadBackup(){
+async function downloadBackup(){
   const stamp = new Date().toISOString().slice(0, 10);
+  const ok = await askConfirm(
+    'ดาวน์โหลดไฟล์สำรอง',
+    `ไฟล์สำรองจะมีสินค้าทั้งหมด ${catalog.length} รายการ บันทึกเป็น products-${stamp}.json`,
+    'ดาวน์โหลด');
+  if(!ok) return;
   const blob = new Blob([JSON.stringify(catalog, null, 2)], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
