@@ -3449,3 +3449,8 @@ function updateBottomNav(){
   const mc = document.getElementById('catMoreCount');
   if(mc){ mc.textContent = extra; mc.hidden = extra === 0; }
 }
+
+/* กันหน้าเว็บโยกซ้าย-ขวา: ถ้าหน้าถูกลากไปด้านข้างด้วยเหตุใดก็ตาม ให้ดีดกลับมาที่ซ้ายสุดทันที */
+window.addEventListener('scroll', function(){
+  if(window.scrollX !== 0) window.scrollTo(0, window.scrollY);
+}, { passive:true });
