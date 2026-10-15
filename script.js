@@ -805,8 +805,11 @@ function renderNav(){
   nav.innerHTML = `
     <button class="cat-filter-btn" onclick="openFilterSheet()" aria-label="ตัวกรอง">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="4 4 20 4 14 12.5 14 19 10 21 10 12.5 4 4"></polygon></svg>
+      <span class="cat-filter-label">ตัวกรอง</span>
+      <span class="filter-count" id="filterCount" hidden></span>
       <span class="filter-badge-dot" id="filterBadgeDot"></span>
-    </button>` + CATS.map(c => {
+    </button>
+    <button type="button" class="cat-quick cat-quick-ready${showReadyOnly ? ' active' : ''}" onclick="quickToggleReady()">⚡ พร้อมส่ง</button>` + CATS.map(c => {
     // "ทั้งหมด" ไฮไลต์เมื่อไม่ได้เลือกหมวดเจาะจงไว้เลย ส่วนหมวดอื่นไฮไลต์เมื่ออยู่ใน activeCats จริง
     // หรือ (ตอนอยู่โหมด "ทั้งหมด") เมื่อ scrollspy กำลังเลื่อนผ่านหมวดนั้นอยู่พอดี
     const isActive = c === 'ทั้งหมด' ? allMode : (activeCats.has(c) || (allMode && scrollSpyCat === c));
@@ -814,7 +817,7 @@ function renderNav(){
   }).join('');
   // เลื่อนแถบแท็บแนวนอนให้ปุ่มที่ active อยู่ในมุมมองเสมอ (เผื่อชื่อหมวดยาวจนล้นจอ)
   const activeBtn = nav.querySelector('.cat-btn.active');
-  if(activeBtn) activeBtn.scrollIntoView({ behavior:'smooth', inline:'center', block:'nearest' });
+  if(activeBtn) activeBtn.scrollIntoView({ behavior:'smooth', inline:'nearest', block:'nearest' });
 }
 // ความสูงรวมของแถบ sticky ด้านบน (แถบค้นหา+ตะกร้า และแถบหมวดหมู่) ใช้คำนวณระยะเลื่อน/scrollspy
 function stickyOffset(){
@@ -1307,11 +1310,18 @@ function applyFilterDraft(){
 // จุดสีบนปุ่ม "ตัวกรอง" (มือถือ) โชว์เมื่อมีตัวกรองใดๆ ต่างไปจากค่าเริ่มต้น
 function updateFilterBadge(){
   const dot = document.getElementById('filterBadgeDot');
-  if(!dot) return;
   const priceActive = customPriceMin !== PRICE_SLIDER_MIN || customPriceMax !== PRICE_SLIDER_MAX;
-  const isActive = activeCats.size > 0 || priceActive || activeSortOrder !== 'none' || showReadyOnly || showFavoritesOnly || showAllVariantsSplit || activeFlowerTypes.size > 0 || activeSizes.size > 0;
-  dot.classList.toggle('show', isActive);
+  // นับ "กลุ่มตัวกรอง" ที่เปิดอยู่ (ไม่ใช่จำนวนค่า) เพื่อโชว์เป็นตัวเลขบนปุ่มตัวกรองบนมือถือ
+  const n = [activeCats.size > 0, priceActive, activeSortOrder !== 'none', showReadyOnly, showFavoritesOnly,
+             showAllVariantsSplit, activeFlowerTypes.size > 0, activeSizes.size > 0].filter(Boolean).length;
+  if(dot) dot.classList.toggle('show', n > 0);
+  const cnt = document.getElementById('filterCount');
+  if(cnt){ cnt.textContent = n; cnt.hidden = n === 0; }
+  // ชิป "พร้อมส่ง" ด่วนบนแถบหมวด ให้สถานะตรงกับตัวกรองเสมอ ไม่ว่าจะเปลี่ยนจากแผงตัวกรองหรือจากชิป
+  document.querySelectorAll('.cat-quick-ready').forEach(b => b.classList.toggle('active', showReadyOnly));
 }
+// กดชิป "พร้อมส่ง" บนแถบหมวด (มือถือ) = เปิด/ปิดตัวกรองพร้อมส่งทันที ไม่ต้องเปิดแผงตัวกรอง
+function quickToggleReady(){ toggleReadyOnly(!showReadyOnly); }
 
 // A product "มีตัวเลือกสินค้า" if the customer has to pick between colors,
 // sizes, or a bill count before the price/line item is final.
@@ -3356,8 +3366,19 @@ function closePromoPopup(e){
     }
   }, {passive:true});
 })();
-// เด้งขึ้นทันทีที่เปิดหน้าเว็บ
-openPromoPopup();
+// เด้งขึ้นทันทีที่เปิดหน้าเว็บ — บนมือถือเด้งแค่ครั้งแรกของแต่ละวัน (เด้งทุกครั้งทำให้ลูกค้าเห็นสินค้าช้าและรำคาญ)
+// คอมพิวเตอร์ยังเด้งทุกครั้งเหมือนเดิม
+(function(){
+  let show = true;
+  try{
+    if(window.matchMedia('(max-width:859px)').matches){
+      const today = new Date().toLocaleDateString('en-CA');
+      if(localStorage.getItem('sfb_promo_seen') === today) show = false;
+      else localStorage.setItem('sfb_promo_seen', today);
+    }
+  }catch(e){ show = true; }
+  if(show) openPromoPopup();
+})();
 
 /* ---------- Chat button ---------- */
 function closeChatBubble(){
@@ -3382,3 +3403,16 @@ function updateChatFabVisibility(){
     document.getElementById('promoOverlay').classList.contains('open');
   wrap.style.display = anyOpen ? 'none' : '';
 }
+
+/* ---------- มือถือ: ย้ายส่วนรีวิวลูกค้าไปไว้ใต้รายการสินค้า (คอมคงตำแหน่งเดิม) ---------- */
+(function(){
+  const sec = document.getElementById('reviewsSection');
+  const layout = document.querySelector('.catalog-layout');
+  if(!sec || !layout || !sec.parentNode) return;
+  const home = document.createComment('reviews-home');
+  sec.parentNode.insertBefore(home, sec);
+  const mq = window.matchMedia('(max-width:859px)');
+  function place(){ if(mq.matches) layout.after(sec); else home.after(sec); }
+  place();
+  if(mq.addEventListener) mq.addEventListener('change', place); else if(mq.addListener) mq.addListener(place);
+})();
