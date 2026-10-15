@@ -123,362 +123,6 @@
 <!-- ข้อความตอนปิดราคา (แสดงเฉพาะเมื่อ <html> มีคลาส prices-hidden) -->
 <div class="price-notice" id="priceNotice" role="note">
   <span class="pn-ico" aria-hidden="true">📸</span>
-  <p><b>ตอนนี้ร้านยังไม่แสดงราคาบนหน้าเว็บ</b> สนใจสินค้าไหน <b>แคปหน้าจอสินค้านั้น</b> (ให้เห็นชื่อสินค้าและตัวเลือกที่เลือก) แล้วส่งให้เพจเพื่อสอบถามราคาได้เลยค่ะ</p>
-  <a class="pn-btn" href="https://m.me/S.Flower.Bloom44" target="_blank" rel="noopener">💬 ทักเพจ</a>
-</div>
-
-<nav class="cat-nav" id="catNav"></nav>
-
-<div class="catalog-layout">
-  <aside class="filter-sidebar" id="filterSidebar"></aside>
-  <main id="catalog">
-    <div style="text-align:center; padding:60px 20px; color:var(--rose-dark);">กำลังโหลดสินค้า...</div>
-  </main>
-</div>
-
-<div class="filter-overlay" id="filterOverlay" onclick="closeFilterSheet()"></div>
-<div class="filter-sheet" id="filterSheet">
-  <div class="filter-sheet-header">
-    <h3>ตัวกรองสินค้า</h3>
-    <button class="filter-sheet-close" onclick="closeFilterSheet()" aria-label="ปิด">✕</button>
-  </div>
-  <div class="filter-sheet-body" id="filterSheetBody"></div>
-  <div class="filter-sheet-footer">
-    <button class="filter-clear-btn" onclick="clearFilterDraft()">ล้าง</button>
-    <button class="filter-apply-btn" onclick="applyFilterDraft()">แสดงผลลัพธ์</button>
-  </div>
-</div>
-
-<div class="overlay" id="overlay" onclick="closeCart()"></div>
-<aside class="drawer" id="drawer">
-  <div class="drawer-head">
-    <h3>ตะกร้าสินค้า</h3>
-    <div style="display:flex; align-items:center; gap:14px;">
-      <button class="clear-cart-btn" onclick="clearCart()">ล้างตะกร้า</button>
-      <button onclick="closeCart()">✕</button>
-    </div>
-  </div>
-  <div class="drawer-items" id="drawerItems"></div>
-  <div class="drawer-foot">
-    <div class="total-row">
-      <span>รวมค่าสินค้า</span>
-      <span class="total-amt" id="totalAmt">฿0</span>
-    </div>
-    <p class="field-hint" style="margin:-6px 0 12px;">ยังไม่รวมค่าจัดส่ง — นัดรับฟรีเมื่อสั่งครบ ฿299 ขึ้นไป (ต่ำกว่านั้นคิดค่าส่งตามระยะทางจริง) / ส่งพัสดุต่างจังหวัด ฿100 ต่อออเดอร์</p>
-    <button class="checkout-btn" id="checkoutBtn" onclick="startCheckout(buildCartOrderLines)">
-      🌸 ยืนยันสั่งทำสินค้า
-    </button>
-    <p class="checkout-hint">กดแล้วกรอกวันรับสินค้า/วิธีรับ/ชื่อ Facebook แอดมินจะทักกลับไปยืนยันอีกครั้ง</p>
-  </div>
-</aside>
-
-<div class="toast" id="toast"></div>
-
-<button class="fab-cart" id="fabCart" onclick="openCart()" style="display:none;">
-  🧺 <span id="fabCount">0</span> ชิ้น · <span id="fabTotal">฿0</span>
-</button>
-
-<div class="product-page" id="productModal">
-  <div class="product-page-scroll" id="productPageScroll">
-    <!-- แถบบน (จอคอมเท่านั้น): กลับ · เส้นทางหน้า · ตะกร้า -->
-    <div class="pd-topbar">
-      <button type="button" class="pd-back" onclick="closeProductModal()"><span aria-hidden="true">←</span> กลับไปเลือกสินค้า</button>
-      <nav class="pd-crumbs" id="pdCrumbs" aria-label="เส้นทางหน้า"></nav>
-      <button type="button" class="pd-cart" id="pdCartBtn" onclick="openCart()" aria-label="เปิดตะกร้าสินค้า">🧺 <span>ตะกร้า</span><b class="pd-cart-count is-zero" id="pdCartCount">0</b></button>
-    </div>
-    <div class="pd-layout" id="pdLayout">
-    <button type="button" class="pd-close" onclick="closeProductModal()" aria-label="ปิด">✕</button>
-    <div class="page-gallery" id="pageGallery">
-      <div class="gallery-thumbs" id="galleryThumbs"></div>
-      <div class="page-media">
-        <button class="page-back-btn" onclick="closeProductModal()" aria-label="กลับ">←</button>
-        <div class="page-img" id="modalImg"></div>
-        <button type="button" class="pd-heart-img" id="modalFavHeartImg" onclick="toggleModalFavorite()" aria-label="บันทึกไว้ในรายการโปรด">♡</button>
-        <div class="pd-img-badges" id="modalImgBadges"></div>
-        <span class="pd-review-tag" id="modalReviewTag" hidden>📷 รีวิวจากลูกค้า</span>
-      </div>
-    </div>
-    <div class="page-body">
-      <div class="pd-toprow">
-        <span class="pd-cat" id="modalCat"></span>
-        <div id="modalBadges" style="margin-bottom:8px;"></div>
-      </div>
-      <div class="pd-title-row" style="display:flex; align-items:flex-start; justify-content:space-between; gap:10px;">
-        <h3 id="modalName" style="margin:0 0 8px;"></h3>
-        <button type="button" class="fav-heart-inline" id="modalFavHeart" onclick="toggleModalFavorite()" aria-label="บันทึกไว้ในรายการโปรด">♡</button>
-      </div>
-      <p class="modal-desc" id="modalDesc"></p>
-      <div class="pd-opts">
-        <div class="color-row" id="modalColors"></div>
-        <div class="color-row" id="modalSizes"></div>
-        <div class="color-row" id="modalAddons" style="display:none;"></div>
-        <div id="modalOptionGroups"></div>
-      </div>
-      <div class="modal-qty" id="modalBillsRow" style="display:none;">
-        <span>จำนวนธนบัตร (ใบ)</span>
-        <div class="qty-ctrl">
-          <button onclick="changeModalBills(-1)">−</button>
-          <span id="modalBills">1</span>
-          <button onclick="changeModalBills(1)">+</button>
-        </div>
-      </div>
-      <div class="modal-price" id="modalPrice"></div>
-      <hr class="pd-hr pd-hr-1">
-      <div class="modal-qty">
-        <span>จำนวนช่อ</span>
-        <div class="qty-ctrl">
-          <button onclick="changeModalQty(-1)">−</button>
-          <span id="modalQty">1</span>
-          <button onclick="changeModalQty(1)">+</button>
-        </div>
-      </div>
-      <hr class="pd-hr pd-hr-2">
-      <div class="modal-actions modal-actions-mobile">
-        <button class="add-btn secondary icon-only" onclick="addModalToCart()" aria-label="ใส่ตะกร้า">🧺</button>
-        <button class="checkout-btn" onclick="startCheckout(buildModalOrderLines)">สั่งทำสินค้า</button>
-      </div>
-      <div class="modal-actions modal-actions-desktop">
-        <button class="add-btn secondary" onclick="addModalToCart()">🧺 ใส่ตะกร้า</button>
-        <button class="checkout-btn" onclick="startCheckout(buildModalOrderLines)">สั่งทำสินค้า</button>
-      </div>
-      <!-- ข้อมูลการสั่งซื้อ (จอคอมเท่านั้น) ตรงกับ FAQ ด้านล่างของหน้าเว็บ -->
-      <ul class="pd-info" aria-label="ข้อมูลการสั่งซื้อ">
-        <li><span class="pd-info-ic" aria-hidden="true">🌸</span><div><b>ทำตามออเดอร์</b><small>ใช้เวลาทำประมาณ 3–5 วัน</small></div></li>
-        <li><span class="pd-info-ic" aria-hidden="true">📍</span><div><b>นัดรับได้</b><small>ในตัวเมืองนครสวรรค์ และอำเภอพยุหะคีรี</small></div></li>
-        <li><span class="pd-info-ic" aria-hidden="true">📦</span><div><b>ส่งพัสดุ EMS</b><small>ผ่านไปรษณีย์ไทย แพ็กอย่างรัดกุม</small></div></li>
-      </ul>
-    </div>
-    </div>
-    <!-- สินค้าแนะนำด้านล่างหน้าสินค้า (มือถือ 6 ชิ้น · จอคอม 8 ชิ้น) -->
-    <section class="pd-related" id="pdRelated" hidden aria-labelledby="pdRelatedTitle">
-      <div class="pd-related-inner">
-        <div class="section-title"><h3 id="pdRelatedTitle">สินค้าอื่นๆ ที่คุณอาจชอบ</h3></div>
-        <div class="grid pd-related-grid" id="pdRelatedGrid"></div>
-      </div>
-    </section>
-  </div>
-</div>
-
-<section class="faq-section" id="faqSection">
-  <h3>คำถามที่พบบ่อย (FAQ)</h3>
-
-  <details class="faq-item">
-    <summary>S.Flower Bloom มีหน้าร้านไหม</summary>
-    <p class="faq-answer">ปัจจุบันเรายังไม่มีหน้าร้าน แต่สามารถนัดรับได้ในเมืองนครสวรรค์ และอำเภอพยุหะคีรี</p>
-  </details>
-
-  <details class="faq-item">
-    <summary>บริการจัดส่งจาก S.Flower Bloom</summary>
-    <p class="faq-answer">ทางร้านของเรามีบริการนัดรับในตัวเมืองนครสวรรค์และอำเภอพยุหะคีรี เพื่อให้มั่นใจว่าสินค้าจะถูกส่งถึงมือผู้รับอย่างปลอดภัยและไม่เกิดความเสียหาย สำหรับการจัดส่งพัสดุ เรามีบริการส่ง EMS ผ่านไปรษณีย์ไทย โดยทำการแพ็กสินค้าอย่างดีรัดกุม เพื่อลดความเสี่ยงของการชำรุดหรือเสียหายในระหว่างการขนส่งจนถึงมือผู้รับ</p>
-  </details>
-
-  <details class="faq-item">
-    <summary>ดอกไม้สามารถเก็บได้นานเท่าไหร่?</summary>
-    <p class="faq-answer">ดอกไม้ลวดกำมะหยี่ของเราสามารถคงความสวยงามได้นาน 3–5 ปี หรือยาวนานกว่านั้น เนื่องจากเป็นวัสดุทนทาน ไม่เหี่ยว ไม่ต้องรดน้ำ เพื่อรักษาความงดงามของดอกไม้ แนะนำให้หลีกเลี่ยงบริเวณที่มีฝุ่นเยอะ เพราะฝุ่นอาจเกาะบนผิวกำมะหยี่ทำให้ดูหมองลงได้ค่ะ</p>
-  </details>
-
-  <details class="faq-item">
-    <summary>ใช้เวลาทำกี่วัน?</summary>
-    <p class="faq-answer">โดยทั่วไปประมาณ 3–5 วัน (สามารถแจ้งเวลาประมาณการให้ลูกค้าทราบเป็นกรณีไป)</p>
-  </details>
-</section>
-
-<footer>© S.Flower Bloom</footer>
-
-<div class="overlay" id="summaryOverlay" onclick="closeOrderSummary()"></div>
-<div class="order-modal" id="orderSummaryModal">
-  <span class="sheet-handle" aria-hidden="true"></span>
-  <button class="modal-close" onclick="closeOrderSummary()" aria-label="ปิด">✕</button>
-
-  <div class="modal-body" id="orderReviewView">
-    <div class="order-modal-head">
-      <h4 class="order-summary-heading">สรุปคำสั่งซื้อ</h4>
-    </div>
-
-    <div class="order-modal-scroll">
-      <div class="order-items-list" id="orderItemsList"></div>
-      <div id="fbNameDisplay"></div>
-
-      <div class="form-group">
-        <label for="pickupDateInput">📅 วันที่ต้องการรับสินค้า</label>
-        <input type="date" id="pickupDateInput" class="form-input">
-        <p class="field-hint">💡 ช่อพร้อมส่งหรืองานเร่งเลือกวันใกล้ๆ ได้เลย แต่ถ้าเป็นช่อที่ต้องเตรียมพิเศษ แนะนำสั่งล่วงหน้า <strong>3-5 วัน</strong> — แอดมินจะทักแจ้งอีกครั้งหากทำไม่ทันวันที่เลือกไว้</p>
-      </div>
-
-      <div class="form-group">
-        <label>🚚 วิธีรับสินค้า</label>
-        <div class="radio-group">
-          <label class="radio-option"><input type="radio" name="deliveryMethod" value="pickup" onchange="onDeliveryMethodChange()"> 🚗 นัดรับสินค้า (พยุหะ–ตัวเมืองนครสวรรค์และใกล้เคียง)</label>
-          <label class="radio-option"><input type="radio" name="deliveryMethod" value="parcel" onchange="onDeliveryMethodChange()"> 📦 ส่งพัสดุ (ต่างจังหวัด)</label>
-          <label class="radio-option"><input type="radio" name="deliveryMethod" value="unsure" onchange="onDeliveryMethodChange()"> ยังไม่แน่ใจ</label>
-        </div>
-        <p class="field-hint" id="deliveryMethodHint"></p>
-      </div>
-
-      <div class="form-group" id="pickupInfoGroup" style="display:none;">
-        <label for="pickupLocationInput">📍 สถานที่นัดรับ <span style="font-weight:400;">(ไม่บังคับ)</span></label>
-        <input type="text" id="pickupLocationInput" class="form-input" placeholder="เช่น เซเว่นหน้าตลาดพยุหะ, ปั๊มน้ำมัน..." style="margin-bottom:10px;">
-        <label for="pickupPhoneInput">📞 เบอร์โทรติดต่อวันนัดรับ <span style="font-weight:400;">(ไม่บังคับ)</span></label>
-        <input type="tel" id="pickupPhoneInput" class="form-input" placeholder="เบอร์โทรที่ติดต่อได้ในวันนัดรับ">
-      </div>
-
-      <div class="form-group" id="deliveryAddressGroup" style="display:none;">
-        <label for="deliveryAddressInput">📍 ที่อยู่จัดส่ง</label>
-        <textarea id="deliveryAddressInput" class="form-input" rows="2" placeholder="ที่อยู่สำหรับจัดส่ง พร้อมเบอร์โทรผู้รับ"></textarea>
-      </div>
-
-      <div class="form-group">
-        <label>💳 การชำระเงิน</label>
-        <div class="radio-group">
-          <label class="radio-option"><input type="radio" name="paymentMethod" value="full" onchange="renderOrderTotalSummary()"> โอนเต็มยอด</label>
-          <label class="radio-option" id="depositPaymentOption"><input type="radio" name="paymentMethod" value="deposit" onchange="renderOrderTotalSummary()"> มัดจำ 50% ส่วนที่เหลือชำระวันทำช่อดอกไม้เสร็จ</label>
-          <label class="radio-option" id="codPaymentOption" style="display:none;"><input type="radio" name="paymentMethod" value="cod" onchange="renderOrderTotalSummary()"> เก็บเงินปลายทาง (COD) — เฉพาะช่อพร้อมส่ง</label>
-        </div>
-      </div>
-
-      <label class="checkbox-label card-addon-toggle">
-        <input type="checkbox" id="addCardCart"> 🎀 เพิ่มการ์ดอวยพร (ฟรี)
-      </label>
-      <textarea id="orderNoteInput" class="form-input" rows="2" placeholder="หมายเหตุ (เช่น อยากเปลี่ยน/เพิ่มสีช่อดอกไม้ ข้อความในการ์ด หรือข้อความอื่นๆ ถึงร้าน)"></textarea>
-      <p class="app-tip">💡 ยังไม่เคยทักแชทเพจใช่ไหม <a href="#" id="messengerLink" target="_blank" rel="noopener">เปิดแชท Facebook Messenger ที่นี่</a> เพื่อทักหาแอดมินไว้ก่อนได้เลยค่ะ (ใช้ชื่อเดียวกับที่แจ้งไว้)</p>
-    </div>
-
-    <div class="order-modal-footer">
-      <div class="order-total-box" id="orderTotalBox">
-        <div class="total-line"><span>รวมค่าสินค้า</span><span id="totalBoxSubtotal">฿0</span></div>
-        <div class="total-line" id="totalBoxShippingLine"><span>ค่าจัดส่ง</span><span id="totalBoxShipping">–</span></div>
-        <div class="total-line grand"><span>ยอดรวม<span id="totalBoxApproxNote"></span></span><span id="totalBoxGrand">฿0</span></div>
-      </div>
-      <button class="checkout-btn" id="confirmOrderBtn" onclick="confirmOrderSubmit()">ยืนยันสั่งทำสินค้า</button>
-    </div>
-  </div>
-
-  <div class="modal-body" id="orderSuccessView" style="display:none; overflow-y:auto;">
-    <div class="copied-banner">✅ รับออเดอร์ของคุณแ<!DOCTYPE html>
-<html lang="th" class="prices-hidden">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>S.Flower Bloom — แคตตาล็อกสินค้า</title>
-<meta name="description" content="S.Flower Bloom ร้านดอกไม้ออนไลน์ เลือกช่อดอกไม้ กรอบรูป กระถาง และของขวัญสำหรับโอกาสพิเศษ เลือกสินค้าแล้วสั่งซื้อง่ายๆ ผ่านแชท นัดรับหรือจัดส่งได้">
-<link rel="canonical" href="https://sflowerbloom.vercel.app/">
-
-<!-- Open Graph: ทำให้ลิงก์ที่แชร์ใน Facebook / LINE / Messenger มีรูปและคำอธิบายสวยๆ -->
-<meta property="og:type" content="website">
-<meta property="og:site_name" content="S.Flower Bloom">
-<meta property="og:title" content="S.Flower Bloom — แคตตาล็อกสินค้า">
-<meta property="og:description" content="เลือกช่อดอกไม้ กรอบรูป กระถาง และของขวัญสำหรับโอกาสพิเศษ สั่งซื้อง่ายผ่านแชท">
-<meta property="og:image" content="https://sflowerbloom.vercel.app/images/banner.jpg">
-<meta property="og:url" content="https://sflowerbloom.vercel.app/">
-<meta property="og:locale" content="th_TH">
-
-<!-- Twitter/X Card — บาง messenger ก็อ่าน tag ชุดนี้ด้วย -->
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="S.Flower Bloom — แคตตาล็อกสินค้า">
-<meta name="twitter:description" content="เลือกช่อดอกไม้ กรอบรูป กระถาง และของขวัญสำหรับโอกาสพิเศษ สั่งซื้อง่ายผ่านแชท">
-<meta name="twitter:image" content="https://sflowerbloom.vercel.app/images/banner.jpg">
-
-<link rel="icon" type="image/png" sizes="192x192" href="images/favicon.png?v=2">
-<link rel="apple-touch-icon" sizes="180x180" href="images/apple-touch-icon.png?v=2">
-<link rel="manifest" href="site.webmanifest?v=2">
-<meta name="theme-color" content="#F62188">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
-<script src="firebase-config.js"></script>
-
-<!-- Vercel Web Analytics (ใช้ได้เมื่อเปิด Analytics ใน Vercel Dashboard และ deploy บน Vercel) -->
-<script>window.va = window.va || function () { (window.va.q = window.va.q || []).push(arguments); };</script>
-<script defer src="/_vercel/insights/script.js"></script>
-<!-- JSON-LD: ช่วยให้ Google เข้าใจว่านี่คือหน้าร้านค้า -->
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "Store",
-  "name": "S.Flower Bloom",
-  "description": "ร้านดอกไม้ออนไลน์ เลือกช่อดอกไม้ กรอบรูป กระถาง และของขวัญสำหรับโอกาสพิเศษ สั่งซื้อผ่านแชท",
-  "image": "https://sflowerbloom.vercel.app/images/banner.jpg",
-  "url": "https://sflowerbloom.vercel.app/",
-  "priceRange": "฿฿"
-}
-</script>
-</head>
-<body>
-
-<div class="search-cart-bar" id="searchCartBar">
-  <div class="brand-mark">
-    <img src="images/logo.png?v=2" alt="โลโก้ร้าน" onerror="this.parentElement.innerHTML='<svg viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot;><path d=&quot;M12 2c1.5 2 1.5 4 0 6-1.5-2-1.5-4 0-6z&quot; fill=&quot;#F62188&quot;/><path d=&quot;M12 22c-3-3-6-6-6-10a6 6 0 0112 0c0 4-3 7-6 10z&quot; fill=&quot;#F62188&quot; opacity=&quot;0.9&quot;/></svg>'">
-  </div>
-  <span class="brand-name">S.Flower Bloom</span>
-  <div class="search-wrap">
-    <svg viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-    <input type="text" id="searchInput" class="search-input" placeholder="ค้นหาสินค้า เช่น กุหลาบ, กรอบรูป..." oninput="handleSearch(this.value)" onfocus="handleSearchFocus()" onkeydown="if(event.key==='Escape') hideSearchSuggestions();" autocomplete="off">
-    <button type="button" class="search-clear" id="searchClearBtn" style="display:none;" onclick="clearSearch()" aria-label="ล้างคำค้นหา">✕</button>
-    <div class="search-suggest" id="searchSuggest"></div>
-  </div>
-  <button class="cart-btn-top" onclick="openCart()" aria-label="ตะกร้าสินค้า">
-    🧺
-    <span class="badge" id="cartBadge">0</span>
-  </button>
-</div>
-<header class="top">
-  <div class="brand-row">
-    <h1>S.Flower Bloom</h1>
-    <p>เลือกสินค้า แล้วสั่งซื้อผ่านแชทได้เลย</p>
-  </div>
-</header>
-
-<section class="hero">
-  <h2>ช่อดอกไม้กำมะหยี่<br>สำหรับโอกาสพิเศษ</h2>
-  <p><span class="price-on">เลือกสินค้าที่ชอบ กดใส่ตะกร้า แล้วกดปุ่มเดียวเพื่อส่งรายการสั่งซื้อมาที่แชทเพจของเราได้ทันที ไม่ต้องพิมพ์เอง</span><span class="price-off">เลือกดูสินค้าที่ชอบ แล้วแคปหน้าจอสินค้านั้นส่งให้เพจเพื่อสอบถามราคาและสั่งทำได้เลย</span></p>
-  <a href="#catalog" class="cta">เลือกดูสินค้า ↓</a>
-</section>
-
-<section class="reviews-section" id="reviewsSection" hidden>
-  <div class="reviews-head">
-    <h3>รีวิวจากลูกค้า</h3>
-    <button type="button" class="reviews-stat" id="reviewsStat" onclick="openReviewsAll()"></button>
-  </div>
-  <div class="reviews-scroll" id="reviewsScroll"></div>
-</section>
-<div class="overlay" id="reviewsAllOverlay" onclick="closeReviewsAll()"></div>
-<div class="reviews-all-modal" id="reviewsAllModal">
-  <span class="sheet-handle" aria-hidden="true"></span>
-  <button class="modal-close" onclick="closeReviewsAll()" aria-label="ปิด">✕</button>
-  <div class="reviews-all-head">
-    <h4>รีวิวจากลูกค้าทั้งหมด</h4>
-    <span id="reviewsAllCount"></span>
-  </div>
-  <div class="reviews-all-body">
-    <div class="reviews-all-grid" id="reviewsAllGrid"></div>
-  </div>
-</div>
-<!-- Promo popup: opens automatically on page load -->
-<div class="promo-overlay" id="promoOverlay" onclick="closePromoPopup(event)">
-  <div class="promo-modal" onclick="event.stopPropagation()">
-    <button class="promo-close" onclick="closePromoPopup()" aria-label="ปิด">✕</button>
-    <div class="promo-track-wrap"
-         id="promoTrackWrap">
-      <div class="promo-track" id="promoTrack"></div>
-      <button class="promo-nav prev" onclick="navPromo(-1)" aria-label="รูปก่อนหน้า">‹</button>
-      <button class="promo-nav next" onclick="navPromo(1)" aria-label="รูปถัดไป">›</button>
-      <div class="promo-dots" id="promoDots"></div>
-    </div>
-  </div>
-</div>
-
-<div class="review-lightbox" id="reviewLightbox" onclick="closeReviewLightbox()">
-  <button class="review-lightbox-close" onclick="event.stopPropagation(); closeReviewLightbox();" aria-label="ปิด">✕</button>
-  <button class="review-lightbox-nav prev" onclick="event.stopPropagation(); navReviewLightbox(-1);" aria-label="รูปก่อนหน้า">‹</button>
-  <img id="reviewLightboxImg" src="" alt="รีวิวลูกค้า" onclick="event.stopPropagation();">
-  <button class="review-lightbox-nav next" onclick="event.stopPropagation(); navReviewLightbox(1);" aria-label="รูปถัดไป">›</button>
-  <div class="review-lightbox-prod" id="reviewLightboxProd" hidden onclick="event.stopPropagation();"></div>
-  <div class="review-lightbox-counter" id="reviewLightboxCounter"></div>
-</div>
-
-<!-- ข้อความตอนปิดราคา (แสดงเฉพาะเมื่อ <html> มีคลาส prices-hidden) -->
-<div class="price-notice" id="priceNotice" role="note">
-  <span class="pn-ico" aria-hidden="true">📸</span>
   <p><b>ตอนนี้ร้านยังไม่แสดงราคาบนหน้าเว็บ</b> สนใจสินค้าไหน <b>แคปหน้าจอสินค้านั้น</b> <span class="pn-more">(ให้เห็นชื่อสินค้าและตัวเลือกที่เลือก)</span> แล้วส่งให้เพจเพื่อสอบถามราคาได้เลยค่ะ</p>
   <a class="pn-btn" href="https://m.me/S.Flower.Bloom44" target="_blank" rel="noopener">💬 ทักเพจ</a>
 </div>
@@ -502,6 +146,38 @@
   <div class="filter-sheet-footer">
     <button class="filter-clear-btn" onclick="clearFilterDraft()">ล้าง</button>
     <button class="filter-apply-btn" onclick="applyFilterDraft()">แสดงผลลัพธ์</button>
+  </div>
+</div>
+
+<!-- แถบเมนูล่าง (มือถือเท่านั้น): หน้าแรก · หมวดหมู่ · พร้อมส่ง · รายการโปรด · ตะกร้า -->
+<nav class="bnav" id="bottomNav" aria-label="เมนูหลัก">
+  <button type="button" class="bnav-item" id="bnavHome" onclick="bnavHome()">
+    <span class="bnav-ic" aria-hidden="true">🏠</span><span class="bnav-lb">หน้าแรก</span>
+  </button>
+  <button type="button" class="bnav-item" id="bnavCat" onclick="openCatSheet()">
+    <span class="bnav-ic" aria-hidden="true">🌸<b class="bnav-badge" id="bnavCatBadge" hidden></b></span><span class="bnav-lb" id="bnavCatLabel">หมวดหมู่</span>
+  </button>
+  <button type="button" class="bnav-item" id="bnavReady" onclick="quickToggleReady()" aria-pressed="false">
+    <span class="bnav-ic" aria-hidden="true">⚡</span><span class="bnav-lb">พร้อมส่ง</span>
+  </button>
+  <button type="button" class="bnav-item" id="bnavFav" onclick="toggleFavoritesOnly(!showFavoritesOnly)" aria-pressed="false">
+    <span class="bnav-ic bnav-heart" id="bnavFavIc" aria-hidden="true">♡</span><span class="bnav-lb">รายการโปรด</span>
+  </button>
+  <button type="button" class="bnav-item bnav-cart" id="bnavCart" onclick="openCart()">
+    <span class="bnav-ic" aria-hidden="true">🧺<b class="bnav-badge" id="bnavCartBadge" hidden>0</b></span><span class="bnav-lb">ตะกร้า</span>
+  </button>
+</nav>
+
+<!-- แผงเลือกหมวดหมู่ (มือถือ) เปิดจากช่อง "หมวดหมู่" ในแถบเมนูล่าง -->
+<div class="filter-overlay" id="catOverlay" onclick="closeCatSheet()"></div>
+<div class="filter-sheet cat-sheet" id="catSheet" role="dialog" aria-label="เลือกหมวดหมู่">
+  <div class="filter-sheet-header">
+    <h3>เลือกหมวดหมู่</h3>
+    <button class="filter-sheet-close" onclick="closeCatSheet()" aria-label="ปิด">✕</button>
+  </div>
+  <div class="filter-sheet-body" id="catSheetBody"></div>
+  <div class="filter-sheet-footer">
+    <button type="button" class="cat-more-btn" onclick="catSheetMoreFilters()">⚙️ ตัวกรองเพิ่มเติม <span class="filter-count" id="catMoreCount" hidden></span></button>
   </div>
 </div>
 
@@ -592,7 +268,7 @@
       <div class="modal-actions modal-actions-mobile">
         <div class="mab-info" id="mabInfo"></div>
         <div class="mab-btns">
-          <button class="add-btn secondary" onclick="addModalToCart()">🧺 ใส่ตะกร้า</button>
+          <button class="add-btn secondary icon-only" onclick="addModalToCart()" aria-label="ใส่ตะกร้า">🧺</button>
           <button class="checkout-btn" onclick="startCheckout(buildModalOrderLines)">สั่งทำสินค้า</button>
         </div>
       </div>
@@ -725,40 +401,5 @@
 
 <script src="script.js" defer></script>
 
-<!-- Floating chat button (bottom-right) -->
-<div class="chat-fab-wrap" id="chatFabWrap">
-  <div class="chat-bubble" id="chatBubble" onclick="startCustomOrder()">
-    <button class="chat-bubble-close" onclick="event.stopPropagation(); closeChatBubble();" aria-label="ปิด">✕</button>
-    <b>ต้องการแบบพิเศษ หรือมีรูปตัวอย่างในใจ?</b>ทักแชทมาได้เลย 🌸
-  </div>
-  <button class="chat-fab" onclick="startCustomOrder()" aria-label="แชทกับร้าน">
-    💬
-    <span class="fab-dot"></span>
-  </button>
-</div>
-</body>
-</html>ล้ว</div>
-    <div class="order-no-chip" id="orderNoChip"></div>
-    <p class="paste-instruction">📌 <strong>ขั้นตอนต่อไป:</strong> กดปุ่ม "ทักแชทแจ้งเลขออเดอร์" ด้านล่าง ระบบจะคัดลอกเลขที่ออเดอร์ให้อัตโนมัติ แล้วเปิดแชท Facebook Messenger ของร้าน — เมื่อแชทเปิดขึ้นมา แค่วางข้อความที่คัดลอกไว้แล้วส่งได้เลย แอดมินจะได้เห็นเลขออเดอร์และยืนยันรายการ พร้อมแจ้งยอด/วิธีรับ-จัดส่งให้ค่ะ 🌸</p>
-    <div class="modal-actions success-actions">
-      <a href="#" id="chatOrderBtn" class="chat-order-btn" onclick="chatWithOrderNo(event)">💬 ทักแชทแจ้งเลขออเดอร์</a>
-      <button class="close-secondary-btn" onclick="closeOrderSummary()">ปิดหน้าต่าง</button>
-    </div>
-  </div>
-</div>
-
-<script src="script.js" defer></script>
-
-<!-- Floating chat button (bottom-right) -->
-<div class="chat-fab-wrap" id="chatFabWrap">
-  <div class="chat-bubble" id="chatBubble" onclick="startCustomOrder()">
-    <button class="chat-bubble-close" onclick="event.stopPropagation(); closeChatBubble();" aria-label="ปิด">✕</button>
-    <b>ต้องการแบบพิเศษ หรือมีรูปตัวอย่างในใจ?</b>ทักแชทมาได้เลย 🌸
-  </div>
-  <button class="chat-fab" onclick="startCustomOrder()" aria-label="แชทกับร้าน">
-    💬
-    <span class="fab-dot"></span>
-  </button>
-</div>
 </body>
 </html>

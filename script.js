@@ -818,6 +818,7 @@ function renderNav(){
   // เลื่อนแถบแท็บแนวนอนให้ปุ่มที่ active อยู่ในมุมมองเสมอ (เผื่อชื่อหมวดยาวจนล้นจอ)
   const activeBtn = nav.querySelector('.cat-btn.active');
   if(activeBtn) activeBtn.scrollIntoView({ behavior:'smooth', inline:'nearest', block:'nearest' });
+  updateBottomNav();
 }
 // ความสูงรวมของแถบ sticky ด้านบน (แถบค้นหา+ตะกร้า และแถบหมวดหมู่) ใช้คำนวณระยะเลื่อน/scrollspy
 function stickyOffset(){
@@ -1319,6 +1320,7 @@ function updateFilterBadge(){
   if(cnt){ cnt.textContent = n; cnt.hidden = n === 0; }
   // ชิป "พร้อมส่ง" ด่วนบนแถบหมวด ให้สถานะตรงกับตัวกรองเสมอ ไม่ว่าจะเปลี่ยนจากแผงตัวกรองหรือจากชิป
   document.querySelectorAll('.cat-quick-ready').forEach(b => b.classList.toggle('active', showReadyOnly));
+  updateBottomNav();
 }
 // กดชิป "พร้อมส่ง" บนแถบหมวด (มือถือ) = เปิด/ปิดตัวกรองพร้อมส่งทันที ไม่ต้องเปิดแผงตัวกรอง
 function quickToggleReady(){ toggleReadyOnly(!showReadyOnly); }
@@ -1994,6 +1996,8 @@ function updateCartUI(){
 
   const fab = document.getElementById('fabCart');
   const count = cartCount();
+  const nb = document.getElementById('bnavCartBadge');
+  if(nb){ nb.textContent = count > 99 ? '99+' : count; nb.hidden = count === 0; }
   if(count > 0){
     fab.style.display = 'flex';
     document.getElementById('fabCount').textContent = count;
@@ -2007,12 +2011,10 @@ function openCart(){
   if(PRICES_HIDDEN) return;
   document.getElementById('drawer').classList.add('open');
   document.getElementById('overlay').classList.add('show');
-  updateChatFabVisibility();
 }
 function closeCart(){
   document.getElementById('drawer').classList.remove('open');
   document.getElementById('overlay').classList.remove('show');
-  updateChatFabVisibility();
 }
 
 let toastTimer;
@@ -2221,12 +2223,10 @@ function showOrderSummary(message, subtotal, items){
   document.getElementById('orderSummaryModal').classList.add('open');
   document.getElementById('summaryOverlay').classList.add('show');
   closeCart();
-  updateChatFabVisibility();
 }
 function closeOrderSummary(){
   document.getElementById('orderSummaryModal').classList.remove('open');
   document.getElementById('summaryOverlay').classList.remove('show');
-  updateChatFabVisibility();
 }
 let lastOrderNo = '';
 function copyOrderNo(){
@@ -2645,7 +2645,6 @@ function openProductModal(id, colorIndex, optionIndex, sizeIndex){
   } else {
     history.pushState({ productPage:true }, '', '#product');
   }
-  updateChatFabVisibility();
 }
 
 /* ---------- สินค้าอื่นๆ ที่คุณอาจชอบ (ใต้หน้าสินค้า: จอคอม 8 ชิ้น · มือถือ 6 ชิ้น) ----------
@@ -2686,7 +2685,6 @@ function closeProductModal(fromPopState){
   document.body.style.overflow = '';
   modalProductId = null;
   modalAllowedVariants = null;
-  updateChatFabVisibility();
   if(!fromPopState && history.state && history.state.productPage){
     history.back();
   }
@@ -3234,13 +3232,11 @@ function openReviewsAll(){
   renderReviewsAllGrid();
   document.getElementById('reviewsAllOverlay').classList.add('show');
   document.getElementById('reviewsAllModal').classList.add('open');
-  updateChatFabVisibility();
 }
 function closeReviewsAll(){
   document.getElementById('reviewsAllOverlay').classList.remove('show');
   document.getElementById('reviewsAllModal').classList.remove('open');
   startReviewAutoScroll();
-  updateChatFabVisibility();
 }
 
 /* ---------- Lightbox: ดูรูปเต็มจอ เลื่อนซ้าย-ขวาดูรูปถัดไปได้โดยไม่ต้องปิด ----------
@@ -3270,7 +3266,6 @@ function openReviewLightbox(list, i){
   currentLightboxIndex = i;
   showLightboxImage();
   document.getElementById('reviewLightbox').classList.add('open');
-  updateChatFabVisibility();
 }
 function navReviewLightbox(delta){
   if(!currentLightboxList.length) return;
@@ -3284,7 +3279,6 @@ function closeReviewLightbox(){
   if(!document.getElementById('reviewsAllModal').classList.contains('open')){
     startReviewAutoScroll();
   }
-  updateChatFabVisibility();
 }
 // ปัดซ้าย-ขวาบนรูปเพื่อเลื่อนดูรูปถัดไป (รูปแบบเดียวกับที่ใช้ในแกลเลอรีสินค้า)
 (function(){
@@ -3367,13 +3361,11 @@ function openPromoPopup(){
   promoIndex = 0;
   renderPromoSlides();
   document.getElementById('promoOverlay').classList.add('open');
-  updateChatFabVisibility();
 }
 function closePromoPopup(e){
   // ปิดเมื่อกดปุ่ม X หรือคลิกพื้นหลังนอกกล่อง (ไม่ปิดเมื่อคลิกในรูป/การ์ด)
   if(e && e.target !== e.currentTarget) return;
   document.getElementById('promoOverlay').classList.remove('open');
-  updateChatFabVisibility();
 }
 // ปัดซ้าย-ขวาเพื่อเลื่อนสไลด์ (รูปแบบเดียวกับแกลเลอรีสินค้า/รีวิว)
 (function(){
@@ -3406,26 +3398,55 @@ function closePromoPopup(e){
   if(show) openPromoPopup();
 })();
 
-/* ---------- Chat button ---------- */
-function closeChatBubble(){
-  const b = document.getElementById('chatBubble');
-  if(!b || b.style.display === 'none') return;
-  b.classList.add('chat-bubble-hide');
-  setTimeout(()=>{ b.style.display = 'none'; }, 350);
+/* ---------- แถบเมนูล่าง (มือถือ) ---------- */
+const CAT_ICONS = { 'ทั้งหมด':'🌷', 'ช่อดอกไม้':'💐', 'กรอบรูป':'🖼️', 'กระถาง':'🪴', 'อื่นๆ':'🎁' };
+function bnavHome(){
+  if(activeCats.size > 0){ scrollSpyCat = 'ทั้งหมด'; clearCategorySelection(); }
+  window.scrollTo({ top:0, behavior:'smooth' });
 }
-// เด้งข้อความชวนแชทขึ้นมาสักพัก แล้วหายไปเองอัตโนมัติหลังจาก 5 วินาที
-// (ถ้าลูกค้ากดปิดเองก่อนหน้านั้น closeChatBubble ด้านบนจะจัดการให้ ไม่ซ้ำซ้อนกัน)
-setTimeout(closeChatBubble, 5000);
-/* ซ่อนปุ่มแชทลอยทุกครั้งที่มีป็อปอัพ/ตะกร้าเปิดอยู่ ป้องกันไปบังปุ่มหรือช่องกรอกข้อมูล */
-function updateChatFabVisibility(){
-  const wrap = document.getElementById('chatFabWrap');
-  if(!wrap) return;
-  const anyOpen =
-    document.getElementById('drawer').classList.contains('open') ||
-    document.getElementById('productModal').classList.contains('open') ||
-    document.getElementById('orderSummaryModal').classList.contains('open') ||
-    document.getElementById('reviewsAllModal').classList.contains('open') ||
-    document.getElementById('reviewLightbox').classList.contains('open') ||
-    document.getElementById('promoOverlay').classList.contains('open');
-  wrap.style.display = anyOpen ? 'none' : '';
+function renderCatSheet(){
+  const body = document.getElementById('catSheetBody');
+  if(!body) return;
+  const allMode = activeCats.size === 0;
+  body.innerHTML = CATS.map(c => {
+    const on = c === 'ทั้งหมด' ? allMode : activeCats.has(c);
+    return `<button type="button" class="cat-opt${on ? ' active' : ''}" onclick="pickCatFromSheet('${c}')">
+      <span class="cat-opt-ic" aria-hidden="true">${CAT_ICONS[c] || '🌸'}</span>
+      <span class="cat-opt-name">${c}</span><span class="cat-opt-check" aria-hidden="true">✓</span></button>`;
+  }).join('');
+}
+function openCatSheet(){
+  renderCatSheet();
+  document.getElementById('catOverlay').classList.add('open');
+  document.getElementById('catSheet').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeCatSheet(){
+  document.getElementById('catOverlay').classList.remove('open');
+  document.getElementById('catSheet').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function pickCatFromSheet(c){ closeCatSheet(); selectCategory(c); }
+function catSheetMoreFilters(){ closeCatSheet(); openFilterSheet(); }
+// อัปเดตสถานะทุกช่องในแถบล่างให้ตรงกับตัวกรองจริง (เรียกจาก renderNav / updateFilterBadge / updateCartUI)
+function updateBottomNav(){
+  const catBtn = document.getElementById('bnavCat');
+  if(!catBtn) return;
+  const picked = activeCats.size > 0 ? [...activeCats][0] : '';
+  // ตอนอยู่โหมด "ทั้งหมด" แสดงชื่อหมวดที่เลื่อนผ่านอยู่ (scrollspy) ให้รู้ว่าอยู่ตรงไหน
+  const spy = (!picked && scrollSpyCat && scrollSpyCat !== 'ทั้งหมด') ? scrollSpyCat : '';
+  document.getElementById('bnavCatLabel').textContent = picked || spy || 'หมวดหมู่';
+  catBtn.classList.toggle('active', !!picked);
+  const ready = document.getElementById('bnavReady');
+  ready.classList.toggle('active', showReadyOnly); ready.setAttribute('aria-pressed', String(!!showReadyOnly));
+  const fav = document.getElementById('bnavFav');
+  fav.classList.toggle('active', showFavoritesOnly); fav.setAttribute('aria-pressed', String(!!showFavoritesOnly));
+  document.getElementById('bnavFavIc').textContent = showFavoritesOnly ? '♥' : '♡';
+  // ตัวกรองอื่นๆ (ราคา/เรียง/ขนาด/ชนิดดอกไม้/แยกการ์ด) นอกเหนือจากหมวด+พร้อมส่ง+โปรด
+  const priceOn = customPriceMin !== PRICE_SLIDER_MIN || customPriceMax !== PRICE_SLIDER_MAX;
+  const extra = [priceOn, activeSortOrder !== 'none', showAllVariantsSplit, activeFlowerTypes.size > 0, activeSizes.size > 0].filter(Boolean).length;
+  const cb = document.getElementById('bnavCatBadge');
+  cb.textContent = extra; cb.hidden = extra === 0;
+  const mc = document.getElementById('catMoreCount');
+  if(mc){ mc.textContent = extra; mc.hidden = extra === 0; }
 }

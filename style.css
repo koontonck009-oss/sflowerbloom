@@ -196,67 +196,6 @@ h1,h2,h3,.display{font-family:'Kanit',sans-serif; font-weight:600;}
 .catalog-dl-btn:hover{background:var(--sage); color:#fff;}
 .catalog-dl-btn:disabled{opacity:.65; cursor:progress; background:var(--paper); color:var(--sage-dark);}
 
-/* ---------- Floating chat button (bottom-right, sits above the cart FAB) ---------- */
-.chat-fab-wrap{
-  position:fixed;
-  right:22px; bottom:92px;
-  z-index:1070;
-  display:flex; flex-direction:column; align-items:flex-end; gap:10px;
-}
-.chat-bubble{
-  position:relative;
-  max-width:230px;
-  background:var(--paper);
-  color:var(--plum);
-  padding:12px 30px 12px 14px;
-  border-radius:16px 16px 4px 16px;
-  box-shadow:var(--shadow);
-  border:1.5px solid var(--line);
-  font-size:13px; font-weight:600; line-height:1.5;
-  cursor:pointer;
-  animation:bubbleIn .35s ease;
-  transition:opacity .35s ease, transform .35s ease;
-}
-.chat-bubble.chat-bubble-hide{
-  opacity:0; transform:translateY(8px) scale(.95);
-  pointer-events:none;
-}
-.chat-bubble b{display:block; color:var(--sage-dark); margin-bottom:2px;}
-.chat-bubble-close{
-  position:absolute; top:6px; right:7px;
-  background:none; border:none; color:var(--rose-dark);
-  font-size:14px; line-height:1; cursor:pointer; padding:3px;
-}
-@keyframes bubbleIn{
-  from{opacity:0; transform:translateY(8px) scale(.95);}
-  to{opacity:1; transform:translateY(0) scale(1);}
-}
-.chat-fab{
-  width:60px; height:60px; border-radius:50%;
-  background:var(--sage); color:#fff; border:none;
-  display:flex; align-items:center; justify-content:center;
-  font-size:27px; cursor:pointer;
-  box-shadow:0 10px 24px rgba(246,33,136,0.45);
-  transition:transform .15s ease;
-  position:relative;
-}
-.chat-fab:hover{transform:translateY(-3px) scale(1.05);}
-.chat-fab .fab-dot{
-  position:absolute; top:2px; right:2px;
-  width:14px; height:14px; border-radius:50%;
-  background:var(--rose); border:2px solid var(--cream);
-}
-@media (max-width:520px){
-  .chat-fab-wrap{right:14px; bottom:76px;}
-  .chat-fab{width:54px; height:54px; font-size:24px;}
-  .chat-bubble{max-width:170px; font-size:12.5px;}
-}
-
-/* Desktop: hide the floating chat button + its teaser bubble */
-@media (min-width:860px){
-  .chat-fab-wrap{display:none !important;}
-}
-
 /* ---------- Reviews / social proof ---------- */
 .reviews-section{margin:26px 6vw 22px;}
 .reviews-head{display:flex; align-items:baseline; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:14px;}
@@ -1775,7 +1714,8 @@ footer{
   .mab-info.need .mab-label{color:var(--sage-dark); font-weight:700;}
   .mab-btns{display:flex; gap:10px;}
   .mab-btns .add-btn.secondary{flex:1; height:48px; padding:0 10px; border-radius:14px; font-size:15px; font-weight:700; white-space:nowrap;}
-  .mab-btns .checkout-btn{flex:1.3; width:auto; height:48px; padding:0 10px; border-radius:14px; font-size:16px;}
+  .mab-btns .add-btn.secondary.icon-only{flex:0 0 56px; width:56px; padding:0; font-size:22px; gap:0;}
+  .mab-btns .checkout-btn{flex:1; width:auto; height:48px; padding:0 10px; border-radius:14px; font-size:16px;}
 
   /* ตัวเลือก (สี/ขนาด/ของเสริม): ปุ่มใหญ่กดง่าย มีรูปในปุ่ม และบอกค่าที่เลือกไว้ข้างหัวข้อ */
   .page-body .color-row{gap:8px; margin:0 0 14px;}
@@ -1786,4 +1726,75 @@ footer{
   .page-body .color-chip.active:has(.chip-thumb){padding:3px 15px 3px 3px;}
   .page-body .pd-selval{display:inline; color:var(--sage-dark); font-weight:600;}
   .page-body .option-group > div:first-child{font-size:14px !important; color:var(--plum) !important; margin:0 0 8px !important;}
+}
+
+/* =========================================================
+   แถบเมนูล่างบนมือถือ (<= 859px เท่านั้น — คอมไม่เปลี่ยน)
+   หน้าแรก · หมวดหมู่ · พร้อมส่ง · รายการโปรด · ตะกร้า
+   ========================================================= */
+.bnav, .cat-sheet, #catOverlay{display:none;}
+@media (max-width:859px){
+  :root{--bnav-h:60px;}
+  body{padding-bottom:calc(var(--bnav-h) + env(safe-area-inset-bottom, 0px));}
+
+  /* แทนที่แถบชิปด้านบน / ปุ่มตะกร้ามุมบน / ปุ่มตะกร้าลอย */
+  .cat-nav, .cart-btn-top, .fab-cart{display:none !important;}
+  .toast{bottom:calc(var(--bnav-h) + 14px + env(safe-area-inset-bottom, 0px));}
+
+  .bnav{
+    display:flex; position:fixed; left:0; right:0; bottom:0; z-index:1030;
+    padding:6px 4px calc(6px + env(safe-area-inset-bottom, 0px));
+    background:var(--paper); border-top:1px solid var(--line);
+    box-shadow:0 -4px 16px rgba(59,18,48,0.08);
+  }
+  /* ขึ้นคีย์บอร์ดตอนพิมพ์ค้นหา — ซ่อนแถบไว้ชั่วคราวไม่ให้ลอยบังช่องพิมพ์ */
+  body:has(#searchInput:focus) .bnav{display:none;}
+  /* โหมดปิดราคาไม่มีตะกร้า */
+  .prices-hidden .bnav-cart{display:none;}
+
+  .bnav-item{
+    flex:1; min-width:0; height:48px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
+    border:none; background:none; padding:0; cursor:pointer;
+    font-family:'Kanit'; font-size:11px; font-weight:600; color:#8a7680;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .bnav-ic{
+    position:relative; display:flex; align-items:center; justify-content:center;
+    width:46px; height:26px; border-radius:999px; font-size:17px; line-height:1;
+    transition:background .15s ease, transform .15s ease;
+  }
+  .bnav-lb{max-width:100%; padding:0 2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; line-height:1.1;}
+  .bnav-item:active .bnav-ic{transform:scale(.9);}
+  .bnav-item.active{color:var(--sage-dark); font-weight:700;}
+  .bnav-item.active .bnav-ic{background:rgba(246,33,136,0.14);}
+  .bnav-heart{font-size:20px; color:#8a7680;}
+  .bnav-item.active .bnav-heart{color:var(--sage);}
+  .bnav-badge{
+    position:absolute; top:-5px; right:2px; min-width:17px; height:17px; padding:0 4px;
+    border-radius:999px; background:var(--sage); color:#fff; border:2px solid var(--paper);
+    font-family:'Kanit'; font-size:10px; font-weight:700; line-height:13px; text-align:center; box-sizing:content-box;
+  }
+  .bnav-badge[hidden]{display:none;}
+
+  /* แผงเลือกหมวดหมู่ */
+  .cat-sheet{display:flex; max-height:70vh;}
+  #catOverlay{display:block;}
+  .cat-sheet .filter-sheet-body{padding:10px 16px 6px;}
+  .cat-opt{
+    width:100%; display:flex; align-items:center; gap:12px; margin:0 0 8px; padding:12px 14px;
+    border:1.5px solid var(--line); border-radius:14px; background:var(--paper); color:var(--plum);
+    font-family:'Kanit'; font-size:15px; font-weight:600; text-align:left; cursor:pointer;
+  }
+  .cat-opt-ic{font-size:22px; width:30px; text-align:center; flex:none;}
+  .cat-opt-name{flex:1;}
+  .cat-opt-check{display:none; font-size:16px; font-weight:700; color:var(--sage);}
+  .cat-opt.active{border-color:var(--sage); background:rgba(246,33,136,0.07); color:var(--sage-dark);}
+  .cat-opt.active .cat-opt-check{display:inline;}
+  .cat-sheet .filter-sheet-footer{padding-top:10px;}
+  .cat-more-btn{
+    flex:1; display:flex; align-items:center; justify-content:center; gap:8px; padding:13px; border-radius:14px;
+    border:1.5px solid var(--sage); background:#fff; color:var(--sage-dark);
+    font-family:'Kanit'; font-weight:700; font-size:14.5px; cursor:pointer;
+  }
 }
