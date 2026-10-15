@@ -1729,23 +1729,26 @@ footer{
 }
 
 /* =========================================================
-   แถบเมนูล่างบนมือถือ (<= 859px เท่านั้น — คอมไม่เปลี่ยน)
+   แถบเมนูล่างแบบลอย (Floating Navigation Bar) — มือถือ <= 859px เท่านั้น คอมไม่เปลี่ยน
    หน้าแรก · หมวดหมู่ · พร้อมส่ง · รายการโปรด · ตะกร้า
    ========================================================= */
 .bnav, .cat-sheet, #catOverlay{display:none;}
 @media (max-width:859px){
-  :root{--bnav-h:60px;}
+  :root{--bnav-h:86px;}
   body{padding-bottom:calc(var(--bnav-h) + env(safe-area-inset-bottom, 0px));}
 
   /* แทนที่แถบชิปด้านบน / ปุ่มตะกร้ามุมบน / ปุ่มตะกร้าลอย */
   .cat-nav, .cart-btn-top, .fab-cart{display:none !important;}
-  .toast{bottom:calc(var(--bnav-h) + 14px + env(safe-area-inset-bottom, 0px));}
+  .toast{bottom:calc(var(--bnav-h) + 10px + env(safe-area-inset-bottom, 0px));}
 
   .bnav{
-    display:flex; position:fixed; left:0; right:0; bottom:0; z-index:1030;
-    padding:6px 4px calc(6px + env(safe-area-inset-bottom, 0px));
-    background:var(--paper); border-top:1px solid var(--line);
-    box-shadow:0 -4px 16px rgba(59,18,48,0.08);
+    display:flex; gap:2px;
+    position:fixed; left:12px; right:12px; bottom:calc(10px + env(safe-area-inset-bottom, 0px)); z-index:1030;
+    padding:6px; border-radius:28px;
+    background:rgba(255,255,255,0.9);
+    -webkit-backdrop-filter:blur(14px) saturate(1.4); backdrop-filter:blur(14px) saturate(1.4);
+    border:1px solid rgba(246,33,136,0.14);
+    box-shadow:0 12px 32px rgba(246,33,136,0.22), 0 2px 8px rgba(59,18,48,0.08);
   }
   /* ขึ้นคีย์บอร์ดตอนพิมพ์ค้นหา — ซ่อนแถบไว้ชั่วคราวไม่ให้ลอยบังช่องพิมพ์ */
   body:has(#searchInput:focus) .bnav{display:none;}
@@ -1753,27 +1756,23 @@ footer{
   .prices-hidden .bnav-cart{display:none;}
 
   .bnav-item{
-    flex:1; min-width:0; height:48px;
+    flex:1; min-width:0; height:50px; border-radius:22px;
     display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
     border:none; background:none; padding:0; cursor:pointer;
     font-family:'Kanit'; font-size:11px; font-weight:600; color:#8a7680;
+    transition:background .18s ease, color .18s ease, box-shadow .18s ease, transform .12s ease;
     -webkit-tap-highlight-color:transparent;
   }
-  .bnav-ic{
-    position:relative; display:flex; align-items:center; justify-content:center;
-    width:46px; height:26px; border-radius:999px; font-size:17px; line-height:1;
-    transition:background .15s ease, transform .15s ease;
-  }
+  .bnav-item:active{transform:scale(.94);}
+  .bnav-ic{position:relative; display:flex; align-items:center; justify-content:center; width:24px; height:24px;}
+  .bnav-ic svg{width:22px; height:22px; display:block;}
   .bnav-lb{max-width:100%; padding:0 2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; line-height:1.1;}
-  .bnav-item:active .bnav-ic{transform:scale(.9);}
-  .bnav-item.active{color:var(--sage-dark); font-weight:700;}
-  .bnav-item.active .bnav-ic{background:rgba(246,33,136,0.14);}
-  .bnav-heart{font-size:20px; color:#8a7680;}
-  .bnav-item.active .bnav-heart{color:var(--sage);}
+  .bnav-item.active{background:var(--sage); color:#fff; font-weight:700; box-shadow:0 6px 14px rgba(246,33,136,0.35);}
+  .bnav-heart.active .bnav-ic svg{fill:currentColor;}
   .bnav-badge{
-    position:absolute; top:-5px; right:2px; min-width:17px; height:17px; padding:0 4px;
-    border-radius:999px; background:var(--sage); color:#fff; border:2px solid var(--paper);
-    font-family:'Kanit'; font-size:10px; font-weight:700; line-height:13px; text-align:center; box-sizing:content-box;
+    position:absolute; top:-6px; right:-8px; min-width:16px; height:16px; padding:0 4px;
+    border-radius:999px; background:var(--sage); color:#fff; border:2px solid #fff;
+    font-family:'Kanit'; font-size:10px; font-weight:700; line-height:16px; text-align:center; box-sizing:content-box;
   }
   .bnav-badge[hidden]{display:none;}
 
@@ -1797,4 +1796,20 @@ footer{
     border:1.5px solid var(--sage); background:#fff; color:var(--sage-dark);
     font-family:'Kanit'; font-weight:700; font-size:14.5px; cursor:pointer;
   }
+}
+
+/* กันหน้าเว็บโยกซ้าย-ขวาบนมือถือ: ไม่ให้มีอะไรดันความกว้างหน้าเกินจอ
+   (ใช้ clip ที่ body เพื่อไม่ทำให้ position:sticky ของแถบค้นหาพัง) */
+html{overflow-x:hidden;}
+body{overflow-x:clip; max-width:100%;}
+@media (max-width:859px){
+  /* กล่องคำแนะนำค้นหาเดิมยื่นออกไปนอกช่องค้นหา 15px ทั้งสองข้าง พอตะกร้ามุมบนถูกซ่อน
+     ช่องค้นหาขยายชิดขอบจอ กล่องนี้เลยล้นขอบขวา ทำให้หน้ากว้างเกินจอ */
+  .search-suggest{left:-12px; right:-12px;}
+}
+
+/* จอแคบมาก (<=360px): ลดขอบและตัวอักษรให้ป้ายชื่อไม่ถูกตัด */
+@media (max-width:360px){
+  .bnav{left:8px; right:8px; padding:5px;}
+  .bnav-lb{font-size:10px; padding:0;}
 }

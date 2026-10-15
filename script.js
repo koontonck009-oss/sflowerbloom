@@ -3441,7 +3441,6 @@ function updateBottomNav(){
   ready.classList.toggle('active', showReadyOnly); ready.setAttribute('aria-pressed', String(!!showReadyOnly));
   const fav = document.getElementById('bnavFav');
   fav.classList.toggle('active', showFavoritesOnly); fav.setAttribute('aria-pressed', String(!!showFavoritesOnly));
-  document.getElementById('bnavFavIc').textContent = showFavoritesOnly ? '♥' : '♡';
   // ตัวกรองอื่นๆ (ราคา/เรียง/ขนาด/ชนิดดอกไม้/แยกการ์ด) นอกเหนือจากหมวด+พร้อมส่ง+โปรด
   const priceOn = customPriceMin !== PRICE_SLIDER_MIN || customPriceMax !== PRICE_SLIDER_MAX;
   const extra = [priceOn, activeSortOrder !== 'none', showAllVariantsSplit, activeFlowerTypes.size > 0, activeSizes.size > 0].filter(Boolean).length;

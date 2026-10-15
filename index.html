@@ -152,19 +152,19 @@
 <!-- แถบเมนูล่าง (มือถือเท่านั้น): หน้าแรก · หมวดหมู่ · พร้อมส่ง · รายการโปรด · ตะกร้า -->
 <nav class="bnav" id="bottomNav" aria-label="เมนูหลัก">
   <button type="button" class="bnav-item" id="bnavHome" onclick="bnavHome()">
-    <span class="bnav-ic" aria-hidden="true">🏠</span><span class="bnav-lb">หน้าแรก</span>
+    <span class="bnav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 9.5V21h5v-6h4v6h5V9.5"/></svg></span><span class="bnav-lb">หน้าแรก</span>
   </button>
   <button type="button" class="bnav-item" id="bnavCat" onclick="openCatSheet()">
-    <span class="bnav-ic" aria-hidden="true">🌸<b class="bnav-badge" id="bnavCatBadge" hidden></b></span><span class="bnav-lb" id="bnavCatLabel">หมวดหมู่</span>
+    <span class="bnav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="12" cy="6.4" rx="2.5" ry="3.4" transform="rotate(0 12 12)"/><ellipse cx="12" cy="6.4" rx="2.5" ry="3.4" transform="rotate(72 12 12)"/><ellipse cx="12" cy="6.4" rx="2.5" ry="3.4" transform="rotate(144 12 12)"/><ellipse cx="12" cy="6.4" rx="2.5" ry="3.4" transform="rotate(216 12 12)"/><ellipse cx="12" cy="6.4" rx="2.5" ry="3.4" transform="rotate(288 12 12)"/><circle cx="12" cy="12" r="1.8"/></svg><b class="bnav-badge" id="bnavCatBadge" hidden></b></span><span class="bnav-lb" id="bnavCatLabel">หมวดหมู่</span>
   </button>
   <button type="button" class="bnav-item" id="bnavReady" onclick="quickToggleReady()" aria-pressed="false">
-    <span class="bnav-ic" aria-hidden="true">⚡</span><span class="bnav-lb">พร้อมส่ง</span>
+    <span class="bnav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg></span><span class="bnav-lb">พร้อมส่ง</span>
   </button>
-  <button type="button" class="bnav-item" id="bnavFav" onclick="toggleFavoritesOnly(!showFavoritesOnly)" aria-pressed="false">
-    <span class="bnav-ic bnav-heart" id="bnavFavIc" aria-hidden="true">♡</span><span class="bnav-lb">รายการโปรด</span>
+  <button type="button" class="bnav-item bnav-heart" id="bnavFav" onclick="toggleFavoritesOnly(!showFavoritesOnly)" aria-pressed="false">
+    <span class="bnav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21.2l7.8-7.7 1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg></span><span class="bnav-lb">รายการโปรด</span>
   </button>
   <button type="button" class="bnav-item bnav-cart" id="bnavCart" onclick="openCart()">
-    <span class="bnav-ic" aria-hidden="true">🧺<b class="bnav-badge" id="bnavCartBadge" hidden>0</b></span><span class="bnav-lb">ตะกร้า</span>
+    <span class="bnav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg><b class="bnav-badge" id="bnavCartBadge" hidden>0</b></span><span class="bnav-lb">ตะกร้า</span>
   </button>
 </nav>
 
