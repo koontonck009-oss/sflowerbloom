@@ -2661,7 +2661,10 @@ async function scanReviewFiles(){
   const listed = await fetchReviewListNames();
   scanListedNames = new Set(listed);
   const custom = Object.keys(reviewTags).filter(k => k.includes('/')).reverse(); // รูปที่เพิ่มด้วย path (เพิ่มล่าสุดก่อน)
-  return [...new Set([...custom, ...listed, ...scanned])].sort((a, b) => reviewNum(b) - reviewNum(a)); // ใหม่สุดก่อน
+  // ไฟล์เดียวกันที่มีทั้งแบบ path เต็ม (เพิ่มจากหลังบ้าน) และแบบชื่อเฉยๆ (สแกนเจอบนเว็บ) ให้เหลือแบบ path เต็มอย่างเดียว ไม่งั้นรูปเดียวขึ้นซ้ำสองใบ
+  const customSet = new Set(custom);
+  const plainNames = [...listed, ...scanned].filter(n => !customSet.has(REVIEW_DIR + n));
+  return [...new Set([...custom, ...plainNames])].sort((a, b) => reviewNum(b) - reviewNum(a)); // ใหม่สุดก่อน
 }
 // เพิ่มรูปรีวิวหลายรูปพร้อมกัน: วางชื่อไฟล์ (หนึ่งบรรทัดต่อหนึ่งรูป) ที่เอาไปไว้ใน images/reviews/ แล้ว
 // ชื่อเฉยๆ = เติม images/reviews/ ให้เอง · ตรวจก่อนว่าเปิดรูปได้จริง · เก็บเป็น path เต็ม หน้าร้านจึงเห็นทันทีโดยไม่ต้องแก้ list.json
@@ -2973,6 +2976,12 @@ async function openReviewsModal(productId){
   renderReviewsModal();
   rvm.files = await scanReviewFiles();
   if(!rvm) return; // ปิดหน้าต่างไปก่อนสแกนเสร็จ
+  // ป้ายสินค้าที่ผูกไว้กับชื่อเฉยๆ ของไฟล์ที่ตอนนี้อยู่เป็น path เต็มแล้ว → รวมเข้าไปที่ path เต็ม
+  Object.keys(rvm.tags).forEach(k => {
+    if(k.includes('/')) return;
+    const f = REVIEW_DIR + k;
+    if(rvm.tags[f]){ rvm.tags[f] = [...new Set([...rvm.tags[f], ...rvm.tags[k]])]; delete rvm.tags[k]; }
+  });
   rvm.loading = false;
   if(!rvm.ctx && rvm.files.some(k => !rvm.hidden.has(k) && !(rvm.tags[k] || []).length)) rvm.filter = 'none'; // เปิดจากเมนู → เริ่มที่รูปที่ยังไม่ผูกสินค้า
   renderReviewsModal();
