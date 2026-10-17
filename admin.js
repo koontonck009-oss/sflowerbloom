@@ -2866,14 +2866,18 @@ async function rvPurge(k){
   toast('ลบไฟล์ในเครื่องแล้ว — กดบันทึก และอย่าลืมลบบน GitHub (ดูรายการใน “＋ เพิ่มรูปรีวิวใหม่”)');
 }
 // เลิกทำ: เก็บภาพก่อนแก้ของป้ายสินค้า/สถานะซ่อน (ล้างทิ้งเมื่อเพิ่มรูปใหม่หรือลบไฟล์จริง เพราะย้อนไฟล์ไม่ได้)
-function rvSnap(){ return { tags: clone(rvm.tags), hidden: [...rvm.hidden], dirty: rvm.dirty }; }
+function rvSnap(label, key){ return { tags: clone(rvm.tags), hidden: [...rvm.hidden], dirty: rvm.dirty, label: label || '', key: key || '' }; }
 function rvPushSnap(s){ if(!rvm || !s) return; rvm.history.push(s); if(rvm.history.length > 30) rvm.history.shift(); }
 function rvUndo(){
   if(!rvm || !rvm.history || !rvm.history.length) return;
   const s = rvm.history.pop();
   rvm.tags = s.tags; rvm.hidden = new Set(s.hidden); rvm.dirty = s.dirty;
   renderReviewsModal();
-  toast('เลิกทำแล้ว');
+  toast('เลิกทำ: ' + (s.label || 'การแก้ไขล่าสุด'));
+  if(s.key){ // เลื่อนไปที่รูปนั้นและกะพริบกรอบ ให้เห็นว่าอะไรเปลี่ยนกลับ
+    const el = [...document.querySelectorAll('#revGrid [data-rv-key]')].find(x => x.dataset.rvKey === s.key);
+    if(el){ el.scrollIntoView({ block: 'center', behavior: 'smooth' }); el.classList.add('is-flash'); setTimeout(() => el.classList.remove('is-flash'), 1600); }
+  }
 }
 // ตัวอย่างแกลเลอรีหน้าร้าน: รูปสินค้า แล้วต่อด้วยรูปรีวิวที่ผูกกับสินค้า (นับตามที่ยังไม่ได้บันทึกด้วย)
 let rvPrevState = null;
@@ -2923,14 +2927,17 @@ function rvRenderPick(){
 function rvPickChoose(pid){
   const k = rvPickKey;
   if(!rvm || !k) return;
-  rvPushSnap(rvSnap());
+  const nm = reviewShortName(k);
+  const before = JSON.stringify(rvm.tags[k] || []);
+  const snap = rvSnap(pid ? `ผูก ${nm} กับ ${pid}` : `เอา ${nm} ออกจากสินค้า`, k);
   if(pid) rvm.tags[k] = [pid];
   else if(k.includes('/')) rvm.tags[k] = [];
   else delete rvm.tags[k];
-  rvm.dirty = true;
+  const same = before === JSON.stringify(rvm.tags[k] || []); // เลือกค่าเดิม = ไม่มีอะไรเปลี่ยน ไม่เก็บเป็นขั้นเลิกทำ
+  if(!same){ rvPushSnap(snap); rvm.dirty = true; }
   rvClosePick();
   renderReviewsModal();
-  toast(pid ? 'ผูกรูปกับ ' + pid + ' แล้ว · ถ้าผิดกด “เลิกทำ”' : 'เอารูปออกจากสินค้าแล้ว · ถ้าผิดกด “เลิกทำ”');
+  toast(same ? 'รูปนี้ผูกกับ ' + pid + ' อยู่แล้ว — ไม่มีอะไรเปลี่ยน' : (pid ? 'ผูก ' + nm + ' กับ ' + pid + ' แล้ว · ถ้าผิดกด “เลิกทำ”' : 'เอารูปออกจากสินค้าแล้ว · ถ้าผิดกด “เลิกทำ”'));
 }
 async function persistReviewTags(next, hidden){
   const hide = hidden || reviewHidden;
@@ -3001,12 +3008,12 @@ async function closeReviewsModal(force){
 // ลบออกจากเว็บ = ซ่อนรูป (ไม่ลบไฟล์จริง กู้คืนได้) · ป้ายสินค้าที่ผูกไว้ยังอยู่ ถ้ากู้คืนจะกลับมาเหมือนเดิม
 function rvHide(k){
   if(!rvm || !k || rvm.hidden.has(k)) return;
-  rvPushSnap(rvSnap());
+  rvPushSnap(rvSnap('ลบ ' + reviewShortName(k), k));
   rvm.hidden.add(k); rvm.dirty = true;
 }
 function rvRestore(k){
   if(!rvm || !rvm.hidden.has(k)) return;
-  rvPushSnap(rvSnap());
+  rvPushSnap(rvSnap('กู้คืน ' + reviewShortName(k), k));
   rvm.hidden.delete(k); rvm.dirty = true;
   renderReviewsModal();
 }
@@ -3099,8 +3106,10 @@ function renderReviewsModal(){
   if(!rvm) return;
   renderReviewAll();
   $('revSave').disabled = !rvm.dirty;
-  $('revUndo').disabled = !(rvm.history && rvm.history.length);
-  $('revHint').textContent = rvm.dirty ? 'มีการเปลี่ยนแปลงที่ยังไม่ได้บันทึก' : '';
+  const lastU = rvm.history && rvm.history.length ? rvm.history[rvm.history.length - 1] : null;
+  $('revUndo').hidden = !lastU; $('revUndo').disabled = !lastU; // ไม่มีอะไรให้เลิกทำ = ซ่อนปุ่ม
+  $('revUndo').title = lastU ? 'เลิกทำ: ' + lastU.label : '';
+  $('revHint').textContent = rvm.dirty ? 'มีการเปลี่ยนแปลงที่ยังไม่ได้บันทึก' + (lastU && lastU.label ? ' · ล่าสุด: ' + lastU.label : '') : '';
   $('revHint').classList.toggle('is-info', rvm.dirty);
 }
 
@@ -3425,7 +3434,7 @@ $('revGrid').addEventListener('click', async e => {
   if(rvm.ctx){
     // เปิดมาจากหน้าแก้ไขสินค้า: กดรูป = เลือก/เอาออกจากสินค้านี้
     const ids = rvm.tags[k] || [];
-    const snap = rvSnap();
+    const snap = rvSnap(ids.includes(rvm.ctx) ? `เอา ${reviewShortName(k)} ออกจาก ${rvm.ctx}` : `เลือก ${reviewShortName(k)} ให้ ${rvm.ctx}`, k);
     if(ids.includes(rvm.ctx)){
       if(k.includes('/')) rvm.tags[k] = []; else delete rvm.tags[k];
     } else {
