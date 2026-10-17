@@ -242,14 +242,20 @@
       </div>
     </div>
 
+    <div class="rv-pick rv-prev" id="revPrev" hidden>
+      <div class="rv-pick-head"><div><b id="revPrevTitle"></b><span>ตัวอย่างโดยประมาณ — แกลเลอรีของสินค้านี้ในหน้าร้าน โดยรูปรีวิวจะต่อท้าย</span></div><button type="button" class="vm-btn" id="revPrevClose">ปิด</button></div>
+      <div class="rv-prev-main" id="revPrevMain"></div>
+      <div class="rv-prev-thumbs" id="revPrevThumbs"></div>
+    </div>
     <div class="rv-pick" id="revPick" hidden>
-      <div class="rv-pick-head"><img id="revPickImg" alt=""><div><b>รูปนี้เป็นรีวิวของสินค้าไหน?</b><span id="revPickCur"></span></div><button type="button" class="vm-btn" id="revPickClose">ยกเลิก</button></div>
+      <div class="rv-pick-head"><img id="revPickImg" alt=""><div><b>รูปนี้เป็นรีวิวของสินค้าไหน?</b><span id="revPickCur"></span><button type="button" class="btn btn-ghost btn-sm" id="revPickPrev" data-rv-prev="" hidden></button></div><button type="button" class="vm-btn" id="revPickClose">ยกเลิก</button></div>
       <input type="search" id="revPickQ" class="rv-search" placeholder="🔍 พิมพ์รหัสหรือชื่อสินค้า" autocomplete="off" spellcheck="false">
       <div class="rv-pick-list" id="revPickList"></div>
     </div>
 
     <div class="vm-foot">
       <p class="vm-hint" id="revHint"></p>
+      <button type="button" class="vm-btn" id="revUndo" disabled>↶ เลิกทำ</button>
       <button type="button" class="vm-btn" id="revCancel">ปิด</button>
       <button type="button" class="vm-btn vm-save" id="revSave" disabled>บันทึก</button>
     </div>
