@@ -2727,13 +2727,20 @@ async function rvKvGet(k){ try{ const db = await rvDb(); return await new Promis
 async function rvKvSet(k, v){ try{ const db = await rvDb(); await new Promise(res => { const t = db.transaction('kv', 'readwrite'); t.objectStore('kv').put(v, k); t.oncomplete = () => res(); t.onerror = () => res(); }); }catch(e){} }
 function rvPendingGet(){ try{ return JSON.parse(localStorage.getItem(RV_PENDING_KEY) || '[]'); }catch(e){ return []; } }
 function rvPendingSet(a){ try{ localStorage.setItem(RV_PENDING_KEY, JSON.stringify(a)); }catch(e){} }
+const RV_PENDING_DEL_KEY = 'sfb_review_pending_del';
+function rvPendingDelGet(){ try{ return JSON.parse(localStorage.getItem(RV_PENDING_DEL_KEY) || '[]'); }catch(e){ return []; } }
+function rvPendingDelSet(a){ try{ localStorage.setItem(RV_PENDING_DEL_KEY, JSON.stringify(a)); }catch(e){} }
 function rvRenderPending(){
   const box = $('revPending'); if(!box) return;
-  const a = rvPendingGet();
+  const a = rvPendingGet(), d = rvPendingDelGet();
   if(!window.showDirectoryPicker) $('revDirName').textContent = 'ต้องเปิดด้วย Chrome หรือ Edge บนคอมพิวเตอร์';
-  if(!a.length){ box.innerHTML = ''; return; }
-  box.innerHTML = `<div class="rv-pending"><b>ยังไม่ได้อัปโหลดขึ้น GitHub: ${a.length} รูป</b><br>ลากโฟลเดอร์ <code>images/reviews</code> ไปวางใน GitHub แล้วกดปุ่มด้านล่าง${a.length > 100 ? '<br>⚠ GitHub รับลากไฟล์ได้ไม่เกิน 100 ไฟล์ต่อครั้ง — ให้ลากเป็นชุดๆ' : ''}<br><small>${a.slice(0, 20).map(esc).join(', ')}${a.length > 20 ? ' …' : ''}</small><br><button type="button" class="btn btn-ghost btn-sm" id="revPendingDone">อัปโหลดขึ้น GitHub แล้ว (ล้างรายการ)</button></div>`;
-  $('revPendingDone').addEventListener('click', () => { rvPendingSet([]); rvRenderPending(); });
+  const list = arr => `<small>${arr.slice(0, 20).map(esc).join(', ')}${arr.length > 20 ? ' …' : ''}</small>`;
+  let html = '';
+  if(a.length) html += `<div class="rv-pending"><b>ยังไม่ได้อัปโหลดขึ้น GitHub: ${a.length} รูป</b><br>ลากโฟลเดอร์ <code>images/reviews</code> ไปวางใน GitHub แล้วกดปุ่มด้านล่าง${a.length > 100 ? '<br>⚠ GitHub รับลากไฟล์ได้ไม่เกิน 100 ไฟล์ต่อครั้ง — ให้ลากเป็นชุดๆ' : ''}<br>${list(a)}<br><button type="button" class="btn btn-ghost btn-sm" id="revPendingDone">อัปโหลดขึ้น GitHub แล้ว (ล้างรายการ)</button></div>`;
+  if(d.length) html += `<div class="rv-pending rv-pending-del"><b>ต้องลบบน GitHub: ${d.length} ไฟล์</b><br>ลบในเครื่องแล้ว แต่ GitHub ยังมีไฟล์อยู่ — เข้าโฟลเดอร์ <code>images/reviews</code> บน GitHub เปิดไฟล์ แล้วกดไอคอนถังขยะ (การลากโฟลเดอร์ขึ้นไปไม่ลบไฟล์เก่าให้)<br>${list(d)}<br><button type="button" class="btn btn-ghost btn-sm" id="revPendingDelDone">ลบบน GitHub แล้ว (ล้างรายการ)</button></div>`;
+  box.innerHTML = html;
+  const b1 = $('revPendingDone'); if(b1) b1.addEventListener('click', () => { rvPendingSet([]); rvRenderPending(); });
+  const b2 = $('revPendingDelDone'); if(b2) b2.addEventListener('click', () => { rvPendingDelSet([]); rvRenderPending(); });
 }
 // โฟลเดอร์ images/reviews ในโฟลเดอร์เว็บ — ครั้งแรกให้เลือกโฟลเดอร์เว็บ ครั้งต่อไปจำไว้ (ขออนุญาตใหม่ทุกครั้งที่เปิดหลังบ้าน)
 async function rvGetDir(forcePick){
@@ -2785,6 +2792,7 @@ async function rvUploadFiles(list){
     for await (const name of dir.keys()) bump(name);
     [...rvm.files, ...Object.keys(rvm.tags)].forEach(bump);
     const seen = new Set((await rvKvGet('rvHashes')) || []);
+    const hmap = (await rvKvGet('rvHashMap')) || {};
     const added = [], dups = [], fails = [];
     for(let i = 0; i < files.length; i++){
       const f = files[i];
@@ -2797,10 +2805,10 @@ async function rvUploadFiles(list){
         const name = `review${++next}.jpg`;
         const w = await (await dir.getFileHandle(name, { create: true })).createWritable();
         await w.write(blob); await w.close();
-        seen.add(sha); added.push(name);
+        seen.add(sha); hmap[name] = sha; added.push(name);
       }catch(e){ fails.push(f.name); }
     }
-    await rvKvSet('rvHashes', [...seen]);
+    await rvKvSet('rvHashes', [...seen]); await rvKvSet('rvHashMap', hmap);
     added.forEach(name => { const key = REVIEW_DIR + name; rvm.tags[key] = rvm.tags[key] || []; rvm.hidden.delete(key); rvm.files = rvm.files.filter(x => x !== key); });
     added.slice().reverse().forEach(name => rvm.files.unshift(REVIEW_DIR + name)); // ใหม่สุดอยู่หน้า
     if(added.length){
@@ -2820,6 +2828,69 @@ async function rvUploadFiles(list){
   }finally{
     drop.classList.remove('is-busy');
   }
+}
+// ลบไฟล์จริง: ใช้ได้เฉพาะรูปที่ซ่อนอยู่แล้ว · ลบไฟล์ในโฟลเดอร์เว็บในเครื่อง + เอาออกจากรายการ · ส่วนบน GitHub ต้องลบเอง (ขึ้นในรายการเตือน)
+async function rvPurge(k){
+  if(!rvm || !rvm.hidden.has(k)) return;
+  const full = k.includes('/') ? k : REVIEW_DIR + k;
+  const name = reviewShortName(k);
+  const ok = await askConfirm('ลบไฟล์รูปนี้จริง', `ลบ “${name}” ถาวร กู้คืนไม่ได้ · ไฟล์ในโฟลเดอร์เว็บจะถูกลบทันที และต้องลบบน GitHub ตามด้วย`, 'ลบไฟล์จริง');
+  if(!ok || !rvm || !rvm.hidden.has(k)) return;
+  const plain = full.startsWith(REVIEW_DIR) && !full.slice(REVIEW_DIR.length).includes('/') ? full.slice(REVIEW_DIR.length) : null;
+  if(plain){
+    let done = false;
+    try{
+      const dir = await rvGetDir(false);
+      if(dir){ await dir.removeEntry(plain); done = true; }
+    }catch(e){ if(e && e.name === 'NotFoundError') done = true; } // ไม่มีในเครื่อง (มีแต่บน GitHub) ถือว่าลบฝั่งเครื่องแล้ว
+    if(!done){ toast('ลบไฟล์ในโฟลเดอร์เว็บไม่ได้ — กด "เลือกโฟลเดอร์เว็บ" แล้วลองใหม่ (ยังไม่มีอะไรถูกลบ)', true); return; }
+  }
+  if(!rvm) return;
+  delete rvm.tags[k]; rvm.hidden.delete(k); rvm.files = rvm.files.filter(x => x !== k);
+  rvm.dirty = true;
+  rvPendingSet(rvPendingGet().filter(x => x !== plain));
+  rvPendingDelSet([...new Set([...rvPendingDelGet(), plain || full])]);
+  const map = (await rvKvGet('rvHashMap')) || {};
+  if(plain && map[plain]){ // ให้อัปโหลดรูปเดิมซ้ำได้อีก ไม่ถูกข้ามว่าซ้ำ
+    const seen = ((await rvKvGet('rvHashes')) || []).filter(x => x !== map[plain]);
+    await rvKvSet('rvHashes', seen); delete map[plain]; await rvKvSet('rvHashMap', map);
+  }
+  rvRenderPending();
+  renderReviewsModal();
+  toast('ลบไฟล์ในเครื่องแล้ว — กดบันทึก และอย่าลืมลบบน GitHub (ดูรายการใน “＋ เพิ่มรูปรีวิวใหม่”)');
+}
+// เลือกสินค้าให้รูป: แตะรูป → เลือกสินค้า → เสร็จ (ใช้เมื่อเปิดจากเมนู "รีวิวลูกค้า" ไม่ได้เลือกสินค้าไว้)
+let rvPickKey = null;
+function rvOpenPick(k){
+  if(!rvm) return;
+  rvPickKey = k;
+  const ids = rvm.tags[k] || [];
+  $('revPickImg').src = reviewSrc(k);
+  $('revPickCur').textContent = ids.length ? 'ตอนนี้ผูกกับ ' + ids.join(', ') : 'ยังไม่ผูกสินค้า — พิมพ์ค้นหาแล้วแตะสินค้าที่ต้องการ';
+  $('revPickQ').value = '';
+  $('revPick').hidden = false;
+  rvRenderPick();
+  setTimeout(() => $('revPickQ').focus(), 0);
+}
+function rvClosePick(){ rvPickKey = null; $('revPick').hidden = true; }
+function rvRenderPick(){
+  if(!rvm || !rvPickKey) return;
+  const q = $('revPickQ').value.trim().toLowerCase();
+  const cur = rvm.tags[rvPickKey] || [];
+  const hit = catalog.filter(p => !q || (String(p.id) + ' ' + String(p.name || '')).toLowerCase().includes(q));
+  const rows = hit.slice(0, 40).map(p => `<button type="button" class="rv-pick-item${cur.includes(p.id) ? ' is-on' : ''}" data-pid="${esc(p.id)}">${thumbHtml(mainImageOf(p), 'rv-opt-img')}<span><b>${esc(p.id)}</b> ${esc(p.name || '')}</span></button>`);
+  if(cur.length && !q) rows.unshift('<button type="button" class="rv-pick-item is-remove" data-pid="">เอารูปนี้ออกจากสินค้า (ไม่ผูกสินค้า)</button>');
+  $('revPickList').innerHTML = rows.length ? rows.join('') + (hit.length > 40 ? '<p class="rv-pick-empty">แสดง 40 รายการแรก — พิมพ์เพิ่มเพื่อกรอง</p>' : '') : '<p class="rv-pick-empty">ไม่พบสินค้าที่ตรงกับคำค้น</p>';
+}
+function rvPickChoose(pid){
+  const k = rvPickKey;
+  if(!rvm || !k) return;
+  if(pid) rvm.tags[k] = [pid];
+  else if(k.includes('/')) rvm.tags[k] = [];
+  else delete rvm.tags[k];
+  rvm.dirty = true;
+  rvClosePick();
+  renderReviewsModal();
 }
 async function persistReviewTags(next, hidden){
   const hide = hidden || reviewHidden;
@@ -2866,6 +2937,7 @@ async function openReviewsModal(productId){
   rvm.files = await scanReviewFiles();
   if(!rvm) return; // ปิดหน้าต่างไปก่อนสแกนเสร็จ
   rvm.loading = false;
+  if(!rvm.ctx && rvm.files.some(k => !rvm.hidden.has(k) && !(rvm.tags[k] || []).length)) rvm.filter = 'none'; // เปิดจากเมนู → เริ่มที่รูปที่ยังไม่ผูกสินค้า
   renderReviewsModal();
 }
 
@@ -2876,6 +2948,7 @@ async function closeReviewsModal(force){
     if(!ok) return;
   }
   $('revScrim').hidden = true;
+  rvClosePick();
   rvm = null;
 }
 
@@ -2929,11 +3002,13 @@ function renderReviewAll(){
   const notLive = live.filter(k => !reviewIsLive(k));
   if(rvm.filter === 'hidden' && !nHidden) rvm.filter = 'all';
   if(rvm.filter === 'notlive' && !notLive.length) rvm.filter = 'all';
+  const nNoneAll = live.filter(k => !(rvm.tags[k] || []).length).length;
   const nMine = ctxP ? live.filter(k => (rvm.tags[k] || []).includes(ctxP.id)).length : 0;
 
   $('revSummary').innerHTML = rvm.loading ? '' :
     `<span><b>${live.length}</b> รูปในระบบ</span>
      <span class="is-ok">ขึ้นหน้าร้านแล้ว <b>${live.length - notLive.length}</b></span>
+     ${!ctxP && nNoneAll ? `<span class="is-warn">ยังไม่ผูกสินค้า <b>${nNoneAll}</b> รูป — แตะรูปเพื่อเลือกสินค้า</span>` : ''}
      ${notLive.length ? `<span class="is-warn">ยังไม่ขึ้นหน้าร้าน <b>${notLive.length}</b></span>` : ''}
      ${nHidden ? `<span>ลบแล้ว <b>${nHidden}</b></span>` : ''}
      ${notLive.length ? `<button type="button" class="btn btn-primary btn-sm" data-rv-golive>เพิ่มรูปที่ยังไม่ขึ้นทั้งหมด (${notLive.length})</button>` : ''}`;
@@ -2964,11 +3039,11 @@ function renderReviewAll(){
           ${mine ? '<span class="rv-check">✓</span>' : ''}
           ${badge}
           <a class="rv-zoom" href="${esc(reviewSrc(k))}" target="_blank" rel="noopener" title="เปิดดูรูปใหญ่" data-rv-zoom>⤢</a>
-          ${isHid ? '<span class="rv-restore" role="button" data-rv-restore>↩ กู้คืน</span>' : '<span class="rv-del" role="button" data-rv-del title="ลบออกจากเว็บ (ซ่อน ไม่ลบไฟล์จริง กู้คืนได้)">🗑</span>'}
+          ${isHid ? '<span class="rv-restore" role="button" data-rv-restore>↩ กู้คืน</span><span class="rv-purge" role="button" data-rv-purge title="ลบไฟล์รูปนี้จริง กู้คืนไม่ได้">🗑 ลบไฟล์จริง</span>' : '<span class="rv-del" role="button" data-rv-del title="ลบออกจากเว็บ (ซ่อน ไม่ลบไฟล์จริง กู้คืนได้)">🗑</span>'}
           ${label}
         </button>`;
       }).join('')
-    : `<p class="rv-empty">${rvm.files.length ? 'ไม่มีรูปที่ตรงกับตัวกรอง/คำค้นนี้' : 'ไม่พบรูปรีวิวใน images/reviews/ — เอารูปไปวางในโฟลเดอร์ แล้วกด “＋ เพิ่มรูปรีวิวใหม่” ด้านบน'}</p>`;
+    : `<p class="rv-empty">${rvm.files.length ? (rvm.filter === 'none' && !rvm.q ? '🎉 ผูกสินค้าครบทุกรูปแล้ว — กด “ทั้งหมด” เพื่อดูรูปทั้งหมด' : 'ไม่มีรูปที่ตรงกับตัวกรอง/คำค้นนี้') : 'ไม่พบรูปรีวิวใน images/reviews/ — เอารูปไปวางในโฟลเดอร์ แล้วกด “＋ เพิ่มรูปรีวิวใหม่” ด้านบน'}</p>`;
 }
 
 function renderReviewsModal(){
@@ -3294,6 +3369,7 @@ $('revGrid').addEventListener('click', async e => {
   if(!t || !rvm) return;
   const k = t.dataset.rvKey;
   if(e.target.closest('[data-rv-del]')){ rvHide(k); renderReviewsModal(); return; }
+  if(e.target.closest('[data-rv-purge]')){ rvPurge(k); return; }
   if(e.target.closest('[data-rv-restore]')){ rvRestore(k); return; }
   if(rvm.hidden.has(k)) return; // รูปที่ลบแล้ว: กู้คืนได้อย่างเดียว
   if(rvm.ctx){
@@ -3309,10 +3385,13 @@ $('revGrid').addEventListener('click', async e => {
     rvm.dirty = true;
     renderReviewsModal();
   } else {
-    window.open(reviewSrc(k), '_blank', 'noopener'); // ไม่ได้เลือกสินค้าไว้: กดรูป = เปิดดูรูปใหญ่
+    rvOpenPick(k); // ไม่ได้เลือกสินค้าไว้: แตะรูป = เลือกสินค้าให้รูปนี้ (ดูรูปใหญ่ใช้ปุ่ม ⤢)
   }
 });
 $('revCancel').addEventListener('click', () => closeReviewsModal());
+$('revPickClose').addEventListener('click', rvClosePick);
+$('revPickQ').addEventListener('input', rvRenderPick);
+$('revPickList').addEventListener('click', e => { const b = e.target.closest('[data-pid]'); if(b) rvPickChoose(b.dataset.pid); });
 $('revSave').addEventListener('click', saveReviewsModal);
 $('revAddOpen').addEventListener('click', () => { const p = $('revAddPanel'); p.hidden = !p.hidden; if(!p.hidden) $('revAddText').focus(); });
 $('revAddClose').addEventListener('click', () => { $('revAddPanel').hidden = true; });
