@@ -217,11 +217,17 @@
 <div class="confirm-scrim" id="revScrim" hidden>
   <div class="vm-card rv-card" role="dialog" aria-modal="true" aria-labelledby="revTitle">
     <h3 class="vm-title" id="revTitle">รูปรีวิวลูกค้า</h3>
-    <div class="rv-addbar"><button type="button" class="btn btn-ghost btn-sm" id="revAddOpen">＋ เพิ่มรูปรีวิวใหม่</button><span class="rv-adv-note">เอารูปไปวางใน images/reviews/ แล้วมาเพิ่มที่นี่</span></div>
+    <div class="rv-addbar"><button type="button" class="btn btn-ghost btn-sm" id="revAddOpen">＋ เพิ่มรูปรีวิวใหม่</button><span class="rv-adv-note">ลากรูปมาวางได้เลย ระบบย่อรูปและตั้งชื่อให้เอง</span></div>
     <div class="rv-addpanel" id="revAddPanel" hidden>
+      <div class="rv-drop" id="revDrop" tabindex="0" role="button"><b>ลากรูปรีวิวมาวางที่นี่</b><span>หรือคลิกเพื่อเลือกรูป (เลือกได้หลายรูป) · ระบบย่อรูปและตั้งชื่อให้เอง</span></div>
+      <input type="file" id="revFile" accept="image/*" multiple hidden>
+      <div class="rv-adv-row"><button type="button" class="btn btn-ghost btn-sm" id="revPickDir">เลือกโฟลเดอร์เว็บ</button><span class="rv-adv-note" id="revDirName"></span></div>
+      <div id="revPending"></div>
+      <details class="rv-old"><summary>วิธีเดิม: พิมพ์ชื่อไฟล์เอง</summary>
       <p class="rv-add-help">วางชื่อไฟล์รูปที่เอาไปไว้ใน <b>images/reviews/</b> แล้ว — <b>หนึ่งบรรทัดต่อหนึ่งรูป</b> (เช่น abc.jpg) · ต้องอัปโหลดเว็บขึ้นไปแล้วก่อน ระบบจะตรวจว่าเปิดรูปได้จริง</p>
       <textarea id="revAddText" rows="4" spellcheck="false" placeholder="review201.jpg&#10;review202.jpg&#10;รีวิวใหม่.jpg"></textarea>
       <div class="rv-adv-row"><button type="button" class="btn btn-primary btn-sm" id="revAddGo">ตรวจและเพิ่ม</button><button type="button" class="btn btn-ghost btn-sm" id="revAddClose">ซ่อนช่องนี้</button></div>
+      </details>
       <div id="revAddOut"></div>
     </div>
     <div class="vm-body rv-body">

@@ -1404,3 +1404,12 @@ body.vm-chip-dragging, body.vm-chip-dragging *{ cursor:grabbing !important; user
   .page-sub{ display:none; }
 }
 @media (prefers-reduced-motion: reduce){ .sidebar{ transition:none; } }
+/* อัปโหลดรูปรีวิว (ลากมาวาง) */
+.rv-drop{display:flex;flex-direction:column;gap:4px;align-items:center;justify-content:center;padding:22px 14px;margin:8px 0;border:2px dashed #e7b8c9;border-radius:12px;background:#fff7fa;color:#7a3b52;text-align:center;cursor:pointer;transition:background .15s,border-color .15s}
+.rv-drop span{font-size:12.5px;opacity:.8}
+.rv-drop:hover,.rv-drop:focus-visible,.rv-drop.is-over{background:#ffeaf2;border-color:#d6336c;outline:none}
+.rv-drop.is-busy{opacity:.6;pointer-events:none}
+.rv-pending{margin:8px 0;padding:10px 12px;border-radius:10px;background:#fff8e6;border:1px solid #f1d58a;font-size:13px;line-height:1.6}
+.rv-pending code{font-size:12px}
+.rv-old{margin:8px 0}
+.rv-old summary{cursor:pointer;font-size:12.5px;opacity:.7}

@@ -2717,6 +2717,110 @@ async function reviewAddMany(){
   $('revAddText').value = [...missing, ...bad].map(o => reviewShortName(o.key)).join('\n'); // เหลือเฉพาะที่ยังไม่สำเร็จ ไว้แก้แล้วกดใหม่
   renderReviewsModal();
 }
+/* ───────────── อัปโหลดรูปรีวิวลงโฟลเดอร์เว็บในเครื่อง (Chrome / Edge บนคอมพิวเตอร์) ─────────────
+   ลากรูปมาวาง → ย่อเป็น JPG → ตั้งชื่อ reviewN.jpg ต่อจากเลขล่าสุด → เขียนลง images/reviews/ ในโฟลเดอร์เว็บ
+   → ผูกเข้ารายการแบบ path เต็ม (หน้าร้านเห็นโดยไม่ต้องแก้ list.json) · แล้วให้ลากโฟลเดอร์ขึ้น GitHub ต่อเอง */
+const RV_MAX_SIDE = 1600, RV_QUALITY = 0.85, RV_PENDING_KEY = 'sfb_review_pending';
+let rvDirHandle = null;
+function rvDb(){ return new Promise((res, rej) => { const r = indexedDB.open('sfb-admin', 1); r.onupgradeneeded = () => r.result.createObjectStore('kv'); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }); }
+async function rvKvGet(k){ try{ const db = await rvDb(); return await new Promise(res => { const q = db.transaction('kv').objectStore('kv').get(k); q.onsuccess = () => res(q.result || null); q.onerror = () => res(null); }); }catch(e){ return null; } }
+async function rvKvSet(k, v){ try{ const db = await rvDb(); await new Promise(res => { const t = db.transaction('kv', 'readwrite'); t.objectStore('kv').put(v, k); t.oncomplete = () => res(); t.onerror = () => res(); }); }catch(e){} }
+function rvPendingGet(){ try{ return JSON.parse(localStorage.getItem(RV_PENDING_KEY) || '[]'); }catch(e){ return []; } }
+function rvPendingSet(a){ try{ localStorage.setItem(RV_PENDING_KEY, JSON.stringify(a)); }catch(e){} }
+function rvRenderPending(){
+  const box = $('revPending'); if(!box) return;
+  const a = rvPendingGet();
+  if(!window.showDirectoryPicker) $('revDirName').textContent = 'ต้องเปิดด้วย Chrome หรือ Edge บนคอมพิวเตอร์';
+  if(!a.length){ box.innerHTML = ''; return; }
+  box.innerHTML = `<div class="rv-pending"><b>ยังไม่ได้อัปโหลดขึ้น GitHub: ${a.length} รูป</b><br>ลากโฟลเดอร์ <code>images/reviews</code> ไปวางใน GitHub แล้วกดปุ่มด้านล่าง${a.length > 100 ? '<br>⚠ GitHub รับลากไฟล์ได้ไม่เกิน 100 ไฟล์ต่อครั้ง — ให้ลากเป็นชุดๆ' : ''}<br><small>${a.slice(0, 20).map(esc).join(', ')}${a.length > 20 ? ' …' : ''}</small><br><button type="button" class="btn btn-ghost btn-sm" id="revPendingDone">อัปโหลดขึ้น GitHub แล้ว (ล้างรายการ)</button></div>`;
+  $('revPendingDone').addEventListener('click', () => { rvPendingSet([]); rvRenderPending(); });
+}
+// โฟลเดอร์ images/reviews ในโฟลเดอร์เว็บ — ครั้งแรกให้เลือกโฟลเดอร์เว็บ ครั้งต่อไปจำไว้ (ขออนุญาตใหม่ทุกครั้งที่เปิดหลังบ้าน)
+async function rvGetDir(forcePick){
+  if(!window.showDirectoryPicker){ toast('ฟีเจอร์นี้ใช้ได้เฉพาะ Chrome หรือ Edge บนคอมพิวเตอร์', true); return null; }
+  let h = forcePick ? null : (rvDirHandle || await rvKvGet('webDir'));
+  if(h){
+    try{
+      let p = await h.queryPermission({ mode: 'readwrite' });
+      if(p !== 'granted') p = await h.requestPermission({ mode: 'readwrite' });
+      if(p !== 'granted') h = null;
+    }catch(e){ toast('กดปุ่ม "เลือกโฟลเดอร์เว็บ" ก่อน แล้วลองลากรูปอีกครั้ง', true); return null; }
+  }
+  if(!h){
+    try{ h = await window.showDirectoryPicker({ mode: 'readwrite', id: 'sfb-web' }); }catch(e){ return null; }
+    try{ await h.getFileHandle('index.html'); }catch(e){ toast('โฟลเดอร์นี้ไม่ใช่โฟลเดอร์เว็บ (ไม่พบ index.html) — เลือกโฟลเดอร์ที่มี index.html อยู่ข้างใน', true); return null; }
+    await rvKvSet('webDir', h);
+  }
+  rvDirHandle = h;
+  $('revDirName').textContent = '✓ โฟลเดอร์เว็บ: ' + h.name;
+  const imgs = await h.getDirectoryHandle('images', { create: true });
+  return imgs.getDirectoryHandle('reviews', { create: true });
+}
+async function rvSha(file){
+  const buf = await crypto.subtle.digest('SHA-256', await file.arrayBuffer());
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+}
+async function rvResize(file){
+  const bmp = await createImageBitmap(file);
+  const sc = Math.min(1, RV_MAX_SIDE / Math.max(bmp.width, bmp.height));
+  const cv = document.createElement('canvas');
+  cv.width = Math.round(bmp.width * sc); cv.height = Math.round(bmp.height * sc);
+  const cx = cv.getContext('2d'); cx.fillStyle = '#fff'; cx.fillRect(0, 0, cv.width, cv.height); cx.drawImage(bmp, 0, 0, cv.width, cv.height);
+  if(bmp.close) bmp.close();
+  return new Promise(res => cv.toBlob(res, 'image/jpeg', RV_QUALITY));
+}
+async function rvUploadFiles(list){
+  const all = Array.from(list || []);
+  if(!rvm || !all.length) return;
+  const files = all.filter(f => /^image\//.test(f.type) || REVIEW_IMG_RE.test(f.name));
+  if(!files.length){ toast('ไม่พบไฟล์รูป ลากไฟล์ .jpg .png .webp มาวาง', true); return; }
+  const drop = $('revDrop'), out = $('revAddOut');
+  drop.classList.add('is-busy');
+  try{
+    const dir = await rvGetDir(false);
+    if(!dir) return;
+    // เลขถัดไป = เลขสูงสุดที่มีอยู่ทั้งในโฟลเดอร์และในรายการ + 1
+    let next = 0;
+    const bump = n => { const m = /review(\d+)/i.exec(String(n)); if(m) next = Math.max(next, +m[1]); };
+    for await (const name of dir.keys()) bump(name);
+    [...rvm.files, ...Object.keys(rvm.tags)].forEach(bump);
+    const seen = new Set((await rvKvGet('rvHashes')) || []);
+    const added = [], dups = [], fails = [];
+    for(let i = 0; i < files.length; i++){
+      const f = files[i];
+      out.innerHTML = `<p class="rv-add-note">กำลังจัดการรูป ${i + 1}/${files.length} …</p>`;
+      try{
+        const sha = await rvSha(f);
+        if(seen.has(sha)){ dups.push(f.name); continue; }
+        const blob = await rvResize(f);
+        if(!blob) throw new Error('resize');
+        const name = `review${++next}.jpg`;
+        const w = await (await dir.getFileHandle(name, { create: true })).createWritable();
+        await w.write(blob); await w.close();
+        seen.add(sha); added.push(name);
+      }catch(e){ fails.push(f.name); }
+    }
+    await rvKvSet('rvHashes', [...seen]);
+    added.forEach(name => { const key = REVIEW_DIR + name; rvm.tags[key] = rvm.tags[key] || []; rvm.hidden.delete(key); rvm.files = rvm.files.filter(x => x !== key); });
+    added.slice().reverse().forEach(name => rvm.files.unshift(REVIEW_DIR + name)); // ใหม่สุดอยู่หน้า
+    if(added.length){
+      rvPendingSet([...new Set([...rvPendingGet(), ...added])]);
+      rvm.dirty = true; rvm.filter = 'all'; rvm.q = ''; $('revSearch').value = '';
+    }
+    const rows = [];
+    if(added.length) rows.push(`<p class="rv-add-ok">✓ เพิ่มแล้ว ${added.length} รูป (${esc(added[0])}${added.length > 1 ? ' – ' + esc(added[added.length - 1]) : ''}) — กดบันทึกด้านล่างเพื่อให้หน้าร้านเห็น แล้วอย่าลืมลากโฟลเดอร์ขึ้น GitHub</p>`);
+    if(dups.length) rows.push(`<p class="rv-add-note">ข้าม ${dups.length} รูปที่เคยอัปโหลดแล้ว: ${dups.map(esc).join(', ')}</p>`);
+    if(fails.length) rows.push(`<p class="rv-add-err">อ่านรูปไม่ได้ ${fails.length} รูป: ${fails.map(esc).join(', ')}</p>`);
+    if(all.length > files.length) rows.push(`<p class="rv-add-note">ข้ามไฟล์ที่ไม่ใช่รูป ${all.length - files.length} ไฟล์</p>`);
+    out.innerHTML = rows.join('');
+    rvRenderPending();
+    renderReviewsModal();
+  }catch(e){
+    toast('เพิ่มรูปไม่สำเร็จ: ' + (e.message || e), true);
+  }finally{
+    drop.classList.remove('is-busy');
+  }
+}
 async function persistReviewTags(next, hidden){
   const hide = hidden || reviewHidden;
   const clean = {};
@@ -3213,6 +3317,14 @@ $('revSave').addEventListener('click', saveReviewsModal);
 $('revAddOpen').addEventListener('click', () => { const p = $('revAddPanel'); p.hidden = !p.hidden; if(!p.hidden) $('revAddText').focus(); });
 $('revAddClose').addEventListener('click', () => { $('revAddPanel').hidden = true; });
 $('revAddGo').addEventListener('click', reviewAddMany);
+$('revAddOpen').addEventListener('click', rvRenderPending);
+$('revDrop').addEventListener('click', () => $('revFile').click());
+$('revDrop').addEventListener('keydown', e => { if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); $('revFile').click(); } });
+$('revDrop').addEventListener('dragover', e => { e.preventDefault(); $('revDrop').classList.add('is-over'); });
+$('revDrop').addEventListener('dragleave', () => $('revDrop').classList.remove('is-over'));
+$('revDrop').addEventListener('drop', e => { e.preventDefault(); $('revDrop').classList.remove('is-over'); rvUploadFiles(e.dataTransfer.files); });
+$('revFile').addEventListener('change', e => { const f = Array.from(e.target.files); e.target.value = ''; rvUploadFiles(f); });
+$('revPickDir').addEventListener('click', () => rvGetDir(true));
 $('revScrim').addEventListener('click', e => { if(e.target === $('revScrim')) closeReviewsModal(); });
 $('optTabs').addEventListener('click', e => {
   const b = e.target.closest('[data-tab]');
