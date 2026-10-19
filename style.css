@@ -1808,3 +1808,125 @@ body{overflow-x:clip; max-width:100%; overscroll-behavior-x:none;}
      ช่องค้นหาขยายชิดขอบจอ กล่องนี้เลยล้นขอบขวา ทำให้หน้ากว้างเกินจอ */
   .search-suggest{left:-12px; right:-12px;}
 }
+
+/* =========================================================
+   อนิเมชั่นมือถือ — เฟส 1: ความรู้สึกตอนแตะ + เปิด/ปิดแผงต่างๆ
+   - ทำงานเฉพาะจอ < 860px (เวอร์ชันคอมไม่เปลี่ยน) ใช้แค่ transform/opacity เพื่อให้ลื่นในเครื่องรุ่นเก่า
+   - ปิดทั้งหมดได้ 2 ทาง: ตั้ง SFB_MOBILE_ANIMATION = false ใน script.js หรือใส่ class "no-anim" ที่แท็ก <html>
+   - เครื่องแรม/CPU น้อย หรือเปิดโหมดประหยัดข้อมูล จะได้ class "anim-lite" (ตัดตัวเด้งออก เหลือแบบเบา)
+   - ถ้าเครื่องตั้ง "ลดการเคลื่อนไหว" จะไม่มีการเลื่อน/เด้งเลย
+   ========================================================= */
+@keyframes sfbHeartPop{
+  0%{transform:scale(1);}
+  35%{transform:scale(1.38);}
+  65%{transform:scale(.92);}
+  100%{transform:scale(1);}
+}
+@keyframes sfbBadgeBump{
+  0%{transform:scale(1);}
+  40%{transform:scale(1.5);}
+  100%{transform:scale(1);}
+}
+@keyframes sfbNavBounce{
+  0%{transform:translateY(0) scale(1);}
+  35%{transform:translateY(-5px) scale(1.08);}
+  70%{transform:translateY(0) scale(.96);}
+  100%{transform:translateY(0) scale(1);}
+}
+
+@media (max-width:859px){
+  :root{
+    --sfb-out:cubic-bezier(.32,.72,0,1);     /* เปิด: พุ่งเร็วแล้วค่อยๆ หยุด (แบบแผงล่างของ iOS) */
+    --sfb-in:cubic-bezier(.4,0,.6,1);        /* ปิด: เร็วกว่าตอนเปิดเล็กน้อย */
+    --sfb-spring:cubic-bezier(.34,1.56,.64,1); /* เด้งเกินนิดหนึ่งแล้วกลับ */
+  }
+  html.anim-lite{--sfb-spring:var(--sfb-out);}
+
+  /* ---------- 1) แตะแล้วยุบลงเล็กน้อย (แทนไฮไลต์สีเทาของเบราว์เซอร์) ---------- */
+  .card, .add-btn, .checkout-btn, .color-chip, .fav-heart, .fav-heart-inline, .qty-ctrl button,
+  .sw-btn, .cat-opt, .filter-apply-btn, .filter-clear-btn, .cat-more-btn, .page-back-btn,
+  .modal-close, .pn-btn, .chat-order-btn, .close-secondary-btn, .remove-btn{
+    -webkit-tap-highlight-color:transparent;
+  }
+  .qty-ctrl button, .cat-opt, .filter-apply-btn, .filter-clear-btn, .cat-more-btn, .checkout-btn,
+  .pn-btn, .chat-order-btn, .close-secondary-btn, .remove-btn{
+    transition:transform .12s ease, background-color .15s ease, color .15s ease, border-color .15s ease, box-shadow .15s ease;
+  }
+  /* มือถือไม่มีเมาส์: กันการ์ดค้างลอย (hover ค้างหลังแตะ) แล้วใช้แบบยุบตอนกดแทน */
+  .card:hover{transform:none;}
+  .card:active{transform:scale(.98);}
+  .add-btn:active, .checkout-btn:active:not(:disabled), .filter-apply-btn:active, .filter-clear-btn:active,
+  .cat-more-btn:active, .chat-order-btn:active, .close-secondary-btn:active, .pn-btn:active{transform:scale(.97);}
+  .cat-opt:active{transform:scale(.98);}
+  .color-chip:not(.disabled):active{transform:scale(.94);}
+  .qty-ctrl button:active, .fav-heart:active, .fav-heart-inline:active,
+  .page-back-btn:active, .modal-close:active{transform:scale(.88);}
+  .sw-btn:active img{transform:scale(.88);}
+  .remove-btn:active{transform:scale(.94);}
+
+  /* ---------- 2) หัวใจเด้งตอนกดบันทึก / ตัวเลขตะกร้าเด้งตอนเพิ่มสินค้า ---------- */
+  .fav-heart.fav-pop, .fav-heart-inline.fav-pop, .pd-heart-img.fav-pop{
+    animation:sfbHeartPop .42s var(--sfb-out);
+  }
+  .bnav-badge.badge-bump{animation:sfbBadgeBump .4s var(--sfb-spring);}
+  .bnav-ic.bnav-bounce{animation:sfbNavBounce .5s var(--sfb-out);}
+  html.anim-lite .fav-pop, html.anim-lite .badge-bump, html.anim-lite .bnav-bounce{animation:none;}
+
+  /* ---------- 3) ข้อความแจ้งเตือน (toast) ลอยขึ้นมาแล้วเด้งนิดหนึ่ง ---------- */
+  .toast{
+    transform:translateX(-50%) translateY(14px) scale(.94);
+    transition:opacity .2s ease, transform .22s var(--sfb-in);
+  }
+  .toast.show{
+    transform:translateX(-50%) translateY(0) scale(1);
+    transition:opacity .2s ease, transform .38s var(--sfb-spring);
+  }
+
+  /* ---------- 4) แผงที่เลื่อนขึ้น-ลง: เปิดนุ่มๆ ปิดเร็วกว่าเล็กน้อย ---------- */
+  .filter-sheet, .reviews-all-modal, .order-modal{
+    transition:transform .24s var(--sfb-in), visibility 0s linear .24s;
+  }
+  .filter-sheet.open, .reviews-all-modal.open, .order-modal.open{
+    transition:transform .34s var(--sfb-out), visibility 0s;
+  }
+  .filter-overlay{transition:opacity .22s ease, visibility 0s linear .22s;}
+  .filter-overlay.open{transition:opacity .32s ease, visibility 0s;}
+
+  /* หน้าสินค้า (เลื่อนเข้าจากขวา) และตะกร้า (เลื่อนเข้าจากขวา) */
+  .product-page{transition:transform .26s var(--sfb-in);}
+  .product-page.open{transition:transform .36s var(--sfb-out);}
+  .drawer{transition:transform .26s var(--sfb-in);}
+  .drawer.open{transition:transform .34s var(--sfb-out);}
+  .overlay{transition:opacity .22s ease;}
+  .overlay.show{transition:opacity .32s ease;}
+
+  /* ป๊อปอัพโปรโมชั่น: ลอยขึ้นพร้อมขยายเล็กน้อย (เดิมปิดแล้วหายวับเพราะ visibility ไม่ได้ทรานสิชัน) */
+  .promo-overlay{transition:opacity .25s ease, visibility 0s linear .25s;}
+  .promo-overlay.open{transition:opacity .25s ease, visibility 0s;}
+  .promo-modal{transform:translateY(18px) scale(.95); transition:transform .24s var(--sfb-in);}
+  .promo-overlay.open .promo-modal{transform:none; transition:transform .38s var(--sfb-out);}
+
+  /* ดูรูปรีวิวเต็มจอ: รูปขยายเข้ามาเบาๆ */
+  .review-lightbox img{transform:scale(.94); transition:transform .3s var(--sfb-out);}
+  .review-lightbox.open img{transform:none;}
+}
+
+/* ลดการเคลื่อนไหว: เครื่องที่ตั้งค่าไว้จะเห็นแผงขึ้น-ลงทันที ไม่มีเด้ง ไม่มียุบ */
+@media (max-width:859px) and (prefers-reduced-motion:reduce){
+  .filter-sheet, .filter-sheet.open, .reviews-all-modal, .reviews-all-modal.open,
+  .order-modal, .order-modal.open, .filter-overlay, .filter-overlay.open,
+  .product-page, .product-page.open, .drawer, .drawer.open, .overlay, .overlay.show,
+  .promo-overlay, .promo-overlay.open, .promo-modal, .promo-overlay.open .promo-modal,
+  .review-lightbox img, .toast, .toast.show,
+  .card, .add-btn, .checkout-btn, .color-chip, .fav-heart, .fav-heart-inline, .qty-ctrl button,
+  .sw-btn img, .cat-opt, .filter-apply-btn, .filter-clear-btn, .cat-more-btn, .page-back-btn,
+  .modal-close, .pn-btn, .chat-order-btn, .close-secondary-btn, .remove-btn{
+    transition-duration:.01ms !important; transition-delay:0s !important;
+  }
+  .fav-pop, .badge-bump, .bnav-bounce{animation:none !important;}
+}
+
+/* สวิตช์ปิดอนิเมชั่นทั้งหมด (ใส่ class "no-anim" ที่ <html> หรือตั้ง SFB_MOBILE_ANIMATION = false) */
+html.no-anim *, html.no-anim *::before, html.no-anim *::after{
+  animation:none !important; transition-duration:.01ms !important; transition-delay:0s !important;
+}

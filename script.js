@@ -386,6 +386,7 @@ function toggleFavorite(id, colorIndex, optionIndex, sizeIndex){
   renderCatalog();
   updateModalHeart();
   if(document.getElementById('productModal').classList.contains('open')) renderRelatedProducts();
+  sfbHeartPop(id, colorIndex, optionIndex, sizeIndex);
 }
 // แบบที่กำลังเลือกอยู่ในหน้าสินค้า (ไว้ผูกหัวใจในหน้าสินค้ากับแบบนั้น) — null = ยังเลือกไม่ครบ/ไม่มีแบบ
 function currentVariantRef(p){
@@ -1998,6 +1999,9 @@ function updateCartUI(){
   const count = cartCount();
   const nb = document.getElementById('bnavCartBadge');
   if(nb){ nb.textContent = count > 99 ? '99+' : count; nb.hidden = count === 0; }
+  // อนิเมชั่นมือถือ: ตัวเลขตะกร้าเด้งเมื่อ "เพิ่ม" สินค้า (ไม่เล่นตอนโหลดหน้า / ตอนลดจำนวน / ตอนเปิดตะกร้าอยู่)
+  if(typeof __sfbLastCartCount === 'number' && count > __sfbLastCartCount) sfbCartBump();
+  __sfbLastCartCount = count;
   if(count > 0){
     fab.style.display = 'flex';
     document.getElementById('fabCount').textContent = count;
@@ -2015,6 +2019,57 @@ function openCart(){
 function closeCart(){
   document.getElementById('drawer').classList.remove('open');
   document.getElementById('overlay').classList.remove('show');
+}
+
+/* ---------- อนิเมชั่นมือถือ (เฟส 1) ----------
+   ตัวอนิเมชั่นอยู่ท้ายไฟล์ style.css (ทำงานเฉพาะจอ < 860px) ฝั่งนี้มีแค่ตัวช่วยสั่งเล่นกับตัวเช็กเครื่อง
+   ปิดทั้งหมด: ตั้ง SFB_MOBILE_ANIMATION เป็น false (หรือใส่ class "no-anim" ที่แท็ก <html>) */
+const SFB_MOBILE_ANIMATION = true;
+// ใช้ var (ไม่ใช่ let) โดยตั้งใจ: updateCartUI() ถูกเรียกตั้งแต่ตอนโหลดสคริปต์ ก่อนจะวิ่งมาถึงบรรทัดนี้
+// ถ้าเป็น let จะเกิด error แบบ TDZ (เหมือนบั๊กตะกร้าที่เคยเจอ) และห้ามใส่ค่าเริ่มต้นที่นี่ ไม่งั้นจะรีเซ็ตค่า
+var __sfbLastCartCount;
+(function sfbAnimInit(){
+  const root = document.documentElement;
+  if(!SFB_MOBILE_ANIMATION){ root.classList.add('no-anim'); return; }
+  const conn = navigator.connection || {};
+  const lowEnd = (navigator.deviceMemory && navigator.deviceMemory <= 2)
+    || (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 2)
+    || conn.saveData === true;
+  if(lowEnd) root.classList.add('anim-lite'); // ตัดตัวเด้งออก เหลืออนิเมชั่นแบบเบา
+  document.addEventListener('touchstart', function(){}, { passive:true }); // ให้ iOS Safari ยอมใช้ :active (แตะแล้วยุบ)
+})();
+function sfbAnimOk(){
+  if(document.documentElement.classList.contains('no-anim')) return false;
+  return window.matchMedia('(max-width:859px)').matches
+    && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+// เล่นอนิเมชั่น 1 ครั้งโดยใส่ class ชั่วคราว (รีสตาร์ทได้ถ้ากดซ้ำเร็วๆ) แล้วถอดออกเอง
+function sfbAnimPlay(el, cls){
+  if(!el || !sfbAnimOk()) return;
+  el.classList.remove(cls);
+  void el.offsetWidth;
+  el.classList.add(cls);
+  clearTimeout(el._sfbAnimT);
+  el._sfbAnimT = setTimeout(function(){ el.classList.remove(cls); }, 700);
+}
+// หัวใจเด้งเฉพาะตอน "บันทึก" (ถ้ากดเอาออกจะไม่เด้ง) — หัวใจบนการ์ดถูกสร้างใหม่ทุกครั้งที่กด จึงหาตัวที่เพิ่งกดจาก onclick
+function sfbHeartPop(id, colorIndex, optionIndex, sizeIndex){
+  const sig = "toggleFavorite('" + id + "', " + (colorIndex ?? 'null') + ", " + (optionIndex ?? 'null') + ", " + (sizeIndex ?? 'null') + ")";
+  document.querySelectorAll('.fav-heart.active').forEach(function(b){
+    if((b.getAttribute('onclick') || '').indexOf(sig) !== -1) sfbAnimPlay(b, 'fav-pop');
+  });
+  if(typeof modalProductId !== 'undefined' && modalProductId === id){
+    document.querySelectorAll('#modalFavHeart.active, #modalFavHeartImg.active').forEach(function(b){ sfbAnimPlay(b, 'fav-pop'); });
+  }
+}
+// รอ ~0.28 วิ ให้หน้าสินค้าเลื่อนปิดก่อน ไม่งั้นแถบล่างยังถูกบังอยู่ มองไม่เห็นตัวเด้ง
+function sfbCartBump(){
+  setTimeout(function(){
+    const drawer = document.getElementById('drawer');
+    if(drawer && drawer.classList.contains('open')) return;
+    sfbAnimPlay(document.getElementById('bnavCartBadge'), 'badge-bump');
+    sfbAnimPlay(document.querySelector('#bnavCart .bnav-ic'), 'bnav-bounce');
+  }, 280);
 }
 
 let toastTimer;
