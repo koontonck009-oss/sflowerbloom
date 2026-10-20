@@ -3556,8 +3556,7 @@ loadReviews();
    แก้ไขรายการรูป/ลิงก์ที่ต้องการโปรโมทได้ตรงนี้ — เพิ่ม/ลบ/แก้ path ได้เลย
    ไฟล์ "order process.jpg" อยู่ในโฟลเดอร์ images ตามที่แจ้งไว้ */
 const PROMO_SLIDES = [
-  { image: 'images/orderprocess.png', alt: 'ขั้นตอนการสั่งซื้อ' },
-  { image: 'images/promotions.png', alt: 'โปรโมชั่น' }
+  { image: 'images/orderprocess.png', alt: 'ขั้นตอนการสั่งซื้อ' }
   // เพิ่มรูปโปรโมชันอื่น ๆ ได้ เช่น:
   // { image: 'images/promo2.jpg', alt: 'โปรโมชันพิเศษ', link: 'https://m.me/yourpage' }
 ];
@@ -3631,6 +3630,150 @@ function closePromoPopup(e){
     }
   }catch(e){ show = true; }
   if(show) openPromoPopup();
+})();
+
+/* ---------- แบนเนอร์โปรโมชั่นเลื่อนได้ (ใต้แถบค้นหา) ----------
+   วางรูป images/promotions.png, promotions1.png, promotions2.png, promotions3.png ... (.png อัตราส่วน 1:1)
+   ตั้งชื่อเรียงเลขต่อกัน ระบบจะโหลดให้เองจนเจอเลขที่ไม่มีไฟล์ — ไม่ต้องแก้โค้ด
+   คลิกรูปแล้วเปิดเพจเฟซบุ๊ก */
+(function(){
+  const LINK = 'https://www.facebook.com/S.Flower.Bloom44';
+  const MAX_IMAGES = 20;
+  const banner = document.getElementById('promoBanner');
+  const track = document.getElementById('pbTrack');
+  const dotsEl = document.getElementById('pbDots');
+  const prevBtn = document.getElementById('pbPrev');
+  const nextBtn = document.getElementById('pbNext');
+  if(!banner || !track) return;
+
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let step = 1, stops = 1, cur = 0, timer = null, inView = true, hold = false, resumeT = null, raf = 0;
+
+  function srcFor(i){ return 'images/promotions' + (i === 0 ? '' : i) + '.png'; }
+  function probe(src){
+    return new Promise(res => { const im = new Image(); im.onload = () => res(true); im.onerror = () => res(false); im.src = src; });
+  }
+
+  // ไฮไลต์รูปที่เห็นเต็ม ๆ (รูปที่โผล่มาแค่ขอบจะจางลง)
+  const io = ('IntersectionObserver' in window) ? new IntersectionObserver(entries => {
+    entries.forEach(en => en.target.classList.toggle('in', en.isIntersecting));
+    banner.classList.add('ready');
+  }, { root: track, threshold: 0.6 }) : null;
+
+  function addSlide(i){
+    const a = document.createElement('a');
+    a.className = 'pb-slide in';
+    a.href = LINK; a.target = '_blank'; a.rel = 'noopener';
+    a.draggable = false;
+    a.style.setProperty('--i', i);
+    a.setAttribute('aria-label', 'โปรโมชั่น ' + (i + 1));
+    const img = document.createElement('img');
+    img.src = srcFor(i); img.alt = 'โปรโมชั่น ' + (i + 1); img.draggable = false; img.decoding = 'async';
+    a.appendChild(img);
+    track.appendChild(a);
+    if(io) io.observe(a);
+    banner.hidden = false;
+    measure();
+  }
+
+  function measure(){
+    const sl = track.children;
+    if(!sl.length) return;
+    step = sl.length > 1 ? (sl[1].offsetLeft - sl[0].offsetLeft) : track.clientWidth;
+    if(step < 1) step = 1;
+    const perView = Math.max(1, Math.round(track.clientWidth / step));
+    stops = Math.max(1, sl.length - perView + 1);
+    banner.classList.toggle('single', stops < 2);
+    if(dotsEl.children.length !== stops){
+      dotsEl.innerHTML = '';
+      for(let i = 0; i < stops; i++){
+        const d = document.createElement('button');
+        d.type = 'button'; d.className = 'pb-dot'; d.setAttribute('aria-label', 'รูปที่ ' + (i + 1));
+        d.addEventListener('click', () => { goTo(i); restartTimer(); });
+        dotsEl.appendChild(d);
+      }
+    }
+    syncUI();
+  }
+
+  function syncUI(){
+    cur = Math.min(stops - 1, Math.max(0, Math.round(track.scrollLeft / step)));
+    Array.prototype.forEach.call(dotsEl.children, (d, i) => d.classList.toggle('active', i === cur));
+    prevBtn.disabled = cur <= 0;
+    nextBtn.disabled = cur >= stops - 1;
+  }
+
+  function goTo(i){
+    i = Math.min(stops - 1, Math.max(0, i));
+    track.scrollTo({ left: i * step, behavior: reduce ? 'auto' : 'smooth' });
+  }
+
+  // เลื่อนอัตโนมัติ
+  function tick(){
+    if(reduce || hold || !inView || document.hidden || stops < 2) return;
+    goTo(cur + 1 >= stops ? 0 : cur + 1);
+  }
+  function restartTimer(){
+    clearInterval(timer);
+    if(!reduce) timer = setInterval(tick, 4000);
+  }
+  function pause(){ hold = true; clearTimeout(resumeT); }
+  function resume(delay){ clearTimeout(resumeT); resumeT = setTimeout(() => { hold = false; }, delay || 0); }
+
+  track.addEventListener('scroll', () => {
+    if(raf) return;
+    raf = requestAnimationFrame(() => { raf = 0; syncUI(); });
+  }, { passive: true });
+  prevBtn.addEventListener('click', () => { goTo(cur - 1); restartTimer(); });
+  nextBtn.addEventListener('click', () => { goTo(cur + 1); restartTimer(); });
+
+  banner.addEventListener('mouseenter', pause);
+  banner.addEventListener('mouseleave', () => resume(0));
+  track.addEventListener('touchstart', pause, { passive: true });
+  track.addEventListener('touchend', () => resume(5000), { passive: true });
+  banner.addEventListener('focusin', pause);
+  banner.addEventListener('focusout', () => resume(0));
+
+  // เมาส์: ลากเพื่อเลื่อน (คอม) — ลากแล้วไม่ให้นับเป็นการคลิกลิงก์
+  let drag = null, justDragged = false;
+  track.addEventListener('pointerdown', e => {
+    if(e.pointerType !== 'mouse' || e.button !== 0) return;
+    drag = { x: e.clientX, left: track.scrollLeft, start: cur, moved: false };
+  });
+  window.addEventListener('pointermove', e => {
+    if(!drag) return;
+    const dx = e.clientX - drag.x;
+    if(!drag.moved && Math.abs(dx) > 6){ drag.moved = true; track.classList.add('dragging'); }
+    if(drag.moved) track.scrollLeft = drag.left - dx;
+  });
+  window.addEventListener('pointerup', e => {
+    if(!drag) return;
+    const d = drag; drag = null;
+    if(!d.moved) return;
+    const dx = e.clientX - d.x;
+    track.classList.remove('dragging');
+    justDragged = true; setTimeout(() => { justDragged = false; }, 60);
+    goTo(dx < -40 ? d.start + 1 : dx > 40 ? d.start - 1 : d.start);
+  });
+  track.addEventListener('click', e => {
+    if(justDragged){ e.preventDefault(); e.stopPropagation(); }
+  }, true);
+
+  // ไม่เลื่อนเองตอนแบนเนอร์อยู่นอกจอ
+  if('IntersectionObserver' in window){
+    new IntersectionObserver(en => { inView = en[0].isIntersecting; }, { threshold: 0.2 }).observe(banner);
+  }
+  window.addEventListener('resize', () => { requestAnimationFrame(measure); });
+
+  // โหลดรูปเรียงตามเลข: promotions.png, promotions1.png, promotions2.png ... หยุดเมื่อเจอเลขที่ไม่มีไฟล์
+  (async function(){
+    for(let i = 0; i < MAX_IMAGES; i++){
+      const ok = await probe(srcFor(i));
+      if(!ok) break;
+      addSlide(i);
+      if(i === 1) restartTimer();
+    }
+  })();
 })();
 
 /* ---------- แถบเมนูล่าง (มือถือ) ---------- */

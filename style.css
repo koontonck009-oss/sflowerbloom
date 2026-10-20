@@ -140,49 +140,120 @@ h1,h2,h3,.display{font-family:'Kanit',sans-serif; font-weight:600;}
 .brand-row h1{margin:0;font-size:21px;color:var(--sage-dark);line-height:1.1;}
 .brand-row p{margin:0;font-size:12.5px;color:var(--rose-dark);letter-spacing:.3px;}
 
-/* ---------- Hero ---------- */
-.hero{
-  margin:6px 6vw 10px;
-  padding:46px 6vw;
-  background:var(--sage);
-  border-radius:28px;
+/* ---------- Promo banner (แบนเนอร์โปรโมชั่นเลื่อนได้ อัตราส่วน 1:1) ----------
+   รูปอยู่ที่ images/promotions.png, promotions1.png, promotions2.png ... (script.js โหลดเรียงเลขให้เอง) */
+.promo-banner{
+  --pb-s:clamp(240px, 15.5vw, 320px);   /* ขนาดรูปสี่เหลี่ยมจัตุรัสบนคอม */
   position:relative;
-  overflow:hidden;
+  width:calc(100% - 12vw);
+  margin:14px auto 16px;
+  display:flex; align-items:flex-start; gap:24px;
+}
+.pb-main{position:relative; flex:0 0 auto; min-width:0; max-width:calc(var(--pb-s) * 2 + 14px);}
+.promo-banner[hidden]{display:none;}
+.pb-track{
+  display:flex; gap:14px; align-items:flex-start;
+  overflow-x:auto; overflow-y:hidden;
+  scroll-snap-type:x mandatory;
+  overscroll-behavior-x:contain;
+  scrollbar-width:none;
+  padding:8px 0 22px;
+  margin-bottom:-12px;
+  cursor:grab;
+}
+.pb-track::-webkit-scrollbar{display:none;}
+.pb-track.dragging{scroll-snap-type:none; cursor:grabbing;}
+.pb-slide{
+  flex:0 0 var(--pb-s);
+  aspect-ratio:1 / 1;
+  scroll-snap-align:start;
+  position:relative; display:block; overflow:hidden;
+  border-radius:22px;
+  background:#fff;
+  box-shadow:0 6px 16px rgba(246,33,136,0.14);
+  transition:transform .35s cubic-bezier(.32,.72,0,1), opacity .35s ease, box-shadow .35s ease;
+  animation:pbIn .55s cubic-bezier(.32,.72,0,1) backwards;
+  animation-delay:calc(var(--i,0) * 90ms);
+  -webkit-tap-highlight-color:transparent;
+}
+.pb-slide img{
+  position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block;
+  user-select:none; -webkit-user-drag:none;
+}
+.promo-banner.ready .pb-slide:not(.in){opacity:.55; transform:scale(.96);}
+@media (hover:hover){
+  .pb-slide.in:hover{transform:translateY(-4px); box-shadow:0 16px 36px rgba(246,33,136,0.22);}
+}
+@keyframes pbIn{
+  from{opacity:0; transform:translateY(16px) scale(.97);}
+  to{opacity:1; transform:none;}
+}
+.pb-nav{
+  position:absolute; top:50%; transform:translateY(-50%);
+  width:42px; height:42px; border-radius:50%; border:0;
+  background:rgba(255,255,255,0.94); color:var(--sage-dark);
+  font-size:26px; line-height:1; padding:0 0 3px;
+  display:flex; align-items:center; justify-content:center;
+  box-shadow:0 6px 18px rgba(59,18,48,0.18);
+  cursor:pointer; z-index:2;
+  transition:opacity .25s ease, transform .2s ease;
+}
+.pb-nav:hover{transform:translateY(-50%) scale(1.08);}
+.pb-nav.prev{left:-14px;}
+.pb-nav.next{right:-14px;}
+.pb-nav[disabled]{opacity:0; pointer-events:none;}
+.pb-dots{display:flex; justify-content:center; gap:6px; margin-top:4px;}
+.pb-dot{
+  width:8px; height:8px; padding:0; border:0; border-radius:999px;
+  background:rgba(246,33,136,0.25); cursor:pointer;
+  transition:width .3s cubic-bezier(.32,.72,0,1), background .3s ease;
+}
+.pb-dot.active{width:24px; background:var(--sage);}
+.promo-banner.single .pb-nav, .promo-banner.single .pb-dots{display:none;}
+.promo-banner.single .pb-track{cursor:default;}
+.pb-info{
+  flex:1 1 0; min-width:0; align-self:flex-start;
+  margin-top:8px; min-height:var(--pb-s);
+  position:relative; overflow:hidden;
+  border-radius:22px;
+  background:linear-gradient(135deg, var(--sage) 0%, #FF5FB0 100%);
   color:#FFF7FC;
-  box-shadow:var(--shadow);
+  padding:24px clamp(28px, 3.2vw, 56px);
+  display:flex; flex-direction:column; justify-content:center; gap:8px;
+  box-shadow:0 6px 16px rgba(246,33,136,0.14);
+  animation:pbIn .55s cubic-bezier(.32,.72,0,1) backwards; animation-delay:180ms;
 }
-.hero::before, .hero::after{
-  content:"";
-  position:absolute;
-  border-radius:50%;
-}
-.hero::before{
-  width:220px;height:220px; background:rgba(255,255,255,0.08);
-  top:-90px; right:-60px;
-}
-.hero::after{
-  width:140px;height:140px; background:var(--peach); opacity:.25;
-  bottom:-60px; left:-30px;
-}
-.hero h2{
-  font-size:clamp(28px,4vw,42px);
-  margin:0 0 10px;
-  position:relative;
-  max-width:640px;
-}
-.hero p{
-  font-size:16px; max-width:520px; opacity:.92; position:relative; margin:0 0 22px;
-}
-.hero .cta{
-  position:relative;
-  display:inline-block;
-  background:var(--peach);
-  color:var(--plum);
-  padding:12px 26px;
-  border-radius:999px;
-  font-weight:700;
-  text-decoration:none;
+.pb-info::before, .pb-info::after{content:""; position:absolute; border-radius:50%; pointer-events:none;}
+.pb-info::before{width:260px; height:260px; background:rgba(255,255,255,0.10); top:-100px; right:-60px;}
+.pb-info::after{width:150px; height:150px; background:var(--peach); opacity:.25; bottom:-70px; right:22%;}
+.pb-info > *{position:relative;}
+.pb-info h2{margin:0 0 2px; font-size:clamp(22px, 2.1vw, 32px); line-height:1.25;}
+.pb-info p{margin:0; font-size:14px; line-height:1.55; opacity:.92; max-width:640px;}
+.pb-chips{display:flex; flex-wrap:wrap; gap:8px;}
+.pb-chips span{background:rgba(255,255,255,0.18); padding:5px 12px; border-radius:999px; font-size:13.5px; font-weight:500; white-space:nowrap;}
+.pb-cta{
+  align-self:flex-start; display:inline-block;
+  background:var(--peach); color:var(--plum);
+  margin-top:4px; padding:9px 24px; border-radius:999px;
+  font-weight:700; text-decoration:none;
   box-shadow:0 6px 16px rgba(0,0,0,0.15);
+  transition:transform .2s ease;
+}
+.pb-cta:hover{transform:translateY(-2px);}
+@media (max-width:1699px){ .pb-chips{display:none;} }
+@media (max-width:1099px){ .pb-info p{display:none;} }
+@media (max-width:859px){
+  .promo-banner{display:block; width:auto; margin:8px 0 4px;}
+  .pb-main{max-width:none;}
+  .pb-info{display:none;}
+  .pb-track{gap:10px; padding:4px 12px 20px; margin-bottom:-10px; scroll-padding-inline:12px; cursor:auto;}
+  .pb-slide{flex:0 0 64%; border-radius:16px;}
+  .pb-nav{display:none;}
+  .promo-banner.single .pb-slide{flex-basis:64%;}
+}
+@media (prefers-reduced-motion:reduce){
+  .pb-slide, .pb-info{animation:none; transition:none;}
+  .pb-dot{transition:none;}
 }
 
 /* ---------- Catalog results bar (desktop only — "พบสินค้า N รายการ") ---------- */
@@ -628,17 +699,6 @@ main{padding:18px 3vw 80px;}
   .brand-name{display:block;}
   .brand-row{display:none;}
 
-  /* hero: ย่อให้เป็นแบนเนอร์บางๆ แถวเดียว แทนบล็อกใหญ่เต็มจอ */
-  .hero{
-    margin:14px 6vw 16px;
-    padding:18px 6vw;
-    border-radius:14px;
-    display:flex; align-items:center; justify-content:space-between; gap:24px; flex-wrap:wrap;
-  }
-  .hero::before, .hero::after{content:none;}
-  .hero h2{font-size:20px; margin:0; line-height:1.3; max-width:none;}
-  .hero p{font-size:13px; margin:0; max-width:360px; opacity:.85;}
-  .hero .cta{padding:9px 20px; font-size:13.5px; flex-shrink:0;}
 
   /* แท็บหมวดหมู่ด้านบนซ้ำกับ sidebar ซ้ายแล้ว เลยตัดออกบนจอคอม */
   .cat-nav{display:none;}
@@ -1495,7 +1555,6 @@ footer{
   .brand-row{padding:0 5vw 10px;}
   .brand-row h1{font-size:18px;}
   .brand-row p{font-size:11px;}
-  .hero{padding:34px 24px; border-radius:22px;}
   .cat-nav{padding:0 5vw;}
   .cat-btn{padding:12px 12px 10px; font-size:13.5px;}
 
@@ -1643,12 +1702,6 @@ footer{
   /* หัวร้านซ้ำกับโลโก้ — ซ่อนจากสายตาแต่คง h1 ไว้ใน DOM (เพื่อ SEO/screen reader) */
   header.top{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap;}
 
-  /* แบนเนอร์เหลือแถบเล็กบรรทัดเดียว เพื่อให้เห็นสินค้าตั้งแต่หน้าจอแรก */
-  .hero{margin:6px 12px 4px; padding:10px 14px; border-radius:14px; display:block; box-shadow:none;}
-  .hero::before, .hero::after{content:none;}
-  .hero h2{font-size:14.5px; margin:0; line-height:1.35; max-width:none; text-align:center;}
-  .hero h2 br{display:none;}
-  .hero p, .hero .cta{display:none;}
 
   /* แถบหมวดหมู่ = ชิปกลมกดครั้งเดียวกรองทันที (ติดใต้แถบบนตลอด) */
   .cat-nav{padding:7px 12px; gap:8px; border-bottom:none; box-shadow:0 1px 0 var(--line);}
@@ -1976,14 +2029,13 @@ html.no-anim *, html.no-anim *::before, html.no-anim *::after{
   .card.reveal-pending{opacity:0;}
   .card.reveal-in{animation:sfbRise .42s var(--sfb-out) backwards; animation-delay:var(--sfb-d, 0ms);}
 
-  /* แบนเนอร์ด้านบน และแถบรีวิว (โผล่ตอนโหลดรีวิวเสร็จ) */
-  .hero{animation:sfbFadeUp .5s var(--sfb-out) backwards;}
+  /* แถบรีวิว (โผล่ตอนโหลดรีวิวเสร็จ) */
   .reviews-section:not([hidden]){animation:sfbFadeUp .5s var(--sfb-out) backwards;}
 }
 
 @media (max-width:859px) and (prefers-reduced-motion:reduce){
   .skel-card::after{animation:none !important; display:none;}
-  .hero, .reviews-section, .card.reveal-in{animation:none !important;}
+  .reviews-section, .card.reveal-in{animation:none !important;}
   .thumb img{transition:none !important;}
 }
 
