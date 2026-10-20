@@ -838,6 +838,7 @@ function updateStickyOffsets(){
 window.addEventListener('resize', updateStickyOffsets);
 // เลื่อนหน้าไปบนสุดของรายการสินค้า (ใช้ร่วมกันทุกจุดที่เปลี่ยนตัวกรองแล้วอยากเลื่อนให้เห็นผลลัพธ์)
 function scrollToCatalogTop(){
+  sfbHeaderLock(1100); // เลื่อนด้วยโค้ด: ห้ามแถบบนซ่อน ไม่งั้นจะเหลือที่ว่างเท่าความสูงแถบ (ระยะเลื่อนคำนวณรวมแถบไว้แล้ว)
   const el = document.getElementById('catalog');
   if(el){
     const offset = stickyOffset() + 8;
@@ -1947,11 +1948,16 @@ async function downloadCatalogImages(){
 
 function changeQty(key, delta){
   if(!cart[key]) return;
+  // อนิเมชั่นมือถือ: ลดจนเหลือ 0 = ลบสินค้า ให้แถวหุบหายก่อนค่อยลบจริง (ถ้าไม่เข้าเงื่อนไข ฟังก์ชันคืน false แล้วทำงานตามเดิม)
+  if(cart[key].qty + delta <= 0 && sfbCartItemLeave(key, function(){ changeQty(key, delta); })) return;
   cart[key].qty += delta;
   if(cart[key].qty <= 0) delete cart[key];
   updateCartUI();
 }
-function removeItem(key){ delete cart[key]; updateCartUI(); }
+function removeItem(key){
+  if(sfbCartItemLeave(key, function(){ removeItem(key); })) return;
+  delete cart[key]; updateCartUI();
+}
 
 function cartCount(){ return Object.values(cart).reduce((a,e)=>a+e.qty,0); }
 function cartTotal(){
@@ -1977,7 +1983,7 @@ function updateCartUI(){
       if(!p) return '';
       const { qty, unitPrice, label } = entry;
       return `
-        <div class="cart-item">
+        <div class="cart-item" data-key="${String(key).replace(/"/g, '&quot;')}">
           <div class="mini-thumb">${renderThumb(p, (p.colors || p.sizes || hasNewOptions(p)) ? label : undefined)}</div>
           <div class="info">
             <h5>${p.name}${label ? ` <span class="variant">(${label})</span>` : ''}</h5>
@@ -2016,6 +2022,7 @@ function openCart(){
   if(PRICES_HIDDEN) return;
   document.getElementById('drawer').classList.add('open');
   document.getElementById('overlay').classList.add('show');
+  sfbCartItemsEnter();
 }
 function closeCart(){
   document.getElementById('drawer').classList.remove('open');
@@ -2065,12 +2072,14 @@ function sfbHeartPop(id, colorIndex, optionIndex, sizeIndex){
 }
 // รอ ~0.28 วิ ให้หน้าสินค้าเลื่อนปิดก่อน ไม่งั้นแถบล่างยังถูกบังอยู่ มองไม่เห็นตัวเด้ง
 function sfbCartBump(){
+  const wait = __sfbBumpDelay || 280;
+  __sfbBumpDelay = 0;
   setTimeout(function(){
     const drawer = document.getElementById('drawer');
     if(drawer && drawer.classList.contains('open')) return;
     sfbAnimPlay(document.getElementById('bnavCartBadge'), 'badge-bump');
     sfbAnimPlay(document.querySelector('#bnavCart .bnav-ic'), 'bnav-bounce');
-  }, 280);
+  }, wait);
 }
 
 /* ---------- อนิเมชั่นมือถือ (เฟส 2): รูปจางเข้า + การ์ดเลื่อนขึ้น ----------
@@ -2138,6 +2147,106 @@ function sfbRevealRun(card){
 function sfbRevealOk(){
   return 'IntersectionObserver' in window && !document.documentElement.classList.contains('anim-lite');
 }
+
+/* ---------- อนิเมชั่นมือถือ (เฟส 3): รูปบินไปตะกร้า + แถวในตะกร้า ----------
+   ทั้งหมดเล่นเฉพาะจอ < 860px และข้ามเองเมื่อเปิดโหมดลดการเคลื่อนไหว / no-anim (sfbAnimOk) */
+var __sfbBumpDelay;   // var (กัน TDZ เหมือนตัวแปรอื่นในชุดนี้) — ตั้งค่าตอนรูปบิน ให้ตัวเลขตะกร้าเด้งตอนรูปบินถึง
+// ก๊อปรูปสินค้าบนหน้าสินค้าเป็นวงกลมเล็กๆ แล้วบินโค้งไปที่ไอคอนตะกร้าที่แถบล่าง (ใช้ transform/opacity ผ่าน Web Animations API)
+function sfbFlyToCart(){
+  if(!sfbAnimOk() || document.documentElement.classList.contains('anim-lite')) return false;
+  const src = document.querySelector('#modalImg img');
+  const navBtn = document.getElementById('bnavCart');
+  const target = navBtn && navBtn.querySelector('.bnav-ic');
+  if(!src || !target || typeof src.animate !== 'function') return false;
+  if(getComputedStyle(navBtn).display === 'none') return false;
+  const s = src.getBoundingClientRect(), t = target.getBoundingClientRect();
+  if(!s.width || !s.height || !t.width) return false;
+  const size = 120;
+  const sx = s.left + s.width / 2 - size / 2, sy = s.top + s.height / 2 - size / 2;
+  const dx = (t.left + t.width / 2 - size / 2) - sx, dy = (t.top + t.height / 2 - size / 2) - sy;
+  const endScale = Math.max(t.width, 20) / size;
+  const fly = document.createElement('img');
+  fly.src = src.currentSrc || src.src;
+  fly.alt = '';
+  fly.setAttribute('aria-hidden', 'true');
+  fly.style.cssText = 'position:fixed;left:' + sx + 'px;top:' + sy + 'px;width:' + size + 'px;height:' + size + 'px;'
+    + 'object-fit:cover;border-radius:50%;pointer-events:none;z-index:2000;'
+    + 'box-shadow:0 8px 22px rgba(0,0,0,.25);will-change:transform,opacity;';
+  document.body.appendChild(fly);
+  const gone = function(){ if(fly.parentNode) fly.parentNode.removeChild(fly); };
+  const anim = fly.animate([
+    { transform:'translate(0px,0px) scale(1)', opacity:1, easing:'cubic-bezier(.2,.7,.4,1)' },
+    { transform:'translate(' + (dx * 0.4) + 'px,' + (dy * 0.12 - 60) + 'px) scale(.72)', opacity:1, offset:.38, easing:'cubic-bezier(.5,0,.8,.5)' },
+    { transform:'translate(' + dx + 'px,' + dy + 'px) scale(' + endScale + ')', opacity:.85 }
+  ], { duration:620, fill:'forwards' });
+  anim.onfinish = gone;
+  anim.oncancel = gone;
+  setTimeout(gone, 1500); // กันค้างบนจอ
+  __sfbBumpDelay = 560;   // ให้ตัวเลขตะกร้าเด้งตอนรูปบินถึงพอดี
+  return true;
+}
+// เปิดตะกร้า: แถวสินค้าเลื่อนเข้าไล่ทีละแถว
+function sfbCartItemsEnter(){
+  if(!sfbAnimOk()) return;
+  document.querySelectorAll('#drawerItems .cart-item').forEach(function(el, i){
+    if(i > 7) return;
+    el.style.setProperty('--sfb-d', (140 + i * 45) + 'ms');
+    el.classList.add('cart-item-in');
+    setTimeout(function(){ el.classList.remove('cart-item-in'); el.style.removeProperty('--sfb-d'); }, 1000);
+  });
+}
+// ลบสินค้าในตะกร้า: แถวเลื่อนออก+หุบความสูง แล้วค่อยเรียก done() เพื่อลบจริง
+// คืน true = เริ่มเล่นอนิเมชั่นแล้ว (ผู้เรียกต้อง return รอ) / false = ไม่เล่น ให้ลบทันทีตามเดิม
+function sfbCartItemLeave(key, done){
+  if(!sfbAnimOk()) return false;
+  const drawer = document.getElementById('drawer');
+  if(!drawer || !drawer.classList.contains('open')) return false;
+  const el = Array.prototype.find.call(drawer.querySelectorAll('.cart-item'), function(e){ return e.dataset.key === String(key); });
+  if(!el || el.classList.contains('cart-item-out')) return false;
+  el.style.height = el.offsetHeight + 'px';
+  void el.offsetHeight;
+  el.classList.add('cart-item-out');
+  setTimeout(done, 300);
+  return true;
+}
+
+/* ---------- อนิเมชั่นมือถือ (เฟส 4): แถบบนซ่อน/โผล่ตามการเลื่อน + รูปแกลเลอรีเลื่อนตามทิศปัด ---------- */
+var __sfbGalleryDir;       // ทิศรูปแกลเลอรีที่เพิ่งเปลี่ยน: 1 = ถัดไป, -1 = ก่อนหน้า (ล้างทุกครั้งหลัง renderModal)
+var __sfbHeaderLockUntil;  // เวลา (ms) ที่ห้ามแถบบนซ่อนจนถึง — ใช้ตอนโค้ดสั่งเลื่อนหน้าเอง
+function sfbGallerySlide(img){
+  const dir = __sfbGalleryDir;
+  if(!dir || !sfbAnimOk()) return;
+  img.classList.add(dir > 0 ? 'pd-slide-next' : 'pd-slide-prev'); // รูปเลื่อนเข้าจากฝั่งที่ปัด
+}
+function sfbHeaderLock(ms){
+  __sfbHeaderLockUntil = Date.now() + ms;
+  const bar = document.getElementById('searchCartBar');
+  if(bar) bar.classList.remove('bar-hidden');
+}
+// เลื่อนลง = แถบค้นหาซ่อนขึ้นไป (ได้พื้นที่ดูสินค้าเพิ่ม) / เลื่อนขึ้นนิดเดียว = กลับมา
+// ไม่ซ่อนเมื่อ: อยู่ใกล้บนสุด, กำลังพิมพ์ค้นหา, โค้ดกำลังเลื่อนหน้าให้, หรือเปิดโหมดลดการเคลื่อนไหว/ปิดอนิเมชั่น
+(function sfbHeaderAutoHide(){
+  const bar = document.getElementById('searchCartBar');
+  if(!bar) return;
+  let lastY = window.pageYOffset, acc = 0, ticking = false;
+  const setHidden = function(h){ if(bar.classList.contains('bar-hidden') !== h) bar.classList.toggle('bar-hidden', h); };
+  function update(){
+    ticking = false;
+    if(!sfbAnimOk()){ setHidden(false); return; }
+    const y = Math.max(0, window.pageYOffset);
+    if(y > document.documentElement.scrollHeight - window.innerHeight + 1) return; // ดึงเกินขอบล่าง (iOS เด้งกลับ) ไม่นับ
+    const dy = y - lastY;
+    lastY = y;
+    if(dy === 0) return;
+    acc = ((dy > 0) === (acc > 0)) ? acc + dy : dy; // สะสมระยะเลื่อนทิศเดียวกัน กลับทิศแล้วเริ่มนับใหม่
+    if(y < 80 || bar.contains(document.activeElement) || Date.now() < (__sfbHeaderLockUntil || 0)){ setHidden(false); return; }
+    if(acc > 24) setHidden(true);
+    else if(acc < -12) setHidden(false);
+  }
+  window.addEventListener('scroll', function(){ if(!ticking){ ticking = true; requestAnimationFrame(update); } }, { passive:true });
+  bar.addEventListener('focusin', function(){ setHidden(false); }); // เลื่อนแท็บด้วยคีย์บอร์ดมาโดนแถบ ต้องโผล่
+  window.addEventListener('resize', function(){ if(!sfbAnimOk()) setHidden(false); });
+})();
 
 let toastTimer;
 function showToast(msg){
@@ -2648,6 +2757,7 @@ function renderModalThumbs(p){
   `).join('');
 }
 function setModalImgIndex(i){
+  __sfbGalleryDir = i > modalImgIndex ? 1 : (i < modalImgIndex ? -1 : 0); // ทิศที่รูปจะเลื่อนเข้า (อนิเมชั่นมือถือ)
   modalImgIndex = i;
   renderModal();
 }
@@ -2662,6 +2772,7 @@ function changeModalImg(delta){
   if(!p) return;
   const imgs = currentGalleryImages(p);
   if(imgs.length < 2) return;
+  __sfbGalleryDir = delta > 0 ? 1 : -1; // ทิศที่รูปจะเลื่อนเข้า (อนิเมชั่นมือถือ)
   modalImgIndex = (modalImgIndex + delta + imgs.length) % imgs.length;
   renderModal();
 }
@@ -2836,7 +2947,8 @@ function renderModal(){
   document.getElementById('modalImg').innerHTML = renderModalMainImage(p);
   const mainImgEl = document.querySelector('#modalImg img');
   const mainSrc = imgs[modalImgIndex] || '';
-  if(mainImgEl && mainSrc !== lastModalImgSrc) mainImgEl.classList.add('pd-fade');
+  if(mainImgEl && mainSrc !== lastModalImgSrc){ mainImgEl.classList.add('pd-fade'); sfbGallerySlide(mainImgEl); }
+  __sfbGalleryDir = 0;
   lastModalImgSrc = mainSrc;
   const rvTag = document.getElementById('modalReviewTag'); // ป้าย "รีวิวจากลูกค้า" บนรูปหลัก เมื่อกำลังดูรูปรีวิว
   if(rvTag) rvTag.hidden = !(mainSrc && reviewPhotosOf(p).includes(mainSrc));
@@ -3043,6 +3155,7 @@ function addModalToCart(){
   const key = cartKeyOf(p.id, label);
   if(cart[key]) cart[key].qty += modalQty;
   else cart[key] = { qty:modalQty, unitPrice, label };
+  sfbFlyToCart(); // ต้องเรียกก่อน updateCartUI/ปิดหน้าสินค้า เพราะต้องอ่านตำแหน่งรูปบนหน้าสินค้าก่อนมันเลื่อนออก
   updateCartUI();
   showToast('เพิ่มลงตะกร้าแล้ว 🌸');
   if(!pdIsDesktop()) closeProductModal(); // จอคอมอยู่หน้าเดิมต่อ จะได้ดูสินค้าแนะนำ/เพิ่มชิ้นอื่นได้ (ตัวเลขตะกร้าบนแถบบนอัปเดตเอง)

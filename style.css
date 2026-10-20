@@ -1986,3 +1986,81 @@ html.no-anim *, html.no-anim *::before, html.no-anim *::after{
   .hero, .reviews-section, .card.reveal-in{animation:none !important;}
   .thumb img{transition:none !important;}
 }
+
+/* =========================================================
+   อนิเมชั่นมือถือ — เฟส 3: ตะกร้า + สั่งซื้อสำเร็จ
+   - รูปบินไปตะกร้า (JS สร้างรูปชั่วคราวเอง) / แถวในตะกร้าเลื่อนเข้า-ออก / เครื่องหมายถูกตอนส่งออเดอร์สำเร็จ
+   - เวอร์ชันคอมไม่เปลี่ยน (ซ่อนเครื่องหมายถูก และอนิเมชั่นอยู่ใน media query มือถือทั้งหมด)
+   ========================================================= */
+.sfb-check{display:none;}
+@keyframes sfbSlideIn{
+  from{opacity:0; transform:translateX(24px);}
+  to{opacity:1; transform:none;}
+}
+@keyframes sfbCheckPop{
+  0%{transform:scale(.6); opacity:0;}
+  60%{transform:scale(1.08); opacity:1;}
+  100%{transform:scale(1); opacity:1;}
+}
+@keyframes sfbDrawCircle{from{stroke-dashoffset:151;} to{stroke-dashoffset:0;}}
+@keyframes sfbDrawTick{from{stroke-dashoffset:34;} to{stroke-dashoffset:0;}}
+
+@media (max-width:859px){
+  /* ตะกร้า: เปิดแล้วแถวเลื่อนเข้า / ลบแล้วแถวเลื่อนออกพร้อมหุบความสูง / ตะกร้าว่างจางเข้า */
+  .cart-item.cart-item-in{animation:sfbSlideIn .38s var(--sfb-out) backwards; animation-delay:var(--sfb-d, 0ms);}
+  .drawer-items{overflow-x:hidden;}  /* แถวที่เลื่อนเข้า/ออกด้านข้างจะไม่ทำให้เกิดแถบเลื่อนแนวนอน */
+  .cart-item{box-sizing:border-box;}
+  .cart-item.cart-item-out{
+    opacity:0; transform:translateX(32px);
+    height:0 !important; padding-top:0; padding-bottom:0; border-bottom-width:0; overflow:hidden;
+    transition:opacity .18s ease, transform .22s ease, height .24s ease .06s, padding .24s ease .06s;
+  }
+  .empty-cart{animation:sfbFadeUp .35s var(--sfb-out) backwards;}
+
+  /* ฟอร์มสั่งซื้อ: ช่องที่อยู่/สถานที่นัดรับโผล่มาแบบจางเข้า (เดิมโผล่ทันที) */
+  #pickupInfoGroup, #deliveryAddressGroup{animation:sfbFadeUp .3s var(--sfb-out) backwards;}
+
+  /* สั่งซื้อสำเร็จ: เครื่องหมายถูกวาดเส้น แล้วข้อความไล่ขึ้นมาทีละส่วน */
+  .sfb-emoji{display:none;}
+  .sfb-check{
+    display:block; width:72px; height:72px; margin:0 auto 12px; align-self:center; flex-shrink:0;
+    animation:sfbCheckPop .5s var(--sfb-spring) backwards;
+  }
+  .sfb-check svg{width:100%; height:100%; fill:none; stroke:var(--sage); stroke-width:3.5; stroke-linecap:round; stroke-linejoin:round;}
+  .sfb-check circle{stroke-dasharray:151; stroke-dashoffset:0; animation:sfbDrawCircle .55s ease-out .08s backwards;}
+  .sfb-check path{stroke-dasharray:34; stroke-dashoffset:0; animation:sfbDrawTick .35s ease-out .5s backwards;}
+  #orderSuccessView > .copied-banner{animation:sfbFadeUp .4s var(--sfb-out) .3s backwards;}
+  #orderSuccessView > .order-no-chip{animation:sfbFadeUp .4s var(--sfb-out) .4s backwards;}
+  #orderSuccessView > .paste-instruction{animation:sfbFadeUp .4s var(--sfb-out) .5s backwards;}
+  #orderSuccessView > .success-actions{animation:sfbFadeUp .4s var(--sfb-out) .6s backwards;}
+  html.anim-lite .sfb-check, html.anim-lite .sfb-check circle, html.anim-lite .sfb-check path{animation:none;}
+}
+
+@media (max-width:859px) and (prefers-reduced-motion:reduce){
+  .cart-item.cart-item-in, .empty-cart, #pickupInfoGroup, #deliveryAddressGroup,
+  .sfb-check, .sfb-check circle, .sfb-check path,
+  #orderSuccessView > .copied-banner, #orderSuccessView > .order-no-chip,
+  #orderSuccessView > .paste-instruction, #orderSuccessView > .success-actions{animation:none !important;}
+}
+
+/* =========================================================
+   อนิเมชั่นมือถือ — เฟส 4: ขัดเกลา
+   - แถบค้นหาด้านบนซ่อนตอนเลื่อนลง / โผล่ตอนเลื่อนขึ้น (class bar-hidden ใส่โดย JS)
+   - รูปแกลเลอรีหน้าสินค้าเลื่อนเข้าตามทิศที่ปัด
+   - เวอร์ชันคอมไม่เปลี่ยน
+   ========================================================= */
+@keyframes sfbGalNext{from{opacity:0; transform:translateX(28px);} to{opacity:1; transform:none;}}
+@keyframes sfbGalPrev{from{opacity:0; transform:translateX(-28px);} to{opacity:1; transform:none;}}
+
+@media (max-width:859px){
+  .search-cart-bar{transition:transform .3s var(--sfb-out);}
+  .search-cart-bar.bar-hidden{
+    transform:translateY(calc(-100% - 2px));
+    transition:transform .22s var(--sfb-in);
+  }
+  .page-img img.pd-slide-next{animation:sfbGalNext .32s var(--sfb-out);}
+  .page-img img.pd-slide-prev{animation:sfbGalPrev .32s var(--sfb-out);}
+}
+@media (max-width:859px) and (prefers-reduced-motion:reduce){
+  .page-img img.pd-slide-next, .page-img img.pd-slide-prev{animation:none !important;}
+}

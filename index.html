@@ -391,7 +391,9 @@
   </div>
 
   <div class="modal-body" id="orderSuccessView" style="display:none; overflow-y:auto;">
-    <div class="copied-banner">✅ รับออเดอร์ของคุณแล้ว</div>
+    <!-- เครื่องหมายถูกวาดเส้น: แสดงเฉพาะมือถือ (CSS) -->
+    <div class="sfb-check" aria-hidden="true"><svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="24"/><path d="M15 27l8 8 14-16"/></svg></div>
+    <div class="copied-banner"><span class="sfb-emoji">✅ </span>รับออเดอร์ของคุณแล้ว</div>
     <div class="order-no-chip" id="orderNoChip"></div>
     <p class="paste-instruction">📌 <strong>ขั้นตอนต่อไป:</strong> กดปุ่ม "ทักแชทแจ้งเลขออเดอร์" ด้านล่าง ระบบจะคัดลอกเลขที่ออเดอร์ให้อัตโนมัติ แล้วเปิดแชท Facebook Messenger ของร้าน — เมื่อแชทเปิดขึ้นมา แค่วางข้อความที่คัดลอกไว้แล้วส่งได้เลย แอดมินจะได้เห็นเลขออเดอร์และยืนยันรายการ พร้อมแจ้งยอด/วิธีรับ-จัดส่งให้ค่ะ 🌸</p>
     <div class="modal-actions success-actions">
