@@ -1930,3 +1930,59 @@ body{overflow-x:clip; max-width:100%; overscroll-behavior-x:none;}
 html.no-anim *, html.no-anim *::before, html.no-anim *::after{
   animation:none !important; transition-duration:.01ms !important; transition-delay:0s !important;
 }
+
+/* =========================================================
+   อนิเมชั่นมือถือ — เฟส 2: ตอนโหลดและเลื่อนดูสินค้า
+   - โครงการ์ด (skeleton) ระหว่างรอสินค้า / รูปจางเข้า / การ์ดเลื่อนขึ้นตอนเลื่อนเจอ / แบนเนอร์-รีวิวจางเข้า
+   - เวอร์ชันคอม (>=860px) ไม่เปลี่ยน: โครงการ์ดซ่อน และ JS ไม่ใส่ class ใดๆ
+   ========================================================= */
+.catalog-skeleton{display:none;}
+@keyframes sfbShimmer{to{transform:translateX(100%);}}
+@keyframes sfbRise{
+  from{opacity:0; transform:translateY(16px);}
+  to{opacity:1; transform:none;}
+}
+@keyframes sfbFadeUp{
+  from{opacity:0; transform:translateY(10px);}
+  to{opacity:1; transform:none;}
+}
+
+@media (max-width:859px){
+  /* โครงการ์ด: แทนข้อความ "กำลังโหลดสินค้า..." ระหว่างรอ (มีแสงวิ่งผ่าน) */
+  .catalog-loading-msg{display:none;}
+  .catalog-skeleton{display:grid;}
+  .skel-card{
+    position:relative; overflow:hidden;
+    background:var(--paper); border-radius:16px; box-shadow:var(--shadow);
+    padding-bottom:16px;
+  }
+  .skel-thumb{aspect-ratio:1/1; background:#fbe4ee;}
+  .skel-line{height:12px; border-radius:6px; background:#f8dae7; margin:12px 12px 0;}
+  .skel-line.w80{width:80%;}
+  .skel-line.w50{width:50%;}
+  .skel-card::after{
+    content:''; position:absolute; inset:0; pointer-events:none;
+    background:linear-gradient(100deg, transparent 30%, rgba(255,255,255,.7) 50%, transparent 70%);
+    transform:translateX(-100%);
+    animation:sfbShimmer 1.3s ease-in-out infinite;
+  }
+  html.anim-lite .skel-card::after{animation:none; display:none;}
+
+  /* รูปสินค้า: จางเข้าเมื่อโหลดเสร็จ (ใส่ class img-pending เฉพาะรูปที่ยังไม่โหลด ถ้า JS ไม่ทำงานรูปก็แสดงตามปกติ) */
+  .thumb img{transition:opacity .35s ease;}
+  .thumb img.img-pending{opacity:0; transition:none;}  /* ซ่อนทันที (ไม่เล่นจางออก) แล้วค่อยจางเข้าตอนถอด class */
+
+  /* การ์ด: เลื่อนขึ้นเมื่อเลื่อนมาเจอ (เล่นครั้งเดียวต่อการ์ด) */
+  .card.reveal-pending{opacity:0;}
+  .card.reveal-in{animation:sfbRise .42s var(--sfb-out) backwards; animation-delay:var(--sfb-d, 0ms);}
+
+  /* แบนเนอร์ด้านบน และแถบรีวิว (โผล่ตอนโหลดรีวิวเสร็จ) */
+  .hero{animation:sfbFadeUp .5s var(--sfb-out) backwards;}
+  .reviews-section:not([hidden]){animation:sfbFadeUp .5s var(--sfb-out) backwards;}
+}
+
+@media (max-width:859px) and (prefers-reduced-motion:reduce){
+  .skel-card::after{animation:none !important; display:none;}
+  .hero, .reviews-section, .card.reveal-in{animation:none !important;}
+  .thumb img{transition:none !important;}
+}

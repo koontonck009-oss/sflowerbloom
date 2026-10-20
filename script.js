@@ -1652,6 +1652,7 @@ function renderCatalog(){
     main.innerHTML = resultsBarHtml + html;
   }
   setupScrollSpy();
+  sfbCatalogEnter(main);
 }
 
 /* =========================================================
@@ -2070,6 +2071,72 @@ function sfbCartBump(){
     sfbAnimPlay(document.getElementById('bnavCartBadge'), 'badge-bump');
     sfbAnimPlay(document.querySelector('#bnavCart .bnav-ic'), 'bnav-bounce');
   }, 280);
+}
+
+/* ---------- อนิเมชั่นมือถือ (เฟส 2): รูปจางเข้า + การ์ดเลื่อนขึ้น ----------
+   เล่นเฉพาะ "ตอนเปิดหน้า" และ "ตอนเปลี่ยนหมวด" — ไม่เล่นซ้ำเวลากรองราคา/พิมพ์ค้นหา/กดหัวใจ (ไม่งั้นการ์ดกระพริบรำคาญ)
+   ถ้ามีอะไรผิดพลาด การ์ด/รูปจะแสดงตามปกติ เพราะ "ซ่อน" จะเกิดขึ้นเมื่อ JS ใส่ class เท่านั้น */
+var __sfbLastCatSig;      // var ด้วยเหตุผลเดียวกับ __sfbLastCartCount (กัน TDZ)
+var __sfbLastRevealAt = 0;
+var __sfbRevealIO = null;
+function sfbCatalogEnter(main){
+  if(__sfbRevealIO){ __sfbRevealIO.disconnect(); __sfbRevealIO = null; }
+  const sig = Array.from(activeCats).sort().join('|');
+  const catChanged = sig !== __sfbLastCatSig;
+  __sfbLastCatSig = sig;
+  // renderCatalog อาจถูกเรียกซ้ำสองรอบติดกันตอนเปิดหน้า — รอบที่สองให้เล่นต่อ ไม่ใช่โชว์การ์ดทันทีจนอนิเมชั่นหาย
+  const justRevealed = Date.now() - __sfbLastRevealAt < 700;
+  if(!catChanged && !justRevealed) return;
+  if(!sfbAnimOk()) return;
+  if(catChanged) __sfbLastRevealAt = Date.now();
+
+  // 1) รูปที่ยังโหลดไม่เสร็จ: ซ่อนไว้ก่อนแล้วจางเข้าตอน load (รูปที่มีในแคชแล้วไม่แตะ)
+  const pending = [];
+  main.querySelectorAll('.card .thumb img').forEach(function(img){
+    if(img.complete && img.naturalWidth > 0) return;
+    img.classList.add('img-pending');
+    const done = function(){ img.classList.remove('img-pending'); };
+    img.addEventListener('load', done, { once:true });
+    img.addEventListener('error', done, { once:true });
+    pending.push(img);
+  });
+  // กันเหตุไม่คาดคิด: 8 วิแล้วรูปที่โหลดเสร็จแล้วแต่ยังค้างซ่อนอยู่ให้โชว์ (รูปที่ยังไม่ถึงตาโหลดเพราะ lazy ยังรอตามปกติ)
+  if(pending.length) setTimeout(function(){
+    pending.forEach(function(i){ if(i.complete) i.classList.remove('img-pending'); });
+  }, 8000);
+
+  // 2) การ์ด: ที่อยู่ในจอตอนนี้เลื่อนขึ้นไล่ทีละใบ (สูงสุด 8 ใบแรก) ที่อยู่ล่างลงไปรอเลื่อนมาเจอค่อยเลื่อนขึ้น
+  if(!sfbRevealOk()) return;
+  const vh = window.innerHeight;
+  let n = 0;
+  const below = [];
+  main.querySelectorAll('.card').forEach(function(card){
+    if(card.getBoundingClientRect().top < vh){
+      card.style.setProperty('--sfb-d', (Math.min(n++, 8) * 45) + 'ms');
+      sfbRevealRun(card);
+    } else {
+      card.classList.add('reveal-pending');
+      below.push(card);
+    }
+  });
+  if(!below.length) return;
+  __sfbRevealIO = new IntersectionObserver(function(entries){
+    entries.forEach(function(en){
+      if(!en.isIntersecting) return;
+      __sfbRevealIO.unobserve(en.target);
+      en.target.classList.remove('reveal-pending');
+      sfbRevealRun(en.target);
+    });
+  }, { rootMargin:'0px 0px -6% 0px' });
+  below.forEach(function(c){ __sfbRevealIO.observe(c); });
+}
+function sfbRevealRun(card){
+  card.classList.add('reveal-in');
+  setTimeout(function(){ card.classList.remove('reveal-in'); card.style.removeProperty('--sfb-d'); }, 1000);
+}
+// เครื่องสเปกต่ำ (anim-lite) ข้ามการเลื่อนขึ้นของการ์ด เหลือแค่โครงการ์ดกับรูปจางเข้า
+function sfbRevealOk(){
+  return 'IntersectionObserver' in window && !document.documentElement.classList.contains('anim-lite');
 }
 
 let toastTimer;

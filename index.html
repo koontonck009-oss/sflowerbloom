@@ -132,7 +132,9 @@
 <div class="catalog-layout">
   <aside class="filter-sidebar" id="filterSidebar"></aside>
   <main id="catalog">
-    <div style="text-align:center; padding:60px 20px; color:var(--rose-dark);">กำลังโหลดสินค้า...</div>
+    <div class="catalog-loading-msg" style="text-align:center; padding:60px 20px; color:var(--rose-dark);">กำลังโหลดสินค้า...</div>
+    <!-- โครงการ์ดระหว่างรอโหลด: แสดงเฉพาะมือถือ (CSS) — พอโหลดเสร็จ renderCatalog() จะแทนที่ทั้งหมดเอง -->
+    <div class="grid catalog-skeleton" aria-hidden="true"><div class="skel-card"><div class="skel-thumb"></div><div class="skel-line w80"></div><div class="skel-line w50"></div></div><div class="skel-card"><div class="skel-thumb"></div><div class="skel-line w80"></div><div class="skel-line w50"></div></div><div class="skel-card"><div class="skel-thumb"></div><div class="skel-line w80"></div><div class="skel-line w50"></div></div><div class="skel-card"><div class="skel-thumb"></div><div class="skel-line w80"></div><div class="skel-line w50"></div></div><div class="skel-card"><div class="skel-thumb"></div><div class="skel-line w80"></div><div class="skel-line w50"></div></div><div class="skel-card"><div class="skel-thumb"></div><div class="skel-line w80"></div><div class="skel-line w50"></div></div></div>
   </main>
 </div>
 
