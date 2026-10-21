@@ -19,6 +19,9 @@ let REVIEW_TAGS = {};         // ป้ายสินค้าของรู�
 let cloudStamp = null;        // ตราเวลา+สถานะสวิตช์+เวลาแก้ตัวเลือกร้านล่าสุดจาก Firestore
 let cloudOptions = null;      // ตัวเลือกร้าน (หมวดหมู่/ชนิดดอกไม้/ขนาด) ที่แก้จากหลังบ้าน null = ใช้ค่าเริ่มต้นในไฟล์นี้
 let CATALOG_DOC_STAMP = null; // ตราที่ใช้ตอนโหลดหน้านี้ (null = ไม่ได้ใช้ข้อมูลจาก Firestore)
+let SITE_CFG = null;           // ค่า "แต่งหน้าร้าน" จากหลังบ้าน (ช่อง siteJson) — null = ใช้ค่าตั้งต้นในโค้ด/HTML
+let SITE_SHOP_NAME = 'S.Flower Bloom';
+let _siteReadyRes; const SITE_READY = new Promise(r => { _siteReadyRes = r; }); // แบนเนอร์/ป๊อปอัปรอจนรู้ค่าตั้งก่อนค่อยเริ่ม
 const PRICE_ASK_SHORT = 'สอบถามราคาทางเพจ';
 function setPricesHidden(v){
   PRICES_HIDDEN = !!v;
@@ -1777,7 +1780,7 @@ function drawCatalogPage(items, pageNo, pageCount, imgs, logo, summary){
   }
   ctx.fillStyle = '#fff';
   ctx.font = '700 42px Kanit, sans-serif';
-  ctx.fillText('S.Flower Bloom', textX, 52);
+  ctx.fillText(SITE_SHOP_NAME, textX, 52);
   ctx.font = '500 23px Kanit, sans-serif';
   ctx.fillText(catalogFitOneLine(ctx, summary, W - textX - 44), textX, 88);
 
@@ -3196,12 +3199,89 @@ async function fetchProductsFromFirestore(){
       });
     }
   }catch(_){ REVIEW_TAGS = {}; REVIEW_HIDDEN = new Set(); }
-  cloudStamp = String(data.updatedAt || '') + '|' + cloudHidePrices + '|' + String(data.optionsUpdatedAt || '') + '|' + String(data.reviewsUpdatedAt || '');
+  SITE_CFG = null;
+  try{ if(typeof data.siteJson === 'string'){ const s = JSON.parse(data.siteJson); if(s && typeof s === 'object') SITE_CFG = s; } }catch(_){ SITE_CFG = null; }
+  cloudStamp = String(data.updatedAt || '') + '|' + cloudHidePrices + '|' + String(data.optionsUpdatedAt || '') + '|' + String(data.reviewsUpdatedAt || '') + '|' + String(data.siteUpdatedAt || '');
   const list = typeof data.json === 'string' ? JSON.parse(data.json) : data.list;
   return (Array.isArray(list) && list.length) ? list : null;
 }
 
+/* ---------- แต่งหน้าร้านจากหลังบ้าน (ช่อง siteJson ในเอกสารเดียวกับสินค้า) ----------
+   ไม่มีค่า / ค่าเสีย → ไม่แตะอะไร หน้าร้านใช้ข้อความและรูปที่เขียนไว้ใน HTML/โค้ดตามเดิม
+   รูปรับเฉพาะ path ที่ขึ้นต้นด้วย images/ เท่านั้น */
+function siteSafeSrc(s){
+  s = String(s || '').trim();
+  return (/^images\/[^\s"'<>\\]+$/.test(s) && !s.includes('..')) ? s : '';
+}
+function siteLines(s){ return escapeHtml(String(s)).replace(/\r?\n/g, '<br>'); }
+function applySiteSettings(cfg){
+  if(!cfg || typeof cfg !== 'object') return;
+  const $id = id => document.getElementById(id);
+  const setText = (id, v) => { const el = $id(id); if(el && typeof v === 'string' && v.trim()) el.textContent = v.trim(); };
+  try{
+    // สีธีม
+    const th = cfg.theme && cfg.theme.vars;
+    if(th && typeof th === 'object'){
+      const hex = /^#[0-9a-f]{6}$/i, root = document.documentElement;
+      const map = { sage:'--sage', sageDark:'--sage-dark', rose:'--rose', roseDark:'--rose-dark', peach:'--peach', cream:'--cream', sageLight:'--sage-light', tint1:'--tint-1', tint2:'--tint-2', tint3:'--tint-3', tint4:'--tint-4' };
+      Object.keys(map).forEach(k => { if(hex.test(String(th[k] || ''))) root.style.setProperty(map[k], th[k]); });
+      if(/^\d{1,3},\d{1,3},\d{1,3}$/.test(String(th.rgb || ''))) root.style.setProperty('--sage-rgb', th.rgb);
+      const meta = document.querySelector('meta[name="theme-color"]');
+      if(meta && hex.test(String(th.sage || ''))) meta.setAttribute('content', th.sage);
+    }
+    // ชื่อร้าน / ประโยคใต้ชื่อ / โลโก้ / ท้ายเว็บ
+    const shop = cfg.shop || {};
+    const name = typeof shop.name === 'string' ? shop.name.trim() : '';
+    if(name){ SITE_SHOP_NAME = name; setText('brandName', name); setText('brandH1', name); }
+    setText('brandTag', shop.tagline);
+    const logo = siteSafeSrc(cfg.logo), logoEl = $id('brandLogo');
+    if(logo && logoEl) logoEl.src = logo;
+    const foot = $id('siteFooter');
+    if(foot){
+      if(typeof cfg.footer === 'string' && cfg.footer.trim()) foot.textContent = cfg.footer.trim();
+      else if(name) foot.textContent = '© ' + name;
+    }
+    // ข้อความข้างแบนเนอร์ (จอคอม)
+    const hero = cfg.hero || {};
+    if(typeof hero.title === 'string' && hero.title.trim() && $id('pbTitle')) $id('pbTitle').innerHTML = siteLines(hero.title.trim());
+    setText('pbTextOn', hero.text); setText('pbTextOff', hero.textOff); setText('pbCta', hero.cta);
+    if(Array.isArray(hero.chips) && $id('pbChips')){
+      $id('pbChips').innerHTML = hero.chips.map(x => String(x || '').trim()).filter(Boolean).map(x => '<span>' + escapeHtml(x) + '</span>').join('');
+    }
+    // แถบรีวิว
+    const rv = cfg.reviews || {};
+    setText('reviewsTitle', rv.title);
+    if(rv.on === false && $id('reviewsSection')) $id('reviewsSection').style.display = 'none';
+    // FAQ
+    const fq = cfg.faq || {}, fsec = $id('faqSection');
+    if(fsec){
+      setText('faqTitle', fq.title);
+      const items = Array.isArray(fq.items) ? fq.items.filter(i => i && String(i.q || '').trim() && String(i.a || '').trim()) : null;
+      if(fq.on === false || (items && !items.length)) fsec.style.display = 'none';
+      else if(items){
+        fsec.querySelectorAll('.faq-item').forEach(el => el.remove());
+        fsec.insertAdjacentHTML('beforeend', items.map(i =>
+          '<details class="faq-item"><summary>' + escapeHtml(String(i.q).trim()) + '</summary><p class="faq-answer">' + siteLines(String(i.a).trim()) + '</p></details>').join(''));
+      }
+    }
+    // ป๊อปอัปตอนเปิดเว็บ
+    const pp = cfg.popup;
+    if(pp && typeof pp === 'object'){
+      if(pp.on === false) PROMO_SLIDES.length = 0;
+      else if(Array.isArray(pp.slides)){
+        const slides = pp.slides.filter(s => s && s.on !== false).map(s => ({ image: siteSafeSrc(s.src), alt: 'โปรโมชั่น' })).filter(s => s.image);
+        PROMO_SLIDES.splice(0, PROMO_SLIDES.length, ...slides);
+      }
+    }
+  }catch(err){ console.warn('ใช้ค่าแต่งหน้าร้านไม่สำเร็จ ใช้ค่าเดิมต่อ:', err); }
+}
+
+// ห่อ loadProducts: ไม่ว่าจะโหลดจาก Firestore / products.json / ล้มเหลว ต้องปล่อยให้แบนเนอร์กับป๊อปอัปเริ่มเสมอ
 async function loadProducts(){
+  try{ await loadProductsInner(); }
+  finally{ _siteReadyRes(); }
+}
+async function loadProductsInner(){
   const catalogEl = document.getElementById('catalog');
   // ลอง Firestore ก่อน แต่ไม่ยอมรอเกิน 6 วินาที ไม่งั้นเน็ตช้าจะค้างหน้าร้านทั้งหน้า
   try{
@@ -3213,6 +3293,7 @@ async function loadProducts(){
       PRODUCTS = fromCloud;
       applyShopOptions(cloudOptions);
       setPricesHidden(cloudHidePrices);
+      applySiteSettings(SITE_CFG);
       CATALOG_DOC_STAMP = cloudStamp;
       finishLoadingProducts();
       return;
@@ -3629,7 +3710,7 @@ function closePromoPopup(e){
       else localStorage.setItem('sfb_promo_seen', today);
     }
   }catch(e){ show = true; }
-  if(show) openPromoPopup();
+  SITE_READY.then(() => { if(show) openPromoPopup(); });
 })();
 
 /* ---------- แบนเนอร์โปรโมชั่นเลื่อนได้ (ใต้แถบค้นหา) ----------
@@ -3660,18 +3741,19 @@ function closePromoPopup(e){
     banner.classList.add('ready');
   }, { root: track, threshold: 0.6 }) : null;
 
-  function addSlide(i){
+  function addSlide(i, src, alt){
     const a = document.createElement('div');
     a.className = 'pb-slide in';
     a.setAttribute('role', 'button'); a.tabIndex = 0;
     a.draggable = false;
     a.addEventListener('click', () => openReviewLightbox(loaded.slice(), i));
     a.addEventListener('keydown', e => { if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); openReviewLightbox(loaded.slice(), i); } });
-    loaded[i] = srcFor(i);
+    const s = src || srcFor(i);
+    loaded[i] = s;
     a.style.setProperty('--i', i);
-    a.setAttribute('aria-label', 'โปรโมชั่น ' + (i + 1));
+    a.setAttribute('aria-label', alt || ('โปรโมชั่น ' + (i + 1)));
     const img = document.createElement('img');
-    img.src = srcFor(i); img.alt = 'โปรโมชั่น ' + (i + 1); img.draggable = false; img.decoding = 'async';
+    img.src = s; img.alt = alt || ('โปรโมชั่น ' + (i + 1)); img.draggable = false; img.decoding = 'async';
     a.appendChild(img);
     track.appendChild(a);
     if(io) io.observe(a);
@@ -3768,15 +3850,24 @@ function closePromoPopup(e){
   }
   window.addEventListener('resize', () => { requestAnimationFrame(measure); });
 
-  // โหลดรูปเรียงตามเลข: promotions.png, promotions1.png, promotions2.png ... หยุดเมื่อเจอเลขที่ไม่มีไฟล์
-  (async function(){
+  // เริ่มหลังรู้ค่าแต่งหน้าร้านแล้ว: มีรายการแบนเนอร์จากหลังบ้าน → ใช้รายการนั้น (ข้ามรูปที่ไฟล์ยังไม่ขึ้นเว็บ)
+  // ไม่มี → โหลดรูปเรียงตามเลข promotions.png, promotions1.png ... เหมือนเดิม
+  SITE_READY.then(async function(){
+    const cfgList = (SITE_CFG && Array.isArray(SITE_CFG.banners)) ? SITE_CFG.banners.filter(b => b && b.on !== false && siteSafeSrc(b.src)) : null;
+    if(cfgList){
+      const ok = await Promise.all(cfgList.map(b => probe(siteSafeSrc(b.src))));
+      let n = 0;
+      cfgList.forEach((b, k) => { if(ok[k]) addSlide(n++, siteSafeSrc(b.src)); });
+      if(n > 1) restartTimer();
+      return;
+    }
     for(let i = 0; i < MAX_IMAGES; i++){
       const ok = await probe(srcFor(i));
       if(!ok) break;
       addSlide(i);
       if(i === 1) restartTimer();
     }
-  })();
+  });
 })();
 
 /* ---------- แถบเมนูล่าง (มือถือ) ---------- */

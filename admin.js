@@ -297,9 +297,11 @@ async function loadCatalog(){
       applyShopOptions(opts);
       reviewTags = parseReviewTags(data.reviewsJson);
       reviewHidden = parseReviewHidden(data.reviewsJson);
+      siteCfgSaved = parseSiteCfg(data.siteJson);
     } else {
       reviewTags = {};
       reviewHidden = new Set();
+      siteCfgSaved = null;
       catalog = [];
       pricesHidden = false;
       applyShopOptions(null);
@@ -3707,6 +3709,7 @@ document.addEventListener('keydown', e => {
   if(e.key !== 'Escape') return;
   if(!$('confirmScrim').hidden) closeConfirm(false);
   else if(!$('revScrim').hidden) closeReviewsModal();
+  else if(!$('siteScrim').hidden) closeSiteModal();
   else if(!$('optScrim').hidden) closeOptionsModal();
   else if(!$('imgScrim').hidden) closeImgModal();
   else if(!$('varScrim').hidden) closeVarModal();
@@ -3722,5 +3725,420 @@ document.addEventListener('keydown', e => {
   $('sidebar').addEventListener('click', e => { if(e.target.closest('.sb-item')) close(); });
   $('navProducts').addEventListener('click', e => { e.preventDefault(); window.scrollTo({ top:0, behavior:'smooth' }); });
 })();
+
+/* =========================================================
+   แต่งหน้าร้าน — แบนเนอร์ / ป๊อปอัป / ข้อความ / ชื่อ โลโก้ สี / FAQ / รีวิว
+   เก็บเป็นข้อความ JSON ก้อนเล็ก ในช่อง siteJson ของเอกสารเดียวกับสินค้า (catalog/products)
+   หน้าร้านอ่านพร้อมสินค้า (ไม่เพิ่มจำนวนครั้งที่อ่าน) · ไม่มีค่า = หน้าร้านใช้ค่าเดิมในโค้ด
+   รูปที่อัปโหลดเขียนลงโฟลเดอร์เว็บในเครื่อง (Chrome/Edge บนคอม) แล้วต้องลากโฟลเดอร์ขึ้น GitHub เหมือนรูปรีวิว
+   ========================================================= */
+const SITE_DEFAULT_COLOR = '#F62188';
+const SITE_DEFAULT_FAQ = [{"q": "S.Flower Bloom มีหน้าร้านไหม", "a": "ปัจจุบันเรายังไม่มีหน้าร้าน แต่สามารถนัดรับได้ในเมืองนครสวรรค์ และอำเภอพยุหะคีรี"}, {"q": "บริการจัดส่งจาก S.Flower Bloom", "a": "ทางร้านของเรามีบริการนัดรับในตัวเมืองนครสวรรค์และอำเภอพยุหะคีรี เพื่อให้มั่นใจว่าสินค้าจะถูกส่งถึงมือผู้รับอย่างปลอดภัยและไม่เกิดความเสียหาย สำหรับการจัดส่งพัสดุ เรามีบริการส่ง EMS ผ่านไปรษณีย์ไทย โดยทำการแพ็กสินค้าอย่างดีรัดกุม เพื่อลดความเสี่ยงของการชำรุดหรือเสียหายในระหว่างการขนส่งจนถึงมือผู้รับ"}, {"q": "ดอกไม้สามารถเก็บได้นานเท่าไหร่?", "a": "ดอกไม้ลวดกำมะหยี่ของเราสามารถคงความสวยงามได้นาน 3–5 ปี หรือยาวนานกว่านั้น เนื่องจากเป็นวัสดุทนทาน ไม่เหี่ยว ไม่ต้องรดน้ำ เพื่อรักษาความงดงามของดอกไม้ แนะนำให้หลีกเลี่ยงบริเวณที่มีฝุ่นเยอะ เพราะฝุ่นอาจเกาะบนผิวกำมะหยี่ทำให้ดูหมองลงได้ค่ะ"}, {"q": "ใช้เวลาทำกี่วัน?", "a": "โดยทั่วไปประมาณ 3–5 วัน (สามารถแจ้งเวลาประมาณการให้ลูกค้าทราบเป็นกรณีไป)"}];
+let siteCfgSaved = null;   // ค่าที่บันทึกไว้ใน Firestore (null = ยังไม่เคยตั้ง)
+let site = null;           // { tab, cfg, dirty, uploaded }
+const siteBlobUrls = {};   // path → blob URL ไว้ดูตัวอย่างรูปที่เพิ่งอัปโหลด (ไฟล์ยังไม่ขึ้นเว็บ)
+
+function parseSiteCfg(raw){
+  try{ const o = typeof raw === 'string' ? JSON.parse(raw) : null; return (o && typeof o === 'object') ? o : null; }catch(_){ return null; }
+}
+function siteDefaults(){
+  return {
+    shop: { name: 'S.Flower Bloom', tagline: 'เลือกสินค้า แล้วสั่งซื้อผ่านแชทได้เลย' },
+    logo: '',
+    footer: '',
+    theme: { main: SITE_DEFAULT_COLOR },
+    banners: null, // null = ยังไม่เคยตั้ง → หน้าร้านใช้ promotions.png, promotions1.png ... เดิม
+    popup: { on: true, slides: [{ src: 'images/orderprocess.png', on: true }] },
+    hero: {
+      title: 'ช่อดอกไม้กำมะหยี่\nสำหรับโอกาสพิเศษ',
+      text: 'เลือกสินค้าที่ชอบ กดใส่ตะกร้า แล้วกดปุ่มเดียวเพื่อส่งรายการสั่งซื้อมาที่แชทเพจของเราได้ทันที ไม่ต้องพิมพ์เอง',
+      textOff: 'เลือกดูสินค้าที่ชอบ แล้วแคปหน้าจอสินค้านั้นส่งให้เพจเพื่อสอบถามราคาและสั่งทำได้เลย',
+      chips: ['🚚 ส่งพัสดุทั่วประเทศ', '📅 สั่งล่วงหน้า 3–5 วัน', '💬 ทักแชตเพื่อจองล่วงหน้า', ''],
+      cta: 'เลือกดูสินค้า ↓'
+    },
+    reviews: { on: true, title: 'รีวิวจากลูกค้า' },
+    faq: { on: true, title: 'คำถามที่พบบ่อย (FAQ)', items: clone(SITE_DEFAULT_FAQ) }
+  };
+}
+function siteMerge(saved){
+  const d = siteDefaults();
+  if(!saved) return d;
+  const pick = (a, b) => Object.assign({}, a, (b && typeof b === 'object' && !Array.isArray(b)) ? b : {});
+  d.shop = pick(d.shop, saved.shop); d.hero = pick(d.hero, saved.hero);
+  d.reviews = pick(d.reviews, saved.reviews); d.faq = pick(d.faq, saved.faq); d.popup = pick(d.popup, saved.popup);
+  d.logo = typeof saved.logo === 'string' ? saved.logo : '';
+  d.footer = typeof saved.footer === 'string' ? saved.footer : '';
+  if(saved.theme && /^#[0-9a-f]{6}$/i.test(String(saved.theme.main || ''))) d.theme.main = saved.theme.main;
+  const cleanList = a => a.map(b => ({ src: String((b && b.src) || '').trim(), on: !(b && b.on === false) })).filter(b => b.src);
+  d.banners = Array.isArray(saved.banners) ? cleanList(saved.banners) : null;
+  d.popup.slides = Array.isArray(saved.popup && saved.popup.slides) ? cleanList(saved.popup.slides) : d.popup.slides;
+  const ch = Array.isArray(d.hero.chips) ? d.hero.chips.map(x => String(x || '')) : [];
+  while(ch.length < 4) ch.push('');
+  d.hero.chips = ch.slice(0, 4);
+  d.faq.items = Array.isArray(d.faq.items) ? d.faq.items.map(i => ({ q: String((i && i.q) || ''), a: String((i && i.a) || '') })) : clone(SITE_DEFAULT_FAQ);
+  return d;
+}
+
+/* ───── สีธีม: คำนวณชุดสีทั้งหมดจากสีหลักสีเดียว ───── */
+function siteHexToHsl(hex){
+  const n = parseInt(hex.slice(1), 16), r = (n >> 16 & 255) / 255, g = (n >> 8 & 255) / 255, b = (n & 255) / 255;
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, d = mx - mn;
+  let h = 0, s = 0;
+  if(d){
+    s = d / (1 - Math.abs(2 * l - 1));
+    h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
+    h = (h * 60 + 360) % 360;
+  }
+  return [h, s * 100, l * 100];
+}
+function siteHslToHex(h, s, l){
+  h = ((h % 360) + 360) % 360; s = Math.max(0, Math.min(100, s)) / 100; l = Math.max(0, Math.min(100, l)) / 100;
+  const k = n => (n + h / 30) % 12, a = s * Math.min(l, 1 - l);
+  const f = n => Math.round(255 * (l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)))));
+  return '#' + [f(0), f(8), f(4)].map(v => v.toString(16).padStart(2, '0')).join('').toUpperCase();
+}
+function siteDerivePalette(main){
+  const [h, s, l] = siteHexToHsl(main);
+  const n = parseInt(main.slice(1), 16);
+  return {
+    sage: main.toUpperCase(),
+    sageDark: siteHslToHex(h, s, Math.max(l - 14, 8)),
+    rose: siteHslToHex(h, Math.max(60, s), 78),
+    roseDark: siteHslToHex(h, s * 0.8, l),
+    peach: siteHslToHex(h - 12, 100, 88),
+    cream: siteHslToHex(h, 100, 98),
+    sageLight: siteHslToHex(h, 100, Math.min(l + 14, 78)),
+    tint1: siteHslToHex(h, 100, 97.5),
+    tint2: siteHslToHex(h, 100, 94.5),
+    tint3: siteHslToHex(h, 67, 93),
+    tint4: siteHslToHex(h, 62, 90),
+    rgb: [n >> 16 & 255, n >> 8 & 255, n & 255].join(',')
+  };
+}
+const SITE_SWATCHES = [['#F62188', 'ชมพูเดิม'], ['#E53935', 'แดง'], ['#FB6F2E', 'ส้ม'], ['#E6A700', 'เหลืองทอง'], ['#2E9E6B', 'เขียว'], ['#1E88E5', 'ฟ้า'], ['#7E57C2', 'ม่วง'], ['#B05BD6', 'ม่วงอ่อน']];
+
+/* ───── อัปโหลดรูปลงโฟลเดอร์เว็บ (ใช้โฟลเดอร์เดียวกับรูปรีวิว) ───── */
+async function siteDir(sub){
+  if(!window.showDirectoryPicker){ toast('อัปโหลดรูปได้เฉพาะ Chrome หรือ Edge บนคอมพิวเตอร์ (หรือใช้ช่อง "เพิ่มจากชื่อไฟล์" แทน)', true); return null; }
+  let h = rvDirHandle || await rvKvGet('webDir');
+  if(h){
+    try{
+      let p = await h.queryPermission({ mode: 'readwrite' });
+      if(p !== 'granted') p = await h.requestPermission({ mode: 'readwrite' });
+      if(p !== 'granted') h = null;
+    }catch(e){ h = null; }
+  }
+  if(!h){
+    try{ h = await window.showDirectoryPicker({ mode: 'readwrite', id: 'sfb-web' }); }catch(e){ return null; }
+    try{ await h.getFileHandle('index.html'); }catch(e){ toast('โฟลเดอร์นี้ไม่ใช่โฟลเดอร์เว็บ (ไม่พบ index.html) — เลือกโฟลเดอร์ที่มี index.html อยู่ข้างใน', true); return null; }
+    await rvKvSet('webDir', h);
+  }
+  rvDirHandle = h;
+  const imgs = await h.getDirectoryHandle('images', { create: true });
+  return imgs.getDirectoryHandle(sub, { create: true });
+}
+async function siteDrawBlob(file, maxSide, mode){
+  const bmp = await createImageBitmap(file);
+  const w = bmp.width, h = bmp.height, big = Math.max(w, h);
+  let cw, ch, padded = false;
+  const cv = document.createElement('canvas'), cx = cv.getContext('2d');
+  if(mode === 'square'){
+    const ratio = w / h, side = Math.min(maxSide, big);
+    cw = ch = side; cv.width = cv.height = side;
+    cx.fillStyle = '#fff'; cx.fillRect(0, 0, side, side);
+    if(ratio > 0.97 && ratio < 1.03) cx.drawImage(bmp, 0, 0, side, side);
+    else { const sc = side / big; cx.drawImage(bmp, (side - w * sc) / 2, (side - h * sc) / 2, w * sc, h * sc); padded = true; }
+  } else {
+    const sc = Math.min(1, maxSide / big); cw = Math.round(w * sc); ch = Math.round(h * sc);
+    cv.width = cw; cv.height = ch;
+    if(mode === 'jpg'){ cx.fillStyle = '#fff'; cx.fillRect(0, 0, cw, ch); }
+    cx.drawImage(bmp, 0, 0, cw, ch);
+  }
+  if(bmp.close) bmp.close();
+  const blob = await new Promise(res => cv.toBlob(res, mode === 'png' ? 'image/png' : 'image/jpeg', 0.86));
+  if(!blob) throw new Error('resize');
+  return { blob, padded };
+}
+async function siteWrite(dir, name, blob){
+  const w = await (await dir.getFileHandle(name, { create: true })).createWritable();
+  await w.write(blob); await w.close();
+}
+function siteProbe(src){ return new Promise(res => { const im = new Image(); im.onload = () => res(true); im.onerror = () => res(false); im.src = src; }); }
+function siteThumbSrc(src){ return siteBlobUrls[src] || src; }
+
+/* ───── เปิด / ปิด / แท็บ ───── */
+const SITE_TABS = [['banners', 'แบนเนอร์'], ['popup', 'ป๊อปอัป'], ['hero', 'ข้อความ'], ['brand', 'ชื่อ · โลโก้ · สี'], ['faq', 'FAQ'], ['reviews', 'รีวิว']];
+function openSiteModal(){
+  site = { tab: 'banners', cfg: siteMerge(siteCfgSaved), dirty: false, uploaded: false, legacyChecked: false,
+    bannersEdited: Array.isArray(siteCfgSaved && siteCfgSaved.banners) };
+  $('siteScrim').hidden = false;
+  siteHint('');
+  renderSiteModal();
+}
+async function closeSiteModal(force){
+  if(!site) return;
+  if(!force && site.dirty && !(await askConfirm('ทิ้งการเปลี่ยนแปลง?', 'มีการแก้ไขที่ยังไม่ได้บันทึก ถ้าปิดตอนนี้การแก้ไขจะหายไป', 'ปิดโดยไม่บันทึก'))) return;
+  $('siteScrim').hidden = true;
+  site = null;
+}
+function siteHint(msg, isErr){
+  const el = $('siteHint');
+  el.textContent = msg || '';
+  el.classList.toggle('is-info', !isErr);
+}
+function siteTouch(key){ if(key === 'banners') site.bannersEdited = true; site.dirty = true; if(!$('siteHint').textContent) siteHint('มีการแก้ไขที่ยังไม่ได้บันทึก'); }
+function siteListRef(key){ return key === 'banners' ? site.cfg.banners : site.cfg.popup.slides; }
+
+function renderSiteModal(){
+  if(!site) return;
+  $('siteTabs').innerHTML = SITE_TABS.map(([k, n]) => `<button type="button" class="om-tab${site.tab === k ? ' is-active' : ''}" data-tab="${k}" role="tab">${n}</button>`).join('');
+  const body = $('siteBody'), top = body.scrollTop;
+  const fn = { banners: siteTabBanners, popup: siteTabPopup, hero: siteTabHero, brand: siteTabBrand, faq: siteTabFaq, reviews: siteTabReviews }[site.tab];
+  body.innerHTML = fn();
+  body.scrollTop = top;
+  if(site.tab === 'banners' && site.cfg.banners === null && !site.legacyChecked) siteLoadLegacyBanners();
+}
+const stInput = (path, val, ph) => `<input type="text" data-path="${path}" value="${esc(val)}"${ph ? ` placeholder="${esc(ph)}"` : ''}>`;
+const stField = (label, inner, note) => `<label class="st-field"><span>${label}</span>${inner}${note ? `<small>${note}</small>` : ''}</label>`;
+const stCheck = (path, on, label) => `<label class="st-check"><input type="checkbox" data-path="${path}"${on ? ' checked' : ''}> ${label}</label>`;
+
+/* รายการรูป (ใช้ทั้งแบนเนอร์และป๊อปอัป) */
+function siteListHtml(key){
+  const list = siteListRef(key);
+  const rows = list.map((b, i) => `<div class="st-row${b.on ? '' : ' is-off'}" data-i="${i}">
+    ${thumbHtml(siteThumbSrc(b.src), 'st-thumb')}
+    <div class="st-path"><b>${key === 'banners' ? 'แบนเนอร์' : 'รูป'} ${i + 1}</b><code>${esc(b.src)}</code></div>
+    <div class="st-acts">
+      <label class="st-check"><input type="checkbox" data-on="${key}" data-i="${i}"${b.on ? ' checked' : ''}> แสดง</label>
+      <button type="button" class="st-ico" data-act="up" data-key="${key}" data-i="${i}" ${i === 0 ? 'disabled' : ''} title="เลื่อนขึ้น" aria-label="เลื่อนขึ้น">↑</button>
+      <button type="button" class="st-ico" data-act="down" data-key="${key}" data-i="${i}" ${i === list.length - 1 ? 'disabled' : ''} title="เลื่อนลง" aria-label="เลื่อนลง">↓</button>
+      <button type="button" class="st-ico is-del" data-act="del" data-key="${key}" data-i="${i}" title="เอาออกจากรายการ" aria-label="เอาออกจากรายการ">✕</button>
+    </div></div>`).join('');
+  return `<div class="st-list">${rows || '<p class="st-empty">ยังไม่มีรูปในรายการ</p>'}</div>
+    <div class="rv-drop" id="siteDrop" data-key="${key}" tabindex="0" role="button"><b>ลากรูปมาวางที่นี่</b><span>หรือคลิกเพื่อเลือกรูป (เลือกได้หลายรูป)</span></div>
+    <div class="st-addpath"><input type="text" id="siteAddPath" data-key="${key}" placeholder="หรือพิมพ์ชื่อไฟล์ที่มีอยู่แล้ว เช่น images/promotions2.png"><button type="button" class="btn btn-ghost btn-sm" data-act="addpath" data-key="${key}">เพิ่มจากชื่อไฟล์</button></div>`;
+}
+function siteTabBanners(){
+  const loading = site.cfg.banners === null;
+  return `<p class="st-note">แบนเนอร์เลื่อนได้ใต้แถบค้นหา — แนะนำรูปสี่เหลี่ยมจัตุรัส 1:1 (เช่น 1080×1080) ระบบย่อรูปและแปลงเป็น JPG ให้ ถ้ารูปไม่จัตุรัสจะเติมขอบขาวให้แทนการตัดรูป
+    ใช้ลูกศรเรียงลำดับ ติ๊ก "แสดง" ออกเพื่อซ่อนชั่วคราว · ถ้าซ่อนทุกรูป แบนเนอร์และข้อความข้างแบนเนอร์จะหายไปทั้งแผง</p>
+    ${loading ? '<p class="st-empty">กำลังดึงรายการแบนเนอร์เดิม (promotions.png ...) มาให้…</p>' : siteListHtml('banners')}`;
+}
+function siteTabPopup(){
+  return `<p class="st-note">รูปที่เด้งขึ้นตอนเปิดเว็บ (เช่น ขั้นตอนการสั่งซื้อ) · มือถือเด้งวันละครั้ง คอมเด้งทุกครั้ง</p>
+    ${stCheck('popup.on', site.cfg.popup.on, 'แสดงป๊อปอัปตอนเปิดเว็บ')}
+    ${siteListHtml('popup')}`;
+}
+function siteTabHero(){
+  const h = site.cfg.hero;
+  return `<p class="st-note">ข้อความในแผงข้างแบนเนอร์ — แสดงเฉพาะบนจอคอม (มือถือซ่อนแผงนี้)</p>
+    ${stField('หัวข้อ (ขึ้นบรรทัดใหม่ได้)', `<textarea rows="2" data-path="hero.title">${esc(h.title)}</textarea>`)}
+    ${stField('คำอธิบาย (ตอนร้านแสดงราคา)', `<textarea rows="3" data-path="hero.text">${esc(h.text)}</textarea>`)}
+    ${stField('คำอธิบาย (ตอนร้านซ่อนราคา)', `<textarea rows="3" data-path="hero.textOff">${esc(h.textOff)}</textarea>`, 'ใช้แทนข้อความด้านบนเมื่อเปิดสวิตช์ "ซ่อนราคาบนหน้าร้าน"')}
+    <div class="st-field"><span>ป้ายสั้น ๆ (ว่าง = ไม่แสดง)</span>${h.chips.map((c, i) => stInput('hero.chips.' + i, c, 'เช่น 🚚 ส่งพัสดุทั่วประเทศ')).join('')}</div>
+    ${stField('ข้อความบนปุ่ม', stInput('hero.cta', h.cta))}`;
+}
+function siteTabBrand(){
+  const c = site.cfg, pal = siteDerivePalette(c.theme.main), l = siteHexToHsl(c.theme.main)[2];
+  const logo = c.logo || 'images/logo.png?v=2';
+  const sw = SITE_SWATCHES.map(([hex, name]) => `<button type="button" class="st-sw${hex.toLowerCase() === c.theme.main.toLowerCase() ? ' is-on' : ''}" data-color="${hex}" style="background:${hex}" title="${name}" aria-label="${name}"></button>`).join('');
+  return `${stField('ชื่อร้าน', stInput('shop.name', c.shop.name), 'แสดงที่หัวเว็บ ท้ายเว็บ และบนภาพแคตตาล็อก · ชื่อที่แท็บเบราว์เซอร์และตัวอย่างลิงก์ที่แชร์ยังเป็นค่าเดิม')}
+    ${stField('ประโยคใต้ชื่อร้าน', stInput('shop.tagline', c.shop.tagline), 'แสดงใต้ชื่อร้านบนจอเล็กเท่านั้น')}
+    ${stField('ข้อความท้ายเว็บ', stInput('footer', c.footer, '© ' + c.shop.name), 'ว่าง = ใช้ "© ชื่อร้าน"')}
+    <div class="st-sec"><h4>โลโก้ที่หัวเว็บ</h4>
+      <div class="st-logo">${thumbHtml(siteThumbSrc(logo), 'st-logo-img')}
+        <div><button type="button" class="btn btn-ghost btn-sm" data-act="logo">เลือกรูปโลโก้ใหม่</button>
+        ${c.logo ? '<button type="button" class="btn btn-ghost btn-sm" data-act="logo-reset">กลับไปใช้โลโก้เดิม</button>' : ''}
+        <small class="st-small">PNG พื้นโปร่งใสสวยที่สุด · ระบบย่อให้ไม่เกิน 512px · ไอคอนแท็บเบราว์เซอร์ยังเป็นรูปเดิม</small></div></div></div>
+    <div class="st-sec"><h4>สีหลักของร้าน</h4>
+      <div class="st-swatches">${sw}<label class="st-pick" title="เลือกสีอื่น"><input type="color" id="siteColor" value="${c.theme.main.toLowerCase()}"><span>เลือกสีเอง</span></label></div>
+      <div class="st-pal" aria-hidden="true">${['sage', 'sageDark', 'rose', 'roseDark', 'peach', 'cream'].map(k => `<i style="background:${pal[k]}"></i>`).join('')}</div>
+      <small class="st-small">ระบบคำนวณสีเข้ม/อ่อนให้เองจากสีหลัก (ปุ่ม หัวข้อ ขอบ เงา)${c.theme.main.toLowerCase() === SITE_DEFAULT_COLOR.toLowerCase() ? ' · ตอนนี้ใช้สีชมพูเดิมของร้าน' : ''}</small>
+      ${l > 66 ? '<p class="st-warn">สีนี้อ่อนมาก ตัวหนังสือสีขาวบนปุ่มอาจอ่านยาก แนะนำเลือกสีเข้มกว่านี้</p>' : ''}
+    </div>`;
+}
+function siteTabFaq(){
+  const f = site.cfg.faq;
+  const rows = f.items.map((it, i) => `<div class="st-faq" data-i="${i}">
+    <div class="st-faq-head"><b>คำถาม ${i + 1}</b><span class="st-acts">
+      <button type="button" class="st-ico" data-act="faq-up" data-i="${i}" ${i === 0 ? 'disabled' : ''} aria-label="เลื่อนขึ้น">↑</button>
+      <button type="button" class="st-ico" data-act="faq-down" data-i="${i}" ${i === f.items.length - 1 ? 'disabled' : ''} aria-label="เลื่อนลง">↓</button>
+      <button type="button" class="st-ico is-del" data-act="faq-del" data-i="${i}" aria-label="ลบคำถามนี้">✕</button></span></div>
+    ${stInput('faq.items.' + i + '.q', it.q, 'คำถาม')}
+    <textarea rows="3" data-path="faq.items.${i}.a" placeholder="คำตอบ">${esc(it.a)}</textarea></div>`).join('');
+  return `${stCheck('faq.on', f.on, 'แสดงส่วนคำถามที่พบบ่อยบนหน้าร้าน')}
+    ${stField('หัวข้อส่วน FAQ', stInput('faq.title', f.title))}
+    ${rows || '<p class="st-empty">ยังไม่มีคำถาม (ถ้าไม่มีคำถามเลย ส่วน FAQ จะซ่อนบนหน้าร้าน)</p>'}
+    <button type="button" class="vm-add" data-act="faq-add"><span>＋</span> เพิ่มคำถาม</button>`;
+}
+function siteTabReviews(){
+  const r = site.cfg.reviews;
+  return `<p class="st-note">แถบรีวิวจากลูกค้าบนหน้าแรก — เพิ่มรูป ผูกกับสินค้า หรือซ่อนรูปรายใบ ทำได้ในหน้าจัดการรูปรีวิว</p>
+    ${stCheck('reviews.on', r.on, 'แสดงแถบรีวิวบนหน้าร้าน')}
+    ${stField('หัวข้อแถบรีวิว', stInput('reviews.title', r.title))}
+    <button type="button" class="btn btn-ghost" data-act="open-reviews">เปิดหน้าจัดการรูปรีวิว</button>`;
+}
+
+/* ดึงรายชื่อแบนเนอร์เดิม (promotions.png, promotions1.png ...) มาเป็นรายการตั้งต้น เพื่อไม่ให้ของเดิมหาย */
+async function siteLoadLegacyBanners(){
+  const s = site; s.legacyChecked = true;
+  const found = [];
+  for(let i = 0; i < 20; i++){
+    const src = 'images/promotions' + (i === 0 ? '' : i) + '.png';
+    if(!(await siteProbe(src))) break;
+    found.push({ src, on: true });
+  }
+  if(site !== s) return;
+  if(s.cfg.banners === null) s.cfg.banners = found;
+  if(found.length){ s.dirty = true; s.bannersEdited = true; }
+  renderSiteModal();
+}
+
+/* ───── อัปโหลด / เพิ่มรูป ───── */
+async function siteUploadFiles(list, key){
+  const files = Array.from(list || []).filter(f => /^image\//.test(f.type) || /\.(jpe?g|png|webp|gif|heic)$/i.test(f.name));
+  if(!site || !files.length){ if(list && list.length) toast('ไม่พบไฟล์รูป ลากไฟล์ .jpg .png .webp มาวาง', true); return; }
+  const drop = $('siteDrop'); if(drop) drop.classList.add('is-busy');
+  try{
+    const sub = key === 'banners' ? 'banners' : 'popup';
+    const dir = await siteDir(sub);
+    if(!dir) return;
+    const tag = Date.now().toString(36);
+    let added = 0, padded = 0; const fails = [];
+    for(const f of files){
+      try{
+        const r = await siteDrawBlob(f, key === 'banners' ? 1080 : 1600, key === 'banners' ? 'square' : 'jpg');
+        const name = `${key === 'banners' ? 'banner' : 'popup'}-${tag}${added}.jpg`;
+        await siteWrite(dir, name, r.blob);
+        const path = `images/${sub}/${name}`;
+        siteBlobUrls[path] = URL.createObjectURL(r.blob);
+        siteListRef(key).push({ src: path, on: true });
+        added++; if(r.padded) padded++;
+      }catch(e){ fails.push(f.name); }
+    }
+    if(added){ site.uploaded = true; siteTouch(key); }
+    renderSiteModal();
+    if(added) toast(`เพิ่มแล้ว ${added} รูป${padded ? ` (เติมขอบขาวให้ ${padded} รูปที่ไม่จัตุรัส)` : ''} — กดบันทึก แล้วลากโฟลเดอร์ images ขึ้น GitHub`);
+    if(fails.length) toast('อ่านรูปไม่ได้: ' + fails.join(', '), true);
+  } finally { const d = $('siteDrop'); if(d) d.classList.remove('is-busy'); }
+}
+async function siteAddByPath(key){
+  const inp = $('siteAddPath'); if(!inp || !site) return;
+  let p = inp.value.trim().replace(/^\.?\//, '');
+  if(!p) return;
+  if(!/^images\//i.test(p)) p = 'images/' + p;
+  if(p.includes('..') || /[\s"'<>\\]/.test(p)){ toast('ชื่อไฟล์ไม่ถูกต้อง (ห้ามมีช่องว่างหรืออักขระพิเศษ)', true); return; }
+  if(!(await siteProbe(p))){ toast('ไม่พบไฟล์นี้บนเว็บ: ' + p + ' — ถ้าเพิ่งวางไฟล์ ต้องลากขึ้น GitHub ก่อน', true); return; }
+  if(siteListRef(key).some(b => b.src === p)){ toast('มีรูปนี้ในรายการแล้ว', true); return; }
+  siteListRef(key).push({ src: p, on: true });
+  siteTouch(key); renderSiteModal();
+}
+async function siteUploadLogo(file){
+  if(!file || !site) return;
+  const dir = await siteDir('site');
+  if(!dir) return;
+  try{
+    const r = await siteDrawBlob(file, 512, 'png');
+    const name = 'logo-' + Date.now().toString(36) + '.png';
+    await siteWrite(dir, name, r.blob);
+    const path = 'images/site/' + name;
+    siteBlobUrls[path] = URL.createObjectURL(r.blob);
+    site.cfg.logo = path; site.uploaded = true;
+    siteTouch(); renderSiteModal();
+    toast('เปลี่ยนโลโก้แล้ว — กดบันทึก แล้วลากโฟลเดอร์ images ขึ้น GitHub');
+  }catch(e){ toast('อ่านรูปโลโก้ไม่ได้', true); }
+}
+
+/* ───── บันทึก ───── */
+function siteClean(c, bannersEdited){
+  const out = {};
+  const name = String(c.shop.name || '').trim() || 'S.Flower Bloom';
+  out.shop = { name, tagline: String(c.shop.tagline || '').trim() };
+  if(c.logo) out.logo = c.logo;
+  if(String(c.footer || '').trim()) out.footer = String(c.footer).trim();
+  if(c.theme.main.toLowerCase() !== SITE_DEFAULT_COLOR.toLowerCase()) out.theme = { main: c.theme.main.toUpperCase(), vars: siteDerivePalette(c.theme.main) };
+  if(Array.isArray(c.banners) && (c.banners.length || bannersEdited)) out.banners = c.banners.map(b => ({ src: b.src, on: b.on !== false }));
+  out.popup = { on: c.popup.on !== false, slides: c.popup.slides.map(b => ({ src: b.src, on: b.on !== false })) };
+  out.hero = {
+    title: String(c.hero.title || '').trim(), text: String(c.hero.text || '').trim(), textOff: String(c.hero.textOff || '').trim(),
+    chips: c.hero.chips.map(x => String(x || '').trim()).filter(Boolean), cta: String(c.hero.cta || '').trim()
+  };
+  out.reviews = { on: c.reviews.on !== false, title: String(c.reviews.title || '').trim() };
+  out.faq = {
+    on: c.faq.on !== false, title: String(c.faq.title || '').trim(),
+    items: c.faq.items.map(i => ({ q: String(i.q || '').trim(), a: String(i.a || '').trim() })).filter(i => i.q && i.a)
+  };
+  return out;
+}
+async function saveSite(){
+  if(!site) return;
+  const cfg = siteClean(site.cfg, site.bannersEdited);
+  const json = JSON.stringify(cfg);
+  if(new Blob([json]).size > 60000){ siteHint('ข้อมูลแต่งหน้าร้านใหญ่เกินไป ลองลดข้อความ FAQ', true); return; }
+  const btn = $('siteSave'); btn.disabled = true;
+  setSaveState('กำลังบันทึก…', 'is-saving');
+  try{
+    await fb.dbApi.setDoc(catalogRef(), { siteJson: json, siteUpdatedAt: new Date().toISOString() }, { merge: true });
+    siteCfgSaved = cfg;
+    setSaveState('บันทึกแล้ว · หน้าร้านอัปเดตทันที');
+    const up = site.uploaded;
+    site.dirty = false;
+    closeSiteModal(true);
+    toast('บันทึกแต่งหน้าร้านแล้ว' + (up ? ' · อย่าลืมลากโฟลเดอร์ images ขึ้น GitHub เพื่อให้รูปใหม่ขึ้นหน้าร้าน' : ''));
+  }catch(err){
+    setSaveState('บันทึกไม่สำเร็จ', 'is-error');
+    siteHint(err.code === 'permission-denied'
+      ? 'บันทึกไม่ได้: กฎความปลอดภัยของ Firestore ยังไม่อนุญาตให้เพิ่มช่อง siteJson / siteUpdatedAt'
+      : 'บันทึกไม่สำเร็จ: ' + (err.code || err.message), true);
+    console.error(err);
+  } finally { btn.disabled = false; }
+}
+
+/* ───── เหตุการณ์ ───── */
+$('siteBtn').addEventListener('click', openSiteModal);
+$('siteCancel').addEventListener('click', () => closeSiteModal());
+$('siteSave').addEventListener('click', saveSite);
+$('siteTabs').addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if(b && site){ site.tab = b.dataset.tab; renderSiteModal(); } });
+$('siteBody').addEventListener('input', e => {
+  const el = e.target; if(!site) return;
+  if(el.id === 'siteColor'){ site.cfg.theme.main = el.value; siteTouch(); const pal = siteDerivePalette(el.value), box = document.querySelector('#siteBody .st-pal'); if(box) box.innerHTML = ['sage', 'sageDark', 'rose', 'roseDark', 'peach', 'cream'].map(k => `<i style="background:${pal[k]}"></i>`).join(''); return; }
+  if(el.dataset.path && el.type !== 'checkbox'){ setPath(site.cfg, el.dataset.path, el.value); siteTouch(); }
+});
+$('siteBody').addEventListener('change', e => {
+  const el = e.target; if(!site) return;
+  if(el.dataset.path && el.type === 'checkbox'){ setPath(site.cfg, el.dataset.path, el.checked); siteTouch(); return; }
+  if(el.dataset.on){ const it = siteListRef(el.dataset.on)[+el.dataset.i]; if(it){ it.on = el.checked; siteTouch(el.dataset.on); renderSiteModal(); } return; }
+  if(el.id === 'siteColor'){ renderSiteModal(); return; }
+});
+$('siteBody').addEventListener('click', e => {
+  if(!site) return;
+  const sw = e.target.closest('[data-color]');
+  if(sw){ site.cfg.theme.main = sw.dataset.color; siteTouch(); renderSiteModal(); return; }
+  if(e.target.closest('#siteDrop')){ const f = $('siteFile'); f.dataset.key = $('siteDrop').dataset.key; f.click(); return; }
+  const b = e.target.closest('[data-act]'); if(!b) return;
+  const act = b.dataset.act, i = +b.dataset.i, key = b.dataset.key;
+  if(act === 'up' || act === 'down'){
+    const list = siteListRef(key), j = act === 'up' ? i - 1 : i + 1;
+    if(j >= 0 && j < list.length){ [list[i], list[j]] = [list[j], list[i]]; siteTouch(key); renderSiteModal(); }
+  } else if(act === 'del'){ siteListRef(key).splice(i, 1); siteTouch(key); renderSiteModal(); }
+  else if(act === 'addpath') siteAddByPath(key);
+  else if(act === 'logo'){ $('siteLogoFile').click(); }
+  else if(act === 'logo-reset'){ site.cfg.logo = ''; siteTouch(); renderSiteModal(); }
+  else if(act === 'faq-add'){ site.cfg.faq.items.push({ q: '', a: '' }); siteTouch(); renderSiteModal(); const bd = $('siteBody'); bd.scrollTop = bd.scrollHeight; }
+  else if(act === 'faq-del'){ site.cfg.faq.items.splice(i, 1); siteTouch(); renderSiteModal(); }
+  else if(act === 'faq-up' || act === 'faq-down'){
+    const l = site.cfg.faq.items, j = act === 'faq-up' ? i - 1 : i + 1;
+    if(j >= 0 && j < l.length){ [l[i], l[j]] = [l[j], l[i]]; siteTouch(); renderSiteModal(); }
+  } else if(act === 'open-reviews') openReviewsModal();
+});
+$('siteBody').addEventListener('keydown', e => {
+  if(e.target.id === 'siteDrop' && (e.key === 'Enter' || e.key === ' ')){ e.preventDefault(); e.target.click(); }
+  if(e.target.id === 'siteAddPath' && e.key === 'Enter'){ e.preventDefault(); siteAddByPath(e.target.dataset.key); }
+});
+['dragover', 'dragenter'].forEach(ev => $('siteBody').addEventListener(ev, e => { const d = e.target.closest('#siteDrop'); if(d){ e.preventDefault(); d.classList.add('is-over'); } }));
+['dragleave', 'drop'].forEach(ev => $('siteBody').addEventListener(ev, e => { const d = e.target.closest('#siteDrop'); if(d) d.classList.remove('is-over'); }));
+$('siteBody').addEventListener('drop', e => { const d = e.target.closest('#siteDrop'); if(d){ e.preventDefault(); siteUploadFiles(e.dataTransfer.files, d.dataset.key); } });
+$('siteFile').addEventListener('change', e => { const el = e.target, k = (site && site.tab === 'popup') ? 'popup' : 'banners'; siteUploadFiles(el.files, k).then(() => { el.value = ''; }); });
+$('siteLogoFile').addEventListener('change', e => { const f = e.target.files[0]; siteUploadLogo(f).then(() => { e.target.value = ''; }); });
 
 boot();

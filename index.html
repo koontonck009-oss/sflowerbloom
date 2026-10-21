@@ -51,9 +51,9 @@
 
 <div class="search-cart-bar" id="searchCartBar">
   <div class="brand-mark">
-    <img src="images/logo.png?v=2" alt="โลโก้ร้าน" onerror="this.parentElement.innerHTML='<svg viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot;><path d=&quot;M12 2c1.5 2 1.5 4 0 6-1.5-2-1.5-4 0-6z&quot; fill=&quot;#F62188&quot;/><path d=&quot;M12 22c-3-3-6-6-6-10a6 6 0 0112 0c0 4-3 7-6 10z&quot; fill=&quot;#F62188&quot; opacity=&quot;0.9&quot;/></svg>'">
+    <img id="brandLogo" src="images/logo.png?v=2" alt="โลโก้ร้าน" onerror="this.parentElement.innerHTML='<svg viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot;><path d=&quot;M12 2c1.5 2 1.5 4 0 6-1.5-2-1.5-4 0-6z&quot; fill=&quot;#F62188&quot;/><path d=&quot;M12 22c-3-3-6-6-6-10a6 6 0 0112 0c0 4-3 7-6 10z&quot; fill=&quot;#F62188&quot; opacity=&quot;0.9&quot;/></svg>'">
   </div>
-  <span class="brand-name">S.Flower Bloom</span>
+  <span class="brand-name" id="brandName">S.Flower Bloom</span>
   <div class="search-wrap">
     <svg viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
     <input type="text" id="searchInput" class="search-input" placeholder="ค้นหาสินค้า เช่น กุหลาบ, กรอบรูป..." oninput="handleSearch(this.value)" onfocus="handleSearchFocus()" onkeydown="if(event.key==='Escape') hideSearchSuggestions();" autocomplete="off">
@@ -67,8 +67,8 @@
 </div>
 <header class="top">
   <div class="brand-row">
-    <h1>S.Flower Bloom</h1>
-    <p>เลือกสินค้า แล้วสั่งซื้อผ่านแชทได้เลย</p>
+    <h1 id="brandH1">S.Flower Bloom</h1>
+    <p id="brandTag">เลือกสินค้า แล้วสั่งซื้อผ่านแชทได้เลย</p>
   </div>
 </header>
 
@@ -81,16 +81,16 @@
   </div>
   <!-- แผงข้อความด้านขวา (แสดงเฉพาะคอม) -->
   <div class="pb-info">
-    <h2>ช่อดอกไม้กำมะหยี่<br>สำหรับโอกาสพิเศษ</h2>
-    <p><span class="price-on">เลือกสินค้าที่ชอบ กดใส่ตะกร้า แล้วกดปุ่มเดียวเพื่อส่งรายการสั่งซื้อมาที่แชทเพจของเราได้ทันที ไม่ต้องพิมพ์เอง</span><span class="price-off">เลือกดูสินค้าที่ชอบ แล้วแคปหน้าจอสินค้านั้นส่งให้เพจเพื่อสอบถามราคาและสั่งทำได้เลย</span></p>
-    <div class="pb-chips"><span>🚚 ส่งพัสดุทั่วประเทศ</span><span>📅 สั่งล่วงหน้า 3–5 วัน</span><span>💬 ทักแชตเพื่อจองล่วงหน้า</span></div>
-    <a href="#catalog" class="pb-cta">เลือกดูสินค้า ↓</a>
+    <h2 id="pbTitle">ช่อดอกไม้กำมะหยี่<br>สำหรับโอกาสพิเศษ</h2>
+    <p><span class="price-on" id="pbTextOn">เลือกสินค้าที่ชอบ กดใส่ตะกร้า แล้วกดปุ่มเดียวเพื่อส่งรายการสั่งซื้อมาที่แชทเพจของเราได้ทันที ไม่ต้องพิมพ์เอง</span><span class="price-off" id="pbTextOff">เลือกดูสินค้าที่ชอบ แล้วแคปหน้าจอสินค้านั้นส่งให้เพจเพื่อสอบถามราคาและสั่งทำได้เลย</span></p>
+    <div class="pb-chips" id="pbChips"><span>🚚 ส่งพัสดุทั่วประเทศ</span><span>📅 สั่งล่วงหน้า 3–5 วัน</span><span>💬 ทักแชตเพื่อจองล่วงหน้า</span></div>
+    <a href="#catalog" class="pb-cta" id="pbCta">เลือกดูสินค้า ↓</a>
   </div>
 </section>
 
 <section class="reviews-section" id="reviewsSection" hidden>
   <div class="reviews-head">
-    <h3>รีวิวจากลูกค้า</h3>
+    <h3 id="reviewsTitle">รีวิวจากลูกค้า</h3>
     <button type="button" class="reviews-stat" id="reviewsStat" onclick="openReviewsAll()"></button>
   </div>
   <div class="reviews-scroll" id="reviewsScroll"></div>
@@ -307,7 +307,7 @@
 </div>
 
 <section class="faq-section" id="faqSection">
-  <h3>คำถามที่พบบ่อย (FAQ)</h3>
+  <h3 id="faqTitle">คำถามที่พบบ่อย (FAQ)</h3>
 
   <details class="faq-item">
     <summary>S.Flower Bloom มีหน้าร้านไหม</summary>
@@ -330,7 +330,7 @@
   </details>
 </section>
 
-<footer>© S.Flower Bloom</footer>
+<footer id="siteFooter">© S.Flower Bloom</footer>
 
 <div class="overlay" id="summaryOverlay" onclick="closeOrderSummary()"></div>
 <div class="order-modal" id="orderSummaryModal">
