@@ -3635,9 +3635,8 @@ function closePromoPopup(e){
 /* ---------- แบนเนอร์โปรโมชั่นเลื่อนได้ (ใต้แถบค้นหา) ----------
    วางรูป images/promotions.png, promotions1.png, promotions2.png, promotions3.png ... (.png อัตราส่วน 1:1)
    ตั้งชื่อเรียงเลขต่อกัน ระบบจะโหลดให้เองจนเจอเลขที่ไม่มีไฟล์ — ไม่ต้องแก้โค้ด
-   คลิกรูปแล้วเปิดเพจเฟซบุ๊ก */
+   กดรูปแล้วเปิดดูรูปใหญ่ (ใช้ lightbox เดียวกับรูปรีวิว) — ไม่มีลิงก์ */
 (function(){
-  const LINK = 'https://www.facebook.com/S.Flower.Bloom44';
   const MAX_IMAGES = 20;
   const banner = document.getElementById('promoBanner');
   const track = document.getElementById('pbTrack');
@@ -3647,6 +3646,7 @@ function closePromoPopup(e){
   if(!banner || !track) return;
 
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const loaded = [];
   let step = 1, stops = 1, cur = 0, timer = null, inView = true, hold = false, resumeT = null, raf = 0;
 
   function srcFor(i){ return 'images/promotions' + (i === 0 ? '' : i) + '.png'; }
@@ -3661,10 +3661,13 @@ function closePromoPopup(e){
   }, { root: track, threshold: 0.6 }) : null;
 
   function addSlide(i){
-    const a = document.createElement('a');
+    const a = document.createElement('div');
     a.className = 'pb-slide in';
-    a.href = LINK; a.target = '_blank'; a.rel = 'noopener';
+    a.setAttribute('role', 'button'); a.tabIndex = 0;
     a.draggable = false;
+    a.addEventListener('click', () => openReviewLightbox(loaded.slice(), i));
+    a.addEventListener('keydown', e => { if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); openReviewLightbox(loaded.slice(), i); } });
+    loaded[i] = srcFor(i);
     a.style.setProperty('--i', i);
     a.setAttribute('aria-label', 'โปรโมชั่น ' + (i + 1));
     const img = document.createElement('img');
@@ -3734,7 +3737,7 @@ function closePromoPopup(e){
   banner.addEventListener('focusin', pause);
   banner.addEventListener('focusout', () => resume(0));
 
-  // เมาส์: ลากเพื่อเลื่อน (คอม) — ลากแล้วไม่ให้นับเป็นการคลิกลิงก์
+  // เมาส์: ลากเพื่อเลื่อน (คอม) — ลากแล้วไม่ให้นับเป็นการกดเปิดรูป
   let drag = null, justDragged = false;
   track.addEventListener('pointerdown', e => {
     if(e.pointerType !== 'mouse' || e.button !== 0) return;
