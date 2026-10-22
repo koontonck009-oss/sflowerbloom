@@ -1019,8 +1019,27 @@ function imageListHtml(arr, pathPrefix){
 }
 
 function renderMediaPanel(){
+  const all = pdAll();
+  const tiles = all.map((src, k) => `
+        <div class="pd-tile${k === 0 ? ' is-main' : ''}">
+          ${thumbHtml(src, 'pd-img')}
+          ${k === 0 ? '<span class="pd-badge">รูปหลัก</span>' : ''}
+          <div class="pd-tools">
+            ${k > 0 ? `<button type="button" class="pd-btn" data-act="pd-main" data-k="${k}" title="ตั้งเป็นรูปหลัก">★</button>` : ''}
+            ${k > 0 ? `<button type="button" class="pd-btn" data-act="pd-left" data-k="${k}" title="เลื่อนไปก่อนหน้า">◀</button>` : ''}
+            ${k < all.length - 1 ? `<button type="button" class="pd-btn" data-act="pd-right" data-k="${k}" title="เลื่อนไปถัดไป">▶</button>` : ''}
+            <button type="button" class="pd-btn pd-del" data-act="pd-rm" data-k="${k}" title="เอารูปนี้ออกจากสินค้า (ไฟล์ยังอยู่ในโฟลเดอร์)">✕</button>
+          </div>
+        </div>`).join('');
   $('panelMedia').innerHTML = `
     <div class="group">
+      <div class="rv-drop pd-drop" tabindex="0" role="button"><b>ลากรูปสินค้ามาวางที่นี่</b><span>หรือคลิกเพื่อเลือกรูป (เลือกได้หลายรูป) · รูปแรกเป็นรูปหลักถ้ายังว่าง · ระบบย่อรูปและตั้งชื่อให้เอง</span></div>
+      <input type="file" class="pd-file" accept="image/*" multiple hidden>
+      <div class="rv-adv-row"><button type="button" class="btn btn-ghost btn-sm" data-act="pd-pickdir">เลือกโฟลเดอร์เว็บ</button><span class="rv-adv-note" id="pdDirName">${window.showDirectoryPicker ? '' : 'ต้องเปิดด้วย Chrome หรือ Edge บนคอมพิวเตอร์'}</span></div>
+      <div id="pdOut"></div>
+      ${pdPendingHtml()}
+      ${all.length ? `<div class="pd-grid">${tiles}</div>` : '<p class="group-note" style="margin:10px 0 0">ยังไม่มีรูป ลากรูปมาวางด้านบนได้เลย</p>'}
+      <details class="rv-old"><summary>วิธีเดิม: พิมพ์พาธรูปเอง</summary>
       <p class="group-note">ใส่เป็นที่อยู่ไฟล์ในโฟลเดอร์ images เช่น images/bouquet/ช่อทานตะวัน/เล็ก.jpg — ต้องอัปโหลดไฟล์รูปขึ้นเว็บแยกต่างหากก่อน · รูปของแต่ละตัวเลือกใส่ในการ์ด “ตัวแปร”</p>
       <div class="img-field">
         <label class="field">
@@ -1033,6 +1052,7 @@ function renderMediaPanel(){
         <span class="field" style="margin:0"><span>รูปเพิ่มเติม (แกลเลอรี)</span></span>
         ${imageListHtml(draft.images, 'images')}
       </div>
+      </details>
     </div>`;
 }
 
@@ -1202,6 +1222,7 @@ function colorsBlockHtml(){
             </label>
             ${thumbHtml(c.image)}
           </div>
+          ${pdRowDropHtml(`colors.${k}`)}
           <div style="margin-top:12px">
             <span class="field" style="margin:0"><span>รูปเพิ่มเติมของสีนี้</span></span>
             ${imageListHtml(c.images, `colors.${k}.images`)}
@@ -1277,6 +1298,7 @@ function renderPricePanel(){
               </label>
               ${thumbHtml(s.image)}
             </div>
+            ${pdRowDropHtml(`sizes.${k}`)}
             <div style="margin-top:12px">
               <span class="field" style="margin:0"><span>รูปเพิ่มเติมของค่านี้</span></span>
               ${imageListHtml(s.images, `sizes.${k}.images`)}
@@ -1378,6 +1400,7 @@ function addonsEditorHtml(arr, pathPrefix, addAct, colorIndex){
           </label>
           ${thumbHtml(a.image)}
         </div>
+        ${pdRowDropHtml(`${pathPrefix}.${k}`, true)}
         <label class="check" style="margin:12px 0 0">
           <input type="checkbox" data-bind="${pathPrefix}.${k}.ready" data-type="bool"${a.ready ? ' checked' : ''}>
           <span>ทำแบบใส่ของเสริมนี้ไว้แล้ว พร้อมส่ง</span>
@@ -1511,6 +1534,24 @@ function onDraftClick(e){
       clearVariables();
       return;
 
+    case 'pd-pickdir':
+      rvGetRoot(true);
+      return;
+    case 'pd-pending-done':
+      pdPendingSet([]);
+      renderMediaPanel();
+      return;
+    case 'pd-main': case 'pd-left': case 'pd-right': case 'pd-rm': {
+      const all = pdAll(), i = +btn.dataset.k;
+      if(i < 0 || i >= all.length) return;
+      if(act === 'pd-main'){ all.unshift(all.splice(i, 1)[0]); }
+      else if(act === 'pd-left' && i > 0){ [all[i - 1], all[i]] = [all[i], all[i - 1]]; }
+      else if(act === 'pd-right' && i < all.length - 1){ [all[i + 1], all[i]] = [all[i], all[i + 1]]; }
+      else if(act === 'pd-rm'){ all.splice(i, 1); }
+      pdSetAll(all);
+      pdRefresh();
+      return;
+    }
     case 'add-img': {
       const arr = getPath(draft, path) || [];
       arr.push('');
@@ -1931,14 +1972,16 @@ function closeImgModal(){
 function renderImgModal(focusLast){
   $('imgBody').innerHTML = `
     <div class="im-main">
-      <span class="vm-label">รูปหลัก (แก้ในตารางด้านหลัง)</span>
+      <span class="vm-label">รูปหลัก</span>
       <div class="im-row">${thumbHtml(im.main, 'im-thumb')}<span class="im-path">${esc(im.main) || '— ยังไม่ได้ใส่ —'}</span></div>
     </div>
+    ${pdRowDropHtml('im')}
     <span class="vm-label" style="margin-top:14px">รูปเพิ่มเติม (ลูกค้าเห็นต่อจากรูปหลัก ตามลำดับนี้)</span>
     ${im.list.length ? im.list.map((src, i) => `
       <div class="im-row">
         ${thumbHtml(src, 'im-thumb')}
         <input type="text" data-im-i="${i}" value="${esc(src)}" placeholder="images/…" autocomplete="off">
+        <button type="button" class="icon-btn" data-im-main="${i}" title="ตั้งเป็นรูปหลัก (สลับกับรูปหลักเดิม)">★</button>
         <button type="button" class="icon-btn" data-im-move="${i}" data-d="-1" ${i === 0 ? 'disabled' : ''} title="เลื่อนขึ้น">↑</button>
         <button type="button" class="icon-btn" data-im-move="${i}" data-d="1" ${i === im.list.length - 1 ? 'disabled' : ''} title="เลื่อนลง">↓</button>
         <button type="button" class="icon-btn" data-im-rm="${i}" title="ลบรูปนี้">✕</button>
@@ -1953,6 +1996,7 @@ function saveImgModal(){
   const list = [];
   im.list.forEach(x => { const t = String(x || '').trim(); if(t && t !== im.main && !list.includes(t)) list.push(t); });
   if(list.length) im.v.images = list; else delete im.v.images;
+  if(im.mainChanged) im.v.image = im.main;
   closeImgModal();
   renderPricePanel();
   updateSummaries();
@@ -1968,6 +2012,14 @@ $('imgBody').addEventListener('input', e => {
 $('imgBody').addEventListener('click', e => {
   const rm = e.target.closest('[data-im-rm]');
   if(rm){ im.list.splice(+rm.dataset.imRm, 1); renderImgModal(); return; }
+  const mn = e.target.closest('[data-im-main]');
+  if(mn){
+    const i = +mn.dataset.imMain, t = String(im.list[i] || '').trim();
+    if(!t) return;
+    if(String(im.main || '').trim()) im.list[i] = im.main; else im.list.splice(i, 1);
+    im.main = t; im.mainChanged = true;
+    renderImgModal(); return;
+  }
   const mv = e.target.closest('[data-im-move]');
   if(mv){
     const i = +mv.dataset.imMove, j = i + +mv.dataset.d;
@@ -2749,7 +2801,7 @@ function rvRenderPending(){
   const b2 = $('revPendingDelDone'); if(b2) b2.addEventListener('click', () => { rvPendingDelSet([]); rvRenderPending(); });
 }
 // โฟลเดอร์ images/reviews ในโฟลเดอร์เว็บ — ครั้งแรกให้เลือกโฟลเดอร์เว็บ ครั้งต่อไปจำไว้ (ขออนุญาตใหม่ทุกครั้งที่เปิดหลังบ้าน)
-async function rvGetDir(forcePick){
+async function rvGetRoot(forcePick){
   if(!window.showDirectoryPicker){ toast('ฟีเจอร์นี้ใช้ได้เฉพาะ Chrome หรือ Edge บนคอมพิวเตอร์', true); return null; }
   let h = forcePick ? null : (rvDirHandle || await rvKvGet('webDir'));
   if(h){
@@ -2765,9 +2817,189 @@ async function rvGetDir(forcePick){
     await rvKvSet('webDir', h);
   }
   rvDirHandle = h;
-  $('revDirName').textContent = '✓ โฟลเดอร์เว็บ: ' + h.name;
+  const n1 = $('revDirName'); if(n1) n1.textContent = '✓ โฟลเดอร์เว็บ: ' + h.name;
+  const n2 = $('pdDirName'); if(n2) n2.textContent = '✓ โฟลเดอร์เว็บ: ' + h.name;
+  return h;
+}
+async function rvGetDir(forcePick){
+  const h = await rvGetRoot(forcePick);
+  if(!h) return null;
   const imgs = await h.getDirectoryHandle('images', { create: true });
   return imgs.getDirectoryHandle('reviews', { create: true });
+}
+/* ───────────── อัปโหลดรูปสินค้า (ลากมาวาง) ─────────────
+   ใช้โฟลเดอร์เว็บและการย่อรูปชุดเดียวกับรูปรีวิว → ย่อเป็น JPG → ตั้งชื่อ <รหัสสินค้า>-N.jpg
+   → เขียนลง images/products/<รหัสสินค้า>/ → ใส่พาธเข้ารูปหลัก/แกลเลอรี · ต้องลากโฟลเดอร์ขึ้น GitHub ต่อเอง
+   ชื่อโฟลเดอร์/ไฟล์เป็นอังกฤษ-ตัวเลขล้วน กันปัญหาภาษาไทยในพาธ */
+const PD_DIR = 'images/products/', PD_PENDING_KEY = 'sfb_product_pending';
+function pdPendingGet(){ try{ return JSON.parse(localStorage.getItem(PD_PENDING_KEY) || '[]'); }catch(e){ return []; } }
+function pdPendingSet(a){ try{ localStorage.setItem(PD_PENDING_KEY, JSON.stringify(a)); }catch(e){} }
+function pdSlug(id){ return String(id || '').trim().toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, ''); }
+// ชุดรูปทั้งหมดของสินค้า (รูปหลักก่อน) / เขียนกลับเป็น image + images
+function pdAll(){ return imgsOf(draft); }
+function pdSetAll(all){
+  draft.image = all[0] || '';
+  if(all.length > 1) draft.images = all.slice(1); else delete draft.images;
+}
+function pdRefresh(){ renderMediaPanel(); updateSummaries(); }
+async function pdFileExists(root, path){
+  try{
+    const seg = String(path).split('/').filter(Boolean);
+    let d = root;
+    for(let i = 0; i < seg.length - 1; i++) d = await d.getDirectoryHandle(seg[i]);
+    await d.getFileHandle(seg[seg.length - 1]);
+    return true;
+  }catch(e){ return false; }
+}
+// แกนอัปโหลด: ย่อรูป → เขียนลง images/products/<รหัส>/ → คืนรายการพาธ (ไม่แตะข้อมูลสินค้า) · have = พาธที่ปลายทางมีอยู่แล้ว
+async function pdProcess(all, have, onProgress){
+  const slug = pdSlug(draft && draft.id);
+  if(!slug){ toast('กรอกรหัสสินค้า (ตัวอักษรอังกฤษหรือตัวเลข) ในการ์ดข้อมูลสินค้าก่อน แล้วค่อยลากรูป', true); return null; }
+  const files = all.filter(f => /^image\//.test(f.type) || REVIEW_IMG_RE.test(f.name));
+  if(!files.length){ toast('ไม่พบไฟล์รูป ลากไฟล์ .jpg .png .webp มาวาง', true); return null; }
+  const root = await rvGetRoot(false);
+  if(!root) return null;
+  const imgs = await root.getDirectoryHandle('images', { create: true });
+  const prods = await imgs.getDirectoryHandle('products', { create: true });
+  const dir = await prods.getDirectoryHandle(slug, { create: true });
+  // เลขถัดไป = เลขสูงสุดของ <รหัส>-N ที่มีทั้งในโฟลเดอร์และในสินค้านี้ (ทุกแถว) + 1
+  let next = 0;
+  const re = new RegExp('^' + slug.replace(/[-_]/g, '\\$&') + '-(\\d+)\\.', 'i');
+  const bump = n => { const m = re.exec(String(n).split('/').pop()); if(m) next = Math.max(next, +m[1]); };
+  for await (const name of dir.keys()) bump(name);
+  pdEveryImagePath().forEach(bump);
+  const hmap = (await rvKvGet('pdHashMap')) || {}; // { sha: พาธ } รูปเดียวกัน → ใช้พาธเดิม ไม่เขียนไฟล์ซ้ำ
+  const added = [], reused = [], already = [], fails = [];
+  have = new Set(have);
+  for(let i = 0; i < files.length; i++){
+    const f = files[i];
+    if(onProgress) onProgress(i + 1, files.length);
+    try{
+      const sha = await rvSha(f);
+      const known = hmap[sha];
+      if(known && await pdFileExists(root, known)){
+        if(have.has(known)){ already.push(f.name); continue; }
+        have.add(known); added.push(known); reused.push(f.name); continue;
+      }
+      const blob = await rvResize(f);
+      if(!blob) throw new Error('resize');
+      const name = `${slug}-${++next}.jpg`;
+      const w = await (await dir.getFileHandle(name, { create: true })).createWritable();
+      await w.write(blob); await w.close();
+      const path = PD_DIR + slug + '/' + name;
+      hmap[sha] = path; have.add(path); added.push(path);
+      pdPendingSet([...new Set([...pdPendingGet(), path])]);
+    }catch(e){ fails.push(f.name); }
+  }
+  await rvKvSet('pdHashMap', hmap);
+  return { added, reused, already, fails, nonImage: all.length - files.length };
+}
+// ทุกพาธรูปในสินค้านี้ (หลัก/แกลเลอรี/สี/ไซซ์/ตัวแปร/ของเสริม) ไว้นับเลขไฟล์ถัดไป ไม่ให้ชื่อชนกัน
+function pdEveryImagePath(){
+  const out = [];
+  const row = o => { if(o){ if(o.image) out.push(String(o.image)); (o.images || []).forEach(x => x && out.push(String(x))); } };
+  row(draft);
+  [draft.colors, draft.sizes, draft.variants, draft.addons].forEach(arr => (arr || []).forEach(o => { row(o); (o.addons || []).forEach(row); }));
+  return out;
+}
+function pdReportHtml(r, total){
+  const rows = [];
+  if(r.added.length) rows.push(`<p class="rv-add-ok">✓ เพิ่มแล้ว ${r.added.length} รูป — กดบันทึกสินค้าด้านบนเพื่อให้หน้าร้านเห็น แล้วอย่าลืมลากโฟลเดอร์ <b>images/products</b> ขึ้น GitHub</p>`);
+  if(r.reused.length) rows.push(`<p class="rv-add-note">${r.reused.length} รูปเคยอัปโหลดแล้ว ใช้ไฟล์เดิมให้: ${r.reused.map(esc).join(', ')}</p>`);
+  if(r.already.length) rows.push(`<p class="rv-add-note">ข้าม ${r.already.length} รูปที่มีอยู่แล้ว: ${r.already.map(esc).join(', ')}</p>`);
+  if(r.fails.length) rows.push(`<p class="rv-add-err">อ่านรูปไม่ได้ ${r.fails.length} รูป: ${r.fails.map(esc).join(', ')}</p>`);
+  if(r.nonImage) rows.push(`<p class="rv-add-note">ข้ามไฟล์ที่ไม่ใช่รูป ${r.nonImage} ไฟล์</p>`);
+  return rows.join('');
+}
+// สรุปสั้นๆ ด้วย toast สำหรับจุดที่วาดใหม่ทั้งแผง (สี/ไซซ์/ของเสริม/หน้าต่างรูปเพิ่มเติม)
+function pdToastResult(r, extra){
+  if(r.added.length) toast(`เพิ่มแล้ว ${r.added.length} รูป${extra || ''} — กดบันทึกสินค้า และลากโฟลเดอร์ images/products ขึ้น GitHub`);
+  else if(r.already.length) toast('รูปนี้มีอยู่แล้ว ไม่ได้เพิ่มซ้ำ');
+  if(r.fails.length) toast('อ่านรูปไม่ได้: ' + r.fails.join(', '), true);
+}
+async function pdUploadFiles(list){
+  const all = Array.from(list || []);
+  if(!draft || !all.length) return;
+  const drop = document.querySelector('#panelMedia .pd-drop'), out = $('pdOut');
+  if(drop) drop.classList.add('is-busy');
+  try{
+    const r = await pdProcess(all, pdAll(), (i, n) => { if(out) out.innerHTML = `<p class="rv-add-note">กำลังจัดการรูป ${i}/${n} …</p>`; });
+    if(!r) return;
+    if(r.added.length){
+      const cur = pdAll();
+      r.added.forEach(pth => { if(!cur.includes(pth)) cur.push(pth); });
+      pdSetAll(cur);
+    }
+    pdRefresh();
+    const o2 = $('pdOut'); if(o2) o2.innerHTML = pdReportHtml(r);
+  }catch(e){
+    toast('เพิ่มรูปไม่สำเร็จ: ' + (e.message || e), true);
+  }finally{
+    const d2 = document.querySelector('#panelMedia .pd-drop'); if(d2) d2.classList.remove('is-busy');
+  }
+}
+/* ── รอบ 2: ช่องลากรูปของแต่ละสี / ไซซ์ / ของเสริม (data-pd-row = เส้นทางในสินค้า เช่น colors.0, sizes.1, addons.0) ── */
+function pdRowDropHtml(path, single){
+  return `<div class="pd-rowdrop" tabindex="0" role="button" data-pd-row="${esc(path)}"${single ? ' data-pd-single="1"' : ''}>📷 ลากรูปมาวาง หรือคลิกเลือกรูป<small>${single ? 'ใช้เป็นรูปของเสริมนี้ (ถ้าเลือกหลายรูปจะใช้รูปแรก)' : 'รูปแรกเป็นรูปหลักถ้ายังว่าง ที่เหลือเข้ารูปเพิ่มเติม'}</small></div>`;
+}
+async function pdUploadToRow(path, list, single){
+  if(!draft) return;
+  const row = getPath(draft, path);
+  if(!row) return;
+  const zoneSel = `.pd-rowdrop[data-pd-row="${path}"]`;
+  const zone = document.querySelector(zoneSel);
+  if(zone) zone.classList.add('is-busy');
+  try{
+    const r = await pdProcess(Array.from(list || []), imgsOf(row), null);
+    if(!r) return;
+    if(r.added.length){
+      if(single){
+        row.image = r.added[0];
+      }else{
+        const cur = imgsOf(row);
+        r.added.forEach(pth => { if(!cur.includes(pth)) cur.push(pth); });
+        row.image = cur[0] || '';
+        if(cur.length > 1) row.images = cur.slice(1); else delete row.images;
+      }
+      if(path.startsWith('addons')) renderAddonsPanel(); else renderPricePanel();
+      renderMediaPanel(); // ให้กล่องเตือน "ยังไม่ได้อัปโหลดขึ้น GitHub" อัปเดต
+      updateSummaries();
+    }
+    pdToastResult(r, single && r.added.length > 1 ? ' (ใช้รูปแรกเป็นรูปของเสริม)' : '');
+  }catch(e){
+    toast('เพิ่มรูปไม่สำเร็จ: ' + (e.message || e), true);
+  }finally{
+    const z2 = document.querySelector(zoneSel); if(z2) z2.classList.remove('is-busy');
+  }
+}
+// หน้าต่าง "รูปเพิ่มเติม" ของตัวแปร: รูปแรกเป็นรูปหลักถ้ายังว่าง ที่เหลือต่อท้ายรูปเพิ่มเติม
+async function pdUploadToModal(list){
+  if(!draft || !im) return;
+  const zone = document.querySelector('#imgBody .pd-rowdrop');
+  if(zone) zone.classList.add('is-busy');
+  try{
+    const have = [im.main, ...im.list].map(x => String(x || '').trim()).filter(Boolean);
+    const r = await pdProcess(Array.from(list || []), have, null);
+    if(!r || !im) return;
+    im.list = im.list.filter(x => String(x || '').trim());
+    r.added.forEach(pth => {
+      if(!String(im.main || '').trim()){ im.main = pth; im.mainChanged = true; }
+      else if(!im.list.includes(pth) && pth !== im.main) im.list.push(pth);
+    });
+    renderImgModal();
+    renderMediaPanel();
+    pdToastResult(r);
+  }catch(e){
+    toast('เพิ่มรูปไม่สำเร็จ: ' + (e.message || e), true);
+  }finally{
+    const z2 = document.querySelector('#imgBody .pd-rowdrop'); if(z2) z2.classList.remove('is-busy');
+  }
+}
+function pdPendingHtml(){
+  const a = pdPendingGet();
+  if(!a.length) return '';
+  const short = a.slice(0, 12).map(x => esc(x.replace(PD_DIR, ''))).join(', ') + (a.length > 12 ? ' …' : '');
+  return `<div class="rv-pending"><b>ยังไม่ได้อัปโหลดขึ้น GitHub: ${a.length} รูป</b><br>ลากโฟลเดอร์ <code>images/products</code> ไปวางใน GitHub แล้วกดปุ่มด้านล่าง${a.length > 100 ? '<br>⚠ GitHub รับลากไฟล์ได้ไม่เกิน 100 ไฟล์ต่อครั้ง — ให้ลากเป็นชุดๆ' : ''}<br><small>${short}</small><br><button type="button" class="btn btn-ghost btn-sm" data-act="pd-pending-done">อัปโหลดขึ้น GitHub แล้ว (ล้างรายการ)</button></div>`;
 }
 async function rvSha(file){
   const buf = await crypto.subtle.digest('SHA-256', await file.arrayBuffer());
@@ -3675,6 +3907,32 @@ drawerBody.addEventListener('change', e => {
   else if(e.target.dataset.sizeTag != null) onSizeTagToggle();
   else onDraftInput(e);
 });
+(function(){
+  const pm = $('panelMedia');
+  pm.addEventListener('click', e => { if(e.target.closest('.pd-drop')){ const f = pm.querySelector('.pd-file'); if(f) f.click(); } });
+  pm.addEventListener('keydown', e => { if((e.key === 'Enter' || e.key === ' ') && e.target.closest('.pd-drop')){ e.preventDefault(); const f = pm.querySelector('.pd-file'); if(f) f.click(); } });
+  pm.addEventListener('dragover', e => { const d = e.target.closest('.pd-drop'); if(d){ e.preventDefault(); d.classList.add('is-over'); } });
+  pm.addEventListener('dragleave', e => { const d = e.target.closest('.pd-drop'); if(d) d.classList.remove('is-over'); });
+  pm.addEventListener('drop', e => { const d = e.target.closest('.pd-drop'); if(d){ e.preventDefault(); d.classList.remove('is-over'); pdUploadFiles(e.dataTransfer.files); } });
+  pm.addEventListener('change', e => { if(e.target.classList.contains('pd-file')){ e.stopPropagation(); const f = Array.from(e.target.files); e.target.value = ''; pdUploadFiles(f); } });
+})();
+(function(){
+  // ช่องลากรูปรายแถว (สี/ไซซ์/ของเสริม ในหน้าแก้ไข + หน้าต่างรูปเพิ่มเติมของตัวแปร) ใช้ไฟล์เลือกรูปตัวเดียวร่วมกัน
+  const inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = 'image/*'; inp.multiple = true; inp.hidden = true;
+  document.body.appendChild(inp);
+  let target = null; // { kind:'row', path, single } | { kind:'im' }
+  const targetOf = z => z.dataset.pdRow === 'im' ? { kind: 'im' } : { kind: 'row', path: z.dataset.pdRow, single: !!z.dataset.pdSingle };
+  const run = (t, files) => { if(!t || !files.length) return; if(t.kind === 'im') pdUploadToModal(files); else pdUploadToRow(t.path, files, t.single); };
+  inp.addEventListener('change', () => { const f = Array.from(inp.files); inp.value = ''; run(target, f); });
+  [$('editorBody'), $('imgBody')].forEach(host => {
+    host.addEventListener('click', e => { const z = e.target.closest('.pd-rowdrop'); if(z){ target = targetOf(z); inp.click(); } });
+    host.addEventListener('keydown', e => { const z = e.target.closest('.pd-rowdrop'); if(z && (e.key === 'Enter' || e.key === ' ')){ e.preventDefault(); target = targetOf(z); inp.click(); } });
+    host.addEventListener('dragover', e => { const z = e.target.closest('.pd-rowdrop'); if(z){ e.preventDefault(); z.classList.add('is-over'); } });
+    host.addEventListener('dragleave', e => { const z = e.target.closest('.pd-rowdrop'); if(z) z.classList.remove('is-over'); });
+    host.addEventListener('drop', e => { const z = e.target.closest('.pd-rowdrop'); if(z){ e.preventDefault(); z.classList.remove('is-over'); run(targetOf(z), Array.from(e.dataTransfer.files)); } });
+  });
+})();
 drawerBody.addEventListener('click', onDraftClick);
 drawerBody.addEventListener('click', e => { const b = e.target.closest('[data-combo-more]'); if(b && !b.disabled) openImgModal(+b.dataset.comboMore); });
 drawerBody.addEventListener('click', e => {

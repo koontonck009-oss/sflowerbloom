@@ -1502,3 +1502,20 @@ body.vm-chip-dragging, body.vm-chip-dragging *{ cursor:grabbing !important; user
   .st-row .st-acts{ grid-column:1 / -1; justify-content:flex-end; }
   .st-addpath{ flex-direction:column; align-items:stretch; }
 }
+/* รูปสินค้า: ลากมาวาง + กริดรูป */
+.pd-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(110px,1fr)); gap:10px; margin-top:12px; }
+.pd-tile{ position:relative; border:1px solid var(--line); border-radius:10px; overflow:hidden; background:var(--line-soft); aspect-ratio:1/1; }
+.pd-tile.is-main{ border-color:#d6336c; box-shadow:0 0 0 2px #f9d3e2; }
+.pd-img{ width:100%; height:100%; object-fit:cover; display:block; }
+.pd-img.is-missing{ border:1px dashed var(--line); background:#fff; }
+.pd-badge{ position:absolute; left:6px; top:6px; background:#d6336c; color:#fff; font-size:11px; font-weight:600; padding:2px 7px; border-radius:999px; }
+.pd-tools{ position:absolute; left:0; right:0; bottom:0; display:flex; gap:4px; justify-content:flex-end; padding:5px; background:linear-gradient(transparent,rgba(0,0,0,.45)); }
+.pd-btn{ border:0; background:rgba(255,255,255,.92); color:#333; width:26px; height:26px; border-radius:7px; font-size:12px; line-height:1; cursor:pointer; }
+.pd-btn:hover{ background:#fff; }
+.pd-del:hover{ background:#fdecec; color:#B3261E; }
+
+/* รูปสินค้ารอบ 2: ช่องลากรูปรายแถว */
+.pd-rowdrop{ display:flex; flex-direction:column; gap:2px; align-items:center; justify-content:center; margin:8px 0 0; padding:10px 12px; border:2px dashed #e7b8c9; border-radius:10px; background:#fff7fa; color:#7a3b52; font-size:13px; font-weight:600; text-align:center; cursor:pointer; transition:background .15s,border-color .15s; }
+.pd-rowdrop small{ font-size:12px; font-weight:400; opacity:.8; }
+.pd-rowdrop:hover,.pd-rowdrop:focus-visible,.pd-rowdrop.is-over{ background:#ffeaf2; border-color:#d6336c; outline:none; }
+.pd-rowdrop.is-busy{ opacity:.6; pointer-events:none; }
