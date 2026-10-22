@@ -23,11 +23,18 @@ let SITE_CFG = null;           // ค่า "แต่งหน้าร้า�
 let SITE_SHOP_NAME = 'S.Flower Bloom';
 let _siteReadyRes; const SITE_READY = new Promise(r => { _siteReadyRes = r; }); // แบนเนอร์/ป๊อปอัปรอจนรู้ค่าตั้งก่อนค่อยเริ่ม
 const PRICE_ASK_SHORT = 'สอบถามราคาทางเพจ';
+const PRICE_LOADING_SHORT = 'กำลังโหลดราคา…';
+let PRICES_PENDING = false;   // true = ยังไม่รู้สถานะราคาจาก Firestore (โหลดไม่ทัน/เน็ตช้า) — ยังซ่อนราคาไว้เหมือนเดิม แต่โชว์ว่า "กำลังโหลดราคา…" แทนข้อความให้ไปถามเพจ
+function setPricesPending(v){
+  PRICES_PENDING = !!v;
+  document.documentElement.classList.toggle('prices-pending', PRICES_PENDING);
+}
 function setPricesHidden(v){
   PRICES_HIDDEN = !!v;
   document.documentElement.classList.toggle('prices-hidden', PRICES_HIDDEN);
 }
 function priceAskHtml(){
+  if(PRICES_PENDING) return '<div class="price-ask-text">⏳ <b>กำลังโหลดราคา…</b> รอสักครู่นะคะ</div>';
   return '<div class="price-ask-text">📸 <b>แคปหน้าจอสินค้านี้</b> (ให้เห็นชื่อสินค้าและตัวเลือกที่เลือก) แล้วส่งให้เพจเพื่อสอบถามราคาได้เลยค่ะ</div>'
     + '<a class="price-ask-btn" href="' + PAGE_LINK + '" target="_blank" rel="noopener">💬 ทักเพจสอบถามราคา</a>';
 }
@@ -1585,7 +1592,7 @@ function renderProductCard(p, variant, narrow){
   // เดิมการ์ดย่อย (isSplit) จะถือว่าพร้อมส่งเสมอ เพราะ readyVariantsOf() คัดมาแต่ตัวที่พร้อมส่งอยู่แล้ว
   // แต่ allVariantsOf() (โหมด "ดูสินค้าทั้งหมด") ส่งมาทั้งที่พร้อมส่งและยังไม่พร้อม จึงต้องเช็คสถานะ
   // ของ "ตัวเลือกนั้นๆ" ตรงๆ แทนที่จะเหมารวมเป็น true เสมอ
-  if(PRICES_HIDDEN) priceHtml = PRICE_ASK_SHORT;
+  if(PRICES_HIDDEN) priceHtml = PRICES_PENDING ? PRICE_LOADING_SHORT : PRICE_ASK_SHORT;
   let isReady;
   if(variantOption) isReady = !!variantOption.ready;
   else if(variantSize) isReady = !!variantSize.ready;
@@ -3360,12 +3367,19 @@ async function loadProducts(){
 async function loadProductsInner(){
   const catalogEl = document.getElementById('catalog');
   // ลอง Firestore ก่อน แต่ไม่ยอมรอเกิน 6 วินาที ไม่งั้นเน็ตช้าจะค้างหน้าร้านทั้งหน้า
+  // ถ้าช้า/ล้มเหลว (cloudPending) หน้าร้านเปิดจาก products.json ไปก่อน แล้วให้ loadPricesLate ตามดึงต่อเบื้องหลัง
+  let cloudPromise = null, cloudPending = false;
   try{
+    cloudPromise = fetchProductsFromFirestore();
+    cloudPromise.catch(() => {}); // กัน error เด้งเป็น unhandled ตอนที่เราเลิกรอไปแล้ว (ตัว loadPricesLate จะรอ/จับเองอีกที)
+    const CLOUD_SLOW = {};
     const fromCloud = await Promise.race([
-      fetchProductsFromFirestore(),
-      new Promise(resolve => setTimeout(() => resolve(null), 6000))
+      cloudPromise,
+      new Promise(resolve => setTimeout(() => resolve(CLOUD_SLOW), 6000))
     ]);
-    if(fromCloud){
+    if(fromCloud === CLOUD_SLOW){
+      cloudPending = true;
+    } else if(fromCloud){
       PRODUCTS = fromCloud;
       applyShopOptions(cloudOptions);
       setPricesHidden(cloudHidePrices);
@@ -3375,8 +3389,12 @@ async function loadProductsInner(){
       return;
     }
   } catch(err){
+    cloudPending = true;
+    cloudPromise = null; // ครั้งแรกล้มเหลวแล้ว — loadPricesLate จะเริ่มลองใหม่เอง
     console.warn('ดึงสินค้าจาก Firestore ไม่สำเร็จ จะใช้ products.json แทน:', err);
   }
+  // ยังไม่รู้สถานะสวิตช์ราคา: ซ่อนราคาไว้ก่อน (กันราคาหลุด) แต่โชว์ว่ากำลังโหลด ไม่ใช่ให้ไปถามเพจ
+  if(cloudPending) setPricesPending(true);
   try{
     const res = await fetch('products.json');
     if(!res.ok) throw new Error('HTTP ' + res.status);
@@ -3388,9 +3406,54 @@ async function loadProductsInner(){
         <p style="font-size:13.5px; color:var(--plum);">กรุณาตรวจสอบว่าไฟล์ products.json อยู่ในโฟลเดอร์เดียวกับเว็บไซต์<br>และเปิดเว็บผ่านลิงก์จริง ไม่ใช่การดับเบิลคลิกเปิดไฟล์โดยตรง</p>
       </div>`;
     console.error('โหลด products.json ไม่สำเร็จ:', err);
+    if(cloudPending) loadPricesLate(cloudPromise);
     return;
   }
   finishLoadingProducts();
+  if(cloudPending) loadPricesLate(cloudPromise);
+}
+
+/* Firestore ตอบช้า/ล้มเหลวตอนเปิดหน้า: หน้าร้านเปิดจาก products.json ไปก่อน (ยังซ่อนราคา โชว์ "กำลังโหลดราคา…")
+   แล้วรอ/ลองดึง Firestore ต่อเบื้องหลัง พอได้ค่าจริงก็อัปเดตหน้าเดิมเลย ไม่ต้องรีโหลด
+   ลองครบแล้วยังไม่ได้ค่อยตกไปโชว์ข้อความให้แคปหน้าจอถามราคาทางเพจเหมือนเดิม
+   (ระหว่างรอ PRICES_HIDDEN ยังเป็น true ตลอด จึงไม่มีทางโชว์ราคาทั้งที่ร้านเปิดสวิตช์ซ่อนไว้) */
+async function loadPricesLate(firstPromise){
+  const withCap = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
+  const delays = firstPromise ? [0, 3000, 8000, 15000] : [3000, 8000, 15000];
+  let list = null;
+  for(let i = 0; i < delays.length; i++){
+    if(delays[i]) await new Promise(r => setTimeout(r, delays[i]));
+    try{
+      const p = (i === 0 && firstPromise) ? firstPromise : fetchProductsFromFirestore();
+      list = await withCap(p, 20000);
+      break; // ได้คำตอบแล้ว (ได้รายการ หรือ null = ไม่มีเอกสาร/ยังไม่ได้ตั้งค่า) ไม่ต้องลองซ้ำ
+    }catch(err){ list = null; }
+  }
+  if(list && list.length){
+    try{
+      PRODUCTS = list;
+      applyShopOptions(cloudOptions);
+      setPricesHidden(cloudHidePrices);
+      CATALOG_DOC_STAMP = cloudStamp;
+      setPricesPending(false);
+      PRODUCTS = PRODUCTS.filter(p => !(p && p.hidden));
+      pruneCartAgainstProducts();
+      pruneFavoritesAgainstProducts();
+      renderNav();
+      renderCatalog();
+      renderFilterSidebar();
+      updateFilterBadge();
+      updateCartUI();
+      if(modalProductId) updateModalPriceDisplay(); // ลูกค้าเปิดหน้าสินค้าค้างไว้ระหว่างรอ — อัปเดตกล่องราคาให้ด้วย
+      return;
+    }catch(err){
+      console.warn('ใช้ข้อมูลที่ตามโหลดมาไม่สำเร็จ:', err);
+    }
+  }
+  // ลองครบแล้วยังไม่ได้ — เลิกโชว์ "กำลังโหลด" แล้วกลับไปข้อความให้ถามราคาทางเพจ
+  setPricesPending(false);
+  renderCatalog();
+  if(modalProductId) updateModalPriceDisplay();
 }
 
 /* ขั้นตอนหลังได้ข้อมูลสินค้ามาแล้ว ใช้ร่วมกันทั้งทาง Firestore และ products.json */

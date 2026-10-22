@@ -1551,6 +1551,12 @@ footer{
 .prices-hidden .price-off{display:inline;}
 
 .price-notice{display:none;}
+/* กำลังโหลดราคา (Firestore ตอบช้า) — ซ่อนแถบ "ร้านยังไม่แสดงราคา" ไว้ก่อน จะได้ไม่เข้าใจผิดว่าร้านปิดราคา */
+.prices-pending .price-notice{display:none !important;}
+@media (prefers-reduced-motion:no-preference){
+  .prices-pending .price.price-ask{animation:priceLoadingPulse 1.4s ease-in-out infinite;}
+}
+@keyframes priceLoadingPulse{0%,100%{opacity:1;}50%{opacity:.45;}}
 .prices-hidden .price-notice{
   display:flex; align-items:center; gap:12px;
   max-width:1180px; margin:12px auto 0; padding:12px 16px;
