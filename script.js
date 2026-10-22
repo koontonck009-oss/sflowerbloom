@@ -482,7 +482,7 @@ function handleSearch(v){
   const clearBtn = document.getElementById('searchClearBtn');
   if(clearBtn) clearBtn.style.display = searchQuery ? 'flex' : 'none';
   renderCatalog();
-  renderSearchSuggestions();
+  if(searchQuery) revealSearchResults();
 }
 function clearSearch(){
   searchQuery = '';
@@ -491,87 +491,157 @@ function clearSearch(){
   const clearBtn = document.getElementById('searchClearBtn');
   if(clearBtn) clearBtn.style.display = 'none';
   renderCatalog();
-  hideSearchSuggestions();
 }
-// รวมทุกฟิลด์ที่ควรค้นหาเจอไว้เป็นสตริงเดียว (ชื่อ, คำอธิบาย, หมวดหมู่, ประเภทดอก, ชื่อสี/ไซซ์/ตัวเลือกเสริม/ตัวเลือกหลายมิติ)
-// แคชไว้ที่ตัวสินค้าเอง (_searchHaystack) เพราะ PRODUCTS ไม่เปลี่ยนระหว่างพิมพ์ค้นหาแต่ละครั้ง
-function searchHaystack(p){
-  if(p._searchHaystack) return p._searchHaystack;
-  const parts = [p.name, p.desc, p.cat, p.flowerType];
-  if(p.colors) p.colors.forEach(c => {
-    parts.push(c.name);
-    if(c.addons) c.addons.forEach(a => parts.push(a.name));
-  });
-  if(p.sizes) p.sizes.forEach(s => parts.push(s.name));
+/* ---------- ระบบค้นหา (ระดับ "แบบ") ----------
+   หลักการ: สินค้าหนึ่งชิ้นมีหลายแบบ (สี/ตัวเลือก/ไซซ์) — คำค้นต้องครบ "ในแบบเดียวกัน" ไม่ใช่กระจายไปคนละแบบ
+   ข้อความที่ใช้เทียบของแต่ละแบบ = ข้อความส่วนกลางของสินค้า (ชื่อ, คำอธิบาย, หมวด, ชนิดดอก ฯลฯ) + ข้อความเฉพาะของแบบนั้น
+   เช่น "ใส่เงิน 10 ใบ" จะเจอเฉพาะสินค้าที่มีแบบ "ใส่เงิน 10 ใบ" จริง ไม่เจอสินค้าที่มีแค่ "ใส่เงิน 5 ใบ"
+   - ไม่สนตัวพิมพ์เล็ก/ใหญ่ ช่องว่าง (ใส่เงิน10ใบ = ใส่เงิน 10 ใบ) และเลขไทย
+   - เลขกับหน่วยที่พิมพ์ติดกัน/เว้นวรรค (10 ใบ, 5 ดอก, 15 ซม.) ถูกมองเป็นก้อนเดียว
+   - ตัวเลขต้องตรงเป๊ะ: 10 ไม่ไปเจอ 100 หรือ 5 ใน 15 และไม่ไปติดกับรหัสสินค้า เช่น S10
+   - คำพ้องความหมาย (SEARCH_SYNONYMS ด้านล่าง) แก้ไข/เพิ่มได้เอง ใส่เป็นกลุ่ม: คำในกลุ่มเดียวกันค้นแทนกันได้ */
+const SEARCH_SYNONYMS = [
+  ['ใส่เงิน', 'ช่อเงิน', 'ช่อแบงค์', 'ช่อแบงก์', 'ช่อธนบัตร', 'ช่อใส่แบงค์', 'ช่อใส่แบงก์'],
+  ['สตรอว์เบอร์รี่', 'สตรอเบอร์รี่', 'สตรอเบอรี่', 'สตรอว์เบอรี่', 'สตรอเบอร์รี', 'สตอเบอรี่', 'strawberry'],
+  ['ไฮเดรนเยีย', 'ไฮเดรนเจีย', 'ไฮเดรนจา', 'ไฮเดรนเยีย', 'hydrangea'],
+  ['กุหลาบ', 'rose'],
+  ['ทานตะวัน', 'sunflower'],
+  ['ทิวลิป', 'tulip'],
+  ['แกะ', 'ตุ๊กตาแกะ'],
+];
+const SEARCH_UNITS = new Set(['ใบ','ดอก','ช่อ','ชิ้น','ก้าน','ชุด','ลูก','กล่อง','อัน','ซม','ซม.','cm','นิ้ว','บาท','฿']);
+const SEARCH_SEP = '|'; // คั่นระหว่างฟิลด์ กันคำค้นข้ามฟิลด์ (จะไม่ถูกลบตอนตัดช่องว่าง)
+
+function srchNorm(str){
+  return String(str == null ? '' : str).normalize('NFC').toLowerCase()
+    .replace(/[\u0E50-\u0E59]/g, d => String.fromCharCode(d.charCodeAt(0) - 0x0E50 + 48)) // เลขไทย → เลขอารบิก
+    .replace(/[\u200b-\u200d\ufeff]/g, '');
+}
+function srchSquash(str){ return srchNorm(str).replace(/\s+/g, ''); }
+
+// ข้อความของสินค้าแบ่งเป็น 3 ชั้น (เก็บแคชไว้ที่ตัวสินค้า)
+//  1) ชื่อ/หมวด/ชนิดดอก  — ใช้ร่วมกันทุกแบบ และเชื่อถือได้ (เช่น ชื่อ "...ใส่เงิน - RM01")
+//  2) ข้อความเฉพาะของแบบนั้นๆ (สี/ตัวเลือก/ไซซ์ เช่น "ใส่เงิน 10 ใบ")
+//  3) คำอธิบาย/ชื่อตัวเลือก — เป็นข้อความอธิบายกว้างๆ ของสินค้า บางทีพูดถึงหลายแบบพร้อมกัน
+//     (เช่น "ซองใส่เงิน มี 2 แบบ: 5 ใบ / 10 ใบ") จึงห้ามใช้ตัดสินแทนแบบ ถ้าคำนั้นมีอยู่ในข้อความของแบบอยู่แล้ว
+function searchNameText(p){
+  if(p._srchName != null) return p._srchName;
+  p._srchName = [p.name, p.cat, p.flowerType].filter(Boolean).map(srchSquash).join(SEARCH_SEP);
+  return p._srchName;
+}
+function searchDescText(p){
+  if(p._srchDesc != null) return p._srchDesc;
+  const parts = [p.desc];
+  if(p.options) p.options.forEach(o => parts.push(o.name));
   if(p.addons) p.addons.forEach(a => parts.push(a.name));
-  if(p.options) p.options.forEach(o => {
-    parts.push(o.name);
-    if(o.values) o.values.forEach(v => parts.push(v));
-  });
-  const hay = parts.filter(Boolean).join(' ').toLowerCase();
-  p._searchHaystack = hay;
-  return hay;
+  // สินค้าแบบสี: ไซซ์เป็นตัวเลือกร่วมของทุกสี
+  if(p.colors && p.colors.length && p.sizes) p.sizes.forEach(z => parts.push(z.name));
+  p._srchDesc = parts.filter(Boolean).map(srchSquash).join(SEARCH_SEP);
+  return p._srchDesc;
 }
-// ค้นหาแบบหลายคำ ไม่สนลำดับ — ทุกคำที่พิมพ์ต้องเจอในฟิลด์ใดฟิลด์หนึ่งของสินค้า (ไม่ต้องติดกัน ไม่ต้องเรียงตามที่พิมพ์)
+// ข้อความเฉพาะของแบบหนึ่งๆ (v = { colorIndex | optionIndex | sizeIndex } หรือไม่มี index = ทั้งสินค้า)
+function searchVariantText(p, v){
+  const out = [];
+  const addColor = c => { if(!c) return; out.push(c.name); (c.addons || []).forEach(a => out.push(a.name)); };
+  const addOpt = pv => { if(!pv) return; out.push((pv.match || []).join(' ')); if(pv.tag) out.push(pv.tag); };
+  const addSize = z => { if(!z) return; out.push(z.name); if(z.tag) out.push(z.tag); };
+  if(v && v.colorIndex != null && p.colors && p.colors[v.colorIndex]) addColor(p.colors[v.colorIndex]);
+  else if(v && v.optionIndex != null && hasNewOptions(p)) addOpt(p.variants[v.optionIndex]);
+  else if(v && v.sizeIndex != null && p.sizes) addSize(p.sizes[v.sizeIndex]);
+  else {
+    // ไม่ได้ระบุแบบ = ทั้งสินค้า → รวมทุกแบบเข้าด้วยกัน (ผ่านถ้าแบบไหนก็ตามมีคำนั้น)
+    if(p.colors) p.colors.forEach(addColor);
+    if(hasNewOptions(p)) p.variants.forEach(addOpt);
+    if(p.sizes) p.sizes.forEach(addSize);
+  }
+  return out.filter(Boolean).map(srchSquash).join(SEARCH_SEP);
+}
+function searchVarKey(v){
+  return v ? (v.colorIndex != null ? 'c' + v.colorIndex : v.optionIndex != null ? 'o' + v.optionIndex : v.sizeIndex != null ? 's' + v.sizeIndex : 'all') : 'all';
+}
+function searchVarHay(p, v){
+  const cache = p._srchVar || (p._srchVar = {});
+  const key = searchVarKey(v);
+  if(cache[key] == null) cache[key] = searchVariantText(p, v);
+  return cache[key];
+}
+// คำนี้มีอยู่ในข้อความของ "แบบ" ใดแบบหนึ่งของสินค้าไหม (ถ้ามี = ต้องตัดสินที่ระดับแบบ ห้ามไปพึ่งคำอธิบาย)
+function tokenInAnyVariant(p, alts){
+  const cache = p._srchAny || (p._srchAny = {});
+  const key = alts.join('\u0001');
+  if(cache[key] == null) cache[key] = allVariantsOf(p).some(v2 => alts.some(a => srchFind(searchVarHay(p, v2), a)));
+  return cache[key];
+}
+// แปลงคำค้นเป็นรายการ "ก้อนคำ" (แต่ละก้อนมีทางเลือกคำพ้อง) — คำนวณใหม่เฉพาะตอนคำค้นเปลี่ยน
+let _srchParsedFor = null, _srchParsed = [];
+function parseSearchQuery(q){
+  if(_srchParsedFor === q) return _srchParsed;
+  const raw = srchNorm(q).split(/\s+/).filter(Boolean);
+  const toks = [];
+  for(let i = 0; i < raw.length; i++){
+    const t = raw[i];
+    // เลข + หน่วย (เช่น "10" "ใบ") รวมเป็นก้อนเดียว "10ใบ"
+    if(/^\d+$/.test(t) && i + 1 < raw.length && SEARCH_UNITS.has(raw[i + 1])){ toks.push(t + raw[i + 1]); i++; }
+    else toks.push(t);
+  }
+  _srchParsed = toks.map(t => {
+    const alts = [t];
+    SEARCH_SYNONYMS.forEach(g => { if(g.map(srchSquash).includes(t)) g.forEach(w => alts.push(srchSquash(w))); });
+    return [...new Set(alts)];
+  });
+  _srchParsedFor = q;
+  return _srchParsed;
+}
+// หา tok ใน hay โดยตัวเลขต้องตรงเป๊ะ (ไม่ติดเลขอื่น / ไม่ติดตัวอักษรอังกฤษนำหน้า เช่น S10)
+function srchFind(hay, tok){
+  let from = 0;
+  const startsDigit = /\d/.test(tok[0]), endsDigit = /\d/.test(tok[tok.length - 1]);
+  for(;;){
+    const i = hay.indexOf(tok, from);
+    if(i < 0) return false;
+    let ok = true;
+    if(startsDigit && i > 0 && /[0-9a-z]/.test(hay[i - 1])) ok = false;
+    const nx = hay[i + tok.length];
+    if(ok && endsDigit && nx && /\d/.test(nx)) ok = false;
+    if(ok) return true;
+    from = i + 1;
+  }
+}
+// เลข+หน่วยที่เป็น "จำนวนใบเงิน" (เช่น 10ใบ) ใช้เทียบกับชื่อและแบบเท่านั้น ไม่ดูคำอธิบาย
+// เพราะคำอธิบายมักเขียนรวมทุกแบบไว้ เช่น "มี 2 แบบ 5 ใบ / 10 ใบ" ทำให้ทุกแบบหลุดเข้าผลค้นหา
+const SEARCH_VARIANT_ONLY = /^\d+ใบ$/;
+// แบบนี้ตรงกับคำค้นไหม (ไม่มีคำค้น = ผ่านทุกแบบ) — ทุกก้อนคำต้องผ่านพร้อมกันในแบบเดียวกัน
+function variantMatchesSearch(p, v){
+  if(!searchQuery) return true;
+  const toks = parseSearchQuery(searchQuery);
+  if(!toks.length) return true;
+  const nameHay = searchNameText(p), varHay = searchVarHay(p, v);
+  return toks.every(alts => {
+    if(alts.some(a => srchFind(nameHay, a) || srchFind(varHay, a))) return true;   // อยู่ในชื่อ หรือในแบบนี้
+    if(alts.some(a => SEARCH_VARIANT_ONLY.test(a))) return false;                    // จำนวนใบ: ห้ามพึ่งคำอธิบาย
+    if(tokenInAnyVariant(p, alts)) return false;                                      // แบบอื่นมีคำนี้ แต่แบบนี้ไม่มี
+    const descHay = searchDescText(p);                                                // คำทั่วไปของสินค้า (เช่น ผ้าซาติน)
+    return alts.some(a => srchFind(descHay, a));
+  });
+}
+// สินค้าผ่านเมื่อมีอย่างน้อย 1 แบบที่ตรงทุกคำ
 function matchesSearch(p){
   if(!searchQuery) return true;
-  const words = searchQuery.toLowerCase().split(/\s+/).filter(Boolean);
-  const hay = searchHaystack(p);
-  return words.every(w => hay.includes(w));
+  return allVariantsOf(p).some(v => variantMatchesSearch(p, v));
 }
-
-/* ---------- Search suggestions dropdown ---------- */
-let searchSuggestOpen = false;
-const SEARCH_SUGGEST_LIMIT = 6;
-function priceLabelFor(p){
-  if(PRICES_HIDDEN) return PRICE_ASK_SHORT;
-  const startsFrom = (p.sizes && p.sizes.length > 1 && new Set(p.sizes.map(z => z.price)).size > 1) || optionPricesVary(p);
-  return (startsFrom ? 'เริ่มต้น ' : '') + fmt(displayPrice(p));
+// ไม่มีรายการดรอปดาวน์แล้ว — ผลอยู่ในรายการสินค้าด้านล่างโดยตรง จึงพาหน้าเลื่อนลงไปให้เห็นผล
+// (เลื่อนเฉพาะตอนที่รายการสินค้ายังอยู่ใต้จอ ถ้าลูกค้าเลื่อนอยู่ในรายการแล้วจะไม่ดึงหน้ากลับ)
+function revealSearchResults(){
+  const el = document.getElementById('catalog');
+  if(!el) return;
+  if(el.getBoundingClientRect().top > stickyOffset() + 40) scrollToCatalogTop();
 }
-function handleSearchFocus(){
-  if(searchQuery) renderSearchSuggestions();
+// กด Enter / ปุ่มค้นหาบนคีย์บอร์ดมือถือ: ปิดคีย์บอร์ดเพื่อให้เห็นผล แล้วเลื่อนไปที่รายการสินค้า
+function handleSearchSubmit(){
+  const input = document.getElementById('searchInput');
+  if(input) input.blur();
+  if(searchQuery) scrollToCatalogTop();
 }
-function renderSearchSuggestions(){
-  const box = document.getElementById('searchSuggest');
-  if(!box) return;
-  if(!searchQuery){
-    box.innerHTML = '';
-    box.classList.remove('open');
-    searchSuggestOpen = false;
-    return;
-  }
-  const allMatches = PRODUCTS.filter(matchesSearch);
-  const matches = allMatches.slice(0, SEARCH_SUGGEST_LIMIT);
-  if(!matches.length){
-    box.innerHTML = `<div class="search-suggest-empty">ไม่พบสินค้าที่ตรงกับ "${searchQuery}"</div>`;
-  } else {
-    const moreCount = allMatches.length - matches.length;
-    box.innerHTML = matches.map(p => `
-      <button type="button" class="search-suggest-item" onmousedown="event.preventDefault(); selectSearchSuggestion('${p.id}')">
-        <span class="search-suggest-thumb">${renderThumb(p)}</span>
-        <span class="search-suggest-info">
-          <span class="search-suggest-name">${p.name}</span>
-          <span class="search-suggest-price">${priceLabelFor(p)}</span>
-        </span>
-      </button>
-    `).join('') + (moreCount > 0 ? `<div class="search-suggest-more">และอีก ${moreCount} รายการด้านล่าง</div>` : '');
-  }
-  box.classList.add('open');
-  searchSuggestOpen = true;
-}
-function selectSearchSuggestion(id){
-  hideSearchSuggestions();
-  openProductModal(id);
-}
-function hideSearchSuggestions(){
-  const box = document.getElementById('searchSuggest');
-  if(box) box.classList.remove('open');
-  searchSuggestOpen = false;
-}
-// ปิด dropdown เมื่อคลิกนอกกรอบค้นหา (กันเคสคลิกที่ไม่ได้ทำให้ input เสีย focus จริงๆ เช่นคลิกพื้นหลัง)
-document.addEventListener('click', (e) => {
-  if(searchSuggestOpen && !e.target.closest('.search-wrap')) hideSearchSuggestions();
-});
 
 function toggleReadyOnly(checked){
   showReadyOnly = checked;
@@ -767,6 +837,7 @@ function variantMatchesOneSize(p, v, sizeFilter){
 }
 // opts = { range:{min,max}, sizes:Set, readyOnly, favOnly }
 function variantPasses(p, v, opts){
+  if(!variantMatchesSearch(p, v)) return false;
   const price = variantPriceOf(p, v);
   if(price < opts.range.min || price > opts.range.max) return false;
   if(!variantMatchesSizeFilter(p, v, opts.sizes)) return false;
@@ -1482,7 +1553,7 @@ function renderProductCard(p, variant, narrow){
     priceHtml = fmt(variantSize.price);
   } else {
     thumbHtml = renderThumb(p);
-    if(narrow && narrow.passing.length && narrow.passing.length < narrow.total && hasNewOptions(p) && activeSizes.size){
+    if(narrow && narrow.passing.length && narrow.passing.length < narrow.total && hasNewOptions(p) && (activeSizes.size || searchQuery)){
       // รูปการ์ด = รูปของแบบที่ผ่านกรองและราคาถูกสุด (ไม่ใช่แบบแรกของสินค้าซึ่งอาจเป็นช่อปกติ)
       const idxs = narrow.passing.filter(x => x.optionIndex != null).map(x => x.optionIndex);
       if(idxs.length){
@@ -1490,12 +1561,17 @@ function renderProductCard(p, variant, narrow){
         thumbHtml = renderThumb(p, best.match.join(', '));
       }
     }
-    if(narrow && narrow.passing.length && narrow.passing.length < narrow.total && p.sizes && p.sizes.length && !hasNewOptions(p) && !(p.colors && p.colors.length) && activeSizes.size){
+    if(narrow && narrow.passing.length && narrow.passing.length < narrow.total && p.sizes && p.sizes.length && !hasNewOptions(p) && !(p.colors && p.colors.length) && (activeSizes.size || searchQuery)){
       const sidx = narrow.passing.filter(x => x.sizeIndex != null).map(x => x.sizeIndex);
       if(sidx.length){
         const bestSize = sidx.map(i => p.sizes[i]).reduce((a,b) => (b.price < a.price ? b : a));
         thumbHtml = renderThumb(p, bestSize.name);
       }
+    }
+    if(narrow && searchQuery && narrow.passing.length && narrow.passing.length < narrow.total && p.colors && p.colors.length){
+      // ค้นหาเจอแค่บางสีของสินค้านี้ — รูปการ์ดใช้รูปสีแรกที่ตรงกับคำค้น
+      const cidx = narrow.passing.filter(x => x.colorIndex != null).map(x => x.colorIndex);
+      if(cidx.length && p.colors[cidx[0]]) thumbHtml = renderThumb(p, p.colors[cidx[0]].name);
     }
     if(narrow && narrow.passing.length && narrow.passing.length < narrow.total){
       // ตัวกรองเหลือแค่บางแบบของสินค้านี้ — โชว์ราคาจากแบบที่ผ่านกรองเท่านั้น (ไม่ใช่ราคาเริ่มต้นของทั้งสินค้า)
@@ -1609,10 +1685,10 @@ function renderCatalog(){
         const hasIdx = only && (only.colorIndex != null || only.optionIndex != null || only.sizeIndex != null);
         if(e.passing.length === 1 && e.total > 1 && hasIdx) return renderProductCard(e.p, only);
         // ตัวกรองขนาด (เช่น ใส่เงิน) บีบเหลือบางแบบ — จำไว้ว่าแบบไหนผ่าน เพื่อให้รูปบนการ์ดและหน้าสินค้าตรงกับตัวกรอง
-        if(activeSizes.size && hasNewOptions(e.p) && e.passing.length < e.total){
+        if((activeSizes.size || searchQuery) && hasNewOptions(e.p) && e.passing.length < e.total){
           cardNarrowByProduct[e.p.id] = e.passing.filter(x => x.optionIndex != null).map(x => x.optionIndex);
         }
-        if(activeSizes.size && e.p.sizes && e.p.sizes.length && !hasNewOptions(e.p) && !(e.p.colors && e.p.colors.length) && e.passing.length < e.total){
+        if((activeSizes.size || searchQuery) && e.p.sizes && e.p.sizes.length && !hasNewOptions(e.p) && !(e.p.colors && e.p.colors.length) && e.passing.length < e.total){
           cardNarrowSizesByProduct[e.p.id] = e.passing.filter(x => x.sizeIndex != null).map(x => x.sizeIndex);
         }
         return renderProductCard(e.p, undefined, e);

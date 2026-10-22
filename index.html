@@ -56,9 +56,8 @@
   <span class="brand-name" id="brandName">S.Flower Bloom</span>
   <div class="search-wrap">
     <svg viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-    <input type="text" id="searchInput" class="search-input" placeholder="ค้นหาสินค้า เช่น กุหลาบ, กรอบรูป..." oninput="handleSearch(this.value)" onfocus="handleSearchFocus()" onkeydown="if(event.key==='Escape') hideSearchSuggestions();" autocomplete="off">
+    <input type="text" id="searchInput" class="search-input" placeholder="ค้นหาสินค้า เช่น กุหลาบ, กรอบรูป..." oninput="handleSearch(this.value)" onkeydown="if(event.key==='Enter'){ event.preventDefault(); handleSearchSubmit(); }" enterkeyhint="search" autocomplete="off">
     <button type="button" class="search-clear" id="searchClearBtn" style="display:none;" onclick="clearSearch()" aria-label="ล้างคำค้นหา">✕</button>
-    <div class="search-suggest" id="searchSuggest"></div>
   </div>
   <button class="cart-btn-top" onclick="openCart()" aria-label="ตะกร้าสินค้า">
     🧺
