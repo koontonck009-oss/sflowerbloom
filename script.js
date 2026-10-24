@@ -14,6 +14,16 @@ const PAGE_LINK = 'https://m.me/S.Flower.Bloom44';
    จะแสดงราคาก็ต่อเมื่ออ่านเอกสารจาก Firestore ได้สำเร็จ และหลังบ้านไม่ได้เปิดสวิตช์ซ่อนราคาไว้ */
 let PRICES_HIDDEN = true;
 let cloudHidePrices = true;   // ค่าที่อ่านได้ล่าสุดจาก Firestore
+/* ---------- โหมดปิดระบบสั่งทำ/ตะกร้า (สวิตช์ "ปิดระบบสั่งทำ / ตะกร้า" ที่หลังบ้าน) ----------
+   ยังแสดงราคาตามปกติ แต่ปิดตะกร้า/ปุ่มสั่งทำ ให้ลูกค้าแคปหน้าจอแล้วทักเพจ
+   ค่าเริ่มต้น = ไม่ปิด (ต่างจากราคา) — อ่านค่าไม่ได้/เน็ตช้า ร้านจะได้ไม่เสียออเดอร์ */
+let ORDERS_CLOSED = false;
+let cloudOrderClosed = false; // ค่าที่อ่านได้ล่าสุดจาก Firestore (ช่อง orderClosed)
+function setOrdersClosed(v){
+  ORDERS_CLOSED = !!v;
+  document.documentElement.classList.toggle('orders-closed', ORDERS_CLOSED);
+}
+function ordersBlocked(){ return PRICES_HIDDEN || ORDERS_CLOSED; } // ปิดสั่งซื้อไม่ว่าด้วยเหตุผลใด (ซ่อนราคา หรือ ปิดสั่งทำ)
 let REVIEW_HIDDEN = new Set(); // รูปรีวิวที่ร้านลบออกจากเว็บ (ซ่อน) จากหลังบ้าน — ไม่แสดงในแถบรีวิว/รีวิวทั้งหมด/แกลเลอรีสินค้า
 let REVIEW_TAGS = {};         // ป้ายสินค้าของรูปรีวิว { 'review12.jpg': ['s13'] } จากหลังบ้าน (ช่อง reviewsJson) — ว่าง = รีวิวไม่ผูกสินค้า
 let cloudStamp = null;        // ตราเวลา+สถานะสวิตช์+เวลาแก้ตัวเลือกร้านล่าสุดจาก Firestore
@@ -2105,7 +2115,7 @@ function updateCartUI(){
 }
 
 function openCart(){
-  if(PRICES_HIDDEN) return;
+  if(ordersBlocked()) return;
   document.getElementById('drawer').classList.add('open');
   document.getElementById('overlay').classList.add('show');
   sfbCartItemsEnter();
@@ -2372,7 +2382,7 @@ function buildModalOrderLines(){
   return result;
 }
 function startCheckout(builderFn){
-  if(PRICES_HIDDEN) return;
+  if(ordersBlocked()) return;
   orderBuildBlockedMsgShown = false;
   const result = builderFn();
   if(!result){
@@ -2598,6 +2608,7 @@ function formatDateThai(dateStr){
 const DELIVERY_LABELS = { pickup:'นัดรับสินค้า (พยุหะ–ตัวเมืองนครสวรรค์และใกล้เคียง)', parcel:'ส่งพัสดุ (ต่างจังหวัด)', unsure:'ยังไม่แน่ใจ' };
 const PAYMENT_LABELS = { full:'โอนเต็มยอด', deposit:'มัดจำ 50% ส่วนที่เหลือชำระวันทำช่อดอกไม้เสร็จ', cod:'เก็บเงินปลายทาง (COD)' };
 async function confirmOrderSubmit(){
+  if(ordersBlocked()) return; // ปิดสั่งทำ/ซ่อนราคาไปแล้ว (เช่นหน้ารีโหลดตามสถานะใหม่) — ไม่ส่งออเดอร์ต่อ
   const editInput = document.getElementById('fbNameEditInput');
   const fbName = editInput ? editInput.value.trim() : customerFbName;
   if(!fbName){
@@ -3176,7 +3187,7 @@ function updateModalPriceDisplay(){
 // ถ้ายังเลือกตัวเลือกไม่ครบ จะบอกว่าต้องเลือกอะไรต่อ แทนที่จะรอให้กดปุ่มแล้วค่อยเจอข้อความเตือน
 function renderModalBar(p){
   const el = document.getElementById('mabInfo');
-  if(!el || !p || PRICES_HIDDEN) return;
+  if(!el || !p || ordersBlocked()) return;
   let text = '', total = '', need = false;
   if(hasNewOptions(p) && !hasFullOptionSelection(p, currentOptionSelection(p))){
     const sel = currentOptionSelection(p);
@@ -3233,7 +3244,7 @@ function currentModalVariant(p){
   return { label, unitPrice };
 }
 function addModalToCart(){
-  if(PRICES_HIDDEN) return;
+  if(ordersBlocked()) return;
   const p = PRODUCTS.find(x=>x.id===modalProductId);
   if(!p) return;
   if(warnIfInvalidOptionSelection(p)) return;
@@ -3267,6 +3278,7 @@ async function fetchProductsFromFirestore(){
   if(!snap.exists()) return null;
   const data = snap.data() || {};
   cloudHidePrices = data.hidePrices === true;
+  cloudOrderClosed = data.orderClosed === true;
   cloudOptions = null;
   try{ if(typeof data.optionsJson === 'string') cloudOptions = JSON.parse(data.optionsJson); }catch(_){ cloudOptions = null; }
   REVIEW_TAGS = {};
@@ -3284,7 +3296,7 @@ async function fetchProductsFromFirestore(){
   }catch(_){ REVIEW_TAGS = {}; REVIEW_HIDDEN = new Set(); }
   SITE_CFG = null;
   try{ if(typeof data.siteJson === 'string'){ const s = JSON.parse(data.siteJson); if(s && typeof s === 'object') SITE_CFG = s; } }catch(_){ SITE_CFG = null; }
-  cloudStamp = String(data.updatedAt || '') + '|' + cloudHidePrices + '|' + String(data.optionsUpdatedAt || '') + '|' + String(data.reviewsUpdatedAt || '') + '|' + String(data.siteUpdatedAt || '');
+  cloudStamp = String(data.updatedAt || '') + '|' + cloudHidePrices + '|' + cloudOrderClosed + '|' + String(data.optionsUpdatedAt || '') + '|' + String(data.reviewsUpdatedAt || '') + '|' + String(data.siteUpdatedAt || '');
   const list = typeof data.json === 'string' ? JSON.parse(data.json) : data.list;
   return (Array.isArray(list) && list.length) ? list : null;
 }
@@ -3383,6 +3395,7 @@ async function loadProductsInner(){
       PRODUCTS = fromCloud;
       applyShopOptions(cloudOptions);
       setPricesHidden(cloudHidePrices);
+      setOrdersClosed(cloudOrderClosed);
       applySiteSettings(SITE_CFG);
       CATALOG_DOC_STAMP = cloudStamp;
       finishLoadingProducts();
@@ -3434,6 +3447,7 @@ async function loadPricesLate(firstPromise){
       PRODUCTS = list;
       applyShopOptions(cloudOptions);
       setPricesHidden(cloudHidePrices);
+      setOrdersClosed(cloudOrderClosed);
       CATALOG_DOC_STAMP = cloudStamp;
       setPricesPending(false);
       PRODUCTS = PRODUCTS.filter(p => !(p && p.hidden));

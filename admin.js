@@ -15,6 +15,7 @@ let fb = null;           // { auth, db, authApi, dbApi }
 let catalog = [];        // รายการสินค้าทั้งหมด
 let reviewHidden = new Set(); // รูปรีวิวที่ "ลบออกจากเว็บ" (ซ่อน) เก็บในช่อง reviewsJson คีย์ __hidden
 let reviewTags = {};      // ป้ายสินค้าของรูปรีวิว { 'review12.jpg': ['s13'] } เก็บในเอกสารเดียวกับสินค้า (ช่อง reviewsJson)
+let ordersClosed = false; // สวิตช์ "ปิดระบบสั่งทำ/ตะกร้า" (เก็บในเอกสารเดียวกัน ช่อง orderClosed) — ยังแสดงราคา แต่ลูกค้าสั่งผ่านเว็บไม่ได้
 let pricesHidden = false; // สวิตช์ "ซ่อนราคาบนหน้าร้าน" (เก็บในเอกสาร catalog/products ช่อง hidePrices)
 let draft = null;        // สินค้าที่กำลังแก้ไขอยู่
 let draftIndex = -1;     // -1 = สินค้าใหม่
@@ -292,6 +293,7 @@ async function loadCatalog(){
       const list = typeof data.json === 'string' ? JSON.parse(data.json) : data.list;
       catalog = Array.isArray(list) ? list : [];
       pricesHidden = data.hidePrices === true;
+      ordersClosed = data.orderClosed === true;
       let opts = null;
       try{ if(typeof data.optionsJson === 'string') opts = JSON.parse(data.optionsJson); }catch(_){ opts = null; }
       applyShopOptions(opts);
@@ -304,6 +306,7 @@ async function loadCatalog(){
       siteCfgSaved = null;
       catalog = [];
       pricesHidden = false;
+      ordersClosed = false;
       applyShopOptions(null);
     }
     applyPricesHiddenUI(true);
@@ -357,6 +360,58 @@ function applyPricesHiddenUI(ready){
   $('priceSwitchHint').textContent = pricesHidden
     ? 'เปิดอยู่ — หน้าร้านไม่แสดงราคา และปิดตะกร้า/การสั่งซื้อ ลูกค้าต้องแคปหน้าจอแล้วทักเพจ (ปุ่มภาพแคตตาล็อกถูกซ่อนไว้)'
     : 'ปิดอยู่ — หน้าร้านแสดงราคาตามปกติ';
+  applyOrdersClosedUI(ready);
+}
+
+/* ───────────────── สวิตช์ปิดระบบสั่งทำ/ตะกร้า (ยังแสดงราคา) ───────────────── */
+
+function applyOrdersClosedUI(ready){
+  const btn = $('closeOrdersBtn');
+  if(!btn) return;
+  $('orderSwitch').classList.toggle('is-on', ordersClosed);
+  btn.setAttribute('aria-checked', String(ordersClosed));
+  if(ready) btn.disabled = false;
+  let hint;
+  if(ordersClosed){
+    hint = 'เปิดอยู่ — หน้าร้านปิดตะกร้า/ปุ่มสั่งทำ แต่ยังแสดงราคา ลูกค้าแคปหน้าจอแล้วทักเพจเพื่อสอบถามรายละเอียดได้';
+    if(pricesHidden) hint += ' (ตอนนี้ซ่อนราคาอยู่ด้วย หน้าร้านจึงยังไม่แสดงราคา จนกว่าจะปิดสวิตช์ซ่อนราคา)';
+  } else {
+    hint = 'ปิดอยู่ — ลูกค้าใส่ตะกร้าและสั่งทำผ่านหน้าร้านได้ตามปกติ';
+    if(pricesHidden) hint += ' (ตอนนี้ซ่อนราคาอยู่ จึงปิดตะกร้า/การสั่งซื้อไปพร้อมกันแล้ว)';
+  }
+  $('orderSwitchHint').textContent = hint;
+}
+
+async function toggleOrdersClosed(){
+  const next = !ordersClosed;
+  const ok = await askConfirm(
+    next ? 'ปิดระบบสั่งทำ/ตะกร้า?' : 'เปิดระบบสั่งทำ/ตะกร้าอีกครั้ง?',
+    next
+      ? 'ลูกค้าจะยังเห็นราคา แต่ใส่ตะกร้าและสั่งทำผ่านหน้าเว็บไม่ได้ (ต้องแคปหน้าจอแล้วทักเพจ) สินค้าและราคาที่ตั้งไว้ไม่หายไปไหน'
+      : 'หน้าร้านจะกลับมาเปิดตะกร้าและปุ่มสั่งทำตามปกติ',
+    next ? 'ปิดสั่งทำ' : 'เปิดสั่งทำ'
+  );
+  if(!ok) return;
+  const btn = $('closeOrdersBtn');
+  btn.disabled = true;
+  setSaveState('กำลังบันทึก…', 'is-saving');
+  try{
+    await fb.dbApi.setDoc(catalogRef(), {
+      orderClosed: next,
+      orderClosedUpdatedAt: new Date().toISOString()
+    }, { merge: true });
+    ordersClosed = next;
+    applyOrdersClosedUI(true);
+    setSaveState('บันทึกแล้ว · หน้าร้านอัปเดตทันที');
+    toast(next ? 'ปิดระบบสั่งทำ/ตะกร้าแล้ว' : 'เปิดระบบสั่งทำ/ตะกร้าแล้ว');
+  } catch(err){
+    btn.disabled = false;
+    setSaveState('บันทึกไม่สำเร็จ', 'is-error');
+    toast(err.code === 'permission-denied'
+      ? 'บันทึกไม่ได้: กฎความปลอดภัยของ Firestore ยังไม่อนุญาตให้เพิ่มช่อง orderClosed'
+      : 'บันทึกไม่สำเร็จ: ' + (err.code || err.message), true);
+    console.error(err);
+  }
 }
 
 async function togglePricesHidden(){
@@ -3633,6 +3688,7 @@ $('catChips').addEventListener('click', e => {
 
 $('addBtn').addEventListener('click', () => openEditor(-1));
 $('hidePricesBtn').addEventListener('click', togglePricesHidden);
+$('closeOrdersBtn').addEventListener('click', toggleOrdersClosed);
 $('catalogBtn').addEventListener('click', () => {
   const list = catalogTargets();
   const stamp = new Date().toISOString().slice(0, 10);

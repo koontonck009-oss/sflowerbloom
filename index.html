@@ -136,6 +136,13 @@
   <a class="pn-btn" href="https://m.me/S.Flower.Bloom44" target="_blank" rel="noopener">💬 ทักเพจ</a>
 </div>
 
+<!-- ข้อความตอนปิดระบบสั่งทำ/ตะกร้า แต่ยังแสดงราคา (แสดงเฉพาะเมื่อ <html> มีคลาส orders-closed และไม่ได้ซ่อนราคา) -->
+<div class="price-notice order-notice" id="orderNotice" role="note">
+  <span class="pn-ico" aria-hidden="true">📸</span>
+  <p><b>ตอนนี้ร้านปิดรับออเดอร์ผ่านหน้าเว็บชั่วคราว</b> สนใจสินค้าไหน <b>แคปหน้าจอสินค้านั้น</b> <span class="pn-more">(ให้เห็นชื่อสินค้า ตัวเลือกที่เลือก และราคา)</span> แล้วส่งให้เพจเพื่อสอบถามรายละเอียดเพิ่มเติมได้เลย</p>
+  <a class="pn-btn" href="https://m.me/S.Flower.Bloom44" target="_blank" rel="noopener">💬 ทักเพจ</a>
+</div>
+
 <nav class="cat-nav" id="catNav"></nav>
 
 <div class="catalog-layout">
@@ -276,12 +283,22 @@
         </div>
       </div>
       <hr class="pd-hr pd-hr-2">
+      <!-- ตอนปิดระบบสั่งทำ/ตะกร้า (ยังแสดงราคา): แทนที่ปุ่มใส่ตะกร้า/สั่งทำสินค้า -->
+      <div class="order-closed-box" id="orderClosedBox">
+        <div class="price-ask-text">📸 <b>ตอนนี้ปิดรับออเดอร์ผ่านหน้าเว็บชั่วคราว</b> สนใจสินค้านี้ <b>แคปหน้าจอ</b> (ให้เห็นชื่อสินค้า ตัวเลือกที่เลือก และราคา) แล้วส่งให้เพจเพื่อสอบถามรายละเอียดเพิ่มเติมได้เลยค่ะ</div>
+        <a class="price-ask-btn" href="https://m.me/S.Flower.Bloom44" target="_blank" rel="noopener">💬 ทักเพจสอบถาม</a>
+      </div>
       <div class="modal-actions modal-actions-mobile">
         <div class="mab-info" id="mabInfo"></div>
         <div class="mab-btns">
           <button class="add-btn secondary icon-only" onclick="addModalToCart()" aria-label="ใส่ตะกร้า">🧺</button>
           <button class="checkout-btn" onclick="startCheckout(buildModalOrderLines)">สั่งทำสินค้า</button>
         </div>
+      </div>
+      <!-- มือถือ ตอนปิดระบบสั่งทำ/ตะกร้า (ยังแสดงราคา): แถบติดล่างแทนแถบสั่งซื้อ -->
+      <div class="order-closed-bar" id="orderClosedBar">
+        <div class="ocb-text">📸 <b>ปิดรับออเดอร์ผ่านเว็บชั่วคราว</b><br>แคปหน้าจอนี้ส่งให้เพจได้เลยค่ะ</div>
+        <a class="ocb-btn" href="https://m.me/S.Flower.Bloom44" target="_blank" rel="noopener">💬 ทักเพจ</a>
       </div>
       <div class="modal-actions modal-actions-desktop">
         <button class="add-btn secondary" onclick="addModalToCart()">🧺 ใส่ตะกร้า</button>
