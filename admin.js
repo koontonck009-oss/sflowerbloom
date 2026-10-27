@@ -1428,6 +1428,42 @@ function renderPricePanel(){
 
 /* --- แท็บ 4: ของเสริม --- */
 
+// ของเสริมไม่ต้องอัปโหลดรูปใหม่: เลือกจากรูปที่มีอยู่แล้ว → เก็บเป็นพาธเดิม ไม่สร้างไฟล์ซ้ำ
+//  แถว 1 = รูปของสินค้านี้ (หลัก/แกลเลอรี/สี/ไซซ์/ตัวแปร/ของเสริมอื่น)
+//  แถว 2 = ของเสริมที่เคยใช้ในสินค้าอื่นของร้าน (ชื่อ + รูป ไม่ซ้ำ)
+// เว้นว่างได้ — ของเสริมที่ไม่มีรูปจะไม่เปลี่ยนรูปในแกลเลอรีหน้าร้าน
+function addonPickerHtml(path, current){
+  const cur = String(current || '').trim();
+  const seen = new Set(), own = [];
+  pdEveryImagePath().forEach(x => { const t = String(x || '').trim(); if(t && !seen.has(t)){ seen.add(t); own.push(t); } });
+  if(cur && !seen.has(cur)){ seen.add(cur); own.unshift(cur); }
+
+  const shared = [], sharedSeen = new Set(seen);
+  const takeAddon = a => {
+    const t = String((a && a.image) || '').trim();
+    if(!t || sharedSeen.has(t)) return;
+    sharedSeen.add(t);
+    shared.push({ src: t, name: String(a.name || '').trim() });
+  };
+  (Array.isArray(catalog) ? catalog : []).forEach(p => {
+    if(!p || p === draft) return;
+    (p.addons || []).forEach(takeAddon);
+    (p.colors || []).forEach(c => (c.addons || []).forEach(takeAddon));
+  });
+
+  const btn = (src, label) => `<button type="button" class="addon-pick-btn${src === cur ? ' is-on' : ''}" data-act="addon-pick" data-path="${esc(path)}" data-src="${esc(src)}" title="${esc(label || src)}">${thumbHtml(src, 'addon-pick-img')}</button>`;
+  const ownHtml = own.length
+    ? `<div class="addon-pick-grid">${own.map(src => btn(src)).join('')}</div>`
+    : '<p class="addon-pick-note">สินค้านี้ยังไม่มีรูป — ใช้รูปจากของเสริมสินค้าอื่นด้านล่าง หรือพิมพ์พาธเองในช่องด้านบน</p>';
+  const sharedHtml = shared.length ? `
+    <span class="addon-pick-label" style="margin-top:10px">ของเสริมที่เคยใช้ในสินค้าอื่น</span>
+    <div class="addon-pick-grid">${shared.map(o => `<span class="addon-pick-item">${btn(o.src, o.name || o.src)}<small>${esc(o.name)}</small></span>`).join('')}</div>` : '';
+  return `<div class="addon-pick">
+    <span class="addon-pick-label">เลือกจากรูปที่มีอยู่ (ไม่สร้างไฟล์ใหม่ · เว้นว่างได้)</span>
+    ${ownHtml}${sharedHtml}
+    ${cur ? `<div class="addon-pick-grid" style="margin-top:8px"><button type="button" class="addon-pick-clear" data-act="addon-pick" data-path="${esc(path)}" data-src="">ไม่ใช้รูป</button></div>` : ''}
+  </div>`;
+}
 function addonsEditorHtml(arr, pathPrefix, addAct, colorIndex){
   const list = arr || [];
   return `
@@ -1455,7 +1491,7 @@ function addonsEditorHtml(arr, pathPrefix, addAct, colorIndex){
           </label>
           ${thumbHtml(a.image)}
         </div>
-        ${pdRowDropHtml(`${pathPrefix}.${k}`, true)}
+        ${addonPickerHtml(`${pathPrefix}.${k}`, a.image)}
         <label class="check" style="margin:12px 0 0">
           <input type="checkbox" data-bind="${pathPrefix}.${k}.ready" data-type="bool"${a.ready ? ' checked' : ''}>
           <span>ทำแบบใส่ของเสริมนี้ไว้แล้ว พร้อมส่ง</span>
@@ -1662,6 +1698,15 @@ function onDraftClick(e){
       draft.colors[k].addons.push({ name:'', price:0, image:'' });
       renderPricePanel();
       return;
+    case 'addon-pick': {
+      const row = getPath(draft, path);
+      if(!row) return;
+      const src = btn.dataset.src || '';
+      if(src && row.image === src) row.image = ''; // กดรูปที่เลือกอยู่ซ้ำ = ยกเลิก
+      else row.image = src;
+      if(path.startsWith('colors.')) renderPricePanel(); else renderAddonsPanel();
+      return;
+    }
     case 'rm-addon': {
       const arr = getPath(draft, path) || [];
       arr.splice(k, 1);
