@@ -2749,20 +2749,30 @@ let modalSelectedAddons = new Set(); // ชื่อตัวเลือกเ�
 // Falls back to the selected color's own image, then the product-level images/image.
 // Existing products with just one "image" keep working unchanged — the
 // gallery/thumbnails simply don't appear when there's only one photo.
+// รวมรูปหลัก (image) + รูปเพิ่มเติม (images) เป็นลิสต์เดียว ตัดค่าว่าง/รูปซ้ำ
+// (หลังบ้านเก็บ images ของสินค้า/สี = เฉพาะรูปเพิ่มเติม แต่ของไซซ์/ตัวเลือกคู่ผสม = รวมรูปหลักแล้ว → ตัดซ้ำให้เหลือชุดเดียว)
+function photosOf(o){
+  const out = [];
+  [o && o.image].concat((o && Array.isArray(o.images)) ? o.images : []).forEach(function(s){
+    s = String(s == null ? '' : s).trim();
+    if(s && out.indexOf(s) < 0) out.push(s);
+  });
+  return out;
+}
 function productPhotoList(p){
   if(hasNewOptions(p)){
     // ยังไม่ได้เลือกตัวเลือกใดเลย = รูปแรกของแกลเลอรีใช้แบบปกติราคาถูกสุด (เหมือนรูปปกบนการ์ด) ไม่ใช่แถวแรกของลิสต์
     const v = currentOptionSelection(p).every(x => x == null) ? coverVariantOf(p) : currentVariant(p);
     if(v){
-      if(v.images && v.images.length) return v.images;
-      if(v.image) return [v.image];
+      const l = photosOf(v);
+      if(l.length) return l;
     }
   }
   if(p.sizes && p.sizes.length){
     const sv = p.sizes[selectedSizeVariant[p.id] || 0];
     if(sv){
-      if(sv.images && sv.images.length) return sv.images;
-      if(sv.image) return [sv.image];
+      const l = photosOf(sv);
+      if(l.length) return l;
     }
   }
   if(p.colors && p.colors.length){
@@ -2774,8 +2784,8 @@ function productPhotoList(p){
         const chosen = c.addons.find(a => modalSelectedAddons.has(a.name) && a.image);
         if(chosen) return [chosen.image];
       }
-      if(c.images && c.images.length) return c.images;
-      if(c.image) return [c.image];
+      const l = photosOf(c);
+      if(l.length) return l;
     }
   }
   // สินค้าที่ไม่มีสีเลยแต่มีตัวเลือกเสริมของตัวเอง (เช่น กรอบรูป + กล่องใส่กรอบรูป)
@@ -2783,9 +2793,7 @@ function productPhotoList(p){
     const chosen = p.addons.find(a => modalSelectedAddons.has(a.name) && a.image);
     if(chosen) return [chosen.image];
   }
-  if(p.images && p.images.length) return p.images;
-  if(p.image) return [p.image];
-  return [];
+  return photosOf(p);
 }
 /* รูปรีวิวลูกค้าที่หลังบ้านผูกกับสินค้านี้ (เรียงรูปล่าสุดก่อน) — ต่อท้ายแกลเลอรีเท่านั้น
    ไม่ใช่รูปปก/รูปในตะกร้า/ภาพแคตตาล็อก เพราะฟังก์ชันเหล่านั้นอ่านจาก image/images ของสินค้าโดยตรง */
