@@ -1731,24 +1731,29 @@ function renderCatalog(){
       <div style="text-align:center; padding:60px 20px; color:var(--rose-dark);">
         <p style="font-size:16px; font-weight:700; margin-bottom:6px;">ไม่พบสินค้าที่ตรงกับ "${searchQuery}"</p>
         <p style="font-size:13.5px; color:var(--plum);">ลองค้นหาด้วยคำอื่น หรือกดล้างคำค้นหาเพื่อดูสินค้าทั้งหมด</p>
+        <button type="button" class="empty-clear-btn" onclick="clearSearch()">ล้างคำค้นหา</button>
       </div>`;
   } else if(totalMatches === 0){
+    const noFav = showFavoritesOnly && favorites.size === 0; // เปิดโปรดแต่ยังไม่เคยกดหัวใจ → บอกวิธีใช้ ไม่ใช่ "ไม่พบสินค้า"
     main.innerHTML = `
       <div style="text-align:center; padding:60px 20px; color:var(--rose-dark);">
-        <p style="font-size:16px; font-weight:700; margin-bottom:6px;">ไม่พบสินค้าตามตัวกรองที่เลือก</p>
-        <p style="font-size:13.5px; color:var(--plum);">ลองล้างตัวกรอง หรือเลือกเงื่อนไขอื่นดูนะ</p>
+        <p style="font-size:16px; font-weight:700; margin-bottom:6px;">${noFav ? 'ยังไม่มีรายการโปรด' : 'ไม่พบสินค้าตามตัวกรองที่เลือก'}</p>
+        <p style="font-size:13.5px; color:var(--plum);">${noFav ? 'กดรูปหัวใจที่การ์ดสินค้าเพื่อเก็บไว้ดูทีหลังได้เลยนะ 🤍' : 'ลองล้างตัวกรอง หรือเลือกเงื่อนไขอื่นดูนะ'}</p>
+        <button type="button" class="empty-clear-btn" onclick="bnavClearAll()">ล้างตัวกรองทั้งหมด</button>
       </div>`;
   } else {
-    // แถบ "พบสินค้า N รายการ" แสดงเฉพาะจอคอม (ซ่อนบนมือถือด้วย CSS) ไว้เหนือกริดสินค้า
-    // ปุ่ม "โหลดแคตตาล็อก" ขึ้นเฉพาะตอนมีตัวกรอง/คำค้นหาทำงานอยู่ และมีสินค้าให้ทำรูปอย่างน้อย 1 ชิ้น (แถบนี้แสดงเฉพาะจอคอม)
+    // แถบ "พบสินค้า N รายการ" ไว้เหนือกริดสินค้า (จอคอมแสดงตลอด / มือถือแสดงเฉพาะตอนมีปุ่มโหลดแคตตาล็อก)
+    // ปุ่ม "โหลดแคตตาล็อก" ขึ้นเฉพาะตอนมีตัวกรอง/คำค้นหาทำงานอยู่ และมีสินค้าให้ทำรูปอย่างน้อย 1 ชิ้น (ทั้งคอมและมือถือ)
     const showDl = !PRICES_HIDDEN && (filtersAreActive(sidebarState()) || !!searchQuery) && catalogExportItems.length > 0;
     const dlBtnHtml = showDl
-      ? `<button type="button" class="catalog-dl-btn" id="catalogDlBtn" onclick="downloadCatalogImages()"${catalogExporting ? ' disabled' : ''}>📥 โหลดแคตตาล็อก (${catalogExportItems.length} รายการ)</button>`
+      ? `<button type="button" class="catalog-dl-btn" id="catalogDlBtn" onclick="downloadCatalogImages()"${catalogExporting ? ' disabled' : ''}>${catalogBtnLabel()}</button>`
       : '';
-    const resultsBarHtml = `<div class="catalog-results-bar"><span>พบสินค้า ${totalMatches} รายการ</span>${dlBtnHtml}</div>`;
+    // มือถือ: แถบนี้ขึ้นเฉพาะตอนมีปุ่มโหลด (class has-dl) ส่วนจอคอมขึ้นตลอดเหมือนเดิม
+    const resultsBarHtml = `<div class="catalog-results-bar${showDl ? ' has-dl' : ''}"><span>พบสินค้า ${totalMatches} รายการ</span>${dlBtnHtml}</div>`;
     main.innerHTML = resultsBarHtml + html;
   }
   setupScrollSpy();
+  if(typeof updateBottomNav === 'function') updateBottomNav(); // ชิปตัวกรอง/สถานะแถบล่างให้ตรงกับผลที่เพิ่งวาด (คำค้นเปลี่ยนก็ผ่านตรงนี้)
   sfbCatalogEnter(main);
 }
 
@@ -1789,7 +1794,7 @@ function catalogFilterSummary(){
   return parts.length ? parts.join(' · ') : 'สินค้าทั้งหมด';
 }
 
-function catalogLoadImage(src){
+function catalogLoadImage(src, timeoutMs){
   return new Promise(resolve => {
     if(!src) return resolve(null);
     const img = new Image();
@@ -1798,7 +1803,7 @@ function catalogLoadImage(src){
     img.crossOrigin = 'anonymous'; // รูปจากโดเมนอื่นที่ไม่เปิด CORS จะโหลดไม่ขึ้น → ใช้ช่องสำรองแทน (ไม่ให้ไฟล์ทั้งรูปพัง)
     img.onload = () => finish(img);
     img.onerror = () => finish(null);
-    setTimeout(() => finish(null), 10000);
+    setTimeout(() => finish(null), timeoutMs || 10000); // มือถือส่งเวลารอยาวกว่า (เน็ตมือถือช้า รูปจะได้ไม่หายจากแคตตาล็อก)
     img.src = src;
   });
 }
@@ -2006,10 +2011,81 @@ function catalogFileName(pageNo, pageCount){
   return `S.Flower Bloom_${base}_${n}-${pageCount}.jpg`;
 }
 
+// ---- มือถือ: หลังสร้างรูปเสร็จ เปิดหน้าต่างแสดงรูปทุกหน้า ให้บันทึกทีละรูป (หรือกดค้างที่รูป / บันทึกทั้งหมดผ่านเมนูแชร์) ----
+// เหตุผล: มือถือ (Chrome/Safari) ยอมให้ 1 การแตะ = 1 ไฟล์ ถ้าสั่งดาวน์โหลดหลายไฟล์ติดกันจะได้แค่ไฟล์แรก
+// จอคอมไม่เกี่ยว ยังดาวน์โหลดทีละไฟล์ตามเดิมทุกอย่าง
+function catalogIsMobile(){
+  try{ return matchMedia('(pointer: coarse)').matches && matchMedia('(max-width: 859px)').matches; }
+  catch(_){ return false; }
+}
+function catalogCanShareFiles(files){
+  try{ return typeof navigator.share === 'function' && typeof navigator.canShare === 'function' && navigator.canShare({ files }); }
+  catch(_){ return false; }
+}
+function catalogBtnLabel(){
+  return catalogIsMobile() ? '📥 โหลดแคตตาล็อก' : `📥 โหลดแคตตาล็อก (${catalogExportItems.length} รายการ)`;
+}
+let catalogSheetUrls = [];
+function closeCatalogSheet(){
+  const el = document.getElementById('catalogSheet');
+  if(el) el.remove();
+  catalogSheetUrls.forEach(u => URL.revokeObjectURL(u));
+  catalogSheetUrls = [];
+  document.documentElement.classList.remove('catalog-sheet-open');
+}
+function openCatalogSheet(files){
+  closeCatalogSheet();
+  const n = files.length;
+  catalogSheetUrls = files.map(f => URL.createObjectURL(f));
+  const canAll = n > 1 && catalogCanShareFiles(files);
+  const wrap = document.createElement('div');
+  wrap.id = 'catalogSheet';
+  wrap.className = 'catalog-sheet';
+  wrap.innerHTML =
+    '<div class="catalog-sheet-backdrop" data-close="1"></div>' +
+    '<div class="catalog-sheet-panel" role="dialog" aria-label="แคตตาล็อกพร้อมแล้ว">' +
+      '<div class="catalog-sheet-head">' +
+        '<div><b>แคตตาล็อกพร้อมแล้ว 🌸</b><span>' + n + ' รูป · กด "บันทึกรูปนี้" ทีละรูป หรือกดค้างที่รูปเพื่อบันทึกลงอัลบั้ม</span></div>' +
+        '<button type="button" class="catalog-sheet-x" data-close="1" aria-label="ปิด">✕</button>' +
+      '</div>' +
+      '<div class="catalog-sheet-list">' +
+        files.map((f, i) =>
+          '<figure class="catalog-sheet-item">' +
+            '<figcaption><span>หน้า ' + (i + 1) + '/' + n + '</span>' +
+            '<button type="button" class="catalog-sheet-save" data-i="' + i + '">💾 บันทึกรูปนี้</button></figcaption>' +
+            '<img src="' + catalogSheetUrls[i] + '" alt="แคตตาล็อกหน้า ' + (i + 1) + '">' +
+          '</figure>').join('') +
+      '</div>' +
+      (canAll ? '<div class="catalog-sheet-foot"><button type="button" class="catalog-sheet-all">📤 บันทึกทั้งหมด (' + n + ' รูป)</button></div>' : '') +
+    '</div>';
+  wrap.addEventListener('click', async function(e){
+    const t = e.target;
+    if(t.closest('[data-close]')){ closeCatalogSheet(); return; }
+    const saveBtn = t.closest('.catalog-sheet-save');
+    if(saveBtn){
+      const file = files[+saveBtn.dataset.i];
+      // แตะ 1 ครั้ง = 1 ไฟล์ → ทุกเบราว์เซอร์ยอม: ใช้เมนูแชร์ถ้ามี ไม่งั้นดาวน์โหลดตรง
+      if(catalogCanShareFiles([file])){
+        try{ await navigator.share({ files: [file], title: 'แคตตาล็อก S.Flower Bloom' }); return; }
+        catch(err){ if(err && err.name === 'AbortError') return; }
+      }
+      catalogSaveBlob(file, file.name);
+      return;
+    }
+    if(t.closest('.catalog-sheet-all')){
+      try{ await navigator.share({ files, title: 'แคตตาล็อก S.Flower Bloom' }); }
+      catch(err){ if(!err || err.name !== 'AbortError') showToast('เครื่องนี้บันทึกพร้อมกันไม่ได้ กด "บันทึกรูปนี้" ทีละรูปนะ'); }
+    }
+  });
+  document.body.appendChild(wrap);
+  document.documentElement.classList.add('catalog-sheet-open');
+}
+
 async function downloadCatalogImages(){
   if(PRICES_HIDDEN || catalogExporting) return;
   const items = catalogExportItems.slice(); // ถ่ายสำเนา ณ ตอนกดปุ่ม กันตัวกรองเปลี่ยนระหว่างวาด
   if(!items.length) return;
+  const mobile = catalogIsMobile();
   catalogExporting = true;
   const setLabel = t => { const b = document.getElementById('catalogDlBtn'); if(b){ b.disabled = true; b.textContent = t; } };
   try{
@@ -2021,24 +2097,36 @@ async function downloadCatalogImages(){
     const logo = await catalogLoadImage('images/logo.png?v=2');
     const summary = catalogFilterSummary();
     const pageCount = Math.ceil(items.length / CATALOG_PER_PAGE);
+    const files = [];
     for(let pg = 0; pg < pageCount; pg++){
       setLabel(`กำลังสร้างรูป ${pg + 1}/${pageCount}...`);
       const slice = items.slice(pg * CATALOG_PER_PAGE, (pg + 1) * CATALOG_PER_PAGE);
-      const imgs = await Promise.all(slice.map(it => catalogLoadImage(it.imgSrc)));
+      const imgs = await Promise.all(slice.map(it => catalogLoadImage(it.imgSrc, mobile ? 30000 : undefined)));
       const cv = drawCatalogPage(slice, pg + 1, pageCount, imgs, logo, summary);
       const blob = await catalogCanvasToBlob(cv);
+      if(mobile){
+        // iPhone/Safari ไม่คืนหน่วยความจำของ canvas ใหญ่ๆ เอง ถ้าสร้างต่อกันหลายหน้า หน้าหลังๆ จะว่าง/พัง → ย่อ canvas ทิ้งทันทีแล้วรอให้เครื่องเก็บกวาด
+        cv.width = 0; cv.height = 0;
+        await catalogSleep(120);
+      }
       if(!blob) throw new Error('toBlob failed');
-      catalogSaveBlob(blob, catalogFileName(pg + 1, pageCount));
-      if(pg < pageCount - 1) await catalogSleep(600); // เว้นช่วงให้เบราว์เซอร์รับไฟล์ต่อเนื่องได้
+      const name = catalogFileName(pg + 1, pageCount);
+      if(mobile){
+        files.push(new File([blob], name, { type: 'image/jpeg' }));
+      }else{
+        catalogSaveBlob(blob, name);
+        if(pg < pageCount - 1) await catalogSleep(600); // เว้นช่วงให้เบราว์เซอร์รับไฟล์ต่อเนื่องได้
+      }
     }
-    showToast(`โหลดแคตตาล็อกแล้ว ${pageCount} รูป 🌸`);
+    if(mobile) openCatalogSheet(files);
+    else showToast(`โหลดแคตตาล็อกแล้ว ${pageCount} รูป 🌸`);
   }catch(e){
     console.error('catalog export failed', e);
     showToast('สร้างรูปแคตตาล็อกไม่สำเร็จ ลองใหม่อีกครั้งนะ');
   }finally{
     catalogExporting = false;
     const b = document.getElementById('catalogDlBtn');
-    if(b){ b.disabled = false; b.textContent = `📥 โหลดแคตตาล็อก (${catalogExportItems.length} รายการ)`; }
+    if(b){ b.disabled = false; b.textContent = catalogBtnLabel(); }
   }
 }
 
@@ -3891,9 +3979,78 @@ function closePromoPopup(e){
 
 /* ---------- แถบเมนูล่าง (มือถือ) ---------- */
 const CAT_ICONS = { 'ทั้งหมด':'🌷', 'ช่อดอกไม้':'💐', 'กรอบรูป':'🖼️', 'กระถาง':'🪴', 'อื่นๆ':'🎁' };
+// มีตัวกรองหรือคำค้นอะไรเปิดอยู่ไหม
+function bnavAnyFilter(){ return filtersAreActive(sidebarState()) || !!searchQuery; }
+function bnavRefreshAll(){ renderNav(); renderCatalog(); renderFilterSidebar(); updateFilterBadge(); }
+// ล้างทุกอย่าง: ตัวกรองทั้งหมด + คำค้น (วาดรายการใหม่รอบเดียว)
+function bnavClearAll(){
+  searchQuery = '';
+  const input = document.getElementById('searchInput'); if(input) input.value = '';
+  const clearBtn = document.getElementById('searchClearBtn'); if(clearBtn) clearBtn.style.display = 'none';
+  scrollSpyCat = 'ทั้งหมด';
+  clearSidebarFilters();
+}
+// "หน้าแรก" = กลับสู่หน้าตั้งต้นจริงๆ: ล้างตัวกรอง/คำค้นทั้งหมดแล้วเลื่อนขึ้นบนสุด
 function bnavHome(){
-  if(activeCats.size > 0){ scrollSpyCat = 'ทั้งหมด'; clearCategorySelection(); }
+  if(bnavAnyFilter()) bnavClearAll();
   window.scrollTo({ top:0, behavior:'smooth' });
+}
+// พร้อมส่ง / รายการโปรด จากแถบล่าง: เปิดแล้วเลื่อนไปเห็นผลลัพธ์ทันที
+function bnavToggle(which){
+  const on = which === 'ready' ? !showReadyOnly : !showFavoritesOnly;
+  if(which === 'ready') toggleReadyOnly(on); else toggleFavoritesOnly(on);
+  if(on) scrollToCatalogTop();
+}
+// ชิปตัวกรองที่ใช้อยู่ [key, ข้อความ]
+function bnavChipList(){
+  const c = [];
+  if(searchQuery) c.push(['search', '🔍 “' + searchQuery + '”']);
+  if(activeCats.size > 0) c.push(['cat', [...activeCats][0]]);
+  if(showReadyOnly) c.push(['ready', '⚡ พร้อมส่ง']);
+  if(showFavoritesOnly) c.push(['fav', '♥ รายการโปรด']);
+  if(customPriceMin !== PRICE_SLIDER_MIN || customPriceMax !== PRICE_SLIDER_MAX){
+    const lo = customPriceMin, hi = customPriceMax;
+    c.push(['price', hi >= PRICE_SLIDER_MAX ? '฿' + lo + ' ขึ้นไป' : (lo <= PRICE_SLIDER_MIN ? 'ไม่เกิน ฿' + hi : '฿' + lo + '–' + hi)]);
+  }
+  if(activeSortOrder !== 'none') c.push(['sort', activeSortOrder === 'asc' ? 'ราคา ต่ำ→สูง' : 'ราคา สูง→ต่ำ']);
+  if(activeSizes.size > 0) c.push(['sizes', 'ขนาด ' + [...activeSizes].join(', ')]);
+  if(activeFlowerTypes.size > 0){
+    const f = [...activeFlowerTypes];
+    c.push(['flower', f.length <= 2 ? f.join(', ') : f.length + ' ชนิดดอกไม้']);
+  }
+  if(showAllVariantsSplit) c.push(['split', 'แยกทุกแบบ']);
+  return c;
+}
+function bnavRemoveChip(k){
+  switch(k){
+    case 'all': bnavClearAll(); break;
+    case 'search': clearSearch(); break;
+    case 'cat': scrollSpyCat = 'ทั้งหมด'; clearCategorySelection(); break;
+    case 'ready': toggleReadyOnly(false); break;
+    case 'fav': toggleFavoritesOnly(false); break;
+    case 'price': customPriceMin = PRICE_SLIDER_MIN; customPriceMax = PRICE_SLIDER_MAX; bnavRefreshAll(); break;
+    case 'sort': activeSortOrder = 'none'; bnavRefreshAll(); break;
+    case 'sizes': activeSizes = new Set(); bnavRefreshAll(); break;
+    case 'flower': activeFlowerTypes = new Set(); bnavRefreshAll(); break;
+    case 'split': toggleAllVariantsSplit(false); break;
+  }
+}
+(function(){
+  const box = document.getElementById('bnavChips');
+  if(box) box.addEventListener('click', function(e){
+    const btn = e.target.closest('[data-k]');
+    if(btn) bnavRemoveChip(btn.dataset.k);
+  });
+  // ไฮไลต์ "หน้าแรก" เมื่ออยู่บนสุดและไม่มีตัวกรอง
+  let raf = 0;
+  window.addEventListener('scroll', function(){
+    if(raf) return;
+    raf = requestAnimationFrame(function(){ raf = 0; bnavSyncHome(); });
+  }, { passive:true });
+})();
+function bnavSyncHome(){
+  const home = document.getElementById('bnavHome');
+  if(home) home.classList.toggle('active', window.scrollY < 120 && !bnavAnyFilter());
 }
 function renderCatSheet(){
   const body = document.getElementById('catSheetBody');
@@ -3924,9 +4081,8 @@ function updateBottomNav(){
   const catBtn = document.getElementById('bnavCat');
   if(!catBtn) return;
   const picked = activeCats.size > 0 ? [...activeCats][0] : '';
-  // ตอนอยู่โหมด "ทั้งหมด" แสดงชื่อหมวดที่เลื่อนผ่านอยู่ (scrollspy) ให้รู้ว่าอยู่ตรงไหน
-  const spy = (!picked && scrollSpyCat && scrollSpyCat !== 'ทั้งหมด') ? scrollSpyCat : '';
-  document.getElementById('bnavCatLabel').textContent = picked || spy || 'หมวดหมู่';
+  // ป้ายคงที่ "หมวดหมู่" (เดิมเปลี่ยนตามหมวดที่เลื่อนผ่าน จนดูเหมือนแท็บหมวดมากกว่าปุ่มเปิดเมนู) — เลือกหมวดแล้วค่อยโชว์ชื่อหมวดที่เลือก
+  document.getElementById('bnavCatLabel').textContent = picked || 'หมวดหมู่';
   catBtn.classList.toggle('active', !!picked);
   const ready = document.getElementById('bnavReady');
   ready.classList.toggle('active', showReadyOnly); ready.setAttribute('aria-pressed', String(!!showReadyOnly));
@@ -3939,6 +4095,17 @@ function updateBottomNav(){
   cb.textContent = extra; cb.hidden = extra === 0;
   const mc = document.getElementById('catMoreCount');
   if(mc){ mc.textContent = extra; mc.hidden = extra === 0; }
+  // แถบชิปตัวกรองที่ใช้อยู่ (วาดใหม่เฉพาะตอนเนื้อหาเปลี่ยน)
+  const box = document.getElementById('bnavChips');
+  if(box){
+    const chips = bnavChipList();
+    const html = chips.map(function(c){ return '<button type=\"button\" class=\"bnav-chip\" data-k=\"' + c[0] + '\" aria-label=\"เอาตัวกรองนี้ออก: ' + escapeHtml(c[1]) + '\">' + escapeHtml(c[1]) + '<i aria-hidden=\"true\">✕</i></button>'; }).join('') +
+      (chips.length > 1 ? '<button type=\"button\" class=\"bnav-chip-clear\" data-k=\"all\">ล้างทั้งหมด</button>' : '');
+    if(box.dataset.sig !== html){ box.innerHTML = html; box.dataset.sig = html; }
+    box.hidden = chips.length === 0;
+    document.documentElement.classList.toggle('has-chips', chips.length > 0);
+  }
+  bnavSyncHome();
 }
 
 /* กันหน้าเว็บโยกซ้าย-ขวา: ถ้าหน้าถูกลากไปด้านข้างด้วยเหตุใดก็ตาม ให้ดีดกลับมาที่ซ้ายสุดทันที */
