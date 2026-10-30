@@ -4106,15 +4106,7 @@ function siteDefaults(){
     logo: '',
     footer: '',
     theme: { main: SITE_DEFAULT_COLOR },
-    banners: null, // null = ยังไม่เคยตั้ง → หน้าร้านใช้ promotions.png, promotions1.png ... เดิม
     popup: { on: true, slides: [{ src: 'images/orderprocess.png', on: true }] },
-    hero: {
-      title: 'ช่อดอกไม้กำมะหยี่\nสำหรับโอกาสพิเศษ',
-      text: 'เลือกสินค้าที่ชอบ กดใส่ตะกร้า แล้วกดปุ่มเดียวเพื่อส่งรายการสั่งซื้อมาที่แชทเพจของเราได้ทันที ไม่ต้องพิมพ์เอง',
-      textOff: 'เลือกดูสินค้าที่ชอบ แล้วแคปหน้าจอสินค้านั้นส่งให้เพจเพื่อสอบถามราคาและสั่งทำได้เลย',
-      chips: ['🚚 ส่งพัสดุทั่วประเทศ', '📅 สั่งล่วงหน้า 3–5 วัน', '💬 ทักแชตเพื่อจองล่วงหน้า', ''],
-      cta: 'เลือกดูสินค้า ↓'
-    },
     reviews: { on: true, title: 'รีวิวจากลูกค้า' },
     faq: { on: true, title: 'คำถามที่พบบ่อย (FAQ)', items: clone(SITE_DEFAULT_FAQ) }
   };
@@ -4123,17 +4115,13 @@ function siteMerge(saved){
   const d = siteDefaults();
   if(!saved) return d;
   const pick = (a, b) => Object.assign({}, a, (b && typeof b === 'object' && !Array.isArray(b)) ? b : {});
-  d.shop = pick(d.shop, saved.shop); d.hero = pick(d.hero, saved.hero);
+  d.shop = pick(d.shop, saved.shop);
   d.reviews = pick(d.reviews, saved.reviews); d.faq = pick(d.faq, saved.faq); d.popup = pick(d.popup, saved.popup);
   d.logo = typeof saved.logo === 'string' ? saved.logo : '';
   d.footer = typeof saved.footer === 'string' ? saved.footer : '';
   if(saved.theme && /^#[0-9a-f]{6}$/i.test(String(saved.theme.main || ''))) d.theme.main = saved.theme.main;
   const cleanList = a => a.map(b => ({ src: String((b && b.src) || '').trim(), on: !(b && b.on === false) })).filter(b => b.src);
-  d.banners = Array.isArray(saved.banners) ? cleanList(saved.banners) : null;
   d.popup.slides = Array.isArray(saved.popup && saved.popup.slides) ? cleanList(saved.popup.slides) : d.popup.slides;
-  const ch = Array.isArray(d.hero.chips) ? d.hero.chips.map(x => String(x || '')) : [];
-  while(ch.length < 4) ch.push('');
-  d.hero.chips = ch.slice(0, 4);
   d.faq.items = Array.isArray(d.faq.items) ? d.faq.items.map(i => ({ q: String((i && i.q) || ''), a: String((i && i.a) || '') })) : clone(SITE_DEFAULT_FAQ);
   return d;
 }
@@ -4226,10 +4214,9 @@ function siteProbe(src){ return new Promise(res => { const im = new Image(); im.
 function siteThumbSrc(src){ return siteBlobUrls[src] || src; }
 
 /* ───── เปิด / ปิด / แท็บ ───── */
-const SITE_TABS = [['banners', 'แบนเนอร์'], ['popup', 'ป๊อปอัป'], ['hero', 'ข้อความ'], ['brand', 'ชื่อ · โลโก้ · สี'], ['faq', 'FAQ'], ['reviews', 'รีวิว']];
+const SITE_TABS = [['popup', 'ป๊อปอัป'], ['brand', 'ชื่อ · โลโก้ · สี'], ['faq', 'FAQ'], ['reviews', 'รีวิว']];
 function openSiteModal(){
-  site = { tab: 'banners', cfg: siteMerge(siteCfgSaved), dirty: false, uploaded: false, legacyChecked: false,
-    bannersEdited: Array.isArray(siteCfgSaved && siteCfgSaved.banners) };
+  site = { tab: 'popup', cfg: siteMerge(siteCfgSaved), dirty: false, uploaded: false };
   $('siteScrim').hidden = false;
   siteHint('');
   renderSiteModal();
@@ -4245,28 +4232,27 @@ function siteHint(msg, isErr){
   el.textContent = msg || '';
   el.classList.toggle('is-info', !isErr);
 }
-function siteTouch(key){ if(key === 'banners') site.bannersEdited = true; site.dirty = true; if(!$('siteHint').textContent) siteHint('มีการแก้ไขที่ยังไม่ได้บันทึก'); }
-function siteListRef(key){ return key === 'banners' ? site.cfg.banners : site.cfg.popup.slides; }
+function siteTouch(key){ site.dirty = true; if(!$('siteHint').textContent) siteHint('มีการแก้ไขที่ยังไม่ได้บันทึก'); }
+function siteListRef(key){ return site.cfg.popup.slides; }
 
 function renderSiteModal(){
   if(!site) return;
   $('siteTabs').innerHTML = SITE_TABS.map(([k, n]) => `<button type="button" class="om-tab${site.tab === k ? ' is-active' : ''}" data-tab="${k}" role="tab">${n}</button>`).join('');
   const body = $('siteBody'), top = body.scrollTop;
-  const fn = { banners: siteTabBanners, popup: siteTabPopup, hero: siteTabHero, brand: siteTabBrand, faq: siteTabFaq, reviews: siteTabReviews }[site.tab];
+  const fn = { popup: siteTabPopup, brand: siteTabBrand, faq: siteTabFaq, reviews: siteTabReviews }[site.tab];
   body.innerHTML = fn();
   body.scrollTop = top;
-  if(site.tab === 'banners' && site.cfg.banners === null && !site.legacyChecked) siteLoadLegacyBanners();
 }
 const stInput = (path, val, ph) => `<input type="text" data-path="${path}" value="${esc(val)}"${ph ? ` placeholder="${esc(ph)}"` : ''}>`;
 const stField = (label, inner, note) => `<label class="st-field"><span>${label}</span>${inner}${note ? `<small>${note}</small>` : ''}</label>`;
 const stCheck = (path, on, label) => `<label class="st-check"><input type="checkbox" data-path="${path}"${on ? ' checked' : ''}> ${label}</label>`;
 
-/* รายการรูป (ใช้ทั้งแบนเนอร์และป๊อปอัป) */
+/* รายการรูปของป๊อปอัป */
 function siteListHtml(key){
   const list = siteListRef(key);
   const rows = list.map((b, i) => `<div class="st-row${b.on ? '' : ' is-off'}" data-i="${i}">
     ${thumbHtml(siteThumbSrc(b.src), 'st-thumb')}
-    <div class="st-path"><b>${key === 'banners' ? 'แบนเนอร์' : 'รูป'} ${i + 1}</b><code>${esc(b.src)}</code></div>
+    <div class="st-path"><b>รูป ${i + 1}</b><code>${esc(b.src)}</code></div>
     <div class="st-acts">
       <label class="st-check"><input type="checkbox" data-on="${key}" data-i="${i}"${b.on ? ' checked' : ''}> แสดง</label>
       <button type="button" class="st-ico" data-act="up" data-key="${key}" data-i="${i}" ${i === 0 ? 'disabled' : ''} title="เลื่อนขึ้น" aria-label="เลื่อนขึ้น">↑</button>
@@ -4275,27 +4261,12 @@ function siteListHtml(key){
     </div></div>`).join('');
   return `<div class="st-list">${rows || '<p class="st-empty">ยังไม่มีรูปในรายการ</p>'}</div>
     <div class="rv-drop" id="siteDrop" data-key="${key}" tabindex="0" role="button"><b>ลากรูปมาวางที่นี่</b><span>หรือคลิกเพื่อเลือกรูป (เลือกได้หลายรูป)</span></div>
-    <div class="st-addpath"><input type="text" id="siteAddPath" data-key="${key}" placeholder="หรือพิมพ์ชื่อไฟล์ที่มีอยู่แล้ว เช่น images/promotions2.png"><button type="button" class="btn btn-ghost btn-sm" data-act="addpath" data-key="${key}">เพิ่มจากชื่อไฟล์</button></div>`;
-}
-function siteTabBanners(){
-  const loading = site.cfg.banners === null;
-  return `<p class="st-note">แบนเนอร์เลื่อนได้ใต้แถบค้นหา — แนะนำรูปสี่เหลี่ยมจัตุรัส 1:1 (เช่น 1080×1080) ระบบย่อรูปและแปลงเป็น JPG ให้ ถ้ารูปไม่จัตุรัสจะเติมขอบขาวให้แทนการตัดรูป
-    ใช้ลูกศรเรียงลำดับ ติ๊ก "แสดง" ออกเพื่อซ่อนชั่วคราว · ถ้าซ่อนทุกรูป แบนเนอร์และข้อความข้างแบนเนอร์จะหายไปทั้งแผง</p>
-    ${loading ? '<p class="st-empty">กำลังดึงรายการแบนเนอร์เดิม (promotions.png ...) มาให้…</p>' : siteListHtml('banners')}`;
+    <div class="st-addpath"><input type="text" id="siteAddPath" data-key="${key}" placeholder="หรือพิมพ์ชื่อไฟล์ที่มีอยู่แล้ว เช่น images/orderprocess.png"><button type="button" class="btn btn-ghost btn-sm" data-act="addpath" data-key="${key}">เพิ่มจากชื่อไฟล์</button></div>`;
 }
 function siteTabPopup(){
   return `<p class="st-note">รูปที่เด้งขึ้นตอนเปิดเว็บ (เช่น ขั้นตอนการสั่งซื้อ) · มือถือเด้งวันละครั้ง คอมเด้งทุกครั้ง</p>
     ${stCheck('popup.on', site.cfg.popup.on, 'แสดงป๊อปอัปตอนเปิดเว็บ')}
     ${siteListHtml('popup')}`;
-}
-function siteTabHero(){
-  const h = site.cfg.hero;
-  return `<p class="st-note">ข้อความในแผงข้างแบนเนอร์ — แสดงเฉพาะบนจอคอม (มือถือซ่อนแผงนี้)</p>
-    ${stField('หัวข้อ (ขึ้นบรรทัดใหม่ได้)', `<textarea rows="2" data-path="hero.title">${esc(h.title)}</textarea>`)}
-    ${stField('คำอธิบาย (ตอนร้านแสดงราคา)', `<textarea rows="3" data-path="hero.text">${esc(h.text)}</textarea>`)}
-    ${stField('คำอธิบาย (ตอนร้านซ่อนราคา)', `<textarea rows="3" data-path="hero.textOff">${esc(h.textOff)}</textarea>`, 'ใช้แทนข้อความด้านบนเมื่อเปิดสวิตช์ "ซ่อนราคาบนหน้าร้าน"')}
-    <div class="st-field"><span>ป้ายสั้น ๆ (ว่าง = ไม่แสดง)</span>${h.chips.map((c, i) => stInput('hero.chips.' + i, c, 'เช่น 🚚 ส่งพัสดุทั่วประเทศ')).join('')}</div>
-    ${stField('ข้อความบนปุ่ม', stInput('hero.cta', h.cta))}`;
 }
 function siteTabBrand(){
   const c = site.cfg, pal = siteDerivePalette(c.theme.main), l = siteHexToHsl(c.theme.main)[2];
@@ -4338,36 +4309,21 @@ function siteTabReviews(){
     <button type="button" class="btn btn-ghost" data-act="open-reviews">เปิดหน้าจัดการรูปรีวิว</button>`;
 }
 
-/* ดึงรายชื่อแบนเนอร์เดิม (promotions.png, promotions1.png ...) มาเป็นรายการตั้งต้น เพื่อไม่ให้ของเดิมหาย */
-async function siteLoadLegacyBanners(){
-  const s = site; s.legacyChecked = true;
-  const found = [];
-  for(let i = 0; i < 20; i++){
-    const src = 'images/promotions' + (i === 0 ? '' : i) + '.png';
-    if(!(await siteProbe(src))) break;
-    found.push({ src, on: true });
-  }
-  if(site !== s) return;
-  if(s.cfg.banners === null) s.cfg.banners = found;
-  if(found.length){ s.dirty = true; s.bannersEdited = true; }
-  renderSiteModal();
-}
-
 /* ───── อัปโหลด / เพิ่มรูป ───── */
 async function siteUploadFiles(list, key){
   const files = Array.from(list || []).filter(f => /^image\//.test(f.type) || /\.(jpe?g|png|webp|gif|heic)$/i.test(f.name));
   if(!site || !files.length){ if(list && list.length) toast('ไม่พบไฟล์รูป ลากไฟล์ .jpg .png .webp มาวาง', true); return; }
   const drop = $('siteDrop'); if(drop) drop.classList.add('is-busy');
   try{
-    const sub = key === 'banners' ? 'banners' : 'popup';
+    const sub = 'popup';
     const dir = await siteDir(sub);
     if(!dir) return;
     const tag = Date.now().toString(36);
     let added = 0, padded = 0; const fails = [];
     for(const f of files){
       try{
-        const r = await siteDrawBlob(f, key === 'banners' ? 1080 : 1600, key === 'banners' ? 'square' : 'jpg');
-        const name = `${key === 'banners' ? 'banner' : 'popup'}-${tag}${added}.jpg`;
+        const r = await siteDrawBlob(f, 1600, 'jpg');
+        const name = `popup-${tag}${added}.jpg`;
         await siteWrite(dir, name, r.blob);
         const path = `images/${sub}/${name}`;
         siteBlobUrls[path] = URL.createObjectURL(r.blob);
@@ -4409,19 +4365,14 @@ async function siteUploadLogo(file){
 }
 
 /* ───── บันทึก ───── */
-function siteClean(c, bannersEdited){
+function siteClean(c){
   const out = {};
   const name = String(c.shop.name || '').trim() || 'S.Flower Bloom';
   out.shop = { name, tagline: String(c.shop.tagline || '').trim() };
   if(c.logo) out.logo = c.logo;
   if(String(c.footer || '').trim()) out.footer = String(c.footer).trim();
   if(c.theme.main.toLowerCase() !== SITE_DEFAULT_COLOR.toLowerCase()) out.theme = { main: c.theme.main.toUpperCase(), vars: siteDerivePalette(c.theme.main) };
-  if(Array.isArray(c.banners) && (c.banners.length || bannersEdited)) out.banners = c.banners.map(b => ({ src: b.src, on: b.on !== false }));
   out.popup = { on: c.popup.on !== false, slides: c.popup.slides.map(b => ({ src: b.src, on: b.on !== false })) };
-  out.hero = {
-    title: String(c.hero.title || '').trim(), text: String(c.hero.text || '').trim(), textOff: String(c.hero.textOff || '').trim(),
-    chips: c.hero.chips.map(x => String(x || '').trim()).filter(Boolean), cta: String(c.hero.cta || '').trim()
-  };
   out.reviews = { on: c.reviews.on !== false, title: String(c.reviews.title || '').trim() };
   out.faq = {
     on: c.faq.on !== false, title: String(c.faq.title || '').trim(),
@@ -4431,7 +4382,7 @@ function siteClean(c, bannersEdited){
 }
 async function saveSite(){
   if(!site) return;
-  const cfg = siteClean(site.cfg, site.bannersEdited);
+  const cfg = siteClean(site.cfg);
   const json = JSON.stringify(cfg);
   if(new Blob([json]).size > 60000){ siteHint('ข้อมูลแต่งหน้าร้านใหญ่เกินไป ลองลดข้อความ FAQ', true); return; }
   const btn = $('siteSave'); btn.disabled = true;
@@ -4497,7 +4448,7 @@ $('siteBody').addEventListener('keydown', e => {
 ['dragover', 'dragenter'].forEach(ev => $('siteBody').addEventListener(ev, e => { const d = e.target.closest('#siteDrop'); if(d){ e.preventDefault(); d.classList.add('is-over'); } }));
 ['dragleave', 'drop'].forEach(ev => $('siteBody').addEventListener(ev, e => { const d = e.target.closest('#siteDrop'); if(d) d.classList.remove('is-over'); }));
 $('siteBody').addEventListener('drop', e => { const d = e.target.closest('#siteDrop'); if(d){ e.preventDefault(); siteUploadFiles(e.dataTransfer.files, d.dataset.key); } });
-$('siteFile').addEventListener('change', e => { const el = e.target, k = (site && site.tab === 'popup') ? 'popup' : 'banners'; siteUploadFiles(el.files, k).then(() => { el.value = ''; }); });
+$('siteFile').addEventListener('change', e => { const el = e.target; siteUploadFiles(el.files, 'popup').then(() => { el.value = ''; }); });
 $('siteLogoFile').addEventListener('change', e => { const f = e.target.files[0]; siteUploadLogo(f).then(() => { e.target.value = ''; }); });
 
 boot();

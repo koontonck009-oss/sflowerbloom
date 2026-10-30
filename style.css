@@ -108,121 +108,66 @@ h1,h2,h3,.display{font-family:'Kanit',sans-serif; font-weight:600;}
 .brand-row h1{margin:0;font-size:21px;color:var(--sage-dark);line-height:1.1;}
 .brand-row p{margin:0;font-size:12.5px;color:var(--rose-dark);letter-spacing:.3px;}
 
-/* ---------- Promo banner (แบนเนอร์โปรโมชั่นเลื่อนได้ อัตราส่วน 1:1) ----------
-   รูปอยู่ที่ images/promotions.png, promotions1.png, promotions2.png ... (script.js โหลดเรียงเลขให้เอง) */
-.promo-banner{
-  --pb-s:clamp(240px, 15.5vw, 320px);   /* ขนาดรูปสี่เหลี่ยมจัตุรัสบนคอม */
-  position:relative;
-  width:calc(100% - 12vw);
-  margin:14px auto 16px;
-  display:flex; align-items:flex-start; gap:24px;
-}
-.pb-main{position:relative; flex:0 0 auto; min-width:0; max-width:calc(var(--pb-s) * 2 + 14px);}
-.promo-banner[hidden]{display:none;}
-.pb-track{
-  display:flex; gap:14px; align-items:flex-start;
-  overflow-x:auto; overflow-y:hidden;
-  scroll-snap-type:x mandatory;
-  overscroll-behavior-x:contain;
-  scrollbar-width:none;
-  padding:8px 0 22px;
-  margin-bottom:-12px;
-  cursor:grab;
-}
-.pb-track::-webkit-scrollbar{display:none;}
-.pb-track.dragging{scroll-snap-type:none; cursor:grabbing;}
-.pb-slide{
-  flex:0 0 var(--pb-s);
-  aspect-ratio:1 / 1;
-  scroll-snap-align:start;
-  position:relative; display:block; overflow:hidden;
-  border-radius:22px;
-  background:#fff;
-  box-shadow:0 6px 16px rgba(var(--sage-rgb),0.14);
-  transition:transform .35s cubic-bezier(.32,.72,0,1), opacity .35s ease, box-shadow .35s ease;
-  animation:pbIn .55s cubic-bezier(.32,.72,0,1) backwards;
-  animation-delay:calc(var(--i,0) * 90ms);
-  -webkit-tap-highlight-color:transparent;
-  cursor:zoom-in;
-}
-.pb-slide img{
-  position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block;
-  user-select:none; -webkit-user-drag:none;
-}
-.promo-banner.ready .pb-slide:not(.in){opacity:.55; transform:scale(.96);}
-@media (hover:hover){
-  .pb-slide.in:hover{transform:translateY(-4px); box-shadow:0 16px 36px rgba(var(--sage-rgb),0.22);}
-}
-@keyframes pbIn{
-  from{opacity:0; transform:translateY(16px) scale(.97);}
-  to{opacity:1; transform:none;}
-}
-.pb-nav{
-  position:absolute; top:50%; transform:translateY(-50%);
-  width:42px; height:42px; border-radius:50%; border:0;
-  background:rgba(255,255,255,0.94); color:var(--sage-dark);
-  font-size:26px; line-height:1; padding:0 0 3px;
-  display:flex; align-items:center; justify-content:center;
-  box-shadow:0 6px 18px rgba(59,18,48,0.18);
-  cursor:pointer; z-index:2;
-  transition:opacity .25s ease, transform .2s ease;
-}
-.pb-nav:hover{transform:translateY(-50%) scale(1.08);}
-.pb-nav.prev{left:-14px;}
-.pb-nav.next{right:-14px;}
-.pb-nav[disabled]{opacity:0; pointer-events:none;}
-.pb-dots{display:flex; justify-content:center; gap:6px; margin-top:4px;}
-.pb-dot{
-  width:8px; height:8px; padding:0; border:0; border-radius:999px;
-  background:rgba(var(--sage-rgb),0.25); cursor:pointer;
-  transition:width .3s cubic-bezier(.32,.72,0,1), background .3s ease;
-}
-.pb-dot.active{width:24px; background:var(--sage);}
-.promo-banner.single .pb-nav, .promo-banner.single .pb-dots{display:none;}
-.promo-banner.single .pb-track{cursor:default;}
-.pb-info{
-  flex:1 1 0; min-width:0; align-self:flex-start;
-  margin-top:8px; min-height:var(--pb-s);
-  position:relative; overflow:hidden;
-  border-radius:22px;
-  background:linear-gradient(135deg, var(--sage) 0%, var(--sage-light) 100%);
-  color:#FFF7FC;
-  padding:24px clamp(28px, 3.2vw, 56px);
-  display:flex; flex-direction:column; justify-content:center; gap:8px;
-  box-shadow:0 6px 16px rgba(var(--sage-rgb),0.14);
-  animation:pbIn .55s cubic-bezier(.32,.72,0,1) backwards; animation-delay:180ms;
-}
-.pb-info::before, .pb-info::after{content:""; position:absolute; border-radius:50%; pointer-events:none;}
-.pb-info::before{width:260px; height:260px; background:rgba(255,255,255,0.10); top:-100px; right:-60px;}
-.pb-info::after{width:150px; height:150px; background:var(--peach); opacity:.25; bottom:-70px; right:22%;}
-.pb-info > *{position:relative;}
-.pb-info h2{margin:0 0 2px; font-size:clamp(22px, 2.1vw, 32px); line-height:1.25;}
-.pb-info p{margin:0; font-size:14px; line-height:1.55; opacity:.92; max-width:640px;}
-.pb-chips{display:flex; flex-wrap:wrap; gap:8px;}
-.pb-chips span{background:rgba(255,255,255,0.18); padding:5px 12px; border-radius:999px; font-size:13.5px; font-weight:500; white-space:nowrap;}
-.pb-cta{
-  align-self:flex-start; display:inline-block;
-  background:var(--peach); color:var(--plum);
-  margin-top:4px; padding:9px 24px; border-radius:999px;
-  font-weight:700; text-decoration:none;
-  box-shadow:0 6px 16px rgba(0,0,0,0.15);
-  transition:transform .2s ease;
-}
-.pb-cta:hover{transform:translateY(-2px);}
-@media (max-width:1699px){ .pb-chips{display:none;} }
-@media (max-width:1099px){ .pb-info p{display:none;} }
+/* ---------- แถวบนสุด: แบนเนอร์ images/banner.jpg (1891x831) + รีวิวจากลูกค้า ----------
+   มือถือ: แบนเนอร์เต็มความกว้าง แล้วรีวิวต่อใต้ (เหมือนเดิม)
+   จอคอม 860-1099px: แบนเนอร์กลางหน้า (กว้างสูงสุด 700px) รีวิวเป็นแถบใต้แบนเนอร์
+   จอคอม >=1100px: แบนเนอร์ชิดซ้าย รีวิวเป็นการ์ดสูงเท่าแบนเนอร์อยู่ด้านขวา (ปรับความกว้างแบนเนอร์ที่ --hero-w) */
+.hero-row{width:calc(100% - 12vw); margin:14px auto 16px;}
+.hero-banner{max-width:700px; margin:0 auto;}  /* ความกว้างสูงสุดของแบนเนอร์บนคอม (700px สูงราว 308px) */
+.hero-banner[hidden]{display:none;}
+.hero-banner img{display:block; width:100%; height:auto; aspect-ratio:1891 / 831; object-fit:cover; border-radius:22px; box-shadow:0 8px 24px rgba(var(--sage-rgb),0.14);}
+.reviews-nav{display:none;}
 @media (max-width:859px){
-  .promo-banner{display:block; width:auto; margin:8px 0 4px;}
-  .pb-main{max-width:none;}
-  .pb-info{display:none;}
-  .pb-track{gap:10px; padding:4px 12px 20px; margin-bottom:-10px; scroll-padding-inline:12px; cursor:auto;}
-  .pb-slide{flex:0 0 64%; border-radius:16px;}
-  .pb-nav{display:none;}
-  .promo-banner.single .pb-slide{flex-basis:64%;}
+  .hero-row{width:auto; margin:0;}
+  .hero-banner{width:auto; max-width:none; margin:8px 12px 4px;}
+  .hero-banner img{border-radius:14px; box-shadow:0 4px 14px rgba(var(--sage-rgb),0.12);}
 }
-@media (prefers-reduced-motion:reduce){
-  .pb-slide, .pb-info{animation:none; transition:none;}
-  .pb-dot{transition:none;}
+@media (min-width:860px){
+  .hero-row .reviews-section{margin:22px 0 0;}
+}
+@media (min-width:1100px){
+  .hero-row{--hero-w:min(700px, 58%); --hero-gap:22px; position:relative;}
+  .hero-row .hero-banner{width:var(--hero-w); max-width:none; margin:0;}
+  .hero-row.no-reviews .hero-banner{margin:0 auto;}
+  .hero-row.no-banner .hero-banner{display:none;}
+  /* กล่องรีวิว: วางทับช่องว่างด้านขวา สูงเท่าแบนเนอร์เสมอ (ไม่ดันความสูงของแถว) */
+  .hero-row .reviews-section{
+    position:absolute; top:0; bottom:0; left:calc(var(--hero-w) + var(--hero-gap)); right:0; margin:0; min-width:0;
+    display:flex; flex-direction:column; padding:16px 18px 14px; overflow:hidden;
+    background:linear-gradient(160deg, var(--paper) 55%, rgba(var(--sage-rgb),0.07));
+    border:1px solid var(--line); border-radius:22px; box-shadow:0 8px 24px rgba(var(--sage-rgb),0.10);
+  }
+  .hero-row .reviews-section[hidden]{display:none;}
+  .hero-row.no-banner .reviews-section{position:static;}
+  .hero-row.no-banner .reviews-scroll{height:260px;}
+  .hero-row .reviews-head{flex:0 0 auto; flex-wrap:nowrap; align-items:center; margin-bottom:12px;}
+  .hero-row .reviews-head h3{font-size:18px; white-space:nowrap; display:flex; align-items:center;}
+  .hero-row .reviews-head h3::before{content:""; width:4px; height:17px; border-radius:4px; margin-right:9px; background:linear-gradient(180deg, var(--sage), var(--rose-dark));}
+  .hero-row .reviews-stat{flex:0 1 auto; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .hero-row .reviews-body{position:relative; flex:1 1 auto; min-height:0;}
+  .hero-row .reviews-scroll{
+    height:100%; padding:4px 2px 8px; scrollbar-width:none;
+    -webkit-mask-image:linear-gradient(90deg, #000 calc(100% - 40px), transparent); mask-image:linear-gradient(90deg, #000 calc(100% - 40px), transparent);
+  }
+  .hero-row .reviews-scroll::-webkit-scrollbar{display:none;}
+  .hero-row .review-card{height:100%; width:auto; aspect-ratio:3 / 4; border-radius:14px; box-shadow:0 4px 12px rgba(var(--sage-rgb),0.14);}
+  .hero-row .review-photo{aspect-ratio:auto; flex:1 1 auto; min-height:0;}
+  .reviews-nav{
+    display:flex; align-items:center; justify-content:center; position:absolute; top:50%; z-index:2;
+    width:34px; height:34px; padding:0 0 3px; border-radius:50%; border:1px solid var(--line);
+    background:rgba(255,255,255,0.96); color:var(--rose-dark); font-size:22px; line-height:1; cursor:pointer;
+    box-shadow:0 4px 14px rgba(59,18,48,0.16); opacity:0; transform:translateY(-50%) scale(.9);
+    transition:opacity .2s ease, transform .15s ease;
+  }
+  .reviews-nav.prev{left:-8px;}
+  .reviews-nav.next{right:-8px;}
+  .reviews-body:hover .reviews-nav, .reviews-nav:focus-visible{opacity:1; transform:translateY(-50%) scale(1);}
+  .reviews-nav:hover{background:var(--paper); color:var(--plum);}
+  .reviews-nav:active{transform:translateY(-50%) scale(.94);}
+}
+@media (min-width:1100px) and (prefers-reduced-motion:no-preference){
+  .hero-row .reviews-section:not([hidden]){animation:heroPanelIn .55s cubic-bezier(.2,.8,.2,1) backwards;}
+  @keyframes heroPanelIn{from{opacity:0; transform:translateX(14px);} to{opacity:1; transform:none;}}
 }
 
 /* ---------- Catalog results bar (desktop only — "พบสินค้า N รายการ") ---------- */

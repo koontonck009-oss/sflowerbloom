@@ -71,29 +71,24 @@
   </div>
 </header>
 
-<section class="promo-banner" id="promoBanner" aria-label="โปรโมชั่น" hidden>
-  <div class="pb-main">
-    <div class="pb-track" id="pbTrack"></div>
-    <button type="button" class="pb-nav prev" id="pbPrev" aria-label="ก่อนหน้า">‹</button>
-    <button type="button" class="pb-nav next" id="pbNext" aria-label="ถัดไป">›</button>
-    <div class="pb-dots" id="pbDots"></div>
-  </div>
-  <!-- แผงข้อความด้านขวา (แสดงเฉพาะคอม) -->
-  <div class="pb-info">
-    <h2 id="pbTitle">ช่อดอกไม้กำมะหยี่<br>สำหรับโอกาสพิเศษ</h2>
-    <p><span class="price-on" id="pbTextOn">เลือกสินค้าที่ชอบ กดใส่ตะกร้า แล้วกดปุ่มเดียวเพื่อส่งรายการสั่งซื้อมาที่แชทเพจของเราได้ทันที ไม่ต้องพิมพ์เอง</span><span class="price-off" id="pbTextOff">เลือกดูสินค้าที่ชอบ แล้วแคปหน้าจอสินค้านั้นส่งให้เพจเพื่อสอบถามราคาและสั่งทำได้เลย</span></p>
-    <div class="pb-chips" id="pbChips"><span>🚚 ส่งพัสดุทั่วประเทศ</span><span>📅 สั่งล่วงหน้า 3–5 วัน</span><span>💬 ทักแชตเพื่อจองล่วงหน้า</span></div>
-    <a href="#catalog" class="pb-cta" id="pbCta">เลือกดูสินค้า ↓</a>
-  </div>
-</section>
+<!-- แถวบนสุด: แบนเนอร์ (ซ้าย) + รีวิวจากลูกค้า (ขวา, เฉพาะจอคอมกว้าง) — มือถือ/จอแคบเรียงต่อกันตามปกติ -->
+<div class="hero-row" id="heroRow">
+  <section class="hero-banner" id="heroBanner" aria-label="แบนเนอร์ร้าน">
+    <img src="images/banner.jpg" width="1891" height="831" alt="S.Flower Bloom" fetchpriority="high" decoding="async" onerror="this.parentNode.hidden=true; this.parentNode.parentNode.classList.add('no-banner')">
+  </section>
 
-<section class="reviews-section" id="reviewsSection" hidden>
-  <div class="reviews-head">
-    <h3 id="reviewsTitle">รีวิวจากลูกค้า</h3>
-    <button type="button" class="reviews-stat" id="reviewsStat" onclick="openReviewsAll()"></button>
-  </div>
-  <div class="reviews-scroll" id="reviewsScroll"></div>
-</section>
+  <section class="reviews-section" id="reviewsSection" hidden>
+    <div class="reviews-head">
+      <h3 id="reviewsTitle">รีวิวจากลูกค้า</h3>
+      <button type="button" class="reviews-stat" id="reviewsStat" onclick="openReviewsAll()"></button>
+    </div>
+    <div class="reviews-body">
+      <div class="reviews-scroll" id="reviewsScroll"></div>
+      <button type="button" class="reviews-nav prev" onclick="reviewManualStep(-1)" aria-label="รีวิวก่อนหน้า">‹</button>
+      <button type="button" class="reviews-nav next" onclick="reviewManualStep(1)" aria-label="รีวิวถัดไป">›</button>
+    </div>
+  </section>
+</div>
 <div class="overlay" id="reviewsAllOverlay" onclick="closeReviewsAll()"></div>
 <div class="reviews-all-modal" id="reviewsAllModal">
   <span class="sheet-handle" aria-hidden="true"></span>

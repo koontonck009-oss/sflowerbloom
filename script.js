@@ -3344,17 +3344,10 @@ function applySiteSettings(cfg){
       if(typeof cfg.footer === 'string' && cfg.footer.trim()) foot.textContent = cfg.footer.trim();
       else if(name) foot.textContent = '© ' + name;
     }
-    // ข้อความข้างแบนเนอร์ (จอคอม)
-    const hero = cfg.hero || {};
-    if(typeof hero.title === 'string' && hero.title.trim() && $id('pbTitle')) $id('pbTitle').innerHTML = siteLines(hero.title.trim());
-    setText('pbTextOn', hero.text); setText('pbTextOff', hero.textOff); setText('pbCta', hero.cta);
-    if(Array.isArray(hero.chips) && $id('pbChips')){
-      $id('pbChips').innerHTML = hero.chips.map(x => String(x || '').trim()).filter(Boolean).map(x => '<span>' + escapeHtml(x) + '</span>').join('');
-    }
     // แถบรีวิว
     const rv = cfg.reviews || {};
     setText('reviewsTitle', rv.title);
-    if(rv.on === false && $id('reviewsSection')) $id('reviewsSection').style.display = 'none';
+    if(rv.on === false && $id('reviewsSection')){ $id('reviewsSection').style.display = 'none'; heroRowFlag('no-reviews', true); }
     // FAQ
     const fq = cfg.faq || {}, fsec = $id('faqSection');
     if(fsec){
@@ -3564,7 +3557,7 @@ async function loadReviews(){
     if(!found.includes(src)) found.push(src); // ต่อท้าย = นับเป็นรูปใหม่สุด
   });
   const shown = found.filter(src => !isReviewHidden(src)); // ตัดรูปที่ร้านลบออกจากเว็บแล้ว
-  if(!shown.length) return;
+  if(!shown.length){ heroRowFlag('no-reviews', true); return; } // ไม่มีรีวิว → แบนเนอร์กลับมาอยู่กลางหน้า
   renderReviews(shown);
 }
 let REVIEWS = []; // ลำดับสุ่ม — ใช้กับแถบพรีวิวหน้าแรก
@@ -3585,6 +3578,8 @@ function reviewCardHTML(src, i, isClone){
       </div>
     </div>`;
 }
+// เปิด/ปิดคลาสของแถวบนสุด (แบนเนอร์ + รีวิว) เช่น no-reviews = ไม่มีรีวิวให้แสดง จึงจัดแบนเนอร์ไว้กลางหน้า
+function heroRowFlag(cls, on){ const r = document.getElementById('heroRow'); if(r) r.classList.toggle(cls, !!on); }
 function renderReviews(imagesIn){
   REVIEWS = shuffle(imagesIn); // random order each page load, for the homepage strip
   REVIEWS_ALL_SORTED = imagesIn.slice().reverse(); // newest first, for the "view all" grid
@@ -3652,6 +3647,26 @@ function startReviewAutoScroll(){
     }
   }, REVIEW_AUTO_INTERVAL);
 }
+// ปุ่มลูกศรซ้าย/ขวาของแถบรีวิว (จอคอมกว้าง) — เลื่อนทีละการ์ด หยุดเลื่อนอัตโนมัติชั่วคราว และวนกลับจุดเริ่มแบบไร้รอยต่อเหมือนตอนเลื่อนเอง
+function reviewManualStep(dir){
+  const el = document.getElementById('reviewsScroll');
+  const card = el && el.querySelector('.review-card');
+  if(!card) return;
+  pauseReviewAutoScroll();
+  const step = card.getBoundingClientRect().width + 14; // ต้องตรงกับ gap ของ .reviews-scroll
+  const firstClone = el.querySelector('.review-card-clone');
+  const realWidth = firstClone ? firstClone.offsetLeft : el.scrollWidth;
+  // กดรัวๆ ให้นับต่อจากจุดหมายเดิมที่กำลังเลื่อนไปอยู่ (ไม่ใช่ตำแหน่งกลางทาง) จะได้เลื่อนสะสมทีละการ์ดจริง
+  const now = performance.now();
+  const base = (reviewManualX !== null && now - reviewManualT < 450) ? reviewManualX : el.scrollLeft;
+  const target = Math.max(0, base + dir * step);
+  reviewManualX = target; reviewManualT = now;
+  animateScrollLeft(el, target, 450);
+  if(dir > 0 && firstClone && target >= realWidth - 2){
+    reviewJumpTimer = setTimeout(() => { el.scrollLeft -= realWidth; reviewManualX = null; }, 470);
+  }
+}
+let reviewManualX = null, reviewManualT = 0;
 function stopReviewAutoScroll(){
   if(reviewAutoTimer){ clearInterval(reviewAutoTimer); reviewAutoTimer = null; }
   clearTimeout(reviewJumpTimer);
@@ -3872,163 +3887,6 @@ function closePromoPopup(e){
     }
   }catch(e){ show = true; }
   SITE_READY.then(() => { if(show) openPromoPopup(); });
-})();
-
-/* ---------- แบนเนอร์โปรโมชั่นเลื่อนได้ (ใต้แถบค้นหา) ----------
-   วางรูป images/promotions.png, promotions1.png, promotions2.png, promotions3.png ... (.png อัตราส่วน 1:1)
-   ตั้งชื่อเรียงเลขต่อกัน ระบบจะโหลดให้เองจนเจอเลขที่ไม่มีไฟล์ — ไม่ต้องแก้โค้ด
-   กดรูปแล้วเปิดดูรูปใหญ่ (ใช้ lightbox เดียวกับรูปรีวิว) — ไม่มีลิงก์ */
-(function(){
-  const MAX_IMAGES = 20;
-  const banner = document.getElementById('promoBanner');
-  const track = document.getElementById('pbTrack');
-  const dotsEl = document.getElementById('pbDots');
-  const prevBtn = document.getElementById('pbPrev');
-  const nextBtn = document.getElementById('pbNext');
-  if(!banner || !track) return;
-
-  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const loaded = [];
-  let step = 1, stops = 1, cur = 0, timer = null, inView = true, hold = false, resumeT = null, raf = 0;
-
-  function srcFor(i){ return 'images/promotions' + (i === 0 ? '' : i) + '.png'; }
-  function probe(src){
-    return new Promise(res => { const im = new Image(); im.onload = () => res(true); im.onerror = () => res(false); im.src = src; });
-  }
-
-  // ไฮไลต์รูปที่เห็นเต็ม ๆ (รูปที่โผล่มาแค่ขอบจะจางลง)
-  const io = ('IntersectionObserver' in window) ? new IntersectionObserver(entries => {
-    entries.forEach(en => en.target.classList.toggle('in', en.isIntersecting));
-    banner.classList.add('ready');
-  }, { root: track, threshold: 0.6 }) : null;
-
-  function addSlide(i, src, alt){
-    const a = document.createElement('div');
-    a.className = 'pb-slide in';
-    a.setAttribute('role', 'button'); a.tabIndex = 0;
-    a.draggable = false;
-    a.addEventListener('click', () => openReviewLightbox(loaded.slice(), i));
-    a.addEventListener('keydown', e => { if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); openReviewLightbox(loaded.slice(), i); } });
-    const s = src || srcFor(i);
-    loaded[i] = s;
-    a.style.setProperty('--i', i);
-    a.setAttribute('aria-label', alt || ('โปรโมชั่น ' + (i + 1)));
-    const img = document.createElement('img');
-    img.src = s; img.alt = alt || ('โปรโมชั่น ' + (i + 1)); img.draggable = false; img.decoding = 'async';
-    a.appendChild(img);
-    track.appendChild(a);
-    if(io) io.observe(a);
-    banner.hidden = false;
-    measure();
-  }
-
-  function measure(){
-    const sl = track.children;
-    if(!sl.length) return;
-    step = sl.length > 1 ? (sl[1].offsetLeft - sl[0].offsetLeft) : track.clientWidth;
-    if(step < 1) step = 1;
-    const perView = Math.max(1, Math.round(track.clientWidth / step));
-    stops = Math.max(1, sl.length - perView + 1);
-    banner.classList.toggle('single', stops < 2);
-    if(dotsEl.children.length !== stops){
-      dotsEl.innerHTML = '';
-      for(let i = 0; i < stops; i++){
-        const d = document.createElement('button');
-        d.type = 'button'; d.className = 'pb-dot'; d.setAttribute('aria-label', 'รูปที่ ' + (i + 1));
-        d.addEventListener('click', () => { goTo(i); restartTimer(); });
-        dotsEl.appendChild(d);
-      }
-    }
-    syncUI();
-  }
-
-  function syncUI(){
-    cur = Math.min(stops - 1, Math.max(0, Math.round(track.scrollLeft / step)));
-    Array.prototype.forEach.call(dotsEl.children, (d, i) => d.classList.toggle('active', i === cur));
-    prevBtn.disabled = cur <= 0;
-    nextBtn.disabled = cur >= stops - 1;
-  }
-
-  function goTo(i){
-    i = Math.min(stops - 1, Math.max(0, i));
-    track.scrollTo({ left: i * step, behavior: reduce ? 'auto' : 'smooth' });
-  }
-
-  // เลื่อนอัตโนมัติ
-  function tick(){
-    if(reduce || hold || !inView || document.hidden || stops < 2) return;
-    goTo(cur + 1 >= stops ? 0 : cur + 1);
-  }
-  function restartTimer(){
-    clearInterval(timer);
-    if(!reduce) timer = setInterval(tick, 4000);
-  }
-  function pause(){ hold = true; clearTimeout(resumeT); }
-  function resume(delay){ clearTimeout(resumeT); resumeT = setTimeout(() => { hold = false; }, delay || 0); }
-
-  track.addEventListener('scroll', () => {
-    if(raf) return;
-    raf = requestAnimationFrame(() => { raf = 0; syncUI(); });
-  }, { passive: true });
-  prevBtn.addEventListener('click', () => { goTo(cur - 1); restartTimer(); });
-  nextBtn.addEventListener('click', () => { goTo(cur + 1); restartTimer(); });
-
-  banner.addEventListener('mouseenter', pause);
-  banner.addEventListener('mouseleave', () => resume(0));
-  track.addEventListener('touchstart', pause, { passive: true });
-  track.addEventListener('touchend', () => resume(5000), { passive: true });
-  banner.addEventListener('focusin', pause);
-  banner.addEventListener('focusout', () => resume(0));
-
-  // เมาส์: ลากเพื่อเลื่อน (คอม) — ลากแล้วไม่ให้นับเป็นการกดเปิดรูป
-  let drag = null, justDragged = false;
-  track.addEventListener('pointerdown', e => {
-    if(e.pointerType !== 'mouse' || e.button !== 0) return;
-    drag = { x: e.clientX, left: track.scrollLeft, start: cur, moved: false };
-  });
-  window.addEventListener('pointermove', e => {
-    if(!drag) return;
-    const dx = e.clientX - drag.x;
-    if(!drag.moved && Math.abs(dx) > 6){ drag.moved = true; track.classList.add('dragging'); }
-    if(drag.moved) track.scrollLeft = drag.left - dx;
-  });
-  window.addEventListener('pointerup', e => {
-    if(!drag) return;
-    const d = drag; drag = null;
-    if(!d.moved) return;
-    const dx = e.clientX - d.x;
-    track.classList.remove('dragging');
-    justDragged = true; setTimeout(() => { justDragged = false; }, 60);
-    goTo(dx < -40 ? d.start + 1 : dx > 40 ? d.start - 1 : d.start);
-  });
-  track.addEventListener('click', e => {
-    if(justDragged){ e.preventDefault(); e.stopPropagation(); }
-  }, true);
-
-  // ไม่เลื่อนเองตอนแบนเนอร์อยู่นอกจอ
-  if('IntersectionObserver' in window){
-    new IntersectionObserver(en => { inView = en[0].isIntersecting; }, { threshold: 0.2 }).observe(banner);
-  }
-  window.addEventListener('resize', () => { requestAnimationFrame(measure); });
-
-  // เริ่มหลังรู้ค่าแต่งหน้าร้านแล้ว: มีรายการแบนเนอร์จากหลังบ้าน → ใช้รายการนั้น (ข้ามรูปที่ไฟล์ยังไม่ขึ้นเว็บ)
-  // ไม่มี → โหลดรูปเรียงตามเลข promotions.png, promotions1.png ... เหมือนเดิม
-  SITE_READY.then(async function(){
-    const cfgList = (SITE_CFG && Array.isArray(SITE_CFG.banners)) ? SITE_CFG.banners.filter(b => b && b.on !== false && siteSafeSrc(b.src)) : null;
-    if(cfgList){
-      const ok = await Promise.all(cfgList.map(b => probe(siteSafeSrc(b.src))));
-      let n = 0;
-      cfgList.forEach((b, k) => { if(ok[k]) addSlide(n++, siteSafeSrc(b.src)); });
-      if(n > 1) restartTimer();
-      return;
-    }
-    for(let i = 0; i < MAX_IMAGES; i++){
-      const ok = await probe(srcFor(i));
-      if(!ok) break;
-      addSlide(i);
-      if(i === 1) restartTimer();
-    }
-  });
 })();
 
 /* ---------- แถบเมนูล่าง (มือถือ) ---------- */
