@@ -1762,7 +1762,10 @@ function renderCatalog(){
       <div style="text-align:center; padding:60px 20px; color:var(--rose-dark);">
         <p style="font-size:16px; font-weight:700; margin-bottom:6px;">${noFav ? 'ยังไม่มีรายการโปรด' : 'ไม่พบสินค้าตามตัวกรองที่เลือก'}</p>
         <p style="font-size:13.5px; color:var(--plum);">${noFav ? 'กดรูปหัวใจที่การ์ดสินค้าเพื่อเก็บไว้ดูทีหลังได้เลยนะ 🤍' : 'ลองล้างตัวกรอง หรือเลือกเงื่อนไขอื่นดูนะ'}</p>
-        <button type="button" class="empty-clear-btn" onclick="bnavClearAll()">ล้างตัวกรองทั้งหมด</button>
+        <div class="empty-actions">
+          <button type="button" class="empty-clear-btn primary" onclick="bnavClearAll()">${noFav ? 'กลับไปดูสินค้า' : 'ล้างตัวกรองทั้งหมด'}</button>
+          ${noFav ? '' : '<button type="button" class="empty-clear-btn" onclick="openFilterSheet()">ปรับตัวกรอง</button>'}
+        </div>
       </div>`;
   } else {
     // แถบ "พบสินค้า N รายการ" ไว้เหนือกริดสินค้า (จอคอมแสดงตลอด / มือถือแสดงเฉพาะตอนมีปุ่มโหลดแคตตาล็อก)

@@ -2176,3 +2176,17 @@ html.no-anim *, html.no-anim *::before, html.no-anim *::after{
 .filter-pill.active .fp-n{opacity:.85;}
 .fswitch small{display:block; margin-top:2px; font-size:12px; font-weight:500; color:#8a7680;}
 .filter-apply-btn:disabled{opacity:.45; cursor:not-allowed; box-shadow:none;}
+
+/* ---------- มือถือ เฟส 3: ตอนไม่พบสินค้า + จอเล็ก ---------- */
+.empty-actions{display:none;}
+@media (max-width:859px){
+  .empty-actions{display:flex; justify-content:center; flex-wrap:wrap; gap:10px; margin-top:16px;}
+  .empty-actions .empty-clear-btn{margin-top:0;}
+  .empty-clear-btn.primary{background:var(--sage); border-color:var(--sage); color:#fff;}
+}
+@media (max-width:380px){
+  .qrow{gap:6px; padding:8px 10px;}
+  .qr-btn{padding:8px 10px; font-size:13px; gap:5px;}
+  .qr-btn svg{width:14px; height:14px;}
+  .qr-btn .filter-count{min-width:18px; height:18px; font-size:11px;}
+}
