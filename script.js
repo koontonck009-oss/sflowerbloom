@@ -916,7 +916,8 @@ function renderNav(){
 function stickyOffset(){
   const bar = document.getElementById('searchCartBar');
   const nav = document.getElementById('catNav');
-  return (bar ? bar.offsetHeight : 0) + (nav ? nav.offsetHeight : 0);
+  const qrow = document.getElementById('qrow'); // มือถือ: แถวตัวกรองด่วนแทนแถบหมวดเดิม (คอม = 0 เพราะซ่อนอยู่)
+  return (bar ? bar.offsetHeight : 0) + (nav ? nav.offsetHeight : 0) + (qrow ? qrow.offsetHeight : 0);
 }
 // ทำให้แถบหมวดหมู่ sticky ต่อท้ายแถบค้นหา (แทนที่จะซ้อนทับกันที่ top:0 เหมือนกัน)
 function updateStickyOffsets(){
@@ -1040,6 +1041,10 @@ function flowerTypesInScope(catsSet){
     .filter(([, n]) => n > 0)
     .sort((a, b) => b[1] - a[1])
     .map(([t]) => t);
+}
+// จำนวนสินค้าของชนิดดอกไม้หนึ่งในขอบเขตหมวดที่เลือก (โชว์เป็นตัวเลขท้ายปุ่มในแผงตัวกรองมือถือ)
+function flowerTypeCount(t, catsSet){
+  return PRODUCTS.filter(p => p.flowerType === t && (!catsSet || catsSet.size === 0 || catsSet.has(p.cat))).length;
 }
 // เปลี่ยนหมวดแล้ว ตัดชนิดที่ไม่มีในหมวดใหม่ทิ้ง (ชนิดที่ยังมีอยู่ในหมวดใหม่จะคงไว้)
 function pruneFlowerTypes(flowerSet, catsSet){
@@ -1237,7 +1242,8 @@ function updateSheetApplyLabel(){
   const btn = document.querySelector('.filter-sheet-footer .filter-apply-btn');
   if(!btn || !filterDraft) return;
   const n = countResultsForState(filterDraft);
-  btn.textContent = n ? `แสดง ${n} รายการ` : 'ไม่พบสินค้า';
+  btn.textContent = n ? `ดู ${n} รายการ` : 'ไม่พบสินค้า';
+  btn.disabled = !n; // ไม่มีสินค้าตรงเงื่อนไข = กดไม่ได้ ให้ปรับตัวกรองหรือกด "ล้าง" ก่อน
 }
 
 function buildFilterPanelHtml(state, mode){
@@ -1279,7 +1285,8 @@ function buildFilterPanelHtml(state, mode){
   const flowerHtml = group('🌸 ชนิดดอกไม้', state.flowerTypes.size,
     `<div class="filter-pills">${flowerList.map(t => {
       const on = t === 'ทั้งหมด' ? state.flowerTypes.size === 0 : state.flowerTypes.has(t);
-      return `<button class="filter-pill${t === 'ทั้งหมด' ? '' : ' is-multi'} ${on?'active':''}" aria-pressed="${on}" onclick="${setFlowerFn}('${t}')">${t}</button>`;
+      const cnt = (mode === 'sheet' && t !== 'ทั้งหมด') ? `<span class="fp-n">${flowerTypeCount(t, state.cats)}</span>` : '';
+      return `<button class="filter-pill${t === 'ทั้งหมด' ? '' : ' is-multi'} ${on?'active':''}" aria-pressed="${on}" onclick="${setFlowerFn}('${t}')">${t}${cnt}</button>`;
     }).join('')}</div>`);
 
   const priceHtml = PRICES_HIDDEN ? '' : group('ช่วงราคา', 0, renderPriceSliderHtml(state, mode));
@@ -1290,20 +1297,33 @@ function buildFilterPanelHtml(state, mode){
       <button class="${state.sortOrder==='desc'?'active':''}" aria-pressed="${state.sortOrder==='desc'}" onclick="${setSortFn}('desc')">มาก → น้อย</button>
     </div>`, 'sort', state.sortOrder !== 'none');
 
-  const moreCount = (state.ready ? 1 : 0) + (state.favorites ? 1 : 0) + (state.allSplit ? 1 : 0);
-  const sw = (label, checked, fn, hint) => `
+  const isSheet = mode === 'sheet';
+  const sw = (label, checked, fn, hint, sub) => `
     <label class="fswitch"${hint ? ` title="${hint}"` : ''}>
-      <span>${label}</span>
+      <span>${label}${sub ? `<small>${sub}</small>` : ''}</span>
       <input type="checkbox" class="fswitch-input" ${checked?'checked':''} onchange="${fn}(this.checked)">
     </label>`;
-  const moreHtml = group('ตัวเลือกอื่น', moreCount,
-    sw('⚡ พร้อมส่ง', state.ready, setReadyFn) +
-    sw('❤️ รายการโปรด', state.favorites, setFavFn) +
-    sw('🧾 แยกการ์ดทุกสี/แบบ', state.allSplit, setAllSplitFn, 'แสดงทุกสี/แบบเป็นการ์ดแยกกัน'),
-    'more', moreCount > 0);
+  let moreHtml;
+  if(isSheet){
+    // มือถือ: "พร้อมส่ง" กับ "เรียงราคา" ย้ายไปอยู่ในแถวตัวกรองด่วนแล้ว แผงนี้เหลือแค่ของที่ใช้น้อย พับเก็บไว้
+    const moreCount = (state.favorites ? 1 : 0) + (state.allSplit ? 1 : 0);
+    moreHtml = group('เพิ่มเติม', moreCount,
+      sw('❤️ เฉพาะรายการโปรด', state.favorites, setFavFn) +
+      sw('🎨 แสดงแยกทุกสี/ทุกแบบ', state.allSplit, setAllSplitFn, '', 'สีหรือแบบที่ต่างกันจะแยกเป็นการ์ดของตัวเอง'),
+      'more', moreCount > 0);
+  } else {
+    const moreCount = (state.ready ? 1 : 0) + (state.favorites ? 1 : 0) + (state.allSplit ? 1 : 0);
+    moreHtml = group('ตัวเลือกอื่น', moreCount,
+      sw('⚡ พร้อมส่ง', state.ready, setReadyFn) +
+      sw('❤️ รายการโปรด', state.favorites, setFavFn) +
+      sw('🧾 แยกการ์ดทุกสี/แบบ', state.allSplit, setAllSplitFn, 'แสดงทุกสี/แบบเป็นการ์ดแยกกัน'),
+      'more', moreCount > 0);
+  }
 
-  return group('หมวดหมู่', 0, `<div class="filter-pills">${catHtml}</div>`)
-    + sizeHtml + flowerHtml + priceHtml + sortHtml + moreHtml;
+  const catGroup = group('หมวดหมู่', 0, `<div class="filter-pills">${catHtml}</div>`);
+  // มือถือ: หมวดหมู่ → ชนิดดอกไม้ → ขนาด → ราคา → เพิ่มเติม (ไม่มีเรียงราคา/พร้อมส่ง) · คอมคงลำดับเดิม
+  if(isSheet) return catGroup + flowerHtml + sizeHtml + priceHtml + moreHtml;
+  return catGroup + sizeHtml + flowerHtml + priceHtml + sortHtml + moreHtml;
 }
 
 // Desktop sidebar — always visible, applies every change immediately (no apply button needed)
@@ -1380,7 +1400,10 @@ function setDraftFlowerType(t){
   renderFilterSheetBody();
 }
 function clearFilterDraft(){
-  filterDraft = { cats:new Set(), customMin:PRICE_SLIDER_MIN, customMax:PRICE_SLIDER_MAX, sortOrder:'none', ready:false, favorites:false, allSplit:false, sizes:new Set(), flowerTypes:new Set() };
+  // "ล้าง" ในแผงล้างเฉพาะสิ่งที่เห็นในแผง — พร้อมส่ง/เรียงราคา อยู่ในแถวด่วนด้านนอก จึงคงค่าเดิมไว้
+  filterDraft = { cats:new Set(), customMin:PRICE_SLIDER_MIN, customMax:PRICE_SLIDER_MAX,
+    sortOrder: filterDraft ? filterDraft.sortOrder : 'none', ready: filterDraft ? filterDraft.ready : false,
+    favorites:false, allSplit:false, sizes:new Set(), flowerTypes:new Set() };
   renderFilterSheetBody();
 }
 function applyFilterDraft(){
@@ -4076,6 +4099,33 @@ function closeCatSheet(){
 }
 function pickCatFromSheet(c){ closeCatSheet(); selectCategory(c); }
 function catSheetMoreFilters(){ closeCatSheet(); openFilterSheet(); }
+/* ---------- แผงเรียงสินค้า (มือถือ) ---------- */
+const SORT_OPTS = [['none','✨','แนะนำ (ค่าเริ่มต้น)'], ['asc','⬆️','ราคา ต่ำ → สูง'], ['desc','⬇️','ราคา สูง → ต่ำ']];
+function renderSortSheet(){
+  const body = document.getElementById('sortSheetBody');
+  if(!body) return;
+  body.innerHTML = SORT_OPTS.map(o => `<button type="button" class="cat-opt${activeSortOrder === o[0] ? ' active' : ''}" onclick="pickSort('${o[0]}')">
+      <span class="cat-opt-ic" aria-hidden="true">${o[1]}</span><span class="cat-opt-name">${o[2]}</span><span class="cat-opt-check" aria-hidden="true">✓</span></button>`).join('');
+}
+function openSortSheet(){
+  renderSortSheet();
+  document.getElementById('sortOverlay').classList.add('open');
+  document.getElementById('sortSheet').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeSortSheet(){
+  document.getElementById('sortOverlay').classList.remove('open');
+  document.getElementById('sortSheet').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function pickSort(order){
+  activeSortOrder = order;
+  closeSortSheet();
+  renderCatalog();
+  renderFilterSidebar();
+  updateFilterBadge();
+  scrollToCatalogTop();
+}
 // อัปเดตสถานะทุกช่องในแถบล่างให้ตรงกับตัวกรองจริง (เรียกจาก renderNav / updateFilterBadge / updateCartUI)
 function updateBottomNav(){
   const catBtn = document.getElementById('bnavCat');
@@ -4084,23 +4134,38 @@ function updateBottomNav(){
   // ป้ายคงที่ "หมวดหมู่" (เดิมเปลี่ยนตามหมวดที่เลื่อนผ่าน จนดูเหมือนแท็บหมวดมากกว่าปุ่มเปิดเมนู) — เลือกหมวดแล้วค่อยโชว์ชื่อหมวดที่เลือก
   document.getElementById('bnavCatLabel').textContent = picked || 'หมวดหมู่';
   catBtn.classList.toggle('active', !!picked);
-  const ready = document.getElementById('bnavReady');
-  ready.classList.toggle('active', showReadyOnly); ready.setAttribute('aria-pressed', String(!!showReadyOnly));
   const fav = document.getElementById('bnavFav');
   fav.classList.toggle('active', showFavoritesOnly); fav.setAttribute('aria-pressed', String(!!showFavoritesOnly));
-  // ตัวกรองอื่นๆ (ราคา/เรียง/ขนาด/ชนิดดอกไม้/แยกการ์ด) นอกเหนือจากหมวด+พร้อมส่ง+โปรด
+  // ตัวกรองหลายกลุ่มที่อยู่ในแผง "ตัวกรอง" (พร้อมส่ง/เรียงราคา มีปุ่มของตัวเองในแถวด่วนแล้ว จึงไม่นับซ้ำ)
   const priceOn = customPriceMin !== PRICE_SLIDER_MIN || customPriceMax !== PRICE_SLIDER_MAX;
-  const extra = [priceOn, activeSortOrder !== 'none', showAllVariantsSplit, activeFlowerTypes.size > 0, activeSizes.size > 0].filter(Boolean).length;
-  const cb = document.getElementById('bnavCatBadge');
-  cb.textContent = extra; cb.hidden = extra === 0;
+  const inPanel = [activeCats.size > 0, priceOn, showAllVariantsSplit, activeFlowerTypes.size > 0, activeSizes.size > 0].filter(Boolean).length;
   const mc = document.getElementById('catMoreCount');
-  if(mc){ mc.textContent = extra; mc.hidden = extra === 0; }
-  // แถบชิปตัวกรองที่ใช้อยู่ (วาดใหม่เฉพาะตอนเนื้อหาเปลี่ยน)
+  if(mc){ mc.textContent = inPanel; mc.hidden = inPanel === 0; }
+  // แถวตัวกรองด่วน (มือถือ): ปุ่มตัวกรอง + พร้อมส่ง + เรียงราคา
+  const qf = document.getElementById('qrFilter');
+  if(qf){
+    qf.classList.toggle('active', inPanel > 0);
+    const qfc = document.getElementById('qrFilterCount');
+    if(qfc){ qfc.textContent = inPanel; qfc.hidden = inPanel === 0; }
+    const qr = document.getElementById('qrReady');
+    qr.classList.toggle('active', showReadyOnly); qr.setAttribute('aria-pressed', String(!!showReadyOnly));
+    const qs = document.getElementById('qrSort');
+    qs.classList.toggle('active', activeSortOrder !== 'none');
+    document.getElementById('qrSortLabel').textContent = activeSortOrder === 'asc' ? 'ราคา ต่ำ→สูง' : (activeSortOrder === 'desc' ? 'ราคา สูง→ต่ำ' : 'เรียงราคา');
+    // จำนวนที่พบ (นับแบบเดียวกับปุ่ม "แสดง N รายการ" ในแผงตัวกรอง)
+    const qc = document.getElementById('qrCount');
+    if(qc){
+      // มีตัวกรอง/คำค้นอยู่ = แถบ "พบสินค้า N รายการ + โหลดแคตตาล็อก" ใต้ชิปบอกอยู่แล้ว ไม่แสดงซ้ำ
+      qc.textContent = (typeof PRODUCTS !== 'undefined' && PRODUCTS.length && !bnavAnyFilter()) ? 'พบสินค้า ' + countResultsForState(sidebarState()) + ' รายการ' : '';
+    }
+  }
+  // ชิปตัวกรองที่ใช้อยู่ใต้แถวด่วน (วาดใหม่เฉพาะตอนเนื้อหาเปลี่ยน) — พร้อมส่ง/เรียงราคา ไม่ทำชิปซ้ำเพราะปุ่มในแถวบอกสถานะอยู่แล้ว
   const box = document.getElementById('bnavChips');
   if(box){
-    const chips = bnavChipList();
-    const html = chips.map(function(c){ return '<button type=\"button\" class=\"bnav-chip\" data-k=\"' + c[0] + '\" aria-label=\"เอาตัวกรองนี้ออก: ' + escapeHtml(c[1]) + '\">' + escapeHtml(c[1]) + '<i aria-hidden=\"true\">✕</i></button>'; }).join('') +
-      (chips.length > 1 ? '<button type=\"button\" class=\"bnav-chip-clear\" data-k=\"all\">ล้างทั้งหมด</button>' : '');
+    const chips = bnavChipList().filter(function(c){ return c[0] !== 'ready' && c[0] !== 'sort'; });
+    const alsoActive = (showReadyOnly ? 1 : 0) + (activeSortOrder !== 'none' ? 1 : 0);
+    const html = chips.map(function(c){ return '<button type="button" class="bnav-chip" data-k="' + c[0] + '" aria-label="เอาตัวกรองนี้ออก: ' + escapeHtml(c[1]) + '">' + escapeHtml(c[1]) + ' <i aria-hidden="true">✕</i></button>'; }).join('') +
+      (chips.length + alsoActive > 1 ? '<button type="button" class="bnav-chip-clear" data-k="all">ล้างทั้งหมด</button>' : '');
     if(box.dataset.sig !== html){ box.innerHTML = html; box.dataset.sig = html; }
     box.hidden = chips.length === 0;
     document.documentElement.classList.toggle('has-chips', chips.length > 0);

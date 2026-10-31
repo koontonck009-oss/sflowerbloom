@@ -1800,7 +1800,7 @@ footer{
    แถบเมนูล่างบนมือถือ (ติดขอบล่างเต็มความกว้าง) — <= 859px เท่านั้น คอมไม่เปลี่ยน
    หน้าแรก · หมวดหมู่ · พร้อมส่ง · รายการโปรด · ตะกร้า (ไอคอน SVG เส้น)
    ========================================================= */
-.bnav, .cat-sheet, #catOverlay, .bnav-chips, .empty-clear-btn{display:none;}
+.bnav, .cat-sheet, #catOverlay, #sortOverlay, .bnav-chips, .qrow, .qr-info, .empty-clear-btn{display:none;}
 @media (max-width:859px){
   :root{--bnav-h:60px;}
   body{padding-bottom:calc(var(--bnav-h) + env(safe-area-inset-bottom, 0px));}
@@ -1846,31 +1846,44 @@ footer{
   .bnav-badge[hidden]{display:none;}
 
   /* ชิปแสดงตัวกรองที่ใช้อยู่ (ลอยเหนือแถบล่าง) — กดชิปเพื่อเอาตัวกรองนั้นออก */
-  .bnav-chips{
-    display:flex; align-items:center; gap:8px; position:fixed; left:0; right:0; z-index:1029;
-    bottom:calc(var(--bnav-h) + env(safe-area-inset-bottom, 0px));
-    padding:12px 12px 8px; overflow-x:auto; scrollbar-width:none; -webkit-overflow-scrolling:touch;
-    background:linear-gradient(180deg, rgba(255,255,255,0), rgba(255,255,255,0.94) 45%);
+  /* แถวตัวกรองด่วน: ติดใต้แถบค้นหา (แถบค้นหาซ่อนตอนเลื่อนลง → แถวนี้ขยับขึ้นไปติดขอบบน) */
+  .qrow{
+    display:flex; align-items:center; gap:8px; position:sticky; top:var(--bar-h, 52px); z-index:999;
+    padding:8px 12px; overflow-x:auto; scrollbar-width:none; -webkit-overflow-scrolling:touch;
+    background:var(--cream); box-shadow:0 1px 0 var(--line); transition:top .22s ease;
   }
-  .bnav-chips::-webkit-scrollbar{display:none;}
-  .bnav-chips[hidden]{display:none;}
-  body:has(#searchInput:focus) .bnav-chips{display:none;}
-  .prices-hidden .bnav-chips{bottom:calc(var(--bnav-h) + env(safe-area-inset-bottom, 0px));}
-  .bnav-chip{
-    flex:0 0 auto; display:inline-flex; align-items:center; gap:7px; max-width:64vw;
-    padding:7px 10px 7px 13px; border-radius:999px; border:1px solid rgba(var(--sage-rgb),0.4);
-    background:var(--paper); color:var(--sage-dark); font-family:'Kanit'; font-weight:600; font-size:12.5px; line-height:1.2;
-    box-shadow:0 2px 8px rgba(var(--sage-rgb),0.16); white-space:nowrap; cursor:pointer;
+  .qrow::-webkit-scrollbar{display:none;}
+  html:has(.search-cart-bar.bar-hidden) .qrow{top:0;}
+  .qr-btn{
+    flex:0 0 auto; display:inline-flex; align-items:center; gap:6px; white-space:nowrap;
+    padding:8px 13px; border-radius:999px; border:1.5px solid var(--line); background:var(--paper); color:var(--plum);
+    font-family:'Kanit'; font-weight:600; font-size:14px; line-height:1.2; cursor:pointer;
     -webkit-tap-highlight-color:transparent;
+  }
+  .qr-btn svg{width:16px; height:16px; flex:none;}
+  .qr-btn:active{transform:scale(.96);}
+  .qr-btn.active{background:var(--sage); border-color:var(--sage); color:#fff;}
+  .qr-btn.active .filter-count{background:#fff; color:var(--sage-dark);}
+  .qr-caret{font-size:11px; opacity:.7;}
+  .prices-hidden .qr-sort{display:none;}
+  /* จำนวนที่พบ + ชิปตัวกรองที่เลือกอยู่ (อยู่ในหน้า ไม่ติดหน้าจอ) */
+  .qr-info{display:block;}
+  .qr-count{display:block; padding:7px 14px 0; font-size:12.5px; font-weight:600; color:#8a7680;}
+  .qr-count:empty{display:none;}
+  .bnav-chips{display:flex; flex-wrap:wrap; align-items:center; gap:8px; padding:8px 12px 0;}
+  .bnav-chips[hidden]{display:none;}
+  .bnav-chip{
+    flex:0 0 auto; display:inline-flex; align-items:center; gap:7px; max-width:100%;
+    padding:6px 10px 6px 13px; border-radius:999px; border:1px solid rgba(var(--sage-rgb),0.4);
+    background:var(--paper); color:var(--sage-dark); font-family:'Kanit'; font-weight:600; font-size:12.5px; line-height:1.2;
+    white-space:nowrap; cursor:pointer; -webkit-tap-highlight-color:transparent;
   }
   .bnav-chip i{font-style:normal; font-size:11px; opacity:.65; flex-shrink:0;}
   .bnav-chip:active{transform:scale(.96);}
   .bnav-chip-clear{
-    flex:0 0 auto; border:none; background:none; padding:7px 6px; cursor:pointer;
+    flex:0 0 auto; border:none; background:none; padding:6px 6px; cursor:pointer;
     font-family:'Kanit'; font-weight:600; font-size:12.5px; color:var(--rose-dark); text-decoration:underline; text-underline-offset:2px;
   }
-  html.has-chips body{padding-bottom:calc(var(--bnav-h) + 52px + env(safe-area-inset-bottom, 0px));}
-  html.has-chips .toast{bottom:calc(var(--bnav-h) + 66px + env(safe-area-inset-bottom, 0px));}
   /* ปุ่มล้างตัวกรองตอนไม่พบสินค้า (เฉพาะมือถือ) */
   .empty-clear-btn{
     display:inline-block; margin-top:14px; padding:10px 22px; border-radius:999px; border:1.5px solid var(--sage);
@@ -1879,7 +1892,7 @@ footer{
 
   /* แผงเลือกหมวดหมู่ */
   .cat-sheet{display:flex; max-height:70vh;}
-  #catOverlay{display:block;}
+  #catOverlay, #sortOverlay{display:block;}
   .cat-sheet .filter-sheet-body{padding:10px 16px 6px;}
   .cat-opt{
     width:100%; display:flex; align-items:center; gap:12px; margin:0 0 8px; padding:12px 14px;
@@ -2158,3 +2171,8 @@ html.no-anim *, html.no-anim *::before, html.no-anim *::after{
 @media (max-width:859px) and (prefers-reduced-motion:reduce){
   .page-img img.pd-slide-next, .page-img img.pd-slide-prev{animation:none !important;}
 }
+/* ---------- มือถือ เฟส 2: แผงตัวกรองให้เรียบง่าย ---------- */
+.fp-n{margin-left:6px; font-size:12px; font-weight:600; opacity:.6;}
+.filter-pill.active .fp-n{opacity:.85;}
+.fswitch small{display:block; margin-top:2px; font-size:12px; font-weight:500; color:#8a7680;}
+.filter-apply-btn:disabled{opacity:.45; cursor:not-allowed; box-shadow:none;}
