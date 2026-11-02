@@ -1410,8 +1410,29 @@
                             </div>
                             <div class="space-y-2">
                                 <div v-for="(item, idx) in form.items" :key="item.id" class="item-row relative p-3 rounded-xl border border-slate-200 bg-slate-50 sm:p-0 sm:border-0 sm:bg-transparent">
-                                    <input :id="idx === 0 ? 'f-item-first' : null" :data-item-details="item.id" v-model="item.details" @input="formErrors.items = ''" type="text" autocomplete="off" placeholder="เช่น ช่อกุหลาบแดง 9 ดอก" class="item-details w-full px-3.5 py-3 sm:py-1.5 border rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500" :class="idx === 0 && formErrors.items ? 'border-rose-400 ring-2 ring-rose-100' : 'border-slate-200'">
-                                    <input v-model.number="item.qty" type="number" inputmode="numeric" min="0" placeholder="1" class="w-full px-2 py-3 sm:py-1.5 border rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 border-slate-200 min-w-0">
+                                    <input :id="idx === 0 ? 'f-item-first' : null" :data-item-details="item.id" v-model="item.details" @input="onItemInput(item)" @focus="onItemFocus(item)" @blur="suggestForId = null" @keydown="onItemKeydown($event, item)" type="text" autocomplete="off" placeholder="ค้นชื่อ/รหัส เช่น R02 หรือพิมพ์เอง" class="item-details w-full px-3.5 py-3 sm:py-1.5 border rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500" :class="idx === 0 && formErrors.items ? 'border-rose-400 ring-2 ring-rose-100' : 'border-slate-200'">
+                                    <div v-if="suggestForId === item.id && suggestionsFor(item).length" class="absolute z-30 left-3 right-3 top-[3.7rem] sm:left-0 sm:right-auto sm:top-[calc(100%+0.25rem)] sm:w-[26rem] max-h-64 overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg py-1">
+                                        <button v-for="(sp, si) in suggestionsFor(item)" :key="sp.id" type="button" tabindex="-1" @mousedown.prevent @click="pickProduct(item, sp)" @mouseenter="suggestIndex = si" class="w-full text-left px-3 py-2 flex items-center justify-between gap-3 text-sm" :class="si === suggestIndex ? 'bg-pink-50' : 'hover:bg-slate-50'">
+                                            <span class="min-w-0 truncate text-slate-700">{{ sp.name }}</span>
+                                            <span class="shrink-0 text-xs font-semibold" :class="sp.price != null ? 'text-slate-600' : 'text-amber-600'">{{ sp.priceLabel }}</span>
+                                        </button>
+                                    </div>
+                                    <div v-if="variantPanel.itemId === item.id && variantPanel.p" data-variant-panel class="absolute z-30 left-3 right-3 top-[3.7rem] sm:left-0 sm:right-auto sm:top-[calc(100%+0.25rem)] sm:w-[26rem] bg-white border border-pink-200 rounded-xl shadow-lg overflow-hidden">
+                                        <div class="flex items-center justify-between gap-2 px-3 py-2 bg-pink-50 border-b border-pink-100">
+                                            <span class="text-xs font-semibold text-slate-700 truncate">เลือกแบบ/สี: {{ variantPanel.p.name }}</span>
+                                            <button type="button" @click="closeVariantPanel()" class="shrink-0 text-slate-400 hover:text-slate-600 text-sm leading-none px-1" aria-label="ปิด">✕</button>
+                                        </div>
+                                        <div class="max-h-64 overflow-y-auto py-1">
+                                            <button v-for="(v, vi) in variantPanel.p.choices" :key="vi" type="button" @click="pickVariant(item, variantPanel.p, v)" class="w-full text-left px-3 py-1.5 flex items-center gap-3 text-sm hover:bg-pink-50">
+                                                <span class="w-9 h-9 shrink-0 rounded-lg bg-slate-100 overflow-hidden flex items-center justify-center text-slate-300 text-xs">
+                                                    <img v-if="v.image" :src="v.image" loading="lazy" alt="" class="w-full h-full object-cover" @error="$event.target.style.display='none'">
+                                                </span>
+                                                <span class="min-w-0 flex-1 truncate text-slate-700">{{ v.label || 'แบบมาตรฐาน' }}</span>
+                                                <span v-if="v.price != null" class="shrink-0 text-xs font-semibold text-slate-600">฿{{ formatNumber(v.price) }}</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <input :data-item-qty="item.id" v-model.number="item.qty" type="number" inputmode="numeric" min="0" placeholder="1" class="w-full px-2 py-3 sm:py-1.5 border rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 border-slate-200 min-w-0">
                                     <input v-model="item.unit" type="text" placeholder="ช่อ" class="w-full px-2 py-3 sm:py-1.5 border rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 border-slate-200 min-w-0">
                                     <input :data-item-price="item.id" v-model.number="item.price" type="number" inputmode="decimal" min="0" placeholder="0" class="w-full px-2 py-3 sm:py-1.5 border rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 border-slate-200 min-w-0">
                                     <div class="item-total text-sm font-semibold text-slate-700"><span class="sm:hidden font-normal text-slate-400">รวม </span>฿{{ formatNumber((Number(item.qty) || 0) * (Number(item.price) || 0)) }}</div>
@@ -1419,9 +1440,34 @@
                                         <i class="fa-solid fa-xmark"></i>
                                     </button>
                                     <span v-else class="hidden sm:block"></span>
+                                    <div v-if="addonsFor(item).length" class="flex flex-wrap items-center gap-1.5" style="grid-column: 1 / -1">
+                                        <span class="text-[11px] text-slate-400">ของเสริม:</span>
+                                        <button v-for="a in addonsFor(item)" :key="a.name" type="button" tabindex="-1" @click="addAddon(item, a)" class="text-xs px-2.5 py-1 rounded-full border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100">+ {{ a.name }} ฿{{ formatNumber(a.price) }}</button>
+                                    </div>
                                 </div>
                             </div>
                             <p v-if="formErrors.items" class="text-[11px] text-rose-600 mt-1">{{ formErrors.items }}</p>
+                            <div v-if="quickCats.length" class="mt-2">
+                                <div class="flex flex-wrap items-center gap-1.5">
+                                    <span class="text-[11px] text-slate-400">เลือกจากหน้าร้าน:</span>
+                                    <button v-for="c in quickCats" :key="c" type="button" tabindex="-1" @click="toggleQuickCat(c)" class="text-xs px-2.5 py-1 rounded-full border transition-colors" :class="quick.cat === c ? 'bg-pink-500 border-pink-500 text-white' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'">{{ c }}</button>
+                                </div>
+                                <div v-if="quick.cat" class="mt-2 border border-slate-200 rounded-xl bg-white overflow-hidden">
+                                    <div v-if="quickTypes.length > 1" class="flex flex-wrap gap-1.5 p-2 border-b border-slate-100 bg-slate-50">
+                                        <button type="button" tabindex="-1" @click="quick.type = ''" class="text-[11px] px-2 py-0.5 rounded-full border" :class="!quick.type ? 'bg-slate-700 border-slate-700 text-white' : 'bg-white border-slate-200 text-slate-600'">ทั้งหมด</button>
+                                        <button v-for="t in quickTypes" :key="t" type="button" tabindex="-1" @click="quick.type = t" class="text-[11px] px-2 py-0.5 rounded-full border" :class="quick.type === t ? 'bg-slate-700 border-slate-700 text-white' : 'bg-white border-slate-200 text-slate-600'">{{ t }}</button>
+                                    </div>
+                                    <div class="max-h-72 overflow-y-auto py-1">
+                                        <button v-for="qp in quickList" :key="qp.id" type="button" tabindex="-1" @click="pickFromQuick(qp)" class="w-full text-left px-3 py-1.5 flex items-center gap-3 text-sm hover:bg-pink-50">
+                                            <span class="w-9 h-9 shrink-0 rounded-lg bg-slate-100 overflow-hidden flex items-center justify-center">
+                                                <img v-if="qp.image" :src="qp.image" loading="lazy" alt="" class="w-full h-full object-cover" @error="$event.target.style.display='none'">
+                                            </span>
+                                            <span class="min-w-0 flex-1 truncate text-slate-700">{{ qp.name }}</span>
+                                            <span class="shrink-0 text-xs font-semibold" :class="qp.price != null ? 'text-slate-600' : 'text-amber-600'">{{ qp.priceLabel }}</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                             <div class="flex items-center justify-between gap-2 mt-2">
                                 <button type="button" @click="addFormItem" class="text-xs px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg font-medium transition-colors">
                                     <i class="fa-solid fa-plus"></i> เพิ่มสินค้า
@@ -2600,6 +2646,258 @@
                     }
                 }
 
+                // ===== เติมสินค้าจากหน้าร้าน (เฟส 1: ค้นแล้วเลือก เติมชื่อ/ราคา/หน่วยให้) =====
+                // สินค้าที่มีหลายแบบ (หลายราคา) เติมแค่ชื่อ แล้วให้กรอกราคาเอง — เฟส 2 จะเพิ่มตัวเลือกแบบ
+                const productCatalog = ref([]);
+                const suggestForId = ref(null);
+                const suggestIndex = ref(-1);
+                const UNIT_BY_CAT = { 'ช่อดอกไม้': 'ช่อ', 'กรอบรูป': 'กรอบ', 'กระถาง': 'กระถาง' };
+
+                function toOrderProduct(p) {
+                    if (!p || typeof p !== 'object') return null;
+                    const name = String(p.name || '').trim();
+                    if (!name) return null;
+                    const prices = (Array.isArray(p.variants) ? p.variants : []).map(v => Number(v && v.price)).filter(n => n > 0);
+                    const single = Number(p.price) > 0 ? Number(p.price) : null;
+                    let price = null, priceLabel = 'ใส่ราคาเอง';
+                    if (prices.length) {
+                        const lo = Math.min(...prices), hi = Math.max(...prices);
+                        priceLabel = lo === hi ? '฿' + formatNumber(lo) + ' (หลายแบบ)' : '฿' + formatNumber(lo) + '–' + formatNumber(hi) + ' (หลายแบบ)';
+                    } else if (single != null) {
+                        price = single; priceLabel = '฿' + formatNumber(single);
+                    }
+                    // รูปหลักของสินค้า (เฉพาะสินค้าที่มีรูปที่ตัวสินค้าเอง — สินค้าหลายแบบรูปขึ้นกับแบบ ไว้เฟส 2)
+                    // หารูปตามลำดับ: image → images[0] → รูปแรกในรายการสี/แบบ (colors) → รูปของตัวเลือกหลายราคา (variants) แบบราคาถูกสุด
+                    const imgOf = (o) => !o ? '' : (typeof o.image === 'string' && o.image.trim()) ? o.image.trim()
+                        : (Array.isArray(o.images) && typeof o.images[0] === 'string' ? o.images[0].trim() : '');
+                    let rawImg = imgOf(p);
+                    if (!rawImg && Array.isArray(p.colors)) {
+                        for (const c of p.colors) { rawImg = imgOf(c); if (rawImg) break; }
+                    }
+                    if (!rawImg && Array.isArray(p.variants)) {
+                        const withImg = p.variants.filter(v => imgOf(v)).sort((a, b) => (Number(a.price) || 1e12) - (Number(b.price) || 1e12));
+                        if (withImg.length) rawImg = imgOf(withImg[0]);
+                    }
+                    const image = (rawImg && !/^(https?:|data:)/i.test(rawImg)) ? encodeURI(rawImg.replace(/\\/g, '/')) : rawImg; // บางรายการเก็บ path แบบ \\ ต้องแปลงเป็น /
+                    const fixPath = (r) => (r && !/^(https?:|data:)/i.test(r)) ? encodeURI(r.replace(/\\/g, '/')) : r;
+                    const variants = (Array.isArray(p.variants) ? p.variants : [])
+                        .filter(v => v && Number(v.price) > 0)
+                        .map(v => ({
+                            label: (Array.isArray(v.match) && v.match.length ? v.match.join(', ') : String(v.tag || '')).trim(),
+                            price: Number(v.price),
+                            image: fixPath(imgOf(v))
+                        }))
+                        .sort((a, b) => a.price - b.price);
+                    const samePrice = variants.length && variants.every(v => v.price === variants[0].price) ? variants[0].price : null;
+                    const normAddons = (arr) => (Array.isArray(arr) ? arr : [])
+                        .filter(a => a && String(a.name || '').trim())
+                        .map(a => ({ name: String(a.name).trim(), price: Number(a.price) || 0 }));
+                    // ตัวเลือกให้กดเลือก: แบบหลายราคา (variants) ก่อน ถ้าไม่มีใช้รายการสี/แบบ (colors) ที่ราคาเดียวกัน
+                    let choices = variants;
+                    if (!choices.length && Array.isArray(p.colors) && p.colors.length > 1) {
+                        choices = p.colors.filter(c => c && String(c.name || '').trim()).map(c => ({
+                            label: String(c.name).trim(), price: null, image: fixPath(imgOf(c)), addons: normAddons(c.addons)
+                        }));
+                    }
+                    return {
+                        id: String(p.id || name), name, price, priceLabel, image, variants, samePrice,
+                        choices, addons: normAddons(p.addons), cat: String(p.cat || ''), flowerType: String(p.flowerType || ''),
+                        unit: UNIT_BY_CAT[p.cat] || '',
+                        hay: [p.id, name, p.flowerType, p.cat].filter(Boolean).join(' ').toLowerCase()
+                    };
+                }
+
+                async function loadProductCatalog() {
+                    let list = null;
+                    try {
+                        const snap = await db.collection('catalog').doc('products').get();
+                        if (snap.exists) {
+                            const d = snap.data() || {};
+                            list = typeof d.json === 'string' ? JSON.parse(d.json) : d.list;
+                        }
+                    } catch (err) { console.warn('โหลดสินค้าจาก Firestore ไม่ได้ จะลองใช้ products.json', err); }
+                    if (!Array.isArray(list) || !list.length) {
+                        try {
+                            const r = await fetch('products.json', { cache: 'no-cache' });
+                            if (r.ok) list = await r.json();
+                        } catch (err) { console.warn('โหลด products.json ไม่ได้', err); }
+                    }
+                    productCatalog.value = (Array.isArray(list) ? list : []).map(toOrderProduct).filter(Boolean);
+                }
+
+                function suggestionsFor(item) {
+                    const q = String(item.details || '').toLowerCase().trim();
+                    if (!q) return [];
+                    const tokens = q.split(/\s+/);
+                    const all = productCatalog.value;
+                    if (all.some(p => p.name.toLowerCase() === q)) return []; // เลือกไปแล้ว ไม่ต้องเสนออีก
+                    const score = (p) => (p.id.toLowerCase() === q ? 3 : p.id.toLowerCase().startsWith(q) ? 2 : p.name.toLowerCase().startsWith(q) ? 1 : 0);
+                    return all.filter(p => tokens.every(t => p.hay.includes(t)))
+                        .sort((a, b) => score(b) - score(a))
+                        .slice(0, 8);
+                }
+
+                function onItemInput(item) {
+                    formErrors.value.items = '';
+                    suggestForId.value = item.id;
+                    suggestIndex.value = -1;
+                }
+                function onItemFocus(item) {
+                    if (String(item.details || '').trim()) { suggestForId.value = item.id; suggestIndex.value = -1; }
+                }
+                function onItemKeydown(e, item) {
+                    if (e.isComposing || e.ctrlKey || e.metaKey) return;
+                    if (suggestForId.value !== item.id) return;
+                    const list = suggestionsFor(item);
+                    if (!list.length) return;
+                    if (e.key === 'ArrowDown') { e.preventDefault(); suggestIndex.value = (suggestIndex.value + 1) % list.length; }
+                    else if (e.key === 'ArrowUp') { e.preventDefault(); suggestIndex.value = suggestIndex.value <= 0 ? list.length - 1 : suggestIndex.value - 1; }
+                    else if (e.key === 'Enter' && suggestIndex.value >= 0 && list[suggestIndex.value]) {
+                        // เลือกรายการที่ไฮไลต์ไว้ (ถ้ายังไม่ได้กดลูกศรลง Enter จะทำงานตามเดิม = ไปช่องถัดไป)
+                        e.preventDefault(); e.stopPropagation();
+                        pickProduct(item, list[suggestIndex.value]);
+                    }
+                    else if (e.key === 'Escape') { e.stopPropagation(); suggestForId.value = null; }
+                }
+                // ใส่รูปสินค้าที่เลือกลงช่อง "รูปภาพตัวอย่าง" (เก็บเป็น path ของรูปบนเว็บ ไม่ซ้ำ ไม่เกิน MAX_ORDER_IMAGES)
+                // ===== เฟส 3: ของเสริม + เลือกจากหน้าร้านตามหมวด =====
+                const itemMeta = ref({}); // item.id -> { pid, choice } หรือ { addonOf, name } (แถวที่เพิ่มจากของเสริม)
+                function setItemMeta(id, meta) { itemMeta.value = { ...itemMeta.value, [id]: meta }; }
+                function newFormItemRow(props) {
+                    form.value.items.push({ id: Date.now() + Math.random(), details: '', qty: 1, unit: 'ช่อ', price: '', ...props });
+                    return form.value.items[form.value.items.length - 1];
+                }
+                function addonsFor(item) {
+                    const m = itemMeta.value[item.id];
+                    if (!m || !m.pid) return [];
+                    const p = productCatalog.value.find(x => x.id === m.pid);
+                    if (!p) return [];
+                    let list = p.addons;
+                    if (p.choices && p.choices.length) {
+                        const c = m.choice ? p.choices.find(x => x.label === m.choice) : null;
+                        if (c && c.addons && c.addons.length) list = c.addons;
+                        else if (!list.length) { // ยังไม่ได้เลือกสี: ใช้ของเสริมที่พบในสีต่างๆ (ไม่ซ้ำชื่อ)
+                            const seen = new Set(); list = [];
+                            p.choices.forEach(ch => (ch.addons || []).forEach(a => { if (!seen.has(a.name)) { seen.add(a.name); list.push(a); } }));
+                        }
+                    }
+                    return list.filter(a => !form.value.items.some(r => { const rm = itemMeta.value[r.id]; return rm && rm.addonOf === item.id && rm.name === a.name; }));
+                }
+                function addAddon(item, a) {
+                    const idx = form.value.items.findIndex(r => r.id === item.id);
+                    if (idx === -1) return;
+                    const id = Date.now() + Math.random();
+                    form.value.items.splice(idx + 1, 0, { id, details: a.name, qty: Number(item.qty) > 0 ? item.qty : 1, unit: 'ชิ้น', price: a.price });
+                    setItemMeta(id, { addonOf: item.id, name: a.name });
+                    formErrors.value.items = '';
+                }
+                const quick = ref({ cat: '', type: '' });
+                const QUICK_CAT_ORDER = ['ช่อดอกไม้', 'กรอบรูป', 'กระถาง', 'อื่นๆ'];
+                const quickCats = computed(() => {
+                    const have = [...new Set(productCatalog.value.map(p => p.cat).filter(Boolean))];
+                    return have.sort((a, b) => {
+                        const ia = QUICK_CAT_ORDER.indexOf(a), ib = QUICK_CAT_ORDER.indexOf(b);
+                        return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+                    });
+                });
+                const quickTypes = computed(() => {
+                    if (!quick.value.cat) return [];
+                    const count = {};
+                    productCatalog.value.filter(p => p.cat === quick.value.cat && p.flowerType).forEach(p => { count[p.flowerType] = (count[p.flowerType] || 0) + 1; });
+                    return Object.keys(count).sort((a, b) => count[b] - count[a]);
+                });
+                const quickList = computed(() => productCatalog.value.filter(p => p.cat === quick.value.cat && (!quick.value.type || p.flowerType === quick.value.type)));
+                function toggleQuickCat(c) { quick.value = quick.value.cat === c ? { cat: '', type: '' } : { cat: c, type: '' }; }
+                function pickFromQuick(p) {
+                    const last = form.value.items[form.value.items.length - 1];
+                    const target = (last && !String(last.details || '').trim() && !(Number(last.price) > 0)) ? last : newFormItemRow({});
+                    quick.value = { cat: '', type: '' };
+                    pickProduct(target, p);
+                    nextTick(() => {
+                        const el = document.querySelector('[data-item-details="' + target.id + '"]');
+                        if (el && el.scrollIntoView) el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                    });
+                }
+
+                // ===== เฟส 2: เลือกแบบ/ราคา สำหรับสินค้าที่มีหลายแบบ =====
+                const variantPanel = ref({ itemId: null, p: null });
+                function closeVariantPanel() { variantPanel.value = { itemId: null, p: null }; }
+                document.addEventListener('mousedown', (e) => {
+                    if (variantPanel.value.itemId && !(e.target.closest && e.target.closest('[data-variant-panel]'))) closeVariantPanel();
+                });
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape' && variantPanel.value.itemId) { e.stopPropagation(); closeVariantPanel(); }
+                }, true);
+                function pickVariant(item, p, v) {
+                    item.details = v.label ? p.name + ' (' + v.label + ')' : p.name;
+                    if (v.price != null) item.price = v.price;
+                    if (p.unit) item.unit = p.unit;
+                    setItemMeta(item.id, { pid: p.id, choice: v.label });
+                    addProductImageToForm(item, { image: v.image || p.image });
+                    closeVariantPanel();
+                    formErrors.value.items = '';
+                    nextTick(() => {
+                        const el = document.querySelector('[data-item-qty="' + item.id + '"]');
+                        if (el) { el.focus(); try { el.select(); } catch (_) {} }
+                    });
+                }
+
+                // จำว่ารูปไหนระบบเติมให้แถวสินค้าแถวไหน (item.id -> url) เพื่อเปลี่ยน/ลบรูปตามเมื่อแถวเปลี่ยนสินค้าหรือถูกลบ
+                // รูปที่แนบเอง หรือรูปที่ผู้ใช้หมุนแล้ว จะไม่ถูกแตะ
+                const autoImageByItem = new Map();
+                function releaseAutoImage(itemId) {
+                    const url = autoImageByItem.get(itemId);
+                    if (url === undefined) return;
+                    autoImageByItem.delete(itemId);
+                    for (const u of autoImageByItem.values()) { if (u === url) return; } // แถวอื่นยังใช้รูปนี้อยู่
+                    const imgs = form.value.images || [];
+                    const idx = imgs.findIndex(im => im && im.url === url && !im.rotation);
+                    if (idx !== -1) imgs.splice(idx, 1);
+                }
+                function addProductImageToForm(item, p) {
+                    if (!Array.isArray(form.value.images)) form.value.images = [];
+                    const imgs = form.value.images;
+                    // เลือกสินค้าเดิมซ้ำ และรูปยังอยู่ — ไม่ต้องทำอะไร
+                    if (p && p.image && autoImageByItem.get(item.id) === p.image && imgs.some(im => im && im.url === p.image)) return;
+                    releaseAutoImage(item.id); // เปลี่ยนสินค้าในแถวนี้ — เอารูปเก่าที่ระบบเติมให้ออกก่อน
+                    if (!p || !p.image) return;
+                    if (imgs.some(im => im && im.url === p.image)) {
+                        // มีรูปนี้อยู่แล้ว: ถ้าเป็นรูปที่แถวอื่นเติมไว้ ให้ผูกกับแถวนี้ด้วย (ถ้าแนบเอง ไม่ผูก จะได้ไม่ถูกลบ)
+                        for (const u of autoImageByItem.values()) { if (u === p.image) { autoImageByItem.set(item.id, p.image); break; } }
+                        return;
+                    }
+                    if (imgs.length >= MAX_ORDER_IMAGES) {
+                        showToast(`รูปตัวอย่างเต็ม ${MAX_ORDER_IMAGES} รูปแล้ว ไม่ได้เพิ่มรูปสินค้านี้ให้ครับ`);
+                        return;
+                    }
+                    imgs.push({ url: p.image, rotation: 0 });
+                    autoImageByItem.set(item.id, p.image);
+                }
+                function pickProduct(item, p) {
+                    item.details = p.name;
+                    const hasChoices = !!(p.choices && p.choices.length);
+                    // เปลี่ยนสินค้าในแถวนี้ — แถวของเสริมที่เคยเพิ่มไว้ของสินค้าเก่า ยังอยู่ (ลบเองได้) แต่ไม่ผูกกับแถวนี้แล้ว เพื่อให้ปุ่มของเสริมของสินค้าใหม่ขึ้นครบ
+                    if (Object.values(itemMeta.value).some(m => m && m.addonOf === item.id)) {
+                        const nm = {};
+                        for (const [k, m] of Object.entries(itemMeta.value)) { if (!(m && m.addonOf === item.id)) nm[k] = m; }
+                        itemMeta.value = nm;
+                    }
+                    setItemMeta(item.id, { pid: p.id, choice: '' });
+                    if (p.price != null) item.price = p.price;
+                    else item.price = (p.samePrice != null) ? p.samePrice : ''; // ไม่ให้ราคาเก่าของสินค้าก่อนหน้าค้างอยู่
+                    if (p.unit) item.unit = p.unit;
+                    suggestForId.value = null;
+                    suggestIndex.value = -1;
+                    formErrors.value.items = '';
+                    addProductImageToForm(item, p);
+                    if (hasChoices) { variantPanel.value = { itemId: item.id, p }; return; } // เปิดตัวเลือกแบบ/สีให้กดเลือก
+                    closeVariantPanel();
+                    nextTick(() => {
+                        const el = document.querySelector('[data-item-' + (p.price != null ? 'qty' : 'price') + '="' + item.id + '"]');
+                        if (el) { el.focus(); try { el.select(); } catch (_) {} }
+                    });
+                }
+
                 function addFormItem() {
                     const id = Date.now() + Math.random();
                     form.value.items.push({ id, details: '', qty: 1, unit: 'ช่อ', price: '' });
@@ -2620,6 +2918,9 @@
 
                 function removeFormItem(id) {
                     if (form.value.items.length <= 1) return;
+                    releaseAutoImage(id);
+                    if (variantPanel.value.itemId === id) closeVariantPanel();
+                    if (itemMeta.value[id]) { const m = { ...itemMeta.value }; delete m[id]; itemMeta.value = m; }
                     form.value.items = form.value.items.filter(i => i.id !== id);
                 }
 
@@ -3886,6 +4187,7 @@
                         isLoggedIn.value = !!user;
                         authChecked.value = true;
                         if (user) {
+                            loadProductCatalog();
                             startFirestoreListeners();
                         }
                     });
@@ -3908,6 +4210,7 @@
                     quickEdit, quickForm, quickInput, quickOrder, quickTitle, quickPay, quickNewTotal, openQuickEdit, closeQuickEdit, saveQuickEdit, quickPayFull,
                     isModalOpen, showMoreFields, formStep, formStepTitles, formScroll, nextStep, prevStep, onFormSubmit, formErrors, onFormKeydown, isEditing, form, formRemainingAmount,
                     formItemizedMode, formItemsTotal, formItemsGrandTotal, toggleFormItemizedMode, addFormItem, removeFormItem,
+                    suggestForId, suggestIndex, suggestionsFor, onItemInput, onItemFocus, onItemKeydown, pickProduct, variantPanel, pickVariant, closeVariantPanel, quick, quickCats, quickTypes, quickList, toggleQuickCat, pickFromQuick, addonsFor, addAddon,
                     filteredOrders, activeOrdersCount, statusCounts, completedCount, cancelledCount, totalOrderCount, thisMonthCount, desktopStatusTabs, typeTabs, hasActiveFilters, clearAllFilters, isMoreMenuOpen, cardMoreId, isRangeOpen, rangeFrom, rangeTo, rangeLabel, rangeStats, setRangePreset, clearRange, pendingCount, pickupCount, shippingCount, totalDepositSum, totalRemainingSum,
                     toastMessage, deleteTarget, receiptTarget, selectedForPrint, ordersToPrint,
                     openModal, closeModal, saveOrder, confirmDelete, executeDelete, queueManual,
