@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ระบบจัดการออเดอร์ & พิมพ์ใบสั่งงาน S.FLOWER BLOOM</title>
     <link rel="icon" type="image/png" sizes="192x192" href="images/favicon.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="images/apple-touch-icon.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="images/apple-touch-icon admin.png">
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts: Prompt & Sarabun -->
@@ -477,8 +477,34 @@
 
                     <!-- add product -->
                     <div v-else-if="quickEdit.type === 'addItem'" class="space-y-3">
-                        <input ref="quickInput" v-model="quickForm.details" type="text" autocomplete="off" placeholder="รายการที่เพิ่ม เช่น ช่อทานตะวัน 1 ช่อ" style="font-size:16px" class="w-full px-3.5 py-3 border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500">
-                        <input v-model="quickForm.price" type="number" inputmode="decimal" step="any" min="0" placeholder="ราคา (บาท)" style="font-size:16px" class="w-full px-3.5 py-3 border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500">
+                        <div class="relative">
+                        <input ref="quickInput" v-model="quickForm.details" @input="onQuickInput" @focus="quickSuggest = !!(quickForm.details || '').trim()" @blur="quickSuggest = false" @keydown="onQuickKeydown" type="text" autocomplete="off" placeholder="พิมพ์ชื่อ/รหัสสินค้า เช่น R02 หรือพิมพ์เอง" style="font-size:16px" class="w-full px-3.5 py-3 border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500">
+                        <div v-if="quickSuggestions.length" class="absolute z-10 left-0 right-0 top-[calc(100%+0.25rem)] max-h-64 overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg py-1">
+                            <button v-for="(sp, si) in quickSuggestions" :key="sp.id" type="button" tabindex="-1" @mousedown.prevent @click="pickQuickProduct(sp)" @mouseenter="quickSuggestIndex = si" class="w-full text-left px-3 py-2.5 flex items-center justify-between gap-3 text-sm" :class="si === quickSuggestIndex ? 'bg-pink-50' : 'active:bg-slate-50'">
+                                <span class="min-w-0 truncate text-slate-700">{{ sp.name }}</span>
+                                <span class="shrink-0 text-xs font-semibold" :class="sp.price != null ? 'text-slate-600' : 'text-amber-600'">{{ sp.priceLabel }}</span>
+                            </button>
+                        </div>
+                        </div>
+                        <div v-if="quickChoiceFor" class="border border-pink-200 rounded-xl overflow-hidden bg-white">
+                            <div class="flex items-center justify-between gap-2 px-3 py-2 bg-pink-50 border-b border-pink-100">
+                                <span class="text-xs font-semibold text-slate-700 truncate">เลือกแบบ/สี: {{ quickChoiceFor.name }}</span>
+                                <button type="button" @click="quickChoiceFor = null" class="shrink-0 text-slate-400 text-sm leading-none px-1" aria-label="ปิด">✕</button>
+                            </div>
+                            <div class="max-h-56 overflow-y-auto py-1">
+                                <button v-for="(v, vi) in quickChoiceFor.choices" :key="vi" type="button" @click="pickQuickChoice(quickChoiceFor, v)" class="w-full text-left px-3 py-2 flex items-center gap-3 text-sm active:bg-pink-50">
+                                    <span class="w-9 h-9 shrink-0 rounded-lg bg-slate-100 overflow-hidden flex items-center justify-center">
+                                        <img v-if="v.image" :src="v.image" loading="lazy" alt="" class="w-full h-full object-cover" @error="$event.target.style.display='none'">
+                                    </span>
+                                    <span class="min-w-0 flex-1 truncate text-slate-700">{{ v.label || 'แบบมาตรฐาน' }}</span>
+                                    <span v-if="v.price != null" class="shrink-0 text-xs font-semibold text-slate-600">฿{{ formatNumber(v.price) }}</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <input v-model="quickForm.price" type="number" inputmode="decimal" step="any" min="0" placeholder="ราคา (บาท)" style="font-size:16px" class="min-w-0 flex-1 px-3.5 py-3 border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500">
+                            <input v-model="quickForm.unit" type="text" placeholder="หน่วย" style="font-size:16px" class="w-24 px-3 py-3 border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500">
+                        </div>
                         <div class="rounded-xl px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 text-slate-700">
                             ยอดรวมจะเป็น <b>฿{{ formatNumber(quickNewTotal) }}</b> <span class="text-slate-400">(เดิม ฿{{ formatNumber(quickOrder.totalAmount) }})</span>
                         </div>
@@ -2076,8 +2102,39 @@
 
                 // ---------- Quick edit (fill in a single missing detail from the card) ----------
                 const quickEdit = ref(null); // { type, id }
-                const quickForm = ref({ text: '', date: '', time: '', amount: '', mode: 'add', details: '', price: '', payDate: '', payMethod: 'โอน', payNote: '', payEditId: '' });
+                const quickForm = ref({ text: '', date: '', time: '', amount: '', mode: 'add', details: '', price: '', unit: 'ช่อ', image: '', payDate: '', payMethod: 'โอน', payNote: '', payEditId: '' });
                 const quickInput = ref(null);
+                // เฟส 4: ค้นสินค้า/เลือกแบบ ในหน้าต่างเพิ่มสินค้าแบบด่วน
+                const quickSuggest = ref(false);
+                const quickSuggestIndex = ref(-1);
+                const quickChoiceFor = ref(null);
+                const quickSuggestions = computed(() => quickSuggest.value ? searchCatalog(quickForm.value.details) : []);
+                function onQuickInput() { quickSuggest.value = true; quickSuggestIndex.value = -1; quickChoiceFor.value = null; }
+                function onQuickKeydown(e) {
+                    if (e.isComposing || e.ctrlKey || e.metaKey) return;
+                    const list = quickSuggestions.value;
+                    if (!list.length) return;
+                    if (e.key === 'ArrowDown') { e.preventDefault(); quickSuggestIndex.value = (quickSuggestIndex.value + 1) % list.length; }
+                    else if (e.key === 'ArrowUp') { e.preventDefault(); quickSuggestIndex.value = quickSuggestIndex.value <= 0 ? list.length - 1 : quickSuggestIndex.value - 1; }
+                    else if (e.key === 'Enter' && quickSuggestIndex.value >= 0 && list[quickSuggestIndex.value]) { e.preventDefault(); pickQuickProduct(list[quickSuggestIndex.value]); }
+                    else if (e.key === 'Escape') { e.stopPropagation(); quickSuggest.value = false; }
+                }
+                function pickQuickProduct(p) {
+                    const f = quickForm.value;
+                    f.details = p.name;
+                    f.price = p.price != null ? p.price : (p.samePrice != null ? p.samePrice : '');
+                    f.unit = p.unit || f.unit || 'ช่อ';
+                    f.image = p.image || '';
+                    quickSuggest.value = false; quickSuggestIndex.value = -1;
+                    quickChoiceFor.value = (p.choices && p.choices.length) ? p : null;
+                }
+                function pickQuickChoice(p, v) {
+                    const f = quickForm.value;
+                    f.details = v.label ? p.name + ' (' + v.label + ')' : p.name;
+                    if (v.price != null) f.price = v.price;
+                    f.image = v.image || p.image || '';
+                    quickChoiceFor.value = null;
+                }
                 const quickOrder = computed(() => quickEdit.value ? (orders.value.find(o => o.id === quickEdit.value.id) || null) : null);
                 const quickTitle = computed(() => {
                     const q = quickEdit.value, o = quickOrder.value;
@@ -2113,10 +2170,11 @@
                 });
                 function openQuickEdit(type, order) {
                     quickEdit.value = { type, id: order.id };
+                    quickSuggest.value = false; quickSuggestIndex.value = -1; quickChoiceFor.value = null;
                     quickForm.value = {
                         text: type === 'phone' ? (order.customerPhone || '') : (type === 'address' ? (order.location || '') : ''),
                         mapLink: order.mapLink || '',
-                        date: order.deliveryDate || '', time: order.deliveryTime || '', amount: '', mode: 'add', details: '', price: '',
+                        date: order.deliveryDate || '', time: order.deliveryTime || '', amount: '', mode: 'add', details: '', price: '', unit: 'ช่อ', image: '',
                         payDate: localDateString(), payMethod: 'โอน', payNote: '', payEditId: ''
                     };
                     setTimeout(() => { if (quickInput.value && quickInput.value.focus) quickInput.value.focus(); }, 120);
@@ -2186,7 +2244,7 @@
                         const price = Number(quickForm.value.price) || 0;
                         if (o.items && o.items.length) {
                             // itemized order: append a row, then rebuild the product text + total exactly like the full form does
-                            const items = [...o.items.map(i => ({ ...i })), { id: Date.now() + Math.random(), details, qty: 1, unit: 'ช่อ', price }];
+                            const items = [...o.items.map(i => ({ ...i })), { id: Date.now() + Math.random(), details, qty: 1, unit: (quickForm.value.unit || '').trim() || 'ช่อ', price }];
                             const products = items.map(item => {
                                 const label = (item.details || '').trim();
                                 if (!label) return null;
@@ -2198,6 +2256,12 @@
                             const base = (o.products || '').replace(/\s+$/, '');
                             patch = { products: base ? base + '\n' + details : details };
                             if (price) patch.totalAmount = inc(price);
+                        }
+                        // ใส่รูปสินค้าที่เลือกเข้ารูปตัวอย่างของออเดอร์ (ไม่ซ้ำ ไม่เกิน MAX_ORDER_IMAGES)
+                        const pickedImg = quickForm.value.image;
+                        if (pickedImg && patch) {
+                            const cur = getOrderImages(o).map(im => ({ ...im }));
+                            if (!cur.some(im => im && im.url === pickedImg) && cur.length < MAX_ORDER_IMAGES) patch.images = [...cur, { url: pickedImg, rotation: 0 }];
                         }
                         msg = 'เพิ่มสินค้าเรียบร้อย';
                     }
@@ -2722,11 +2786,29 @@
                             if (r.ok) list = await r.json();
                         } catch (err) { console.warn('โหลด products.json ไม่ได้', err); }
                     }
-                    productCatalog.value = (Array.isArray(list) ? list : []).map(toOrderProduct).filter(Boolean);
+                    const products = (Array.isArray(list) ? list : []).map(toOrderProduct).filter(Boolean);
+                    // ของเสริม (เช่น กล่องใส่กรอบรูป) ให้ค้นหา/เลือกได้เองด้วย — รวมชื่อ+ราคาที่ซ้ำกัน
+                    const addonSeen = new Set();
+                    products.slice().forEach(pr => {
+                        const all = [...(pr.addons || [])];
+                        (pr.choices || []).forEach(ch => (ch.addons || []).forEach(a => all.push(a)));
+                        all.forEach(a => {
+                            const key = a.name + '|' + a.price;
+                            if (addonSeen.has(key)) return;
+                            addonSeen.add(key);
+                            products.push({
+                                id: 'addon:' + key, name: a.name, price: a.price, priceLabel: '฿' + formatNumber(a.price) + ' (ของเสริม)',
+                                image: '', variants: [], samePrice: null, choices: [], addons: [], cat: 'ของเสริม', flowerType: '',
+                                unit: 'ชิ้น', hay: (a.name + ' ของเสริม').toLowerCase()
+                            });
+                        });
+                    });
+                    productCatalog.value = products;
                 }
 
-                function suggestionsFor(item) {
-                    const q = String(item.details || '').toLowerCase().trim();
+                function suggestionsFor(item) { return searchCatalog(item.details); }
+                function searchCatalog(text) {
+                    const q = String(text || '').toLowerCase().trim();
                     if (!q) return [];
                     const tokens = q.split(/\s+/);
                     const all = productCatalog.value;
@@ -4207,7 +4289,7 @@
                     isFilterSheetOpen, isMobileMenuOpen, activeFilterCount, resetFilters,
                     TRACK_CARRIERS, trackDraft, trackEditing, startTrackEdit, cancelTrackEdit, saveInlineTracking, saveCarrier,
                     isExpanded, toggleExpand, cardMenuOrder, runCardMenu, urgencyChip, deliveryLabel, timeSuffix, isFinishedStatus,
-                    quickEdit, quickForm, quickInput, quickOrder, quickTitle, quickPay, quickNewTotal, openQuickEdit, closeQuickEdit, saveQuickEdit, quickPayFull,
+                    quickEdit, quickForm, quickInput, quickSuggestions, quickSuggestIndex, quickSuggest, quickChoiceFor, onQuickInput, onQuickKeydown, pickQuickProduct, pickQuickChoice, quickOrder, quickTitle, quickPay, quickNewTotal, openQuickEdit, closeQuickEdit, saveQuickEdit, quickPayFull,
                     isModalOpen, showMoreFields, formStep, formStepTitles, formScroll, nextStep, prevStep, onFormSubmit, formErrors, onFormKeydown, isEditing, form, formRemainingAmount,
                     formItemizedMode, formItemsTotal, formItemsGrandTotal, toggleFormItemizedMode, addFormItem, removeFormItem,
                     suggestForId, suggestIndex, suggestionsFor, onItemInput, onItemFocus, onItemKeydown, pickProduct, variantPanel, pickVariant, closeVariantPanel, quick, quickCats, quickTypes, quickList, toggleQuickCat, pickFromQuick, addonsFor, addAddon,
