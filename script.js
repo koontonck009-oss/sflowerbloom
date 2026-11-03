@@ -4000,7 +4000,8 @@ function closePromoPopup(e){
       else localStorage.setItem('sfb_promo_seen', today);
     }
   }catch(e){ show = true; }
-  SITE_READY.then(() => { if(show) openPromoPopup(); });
+  // ปิดป๊อปอัปตอนเปิดเว็บ (ร้านไม่ได้ใช้แล้ว) — อยากให้กลับมาเด้ง ให้ลบ // หน้าบรรทัดล่างนี้ออก
+  // SITE_READY.then(() => { if(show) openPromoPopup(); });
 })();
 
 /* ---------- แถบเมนูล่าง (มือถือ) ---------- */
