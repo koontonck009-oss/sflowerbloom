@@ -1,0 +1,288 @@
+html { overflow-x: hidden; max-width: 100vw; }
+/* clip (not hidden) so body does not become a scroll container — that would break position:sticky */
+body { overflow-x: clip; max-width: 100vw; }
+@media (max-width: 639px) {
+    .order-form .step-sec:not(.step-on) { display: none; }
+    .order-form input:not([type=radio]):not([type=checkbox]):not([type=file]), .order-form select, .order-form textarea { font-size: 16px !important; }
+}
+/* Order form layout: single column on mobile/tablet, two columns on desktop */
+.of-cols, .of-col { display: contents; }
+.item-head { display: none; }
+.item-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .5rem; align-items: center; }
+.item-row .item-details { grid-column: 1 / -1; padding-right: 2rem !important; }
+.item-row .item-total { grid-column: 1 / -1; text-align: right; }
+.item-row .item-remove { position: absolute; top: .25rem; right: .25rem; }
+@media (min-width: 640px) {
+    .item-head, .item-row { grid-template-columns: minmax(0, 1fr) 64px 76px 100px 84px 24px; }
+    .item-head { display: grid; gap: .5rem; }
+    .item-row .item-details { grid-column: auto; padding-right: .875rem !important; }
+    .item-row .item-total { grid-column: auto; }
+    .item-row .item-remove { position: static; }
+}
+@media (min-width: 1024px) {
+    .of-cols { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 1.25rem; align-items: start; }
+    .of-col { display: flex; flex-direction: column; gap: 1rem; min-width: 0; }
+    .of-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 1rem; padding: 1rem; }
+}
+.hide-scrollbar { scrollbar-width: none; }
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+body {
+    font-family: 'Prompt', 'Sarabun', sans-serif;
+    background-color: #eef1f5;
+}
+/* การ์ดออเดอร์: เงาชัดขึ้นเพื่อให้แยกจากพื้นหลังหน้า */
+.order-card { box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08), 0 4px 14px rgba(15, 23, 42, 0.06) !important; }
+.order-card:hover { box-shadow: 0 2px 6px rgba(15, 23, 42, 0.10), 0 10px 24px rgba(15, 23, 42, 0.08) !important; }
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* Used briefly (off-screen) before printing, to measure each work order's natural
+   content height so it can be auto-shrunk to fit exactly one A4 page. */
+.print-measure-mode {
+    display: block !important;
+    position: fixed !important;
+    left: -10000px;
+    top: 0;
+    width: 200mm;
+    visibility: visible !important;
+    z-index: -1;
+}
+
+.print-page-content {
+    transform-origin: top left;
+}
+
+/* Plain CSS (not Tailwind arbitrary classes) so they exist from the very first print,
+   before the Tailwind CDN has had a chance to generate them. */
+.print-img-grid { display: grid; }
+.print-img-grid-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+.print-img-grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.print-img-grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.print-img-h-1 { max-height: 135mm; }
+.print-img-h-2 { max-height: 100mm; }
+.print-img-h-4 { max-height: 65mm; }
+.print-img-h-6 { max-height: 42mm; }
+
+/* Print styles for Receipt and Work Order printing */
+@media print {
+    body * {
+        visibility: hidden;
+    }
+    #printable-work-orders, #printable-work-orders *, #printable-receipt, #printable-receipt * {
+        visibility: visible;
+    }
+    #printable-work-orders {
+        display: block !important;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        background: white !important;
+    }
+    .print-page {
+        box-shadow: none !important;
+        padding: 4mm 6mm !important;
+        margin: 0 auto !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        height: 272mm !important;
+        max-height: 272mm !important;
+        min-height: 0 !important;
+        border: none !important;
+        box-sizing: border-box !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: space-between !important;
+        page-break-after: always !important;
+        break-after: page !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        overflow: hidden !important;
+        background: white !important;
+    }
+    .print-page:last-child {
+        page-break-after: auto !important;
+        break-after: auto !important;
+    }
+    .image-frame {
+        max-height: 145mm !important;
+        height: 145mm !important;
+    }
+    .no-print {
+        display: none !important;
+    }
+    @page {
+        size: A4 portrait;
+        margin: 5mm;
+    }
+}
+
+/* ===== หน้าปกประจำเดือน (plain CSS) ===== */
+.mc-inner{height:100%;display:flex;flex-direction:column;color:#0f172a;font-family:'Prompt','Sarabun',sans-serif;}
+.mc-top{display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #0f172a;padding-bottom:3mm;}
+.mc-brand{display:flex;align-items:center;gap:3mm;}
+.mc-brand img{width:12mm;height:12mm;object-fit:contain;}
+.mc-brand b{display:block;font-size:15pt;letter-spacing:.04em;line-height:1.2;}
+.mc-brand span{font-size:8pt;color:#475569;letter-spacing:.08em;}
+.mc-docno{text-align:right;font-size:8pt;color:#475569;line-height:1.6;}
+.mc-docno b{color:#0f172a;font-size:10pt;}
+.mc-hero{margin-top:12mm;padding:11mm 0 9mm;text-align:center;border-top:1px solid #cbd5e1;border-bottom:1px solid #cbd5e1;}
+.mc-kicker{font-size:9pt;letter-spacing:.3em;color:#be185d;font-weight:600;}
+.mc-title{font-size:20pt;font-weight:600;margin-top:2mm;}
+.mc-month{font-size:52pt;font-weight:700;line-height:1.2;margin-top:4mm;}
+.mc-month i{font-style:normal;color:#be185d;margin:0 3mm;font-weight:300;}
+.mc-sub{font-size:10pt;color:#475569;margin-top:2mm;}
+.mc-stats{display:grid;grid-template-columns:repeat(3,1fr);margin-top:9mm;border:1px solid #94a3b8;}
+.mc-stat{padding:3.5mm 4mm;border-right:1px solid #94a3b8;border-bottom:1px solid #94a3b8;}
+.mc-stat:nth-child(3n){border-right:none;}
+.mc-stat:nth-last-child(-n+3){border-bottom:none;}
+.mc-stat small{display:block;font-size:8pt;color:#475569;}
+.mc-stat b{display:block;font-size:17pt;line-height:1.3;}
+.mc-stat.pk b{color:#be185d;}
+.mc-stat em{font-style:normal;font-size:7.5pt;color:#64748b;}
+.mc-meta{display:grid;grid-template-columns:1fr 1fr;gap:8mm;margin-top:8mm;font-size:9pt;}
+.mc-meta h4{font-size:9pt;font-weight:700;border-bottom:1.5px solid #0f172a;padding-bottom:1.5mm;margin-bottom:1mm;}
+.mc-meta div.r{display:flex;justify-content:space-between;padding:1.2mm 0;border-bottom:1px solid #e2e8f0;}
+.mc-meta div.r span:first-child{color:#475569;}
+.mc-meta div.r b{font-weight:600;}
+.mc-sign{margin-top:auto;display:grid;grid-template-columns:repeat(3,1fr);gap:10mm;font-size:9pt;text-align:center;padding-top:16mm;}
+.mc-sign div{border-top:1px solid #64748b;padding-top:2mm;}
+.mc-sign small{display:block;color:#94a3b8;font-size:7.5pt;margin-top:1mm;}
+.mc-foot{display:flex;justify-content:space-between;font-size:7.5pt;color:#64748b;border-top:1px solid #cbd5e1;margin-top:5mm;padding-top:2mm;}
+.mc-ihead{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #0f172a;padding-bottom:2mm;margin-bottom:3mm;}
+.mc-ihead b{font-size:13pt;}
+.mc-ihead span{font-size:8pt;color:#475569;}
+.mc-tbl{width:100%;border-collapse:collapse;table-layout:fixed;font-size:8pt;}
+.mc-tbl th{background:#0f172a;color:#fff;font-weight:600;height:8mm;padding:0 1.5mm;text-align:left;white-space:nowrap;}
+.mc-tbl td{height:8mm;padding:0 1.5mm;border-bottom:1px solid #e2e8f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.mc-tbl tbody tr:nth-child(even) td{background:#f8fafc;}
+.mc-tbl .n{text-align:right;}
+.mc-tbl tr.mc-x td{color:#94a3b8;}
+.mc-tbl tr.mc-x td.n{text-decoration:line-through;}
+.mc-tbl tr.mc-total td{height:9mm;font-weight:700;border-top:2px solid #0f172a;border-bottom:none;background:#fff !important;}
+
+/* --- ปกสวย + หน้าสรุป --- */
+.mc-inner, .mc-inner * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.mc-cover{position:relative;height:100%;overflow:hidden;display:flex;flex-direction:column;color:#0f172a;font-family:'Prompt','Sarabun',sans-serif;}
+.mc-ring{position:absolute;border-radius:50%;}
+.mc-ring.r1{width:170mm;height:170mm;top:-62mm;right:-70mm;background:#fdf2f8;}
+.mc-ring.r2{width:130mm;height:130mm;top:-42mm;right:-50mm;border:.5mm solid #f9a8d4;}
+.mc-ring.r3{width:92mm;height:92mm;top:-23mm;right:-31mm;border:.5mm solid #ec4899;}
+.mc-ring.r4{width:52mm;height:52mm;top:-3mm;right:-11mm;background:#be185d;}
+.mc-cbrand{position:relative;display:flex;align-items:center;gap:4mm;}
+.mc-cbrand img{width:20mm;height:20mm;object-fit:contain;}
+.mc-cbrand b{display:block;font-size:17pt;letter-spacing:.06em;line-height:1.2;}
+.mc-cbrand span{font-size:8.5pt;color:#64748b;letter-spacing:.14em;}
+.mc-cmain{position:relative;margin-top:auto;margin-bottom:auto;padding-left:9mm;border-left:2.2mm solid #be185d;}
+.mc-ckick{font-size:10pt;letter-spacing:.34em;color:#be185d;font-weight:600;}
+.mc-ctitle{font-size:22pt;font-weight:600;margin-top:3mm;color:#334155;}
+.mc-cmonth{font-size:74pt;font-weight:700;line-height:1.25;margin-top:6mm;letter-spacing:-.01em;white-space:nowrap;}
+.mc-cmonth i{font-style:normal;color:#be185d;font-weight:300;margin:0 1mm;}
+.mc-csub{font-size:11pt;color:#64748b;margin-top:2mm;letter-spacing:.04em;}
+.mc-cband{position:relative;background:#be185d;color:#fff;display:flex;justify-content:space-between;align-items:center;padding:7mm 8mm;}
+.mc-cband b{display:block;font-size:14pt;letter-spacing:.08em;}
+.mc-cband span{font-size:8.5pt;opacity:.85;letter-spacing:.1em;}
+.mc-cband .dn{text-align:right;font-size:8.5pt;line-height:1.7;}
+.mc-cband .dn b{font-size:12pt;letter-spacing:.04em;}
+.mc-csign{display:grid;grid-template-columns:1fr 1fr;gap:14mm;margin-top:12mm;font-size:8.5pt;color:#475569;text-align:center;}
+.mc-csign div{border-top:1px solid #94a3b8;padding-top:1.5mm;}
+
+/* เว้นขอบซ้ายสำหรับเจาะรูใส่แฟ้ม (เฉพาะตอนพิมพ์ชุดประจำเดือน): 5mm ขอบกระดาษ + 20mm = 25mm */
+@media print {
+    #printable-work-orders.mc-punch .print-page:not(.mc-fullbleed) { padding-left: 20mm !important; }
+}
+/* ตอนวัดความสูงก่อนพิมพ์ ใช้ความกว้างเท่าตอนพิมพ์จริง (200mm - 20mm - 6mm) เพื่อให้ย่อใบสั่งงานได้พอดีหน้า */
+#printable-work-orders.mc-punch.print-measure-mode .print-page:not(.mc-fullbleed) { padding-left: 20mm; padding-right: 6mm; box-sizing: border-box; }
+.mc-cn { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; white-space: normal; line-height: 1.25; }
+
+/* ปกประจำเดือน: พิมพ์เต็มแผ่น (ไม่มีขอบขาว) เฉพาะหน้าปก */
+@page mc-cover { size: A4 portrait; margin: 0; }
+.mc-fullbleed .mc-cover { padding: 9mm 11mm 9mm 25mm; box-sizing: border-box; }
+@media print {
+    .print-page.mc-fullbleed {
+        page: mc-cover;
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 210mm !important;
+        max-width: 210mm !important;
+        height: 296mm !important;
+        max-height: 296mm !important;
+        border-radius: 0 !important;
+    }
+}
+.mc-sum .mc-stats{margin-top:0;}
+.mc-sum .mc-stat{padding:2.5mm 3.5mm;}
+.mc-sum .mc-stat b{font-size:14pt;}
+.mc-sum .mc-meta{margin-top:4mm;margin-bottom:4mm;}
+.mc-sum .mc-meta div.r{padding:.9mm 0;}
+
+/* --- ปกแบบ A: Editorial --- */
+.mc-ed{height:100%;display:flex;flex-direction:column;color:#0f172a;font-family:'Prompt','Sarabun',sans-serif;}
+.mc-ed-top{display:flex;justify-content:space-between;align-items:center;padding-bottom:4mm;border-bottom:.4mm solid #0f172a;}
+.mc-ed-brand{display:flex;align-items:center;gap:3.5mm;}
+.mc-ed-brand img{width:13mm;height:13mm;object-fit:contain;}
+.mc-ed-brand b{display:block;font-size:12pt;letter-spacing:.14em;line-height:1.2;}
+.mc-ed-brand span{display:block;font-size:7pt;color:#64748b;letter-spacing:.22em;margin-top:.5mm;}
+.mc-ed-top .no{font-size:8pt;letter-spacing:.22em;color:#475569;}
+.mc-ed-main{margin-top:50mm;}
+.mc-ed-kick{display:flex;align-items:center;gap:4mm;font-size:9pt;letter-spacing:.32em;color:#be185d;font-weight:600;}
+.mc-ed-kick i{display:block;width:16mm;height:.7mm;background:#be185d;}
+.mc-ed-title{font-size:26pt;font-weight:300;line-height:1.35;margin-top:7mm;color:#334155;}
+.mc-ed-month{font-weight:700;line-height:1.15;margin-top:8mm;letter-spacing:-.015em;white-space:nowrap;}
+.mc-ed-month i{font-style:normal;color:#be185d;font-weight:300;}
+.mc-ed-sub{font-size:11pt;color:#64748b;letter-spacing:.08em;margin-top:4mm;}
+.mc-ed-ctl{margin-top:auto;display:grid;grid-template-columns:1.1fr 1.7fr 1.1fr;border-top:.4mm solid #0f172a;}
+.mc-ed-ctl div{padding:4mm 4mm 0 0;}
+.mc-ed-ctl small{display:block;font-size:7pt;letter-spacing:.18em;color:#64748b;}
+.mc-ed-ctl b{display:block;font-size:11pt;font-weight:600;margin-top:1.2mm;}
+.mc-ed-sign{display:grid;grid-template-columns:1fr 1fr;gap:16mm;margin-top:14mm;font-size:8.5pt;color:#475569;}
+.mc-ed-sign div{height:13mm;border-bottom:.3mm solid #94a3b8;}
+.mc-ed-sign p{margin-top:1.5mm;display:flex;justify-content:space-between;}
+.mc-ed-sign p em{font-style:normal;color:#94a3b8;}
+.mc-ed-foot{display:flex;justify-content:space-between;margin-top:9mm;padding-top:2.5mm;border-top:.2mm solid #cbd5e1;font-size:7.5pt;color:#94a3b8;letter-spacing:.12em;}
+
+/* --- ปกแบบ B: บล็อกชมพูเข้ม + ตารางควบคุมเอกสาร --- */
+.mc-b{height:100%;display:flex;flex-direction:column;color:#0f172a;font-family:'Prompt','Sarabun',sans-serif;}
+.mc-b-hero{position:relative;height:150mm;flex:0 0 150mm;overflow:hidden;color:#fff;padding:10mm;display:flex;flex-direction:column;justify-content:space-between;background:linear-gradient(135deg,#be185d 0%,#9d174d 100%);}
+.mc-b-flower{position:absolute;right:-34mm;top:-26mm;width:150mm;height:150mm;}
+.mc-b-petal{position:absolute;left:50%;top:50%;width:46mm;height:72mm;margin-left:-23mm;margin-top:-72mm;transform-origin:50% 100%;border-radius:50%;background:rgba(255,255,255,.07);border:.4mm solid rgba(255,255,255,.3);}
+.mc-b-core{position:absolute;left:50%;top:50%;width:24mm;height:24mm;margin:-12mm 0 0 -12mm;border-radius:50%;background:rgba(255,255,255,.16);}
+.mc-b-top{position:relative;display:flex;justify-content:space-between;align-items:center;}
+.mc-b-brand{display:flex;align-items:center;gap:4mm;}
+.mc-b-badge{width:17mm;height:17mm;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;}
+.mc-b-badge img{width:12mm;height:12mm;object-fit:contain;}
+.mc-b-brand b{display:block;font-size:13pt;letter-spacing:.14em;line-height:1.2;}
+.mc-b-brand span{display:block;font-size:7.5pt;letter-spacing:.22em;opacity:.85;margin-top:.8mm;}
+.mc-b-top .no{font-size:9pt;letter-spacing:.2em;border:.3mm solid rgba(255,255,255,.6);padding:1.5mm 3.5mm;}
+.mc-b-text{position:relative;}
+.mc-b-kick{display:flex;align-items:center;gap:4mm;font-size:9pt;letter-spacing:.32em;font-weight:600;}
+.mc-b-kick i{display:block;width:16mm;height:.7mm;background:#fbcfe8;}
+.mc-b-title{font-size:21pt;font-weight:400;margin-top:4mm;}
+.mc-b-month{font-weight:700;line-height:1.15;margin-top:4mm;letter-spacing:-.015em;white-space:nowrap;}
+.mc-b-month i{font-style:normal;color:#fbcfe8;font-weight:300;}
+.mc-b-sub{font-size:11pt;letter-spacing:.08em;margin-top:2mm;color:#fce7f3;}
+.mc-b-ctl{margin-top:9mm;}
+.mc-b-ctl h5{display:flex;align-items:center;gap:3mm;font-size:8pt;letter-spacing:.26em;font-weight:700;color:#be185d;margin-bottom:2mm;}
+.mc-b-ctl h5 i{display:block;width:10mm;height:.6mm;background:#be185d;}
+.mc-b-grid{display:grid;grid-template-columns:1fr 1fr;column-gap:10mm;border-top:.4mm solid #0f172a;}
+.mc-b-cell{padding:3mm 0;border-bottom:.2mm solid #cbd5e1;}
+.mc-b-cell small{display:block;font-size:7pt;letter-spacing:.18em;color:#64748b;}
+.mc-b-cell b{display:block;font-size:11pt;font-weight:600;margin-top:1mm;}
+.mc-b-cell.sg{height:24mm;position:relative;}
+.mc-b-cell.sg p{position:absolute;left:0;right:0;bottom:2.5mm;display:flex;justify-content:space-between;font-size:8pt;color:#94a3b8;}
+.mc-b-foot{display:flex;justify-content:space-between;margin-top:auto;padding-top:2.5mm;border-top:.2mm solid #cbd5e1;font-size:7.5pt;color:#94a3b8;letter-spacing:.12em;}
+.flash-highlight { outline: 3px solid #ec4899; outline-offset: 2px; border-radius: 1rem; }
