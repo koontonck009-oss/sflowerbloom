@@ -218,6 +218,117 @@
         .mc-tbl tr.mc-x td{color:#94a3b8;}
         .mc-tbl tr.mc-x td.n{text-decoration:line-through;}
         .mc-tbl tr.mc-total td{height:9mm;font-weight:700;border-top:2px solid #0f172a;border-bottom:none;background:#fff !important;}
+
+        /* --- ปกสวย + หน้าสรุป --- */
+        .mc-inner, .mc-inner * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .mc-cover{position:relative;height:100%;overflow:hidden;display:flex;flex-direction:column;color:#0f172a;font-family:'Prompt','Sarabun',sans-serif;}
+        .mc-ring{position:absolute;border-radius:50%;}
+        .mc-ring.r1{width:170mm;height:170mm;top:-62mm;right:-70mm;background:#fdf2f8;}
+        .mc-ring.r2{width:130mm;height:130mm;top:-42mm;right:-50mm;border:.5mm solid #f9a8d4;}
+        .mc-ring.r3{width:92mm;height:92mm;top:-23mm;right:-31mm;border:.5mm solid #ec4899;}
+        .mc-ring.r4{width:52mm;height:52mm;top:-3mm;right:-11mm;background:#be185d;}
+        .mc-cbrand{position:relative;display:flex;align-items:center;gap:4mm;}
+        .mc-cbrand img{width:20mm;height:20mm;object-fit:contain;}
+        .mc-cbrand b{display:block;font-size:17pt;letter-spacing:.06em;line-height:1.2;}
+        .mc-cbrand span{font-size:8.5pt;color:#64748b;letter-spacing:.14em;}
+        .mc-cmain{position:relative;margin-top:auto;margin-bottom:auto;padding-left:9mm;border-left:2.2mm solid #be185d;}
+        .mc-ckick{font-size:10pt;letter-spacing:.34em;color:#be185d;font-weight:600;}
+        .mc-ctitle{font-size:22pt;font-weight:600;margin-top:3mm;color:#334155;}
+        .mc-cmonth{font-size:74pt;font-weight:700;line-height:1.25;margin-top:6mm;letter-spacing:-.01em;white-space:nowrap;}
+        .mc-cmonth i{font-style:normal;color:#be185d;font-weight:300;margin:0 1mm;}
+        .mc-csub{font-size:11pt;color:#64748b;margin-top:2mm;letter-spacing:.04em;}
+        .mc-cband{position:relative;background:#be185d;color:#fff;display:flex;justify-content:space-between;align-items:center;padding:7mm 8mm;}
+        .mc-cband b{display:block;font-size:14pt;letter-spacing:.08em;}
+        .mc-cband span{font-size:8.5pt;opacity:.85;letter-spacing:.1em;}
+        .mc-cband .dn{text-align:right;font-size:8.5pt;line-height:1.7;}
+        .mc-cband .dn b{font-size:12pt;letter-spacing:.04em;}
+        .mc-csign{display:grid;grid-template-columns:1fr 1fr;gap:14mm;margin-top:12mm;font-size:8.5pt;color:#475569;text-align:center;}
+        .mc-csign div{border-top:1px solid #94a3b8;padding-top:1.5mm;}
+
+        /* เว้นขอบซ้ายสำหรับเจาะรูใส่แฟ้ม (เฉพาะตอนพิมพ์ชุดประจำเดือน): 5mm ขอบกระดาษ + 20mm = 25mm */
+        @media print {
+            #printable-work-orders.mc-punch .print-page:not(.mc-fullbleed) { padding-left: 20mm !important; }
+        }
+        /* ตอนวัดความสูงก่อนพิมพ์ ใช้ความกว้างเท่าตอนพิมพ์จริง (200mm - 20mm - 6mm) เพื่อให้ย่อใบสั่งงานได้พอดีหน้า */
+        #printable-work-orders.mc-punch.print-measure-mode .print-page:not(.mc-fullbleed) { padding-left: 20mm; padding-right: 6mm; box-sizing: border-box; }
+        .mc-cn { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; white-space: normal; line-height: 1.25; }
+
+        /* ปกประจำเดือน: พิมพ์เต็มแผ่น (ไม่มีขอบขาว) เฉพาะหน้าปก */
+        @page mc-cover { size: A4 portrait; margin: 0; }
+        .mc-fullbleed .mc-cover { padding: 9mm 11mm 9mm 25mm; box-sizing: border-box; }
+        @media print {
+            .print-page.mc-fullbleed {
+                page: mc-cover;
+                padding: 0 !important;
+                margin: 0 !important;
+                width: 210mm !important;
+                max-width: 210mm !important;
+                height: 296mm !important;
+                max-height: 296mm !important;
+                border-radius: 0 !important;
+            }
+        }
+        .mc-sum .mc-stats{margin-top:0;}
+        .mc-sum .mc-stat{padding:2.5mm 3.5mm;}
+        .mc-sum .mc-stat b{font-size:14pt;}
+        .mc-sum .mc-meta{margin-top:4mm;margin-bottom:4mm;}
+        .mc-sum .mc-meta div.r{padding:.9mm 0;}
+
+        /* --- ปกแบบ A: Editorial --- */
+        .mc-ed{height:100%;display:flex;flex-direction:column;color:#0f172a;font-family:'Prompt','Sarabun',sans-serif;}
+        .mc-ed-top{display:flex;justify-content:space-between;align-items:center;padding-bottom:4mm;border-bottom:.4mm solid #0f172a;}
+        .mc-ed-brand{display:flex;align-items:center;gap:3.5mm;}
+        .mc-ed-brand img{width:13mm;height:13mm;object-fit:contain;}
+        .mc-ed-brand b{display:block;font-size:12pt;letter-spacing:.14em;line-height:1.2;}
+        .mc-ed-brand span{display:block;font-size:7pt;color:#64748b;letter-spacing:.22em;margin-top:.5mm;}
+        .mc-ed-top .no{font-size:8pt;letter-spacing:.22em;color:#475569;}
+        .mc-ed-main{margin-top:50mm;}
+        .mc-ed-kick{display:flex;align-items:center;gap:4mm;font-size:9pt;letter-spacing:.32em;color:#be185d;font-weight:600;}
+        .mc-ed-kick i{display:block;width:16mm;height:.7mm;background:#be185d;}
+        .mc-ed-title{font-size:26pt;font-weight:300;line-height:1.35;margin-top:7mm;color:#334155;}
+        .mc-ed-month{font-weight:700;line-height:1.15;margin-top:8mm;letter-spacing:-.015em;white-space:nowrap;}
+        .mc-ed-month i{font-style:normal;color:#be185d;font-weight:300;}
+        .mc-ed-sub{font-size:11pt;color:#64748b;letter-spacing:.08em;margin-top:4mm;}
+        .mc-ed-ctl{margin-top:auto;display:grid;grid-template-columns:1.1fr 1.7fr 1.1fr;border-top:.4mm solid #0f172a;}
+        .mc-ed-ctl div{padding:4mm 4mm 0 0;}
+        .mc-ed-ctl small{display:block;font-size:7pt;letter-spacing:.18em;color:#64748b;}
+        .mc-ed-ctl b{display:block;font-size:11pt;font-weight:600;margin-top:1.2mm;}
+        .mc-ed-sign{display:grid;grid-template-columns:1fr 1fr;gap:16mm;margin-top:14mm;font-size:8.5pt;color:#475569;}
+        .mc-ed-sign div{height:13mm;border-bottom:.3mm solid #94a3b8;}
+        .mc-ed-sign p{margin-top:1.5mm;display:flex;justify-content:space-between;}
+        .mc-ed-sign p em{font-style:normal;color:#94a3b8;}
+        .mc-ed-foot{display:flex;justify-content:space-between;margin-top:9mm;padding-top:2.5mm;border-top:.2mm solid #cbd5e1;font-size:7.5pt;color:#94a3b8;letter-spacing:.12em;}
+
+        /* --- ปกแบบ B: บล็อกชมพูเข้ม + ตารางควบคุมเอกสาร --- */
+        .mc-b{height:100%;display:flex;flex-direction:column;color:#0f172a;font-family:'Prompt','Sarabun',sans-serif;}
+        .mc-b-hero{position:relative;height:150mm;flex:0 0 150mm;overflow:hidden;color:#fff;padding:10mm;display:flex;flex-direction:column;justify-content:space-between;background:linear-gradient(135deg,#be185d 0%,#9d174d 100%);}
+        .mc-b-flower{position:absolute;right:-34mm;top:-26mm;width:150mm;height:150mm;}
+        .mc-b-petal{position:absolute;left:50%;top:50%;width:46mm;height:72mm;margin-left:-23mm;margin-top:-72mm;transform-origin:50% 100%;border-radius:50%;background:rgba(255,255,255,.07);border:.4mm solid rgba(255,255,255,.3);}
+        .mc-b-core{position:absolute;left:50%;top:50%;width:24mm;height:24mm;margin:-12mm 0 0 -12mm;border-radius:50%;background:rgba(255,255,255,.16);}
+        .mc-b-top{position:relative;display:flex;justify-content:space-between;align-items:center;}
+        .mc-b-brand{display:flex;align-items:center;gap:4mm;}
+        .mc-b-badge{width:17mm;height:17mm;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;}
+        .mc-b-badge img{width:12mm;height:12mm;object-fit:contain;}
+        .mc-b-brand b{display:block;font-size:13pt;letter-spacing:.14em;line-height:1.2;}
+        .mc-b-brand span{display:block;font-size:7.5pt;letter-spacing:.22em;opacity:.85;margin-top:.8mm;}
+        .mc-b-top .no{font-size:9pt;letter-spacing:.2em;border:.3mm solid rgba(255,255,255,.6);padding:1.5mm 3.5mm;}
+        .mc-b-text{position:relative;}
+        .mc-b-kick{display:flex;align-items:center;gap:4mm;font-size:9pt;letter-spacing:.32em;font-weight:600;}
+        .mc-b-kick i{display:block;width:16mm;height:.7mm;background:#fbcfe8;}
+        .mc-b-title{font-size:21pt;font-weight:400;margin-top:4mm;}
+        .mc-b-month{font-weight:700;line-height:1.15;margin-top:4mm;letter-spacing:-.015em;white-space:nowrap;}
+        .mc-b-month i{font-style:normal;color:#fbcfe8;font-weight:300;}
+        .mc-b-sub{font-size:11pt;letter-spacing:.08em;margin-top:2mm;color:#fce7f3;}
+        .mc-b-ctl{margin-top:9mm;}
+        .mc-b-ctl h5{display:flex;align-items:center;gap:3mm;font-size:8pt;letter-spacing:.26em;font-weight:700;color:#be185d;margin-bottom:2mm;}
+        .mc-b-ctl h5 i{display:block;width:10mm;height:.6mm;background:#be185d;}
+        .mc-b-grid{display:grid;grid-template-columns:1fr 1fr;column-gap:10mm;border-top:.4mm solid #0f172a;}
+        .mc-b-cell{padding:3mm 0;border-bottom:.2mm solid #cbd5e1;}
+        .mc-b-cell small{display:block;font-size:7pt;letter-spacing:.18em;color:#64748b;}
+        .mc-b-cell b{display:block;font-size:11pt;font-weight:600;margin-top:1mm;}
+        .mc-b-cell.sg{height:24mm;position:relative;}
+        .mc-b-cell.sg p{position:absolute;left:0;right:0;bottom:2.5mm;display:flex;justify-content:space-between;font-size:8pt;color:#94a3b8;}
+        .mc-b-foot{display:flex;justify-content:space-between;margin-top:auto;padding-top:2.5mm;border-top:.2mm solid #cbd5e1;font-size:7.5pt;color:#94a3b8;letter-spacing:.12em;}
         .flash-highlight { outline: 3px solid #ec4899; outline-offset: 2px; border-radius: 1rem; }
     </style>
 </head>
@@ -1325,69 +1436,67 @@
             </div>
         </div>
 
-        <div id="printable-work-orders" :class="isMeasuringPrint ? 'print-measure-mode' : 'hidden'">
+        <div id="printable-work-orders" :class="[isMeasuringPrint ? 'print-measure-mode' : 'hidden', monthlyCover ? 'mc-punch' : '']">
             <template v-if="monthlyCoverData">
-            <div class="print-page mc-page bg-white p-8 border border-slate-300 mb-8 rounded-xl font-sans">
+            <div class="print-page mc-page mc-fullbleed bg-white p-8 border border-slate-300 mb-8 rounded-xl font-sans">
                 <div class="mc-inner">
-                    <div class="mc-top">
-                        <div class="mc-brand">
+                    <div class="mc-cover">
+                        <div class="mc-ring r1"></div><div class="mc-ring r2"></div><div class="mc-ring r3"></div><div class="mc-ring r4"></div>
+                        <div class="mc-cbrand">
                             <img src="images/logo.png" alt="S.FLOWER BLOOM">
-                            <div><b>S.FLOWER BLOOM</b><span>MONTHLY WORK ORDER FILE</span></div>
+                            <div><b>S.FLOWER BLOOM</b><span>FLORAL STUDIO</span></div>
                         </div>
-                        <div class="mc-docno">เลขที่เอกสาร <b>{{ monthlyCoverData.docNo }}</b><br>วันที่พิมพ์ {{ monthlyCoverData.printDate }}</div>
-                    </div>
-                    <div class="mc-hero">
-                        <div class="mc-kicker">WORK ORDER ARCHIVE</div>
-                        <div class="mc-title">ใบสั่งงานประจำเดือน</div>
-                        <div class="mc-month">{{ monthlyCoverData.monthName }}<i>/</i>{{ monthlyCoverData.yy }}</div>
-                        <div class="mc-sub">{{ monthlyCoverData.monthName }} พ.ศ. {{ monthlyCoverData.be }} ({{ monthlyCoverData.monthEn }} {{ monthlyCoverData.ce }})</div>
-                    </div>
-                    <div class="mc-stats">
-                        <div class="mc-stat"><small>ออเดอร์ทั้งหมด (รวมที่ยกเลิก)</small><b>{{ monthlyCoverData.total }}</b></div>
-                        <div class="mc-stat"><small>ส่งสำเร็จ</small><b>{{ monthlyCoverData.byStatus.completed }}</b></div>
-                        <div class="mc-stat"><small>ยกเลิก</small><b>{{ monthlyCoverData.byStatus.cancelled }}</b></div>
-                        <div class="mc-stat pk"><small>ยอดขายรวม</small><b>฿{{ formatNumber(monthlyCoverData.sales) }}</b><em>ไม่รวมออเดอร์ที่ยกเลิก</em></div>
-                        <div class="mc-stat"><small>ชำระแล้ว/มัดจำ</small><b>฿{{ formatNumber(monthlyCoverData.paid) }}</b></div>
-                        <div class="mc-stat"><small>ค้างชำระ</small><b>฿{{ formatNumber(monthlyCoverData.due) }}</b></div>
-                    </div>
-                    <div class="mc-meta">
-                        <div>
-                            <h4>สถานะออเดอร์</h4>
-                            <div class="r"><span>รอดำเนินการ</span><b>{{ monthlyCoverData.byStatus.pending }}</b></div>
-                            <div class="r"><span>กำลังทำ</span><b>{{ monthlyCoverData.byStatus.in_progress }}</b></div>
-                            <div class="r"><span>พร้อมส่ง/รับ</span><b>{{ monthlyCoverData.byStatus.ready }}</b></div>
-                            <div class="r"><span>ส่งสำเร็จ</span><b>{{ monthlyCoverData.byStatus.completed }}</b></div>
-                            <div class="r"><span>ยกเลิก</span><b>{{ monthlyCoverData.byStatus.cancelled }}</b></div>
+                        <div class="mc-cmain">
+                            <div class="mc-ckick">MONTHLY WORK ORDER REPORT</div>
+                            <div class="mc-ctitle">รายงานใบสั่งงานประจำเดือน</div>
+                            <div class="mc-cmonth">{{ monthlyCoverData.monthName }}<i>/</i>{{ monthlyCoverData.yy }}</div>
+                            <div class="mc-csub">{{ monthlyCoverData.monthName }} พ.ศ. {{ monthlyCoverData.be }} &nbsp;·&nbsp; {{ monthlyCoverData.monthEn }} {{ monthlyCoverData.ce }}</div>
                         </div>
-                        <div>
-                            <h4>ข้อมูลเอกสาร</h4>
-                            <div class="r"><span>จัดส่งพัสดุ</span><b>{{ monthlyCoverData.shipping }} ออเดอร์</b></div>
-                            <div class="r"><span>นัดรับหน้าร้าน</span><b>{{ monthlyCoverData.pickup }} ออเดอร์</b></div>
-                            <div class="r"><span>ช่วงเลขออเดอร์</span><b>{{ monthlyCoverData.noRange }}</b></div>
-                            <div class="r"><span>ช่วงเลขคิว</span><b>{{ monthlyCoverData.queueRange }}</b></div>
-                            <div class="r"><span>ช่วงวันที่สั่งซื้อ</span><b>{{ monthlyCoverData.dateRange }}</b></div>
+                        <div class="mc-cband">
+                            <div><b>ใบสั่งงานประจำเดือน</b><span>WORK ORDER FILE</span></div>
+                            <div class="dn">เลขที่เอกสาร<br><b>{{ monthlyCoverData.docNo }}</b></div>
                         </div>
+                        <div class="mc-csign"><div>ผู้จัดทำ</div><div>ผู้ตรวจสอบ</div></div>
                     </div>
-                    <div class="mc-sign">
-                        <div>ผู้จัดทำ<small>วันที่ ........ / ........ / ........</small></div>
-                        <div>ผู้ตรวจสอบ<small>วันที่ ........ / ........ / ........</small></div>
-                        <div>วันที่ปิดเดือน<small>........ / ........ / ........</small></div>
-                    </div>
-                    <div class="mc-foot"><span>S.FLOWER BLOOM · {{ monthlyCoverData.docNo }}</span><span>หน้า 1 / {{ monthlyCoverData.pages.length + 1 }}</span></div>
                 </div>
             </div>
             <div v-for="(pg, pi) in monthlyCoverData.pages" :key="'mc-idx-' + pi" class="print-page mc-page bg-white p-8 border border-slate-300 mb-8 rounded-xl font-sans">
-                <div class="mc-inner">
+                <div class="mc-inner" :class="pi === 0 ? 'mc-sum' : ''">
                     <div class="mc-ihead">
-                        <div><b>สารบัญใบสั่งงาน · {{ monthlyCoverData.monthName }}/{{ monthlyCoverData.yy }}</b></div>
-                        <span>{{ monthlyCoverData.docNo }} · รวม {{ monthlyCoverData.total }} ออเดอร์</span>
+                        <div><b>{{ pi === 0 ? 'สารบัญ & สรุปประจำเดือน' : 'สารบัญใบสั่งงาน (ต่อ)' }} · {{ monthlyCoverData.monthName }}/{{ monthlyCoverData.yy }}</b></div>
+                        <span>{{ monthlyCoverData.docNo }} · พิมพ์เมื่อ {{ monthlyCoverData.printDate }}</span>
                     </div>
+                    <template v-if="pi === 0">
+                        <div class="mc-stats">
+                            <div class="mc-stat"><small>ออเดอร์ทั้งหมด (รวมที่ยกเลิก)</small><b>{{ monthlyCoverData.total }}</b></div>
+                            <div class="mc-stat"><small>ส่งสำเร็จ</small><b>{{ monthlyCoverData.byStatus.completed }}</b></div>
+                            <div class="mc-stat"><small>ยกเลิก</small><b>{{ monthlyCoverData.byStatus.cancelled }}</b></div>
+                            <div class="mc-stat pk"><small>ยอดขายรวม</small><b>฿{{ formatNumber(monthlyCoverData.sales) }}</b><em>ไม่รวมออเดอร์ที่ยกเลิก</em></div>
+                            <div class="mc-stat"><small>ชำระแล้ว/มัดจำ</small><b>฿{{ formatNumber(monthlyCoverData.paid) }}</b></div>
+                            <div class="mc-stat"><small>ค้างชำระ</small><b>฿{{ formatNumber(monthlyCoverData.due) }}</b></div>
+                        </div>
+                        <div class="mc-meta">
+                            <div>
+                                <h4>สถานะออเดอร์</h4>
+                                <div class="r"><span>ส่งสำเร็จ</span><b>{{ monthlyCoverData.byStatus.completed }}</b></div>
+                                <div class="r"><span>ยกเลิก</span><b>{{ monthlyCoverData.byStatus.cancelled }}</b></div>
+                            </div>
+                            <div>
+                                <h4>ข้อมูลเอกสาร</h4>
+                                <div class="r"><span>จัดส่งพัสดุ</span><b>{{ monthlyCoverData.shipping }} ออเดอร์</b></div>
+                                <div class="r"><span>นัดรับหน้าร้าน</span><b>{{ monthlyCoverData.pickup }} ออเดอร์</b></div>
+                                <div class="r"><span>ช่วงเลขออเดอร์</span><b>{{ monthlyCoverData.noRange }}</b></div>
+                                <div class="r"><span>ช่วงเลขคิว</span><b>{{ monthlyCoverData.queueRange }}</b></div>
+                                <div class="r"><span>ช่วงวันที่สั่งซื้อ</span><b>{{ monthlyCoverData.dateRange }}</b></div>
+                            </div>
+                        </div>
+                    </template>
                     <table class="mc-tbl">
-                        <colgroup><col style="width:6%"><col style="width:8%"><col style="width:10%"><col style="width:19%"><col style="width:8%"><col style="width:10%"><col style="width:10%"><col style="width:10%"><col style="width:10%"><col style="width:9%"></colgroup>
+                        <colgroup><col style="width:6%"><col style="width:8%"><col style="width:11%"><col style="width:20%"><col style="width:8%"><col style="width:11%"><col style="width:9%"><col style="width:9%"><col style="width:9%"><col style="width:9%"></colgroup>
                         <thead><tr><th>คิว</th><th>ออเดอร์</th><th>วันที่สั่ง</th><th>ลูกค้า</th><th>ประเภท</th><th>กำหนดส่ง</th><th class="n">ยอดรวม</th><th class="n">ชำระแล้ว</th><th class="n">คงเหลือ</th><th>สถานะ</th></tr></thead>
                         <tbody>
                             <tr v-for="r in pg" :key="r.id" :class="r.cancelled ? 'mc-x' : ''">
-                                <td>{{ r.queue }}</td><td>{{ r.no }}</td><td>{{ r.date }}</td><td>{{ r.customer }}</td><td>{{ r.type }}</td><td>{{ r.due }}</td>
+                                <td>{{ r.queue }}</td><td>{{ r.no }}</td><td>{{ r.date }}</td><td><div class="mc-cn">{{ r.customer }}</div></td><td>{{ r.type }}</td><td>{{ r.due }}</td>
                                 <td class="n">{{ formatNumber(r.total) }}</td><td class="n">{{ formatNumber(r.paid) }}</td><td class="n">{{ r.cancelled ? '-' : formatNumber(r.remain) }}</td><td>{{ r.status }}</td>
                             </tr>
                             <tr v-if="pi === monthlyCoverData.pages.length - 1" class="mc-total">
@@ -2787,6 +2896,7 @@
                 const MC_SHORT_MONTHS = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
                 const MC_EN_MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
                 const MC_ROWS_PER_PAGE = 26;
+                const MC_ROWS_FIRST_PAGE = 16;
                 const mcBE = (y) => Number(y) + 543;
                 const mcShortDate = (s) => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(s || '')); if (!m || +m[2] < 1 || +m[2] > 12) return '-'; return (+m[3]) + ' ' + MC_SHORT_MONTHS[+m[2] - 1] + ' ' + String(mcBE(m[1])).slice(-2); };
                 const mcSort = (a, b) => (Number(a.queueNo) || 0) - (Number(b.queueNo) || 0) || String(a.orderDate || '').localeCompare(String(b.orderDate || '')) || String(a.id).localeCompare(String(b.id));
@@ -2816,9 +2926,14 @@
                         total: o.totalAmount, paid: o.depositAmount, remain: getRemainingBalance(o), status: statusLabelOf(o.status), cancelled: o.status === 'cancelled'
                     }));
                     const pages = [];
-                    for (let i = 0; i < rows.length; i += MC_ROWS_PER_PAGE) pages.push(rows.slice(i, i + MC_ROWS_PER_PAGE));
-                    if (!pages.length) pages.push([]);
+                    pages.push(rows.slice(0, MC_ROWS_FIRST_PAGE));
+                    for (let i = MC_ROWS_FIRST_PAGE; i < rows.length; i += MC_ROWS_PER_PAGE) pages.push(rows.slice(i, i + MC_ROWS_PER_PAGE));
+                    const mName = THAI_MONTHS_FULL[+m - 1];
+                    const adv = mName.replace(/[\u0E31\u0E34-\u0E3A\u0E47-\u0E4E]/g, '').length;
+                    const monthPt = adv <= 5 ? 92 : adv <= 6 ? 84 : adv <= 7 ? 74 : 66;
+                    const period = '1 – ' + new Date(+y, +m, 0).getDate() + ' ' + mName + ' ' + mcBE(y);
                     return {
+                        monthPt, period,
                         docNo: 'WO-' + mcBE(y) + '-' + m, monthName: THAI_MONTHS_FULL[+m - 1], monthEn: MC_EN_MONTHS[+m - 1],
                         be: mcBE(y), ce: y, yy: String(mcBE(y)).slice(-2), printDate: mcShortDate(localDateString()),
                         total: list.length, byStatus, sales: sum(live, o => o.totalAmount), paid: sum(live, o => o.depositAmount), due: sum(live, o => getRemainingBalance(o)),
