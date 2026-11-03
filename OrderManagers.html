@@ -320,7 +320,7 @@
                     <div>
                         <div class="text-xs font-semibold text-slate-500 mb-2">เรียงตาม</div>
                         <div class="space-y-1.5">
-                            <button v-for="o in [{v:'delivery_asc',t:'🚨 ด่วนสุด (กำหนดส่งใกล้นี้)'},{v:'created_desc',t:'🆕 ออเดอร์ใหม่ล่าสุด'},{v:'remaining_desc',t:'💰 ยอดค้างชำระ (มากไปน้อย)'}]" :key="o.v" @click="sortBy = o.v"
+                            <button v-for="o in sortOptions" :key="o.v" @click="sortBy = o.v"
                                     :class="sortBy === o.v ? 'border-pink-500 bg-pink-50 text-pink-700 font-semibold' : 'border-slate-200 bg-white text-slate-700'"
                                     class="w-full flex items-center justify-between px-3.5 py-3 rounded-xl border text-sm text-left">
                                 <span>{{ o.t }}</span>
@@ -604,9 +604,7 @@
                 <label class="flex items-center gap-2 shrink-0">
                     <span class="text-xs font-semibold text-slate-500 whitespace-nowrap">เรียงตาม</span>
                     <select v-model="sortBy" class="h-10 px-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-pink-300 cursor-pointer">
-                        <option value="delivery_asc">ด่วนสุด (กำหนดส่งใกล้สุด)</option>
-                        <option value="created_desc">ออเดอร์ใหม่ล่าสุด</option>
-                        <option value="remaining_desc">ยอดค้างชำระ (มากไปน้อย)</option>
+                        <option v-for="o in sortOptions" :key="o.v" :value="o.v">{{ o.t }}</option>
                     </select>
                 </label>
                 <select v-model="datePreset" class="shrink-0 h-10 px-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-pink-300 cursor-pointer">
@@ -654,9 +652,7 @@
                     <div class="hidden md:flex items-center gap-2 w-full sm:w-auto shrink-0">
                         <span class="text-xs font-semibold text-slate-500 whitespace-nowrap"><i class="fa-solid fa-arrow-down-wide-short text-pink-600"></i> เรียงตาม:</span>
                         <select v-model="sortBy" class="w-full sm:w-auto py-2.5 sm:py-2 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none cursor-pointer shadow-sm">
-                            <option value="delivery_asc">🚨 ด่วนสุด (กำหนดส่งใกล้นี้)</option>
-                            <option value="created_desc">🆕 ออเดอร์ใหม่ล่าสุด</option>
-                            <option value="remaining_desc">💰 ยอดค้างชำระ (มากไปน้อย)</option>
+                            <option v-for="o in sortOptions" :key="o.v" :value="o.v">{{ o.t }}</option>
                         </select>
                     </div>
                 </div>
@@ -2081,7 +2077,19 @@
                 const statusFilter = ref('active'); // default: hide completed/cancelled orders
                 const unpaidOnly = ref(false); // show only orders with an outstanding balance (any status except cancelled)
                 const datePreset = ref('all');
-                const sortBy = ref('delivery_asc');
+                // ตัวเลือก "เรียงตาม" ชุดเดียว ใช้ร่วมกันทั้งเดสก์ท็อปและมือถือ
+                const sortOptions = [
+                    { v: 'delivery_asc', t: '🚨 ด่วนสุด (กำหนดส่งใกล้สุด)' },
+                    { v: 'order_desc', t: '🆕 วันที่สั่ง (ใหม่ → เก่า)' },
+                    { v: 'order_asc', t: '📆 วันที่สั่ง (เก่า → ใหม่)' },
+                    { v: 'remaining_desc', t: '💰 ยอดค้างชำระ (มากไปน้อย)' }
+                ];
+                const SORT_KEY = 'orderManagers.sortBy';
+                const sortBy = ref((() => {
+                    try { const v = localStorage.getItem(SORT_KEY); if (sortOptions.some(o => o.v === v)) return v; } catch (e) {}
+                    return 'delivery_asc';
+                })());
+                watch(sortBy, v => { try { localStorage.setItem(SORT_KEY, v); } catch (e) {} });
                 const currentView = ref('grid');
                 const isFilterSheetOpen = ref(false);
                 const isMobileMenuOpen = ref(false);
@@ -3037,7 +3045,14 @@
                             const at = a.deliveryTime || '99:99', bt = b.deliveryTime || '99:99';
                             return at === bt ? 0 : (at < bt ? -1 : 1);
                         }
-                        if (sortBy.value === 'created_desc') return b.id.localeCompare(a.id);
+                        if (sortBy.value === 'order_desc' || sortBy.value === 'order_asc') {
+                            // เรียงตามวันที่สั่ง (ถ้าวันเดียวกันใช้ id ตัดสิน) ออเดอร์ที่ไม่มีวันที่สั่งไปท้ายสุด
+                            const ao = String(a.orderDate || ''), bo = String(b.orderDate || '');
+                            if (!ao !== !bo) return ao ? -1 : 1;
+                            const dir = sortBy.value === 'order_desc' ? -1 : 1;
+                            if (ao !== bo) return (ao < bo ? -1 : 1) * dir;
+                            return String(a.id).localeCompare(String(b.id)) * dir;
+                        }
                         if (sortBy.value === 'remaining_desc') return getRemainingBalance(b) - getRemainingBalance(a);
                         return 0;
                     });
@@ -4285,7 +4300,7 @@
                 });
 
                 return {
-                    orders, ordersLoaded, searchQuery, filterType, statusFilter, datePreset, sortBy, currentView,
+                    orders, ordersLoaded, searchQuery, filterType, statusFilter, datePreset, sortBy, sortOptions, currentView,
                     isFilterSheetOpen, isMobileMenuOpen, activeFilterCount, resetFilters,
                     TRACK_CARRIERS, trackDraft, trackEditing, startTrackEdit, cancelTrackEdit, saveInlineTracking, saveCarrier,
                     isExpanded, toggleExpand, cardMenuOrder, runCardMenu, urgencyChip, deliveryLabel, timeSuffix, isFinishedStatus,
