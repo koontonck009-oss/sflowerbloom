@@ -16,6 +16,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Vue 3 CDN -->
     <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <!-- Firebase SDK (compat) สำหรับซิงค์ข้อมูลระหว่างเครื่อง -->
     <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
@@ -335,6 +336,62 @@
 <body class="text-slate-800 antialiased min-h-screen pb-12">
 
     <div id="app" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-3 md:pt-6 pb-16 md:pb-0">
+        <!-- ===== นำเข้าข้อมูลเก่าจาก Excel/CSV ===== -->
+        <div v-if="imp.open" class="fixed inset-0 z-[70] bg-slate-900/50 flex items-end sm:items-center justify-center p-0 sm:p-4" @click.self="closeImportModal()">
+            <div class="bg-white w-full sm:max-w-3xl max-h-[92vh] flex flex-col rounded-t-2xl sm:rounded-2xl shadow-2xl">
+                <div class="px-5 py-4 border-b flex items-center justify-between">
+                    <h3 class="font-bold text-slate-800"><i class="fa-solid fa-file-excel text-emerald-500 mr-2"></i>นำเข้าข้อมูลเก่า (Excel / CSV)</h3>
+                    <button type="button" @click="closeImportModal()" class="w-8 h-8 rounded-full hover:bg-slate-100 text-slate-500"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="p-5 overflow-y-auto text-sm text-slate-700 space-y-4">
+                    <div v-if="!imp.orders.length && !imp.errors.length">
+                        <ol class="list-decimal pl-5 space-y-1.5 mb-4">
+                            <li>โหลดแม่แบบ แล้วกรอกข้อมูลจากกระดาษ รวมถึงเลขออเดอร์และคิวตามกระดาษ (1 แถว = 1 สินค้า, ออเดอร์ที่มีหลายสินค้าให้ใส่ "เลขออเดอร์" เดียวกัน)</li>
+                            <li>ใช้ Excel หรืออัปโหลดแม่แบบขึ้น Google Sheet ก็ได้ แล้วดาวน์โหลดกลับเป็น .xlsx หรือ .csv</li>
+                            <li>เลือกไฟล์ด้านล่าง ระบบจะแสดงตัวอย่างให้ตรวจก่อน ยังไม่บันทึกจนกว่าจะกดยืนยัน</li>
+                        </ol>
+                        <p class="text-xs text-slate-500 mb-4">ช่องที่เว้นว่างได้: วันที่รับ (ค่าเริ่มต้น = วันที่สั่ง), สถานะ (ค่าเริ่มต้น = เสร็จแล้ว), รับเงินแล้ว (ค่าเริ่มต้น = เต็มจำนวน), วิธีรับ (ค่าเริ่มต้น = จัดส่ง), ยอดรวม (คำนวณจากสินค้า + ค่าส่ง)</p>
+                        <div class="flex flex-wrap gap-2">
+                            <button type="button" @click="downloadImportTemplate()" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 font-semibold"><i class="fa-solid fa-download mr-1.5"></i>โหลดแม่แบบ Excel</button>
+                            <label class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold cursor-pointer"><i class="fa-solid fa-upload mr-1.5"></i>เลือกไฟล์ที่กรอกแล้ว<input type="file" accept=".xlsx,.xls,.csv" class="hidden" @change="onImportFile($event)"></label>
+                        </div>
+                    </div>
+                    <div v-if="!imp.orders.length && !imp.errors.length && importBatches.length" class="border-t pt-4">
+                        <div class="font-semibold mb-2">ชุดที่นำเข้าแล้ว (ลบทั้งชุดได้ ถ้านำเข้าผิด)</div>
+                        <div class="space-y-2">
+                            <div v-for="b in importBatches" :key="b.id" class="flex flex-wrap items-center justify-between gap-2 border rounded-xl px-3 py-2">
+                                <div class="text-xs"><span class="font-semibold">{{ fmtBatchTime(b.at) || b.id }}</span> · {{ b.count }} ออเดอร์ · {{ b.total.toLocaleString() }} ฿</div>
+                                <div v-if="imp.delBatch !== b.id"><button type="button" @click="imp.delBatch = b.id" class="px-3 py-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 text-xs font-semibold">ลบทั้งชุด</button></div>
+                                <div v-else class="flex items-center gap-2 text-xs"><span class="text-rose-600">ลบ {{ b.count }} ออเดอร์? กู้คืนไม่ได้</span><button type="button" :disabled="imp.busy" @click="deleteImportBatch(b)" class="px-3 py-1.5 rounded-lg bg-rose-600 text-white font-semibold disabled:opacity-40">{{ imp.busy ? 'กำลังลบ...' : 'ยืนยันลบ' }}</button><button type="button" @click="imp.delBatch = ''" class="px-2 py-1.5 rounded-lg bg-slate-100">ยกเลิก</button></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div v-if="imp.errors.length" class="bg-rose-50 border border-rose-200 rounded-xl p-3">
+                        <div class="font-semibold text-rose-700 mb-1">พบปัญหา {{ imp.errors.length }} จุด (แถวที่มีปัญหาจะไม่ถูกนำเข้า)</div>
+                        <ul class="text-xs text-rose-700 space-y-0.5 max-h-28 overflow-y-auto"><li v-for="(e, i) in imp.errors" :key="i">{{ e }}</li></ul>
+                        <button v-if="imp.badRows.length" type="button" @click="downloadImportErrors()" class="mt-2 text-xs font-semibold text-rose-700 underline"><i class="fa-solid fa-download mr-1"></i>ดาวน์โหลดรายงานแถวที่ผิด (.xlsx)</button>
+                    </div>
+                    <div v-if="imp.orders.length">
+                        <div class="flex flex-wrap gap-x-5 gap-y-1 mb-2 font-semibold">
+                            <span>นำเข้าได้ {{ imp.orders.length }} ออเดอร์</span>
+                            <span class="text-emerald-700">ยอดขายรวม {{ imp.orders.reduce((a, o) => a + o.totalAmount, 0).toLocaleString() }} ฿</span>
+                            <span v-if="imp.dupes" class="text-amber-600">ข้ามรายการซ้ำ {{ imp.dupes }}</span>
+                        </div>
+                        <div class="border rounded-xl overflow-auto max-h-72">
+                            <table class="w-full text-xs">
+                                <thead class="bg-slate-50 text-slate-500 sticky top-0"><tr><th class="p-2 text-left">วันที่</th><th class="p-2 text-left">ลูกค้า</th><th class="p-2 text-left">สินค้า</th><th class="p-2 text-right">ยอดรวม</th><th class="p-2 text-right">รับแล้ว</th><th class="p-2 text-left">สถานะ</th></tr></thead>
+                                <tbody><tr v-for="o in imp.orders" :key="o.id" class="border-t"><td class="p-2 whitespace-nowrap">{{ o.orderDate }}</td><td class="p-2">{{ o.customerName }}</td><td class="p-2 max-w-[14rem] truncate">{{ (o.products || '').replace(/\n/g, ', ') }}</td><td class="p-2 text-right">{{ o.totalAmount.toLocaleString() }}</td><td class="p-2 text-right">{{ o.depositAmount.toLocaleString() }}</td><td class="p-2">{{ o.status }}</td></tr></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="px-5 py-3 border-t flex justify-end gap-2" v-if="imp.orders.length || imp.errors.length">
+                    <button type="button" @click="imp.orders = []; imp.errors = []; imp.dupes = 0" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 font-semibold text-sm">เลือกไฟล์ใหม่</button>
+                    <button type="button" :disabled="!imp.orders.length || imp.busy" @click="confirmImport()" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 text-white font-semibold text-sm">{{ imp.busy ? 'กำลังนำเข้า...' : 'ยืนยันนำเข้า ' + imp.orders.length + ' ออเดอร์' }}</button>
+                </div>
+            </div>
+        </div>
+
 
         <!-- Loading state while Firebase reports auth status -->
         <div v-if="!authChecked" class="min-h-[80vh] flex items-center justify-center">
@@ -384,6 +441,9 @@
             </button>
             <div v-show="isMobileMenuOpen" class="fixed inset-0 z-40" @click="isMobileMenuOpen = false"></div>
             <div v-show="isMobileMenuOpen" class="absolute right-0 top-12 z-50 w-64 bg-white rounded-2xl shadow-xl border border-slate-200 p-1.5">
+                <button @click="openImportModal(); isMobileMenuOpen = false" class="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm text-slate-700 hover:bg-slate-50 text-left">
+                    <i class="fa-solid fa-file-excel w-5 text-center text-emerald-500"></i> นำเข้าข้อมูลเก่า (Excel)
+                </button>
                 <button @click="isMobileMenuOpen = false; openMonthlyCoverModal()" class="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm text-slate-700 hover:bg-slate-50 text-left">
                     <i class="fa-solid fa-book-open w-5 text-center text-slate-400"></i> พิมพ์ปกประจำเดือน
                 </button>
@@ -478,7 +538,7 @@
                     <div>
                         <div class="text-xs font-semibold text-slate-500 mb-2">เรียงตาม</div>
                         <div class="space-y-1.5">
-                            <button v-for="o in sortOptions" :key="o.v" @click="sortBy = o.v"
+                            <button v-for="o in [{v:'delivery_asc',t:'🚨 ด่วนสุด (กำหนดส่งใกล้นี้)'},{v:'created_desc',t:'🆕 ออเดอร์ใหม่ล่าสุด'},{v:'remaining_desc',t:'💰 ยอดค้างชำระ (มากไปน้อย)'}]" :key="o.v" @click="sortBy = o.v"
                                     :class="sortBy === o.v ? 'border-pink-500 bg-pink-50 text-pink-700 font-semibold' : 'border-slate-200 bg-white text-slate-700'"
                                     class="w-full flex items-center justify-between px-3.5 py-3 rounded-xl border text-sm text-left">
                                 <span>{{ o.t }}</span>
@@ -703,6 +763,7 @@
                         <div v-show="isMoreMenuOpen" class="absolute right-0 top-full mt-2 w-48 bg-white border border-slate-200 rounded-xl shadow-lg py-1 z-40">
                             <button type="button" @click="exportDataJSON(); isMoreMenuOpen = false" class="w-full px-3.5 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2.5"><i class="fa-solid fa-file-export text-slate-400 w-4"></i> Export ข้อมูลสำรอง</button>
                             <label class="w-full px-3.5 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 cursor-pointer"><i class="fa-solid fa-file-import text-slate-400 w-4"></i> Import ข้อมูล<input type="file" @change="importDataJSON" accept=".json" class="hidden"></label>
+                            <button type="button" @click="openImportModal(); isMoreMenuOpen = false" class="w-full px-3.5 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2.5"><i class="fa-solid fa-file-excel text-emerald-500 w-4"></i> นำเข้าข้อมูลเก่า (Excel)</button>
                             <div class="my-1 border-t border-slate-100"></div>
                             <button type="button" @click="isMoreMenuOpen = false; handleLogout()" class="w-full px-3.5 py-2.5 text-left text-sm text-slate-700 hover:bg-rose-50 hover:text-rose-600 flex items-center gap-2.5"><i class="fa-solid fa-right-from-bracket text-slate-400 w-4"></i> ออกจากระบบ</button>
                         </div>
@@ -765,7 +826,9 @@
                 <label class="flex items-center gap-2 shrink-0">
                     <span class="text-xs font-semibold text-slate-500 whitespace-nowrap">เรียงตาม</span>
                     <select v-model="sortBy" class="h-10 px-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-pink-300 cursor-pointer">
-                        <option v-for="o in sortOptions" :key="o.v" :value="o.v">{{ o.t }}</option>
+                        <option value="delivery_asc">ด่วนสุด (กำหนดส่งใกล้สุด)</option>
+                        <option value="created_desc">ออเดอร์ใหม่ล่าสุด</option>
+                        <option value="remaining_desc">ยอดค้างชำระ (มากไปน้อย)</option>
                     </select>
                 </label>
                 <select v-model="datePreset" class="shrink-0 h-10 px-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-pink-300 cursor-pointer">
@@ -813,7 +876,9 @@
                     <div class="hidden md:flex items-center gap-2 w-full sm:w-auto shrink-0">
                         <span class="text-xs font-semibold text-slate-500 whitespace-nowrap"><i class="fa-solid fa-arrow-down-wide-short text-pink-600"></i> เรียงตาม:</span>
                         <select v-model="sortBy" class="w-full sm:w-auto py-2.5 sm:py-2 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none cursor-pointer shadow-sm">
-                            <option v-for="o in sortOptions" :key="o.v" :value="o.v">{{ o.t }}</option>
+                            <option value="delivery_asc">🚨 ด่วนสุด (กำหนดส่งใกล้นี้)</option>
+                            <option value="created_desc">🆕 ออเดอร์ใหม่ล่าสุด</option>
+                            <option value="remaining_desc">💰 ยอดค้างชำระ (มากไปน้อย)</option>
                         </select>
                     </div>
                 </div>
@@ -2323,7 +2388,7 @@
         // so the password is never sitting in readable page source.
         const ADMIN_LOGIN_EMAIL = 'admin@sflowerbloom.local';
 
-        const { createApp, ref, computed, onMounted, nextTick, watch } = Vue;
+        const { createApp, ref, reactive, computed, onMounted, nextTick, watch } = Vue;
 
         createApp({
             setup() {
@@ -2333,19 +2398,7 @@
                 const statusFilter = ref('active'); // default: hide completed/cancelled orders
                 const unpaidOnly = ref(false); // show only orders with an outstanding balance (any status except cancelled)
                 const datePreset = ref('all');
-                // ตัวเลือก "เรียงตาม" ชุดเดียว ใช้ร่วมกันทั้งเดสก์ท็อปและมือถือ
-                const sortOptions = [
-                    { v: 'delivery_asc', t: '🚨 ด่วนสุด (กำหนดส่งใกล้สุด)' },
-                    { v: 'order_desc', t: '🆕 วันที่สั่ง (ใหม่ → เก่า)' },
-                    { v: 'order_asc', t: '📆 วันที่สั่ง (เก่า → ใหม่)' },
-                    { v: 'remaining_desc', t: '💰 ยอดค้างชำระ (มากไปน้อย)' }
-                ];
-                const SORT_KEY = 'orderManagers.sortBy';
-                const sortBy = ref((() => {
-                    try { const v = localStorage.getItem(SORT_KEY); if (sortOptions.some(o => o.v === v)) return v; } catch (e) {}
-                    return 'delivery_asc';
-                })());
-                watch(sortBy, v => { try { localStorage.setItem(SORT_KEY, v); } catch (e) {} });
+                const sortBy = ref('delivery_asc');
                 const currentView = ref('grid');
                 const isFilterSheetOpen = ref(false);
                 const isMobileMenuOpen = ref(false);
@@ -3375,14 +3428,7 @@
                             const at = a.deliveryTime || '99:99', bt = b.deliveryTime || '99:99';
                             return at === bt ? 0 : (at < bt ? -1 : 1);
                         }
-                        if (sortBy.value === 'order_desc' || sortBy.value === 'order_asc') {
-                            // เรียงตามวันที่สั่ง (ถ้าวันเดียวกันใช้ id ตัดสิน) ออเดอร์ที่ไม่มีวันที่สั่งไปท้ายสุด
-                            const ao = String(a.orderDate || ''), bo = String(b.orderDate || '');
-                            if (!ao !== !bo) return ao ? -1 : 1;
-                            const dir = sortBy.value === 'order_desc' ? -1 : 1;
-                            if (ao !== bo) return (ao < bo ? -1 : 1) * dir;
-                            return String(a.id).localeCompare(String(b.id)) * dir;
-                        }
+                        if (sortBy.value === 'created_desc') return b.id.localeCompare(a.id);
                         if (sortBy.value === 'remaining_desc') return getRemainingBalance(b) - getRemainingBalance(a);
                         return 0;
                     });
@@ -4231,6 +4277,165 @@
                     reader.readAsText(file);
                 }
 
+
+                // ===== นำเข้าข้อมูลเก่าจาก Excel/CSV =====
+                const imp = reactive({ open: false, busy: false, orders: [], errors: [], badRows: [], dupes: 0, delBatch: '' });
+                const IMP_COLS = ['เลขออเดอร์', 'คิว', 'วันที่สั่ง', 'วันที่รับ', 'ชื่อลูกค้า', 'เบอร์', 'สินค้า', 'จำนวน', 'ราคาต่อชิ้น', 'ค่าส่ง', 'ยอดรวม', 'รับเงินแล้ว', 'สถานะ', 'วิธีรับ', 'ขนส่ง', 'หมายเหตุ'];
+                function openImportModal() { imp.open = true; imp.orders = []; imp.errors = []; imp.badRows = []; imp.dupes = 0; imp.delBatch = ''; }
+                function closeImportModal() { if (!imp.busy) imp.open = false; }
+                async function downloadImportTemplate() {
+                    // แม่แบบจริง (มีดรอปดาวน์สถานะ/วิธีรับ) อยู่ในไฟล์ import-template.xlsx ข้าง ๆ หน้านี้
+                    try {
+                        const res = await fetch('import-template.xlsx', { cache: 'no-cache' });
+                        if (!res.ok) throw new Error('missing');
+                        const url = URL.createObjectURL(await res.blob());
+                        const a = document.createElement('a');
+                        a.href = url; a.download = 'แม่แบบนำเข้าออเดอร์เก่า.xlsx';
+                        document.body.appendChild(a); a.click(); a.remove();
+                        setTimeout(() => URL.revokeObjectURL(url), 5000);
+                        return;
+                    } catch (err) { /* ไม่มีไฟล์แม่แบบ → สร้างแบบพื้นฐานให้แทน (ไม่มีดรอปดาวน์) */ }
+                    const ws = XLSX.utils.aoa_to_sheet([IMP_COLS]);
+                    ws['!cols'] = IMP_COLS.map(() => ({ wch: 16 }));
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, 'ออเดอร์เก่า');
+                    XLSX.writeFile(wb, 'แม่แบบนำเข้าออเดอร์เก่า.xlsx');
+                    showToast('ไม่พบไฟล์ import-template.xlsx จึงสร้างแม่แบบแบบไม่มีดรอปดาวน์ให้แทน');
+                }
+                function impDate(v) {
+                    if (v instanceof Date && !isNaN(v)) v = localDateString(v);
+                    const t = String(v == null ? '' : v).trim();
+                    let m = /^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(t), y, mo, d;
+                    if (m) { y = +m[1]; mo = +m[2]; d = +m[3]; }
+                    else if ((m = /^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4})/.exec(t))) { d = +m[1]; mo = +m[2]; y = +m[3]; }
+                    else return '';
+                    if (y > 2400) y -= 543;
+                    if (mo < 1 || mo > 12 || d < 1 || d > 31) return '';
+                    return `${y}-${String(mo).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                }
+                const impNum = (v) => { const t = String(v == null ? '' : v).replace(/[,฿\s]/g, ''); return t === '' ? null : (isNaN(Number(t)) ? NaN : Number(t)); };
+                const IMP_STATUS = { 'เสร็จแล้ว': 'completed', 'เสร็จ': 'completed', 'completed': 'completed', 'ยกเลิก': 'cancelled', 'cancelled': 'cancelled', 'รอดำเนินการ': 'pending', 'รอ': 'pending', 'pending': 'pending', 'กำลังทำ': 'in_progress', 'in_progress': 'in_progress', 'พร้อมส่ง': 'ready', 'ready': 'ready' };
+                function onImportFile(event) {
+                    const file = event.target.files && event.target.files[0];
+                    event.target.value = '';
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        try {
+                            const wb = XLSX.read(e.target.result, { type: 'array', cellDates: true });
+                            const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: '', raw: true });
+                            buildImportPreview(rows);
+                        } catch (err) { imp.orders = []; imp.errors = ['อ่านไฟล์ไม่ได้ ตรวจสอบว่าเป็น .xlsx หรือ .csv']; }
+                    };
+                    reader.readAsArrayBuffer(file);
+                }
+                function buildImportPreview(rows) {
+                    const errors = [], badRows = [], groups = [], byKey = {};
+                    rows.forEach((r, i) => {
+                        const line = i + 2;
+                        const bad = (msg) => { errors.push(msg); badRows.push({ 'แถวที่': line, 'ปัญหา': msg, ...r }); };
+                        if (IMP_COLS.every(c => String(r[c] == null ? '' : r[c]).trim() === '')) return;
+                        const date = impDate(r['วันที่สั่ง']);
+                        const name = String(r['ชื่อลูกค้า'] || '').trim();
+                        const detail = String(r['สินค้า'] || '').trim();
+                        const price = impNum(r['ราคาต่อชิ้น']), qty = impNum(r['จำนวน']);
+                        const recvRaw = String(r['วันที่รับ'] == null ? '' : r['วันที่รับ']).trim();
+                        const recv = recvRaw === '' ? '' : impDate(r['วันที่รับ']);
+                        if (!date) return bad(`แถว ${line}: วันที่สั่งไม่ถูกต้อง`);
+                        if (recvRaw !== '' && !recv) return bad(`แถว ${line}: วันที่รับไม่ถูกต้อง`);
+                        if (!name) return bad(`แถว ${line}: ไม่มีชื่อลูกค้า`);
+                        if (!detail) return bad(`แถว ${line}: ไม่มีสินค้า`);
+                        if (price === null || isNaN(price)) return bad(`แถว ${line}: ราคาต่อชิ้นไม่ใช่ตัวเลข`);
+                        if (qty !== null && isNaN(qty)) return bad(`แถว ${line}: จำนวนไม่ใช่ตัวเลข`);
+                        const st = String(r['สถานะ'] || '').trim();
+                        if (st && !IMP_STATUS[st]) return bad(`แถว ${line}: สถานะ "${st}" ไม่รู้จัก`);
+                        const no = String(r['เลขออเดอร์'] || '').trim();
+                        const key = no ? no + '|' + date : '';
+                        let g = key ? byKey[key] : null;
+                        if (!g) { g = { no, date, name, recv, rows: [] }; groups.push(g); if (key) byKey[key] = g; }
+                        g.rows.push({ r, detail, price, qty: qty === null ? 1 : qty });
+                    });
+                    const batch = 'IMP' + Date.now().toString(36);
+                    const existing = new Set(orders.value.map(o => [o.customerName, String(o.orderDate || '').slice(0, 10), Number(o.totalAmount) || 0].join('|')));
+                    const out = []; let dupes = 0;
+                    groups.sort((a, b) => a.date.localeCompare(b.date)).forEach((g, gi) => {
+                        const first = g.rows[0].r;
+                        const items = g.rows.map((x, k) => ({ id: Date.now() + gi * 100 + k + Math.random(), details: x.detail, qty: x.qty, unit: 'ชิ้น', price: x.price }));
+                        const ship = g.rows.map(x => impNum(x.r['ค่าส่ง'])).find(v => v) || 0;
+                        const typedTotal = g.rows.map(x => impNum(x.r['ยอดรวม'])).find(v => v);
+                        const total = roundMoney(typedTotal || (items.reduce((a, i) => a + i.qty * i.price, 0) + ship));
+                        const status = IMP_STATUS[String(first['สถานะ'] || '').trim()] || 'completed';
+                        const paidTyped = g.rows.map(x => impNum(x.r['รับเงินแล้ว'])).find(v => v !== null && !isNaN(v));
+                        const paid = status === 'cancelled' ? 0 : roundMoney(paidTyped === undefined ? total : paidTyped);
+                        if (existing.has([g.name, g.date, total].join('|'))) { dupes++; return; }
+                        const numOf = (v) => { const t = String(v == null ? '' : v).trim(); return /^\d+$/.test(t) ? padNo(t) : t; };
+                        const pickup = String(first['วิธีรับ'] || '').indexOf('รับ') === 0;
+                        const o = {
+                            id: `ORD-${batch}-${out.length + 1}`, importBatch: batch,
+                            customerName: g.name, customerPhone: String(first['เบอร์'] || '').trim(),
+                            orderNo: numOf(first['เลขออเดอร์']), queueNo: numOf(first['คิว']), orderMonth: monthLabelOf(g.date),
+                            products: items.map(i => i.qty > 1 ? `${i.details} (x${i.qty} ${i.unit})` : i.details).join('\n'),
+                            items, notes: String(first['หมายเหตุ'] || '').trim(), images: [],
+                            orderDate: g.date, deliveryDate: g.recv || (status === 'completed' ? g.date : ''), deliveryTime: '',
+                            deliveryType: pickup ? 'pickup' : 'shipping',
+                            expressCompany: pickup ? '' : String(first['ขนส่ง'] || 'ไปรษณีย์ไทย (EMS)').trim(),
+                            trackingNumber: '',
+                            shippingFee: ship, location: '', mapLink: '', totalAmount: total, depositAmount: paid,
+                            paymentMode: 'default', status,
+                            payments: paid > 0 ? [{ id: newPaymentId(), date: g.date, amount: paid, method: '', note: 'นำเข้าข้อมูลเก่า' }] : []
+                        };
+                        out.push(o);
+                    });
+                    imp.orders = out; imp.errors = errors; imp.badRows = badRows; imp.dupes = dupes;
+                    if (!out.length && !errors.length) imp.errors = [dupes ? 'ออเดอร์ทั้งหมดในไฟล์มีอยู่ในระบบแล้ว' : 'ไม่พบข้อมูลในไฟล์'];
+                }
+
+                // ----- เฟส 2: ลบชุดที่นำเข้า + รายงานแถวที่ผิด -----
+                const importBatches = computed(() => {
+                    const m = {};
+                    orders.value.forEach(o => {
+                        if (!o.importBatch) return;
+                        const b = m[o.importBatch] || (m[o.importBatch] = { id: o.importBatch, count: 0, total: 0, ids: [], at: parseInt(String(o.importBatch).slice(3), 36) || 0 });
+                        b.count++; b.total += Number(o.totalAmount) || 0; b.ids.push(o.id);
+                    });
+                    return Object.values(m).sort((a, b) => b.at - a.at);
+                });
+                const fmtBatchTime = (at) => at ? new Date(at).toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' }) : '';
+                async function deleteImportBatch(b) {
+                    if (imp.busy) return;
+                    imp.busy = true;
+                    try {
+                        for (let i = 0; i < b.ids.length; i += 400) {
+                            const batch = db.batch();
+                            b.ids.slice(i, i + 400).forEach(id => batch.delete(db.collection('orders').doc(id)));
+                            await batch.commit();
+                        }
+                        showToast(`ลบชุดที่นำเข้า ${b.count} ออเดอร์แล้ว`);
+                    } catch (err) { console.error(err); showToast('ลบไม่สำเร็จ ตรวจสอบการเชื่อมต่อ'); }
+                    imp.busy = false; imp.delBatch = '';
+                }
+                function downloadImportErrors() {
+                    if (!imp.badRows.length) return;
+                    const ws = XLSX.utils.json_to_sheet(imp.badRows, { header: ['แถวที่', 'ปัญหา', ...IMP_COLS] });
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, 'แถวที่ผิด');
+                    XLSX.writeFile(wb, 'รายงานแถวที่นำเข้าไม่ได้.xlsx');
+                }
+                async function confirmImport() {
+                    if (!imp.orders.length || imp.busy) return;
+                    imp.busy = true;
+                    try {
+                        for (let i = 0; i < imp.orders.length; i += 400) {
+                            const batch = db.batch();
+                            imp.orders.slice(i, i + 400).forEach(o => batch.set(db.collection('orders').doc(o.id), o));
+                            await batch.commit();
+                        }
+                        showToast(`นำเข้าข้อมูลเก่า ${imp.orders.length} ออเดอร์สำเร็จ`);
+                        imp.orders = []; imp.open = false;
+                    } catch (err) { console.error(err); showToast('นำเข้าไม่สำเร็จ ตรวจสอบการเชื่อมต่อ / Firestore rules'); }
+                    imp.busy = false;
+                }
+
                 let isFirstOrdersLoad = true;
                 const ordersLoaded = ref(false);
                 // ===== บัญชีรายรับ-รายจ่าย =====
@@ -4633,7 +4838,7 @@
                 });
 
                 return {
-                    orders, ordersLoaded, searchQuery, filterType, statusFilter, datePreset, sortBy, sortOptions, currentView,
+                    orders, ordersLoaded, searchQuery, filterType, statusFilter, datePreset, sortBy, currentView,
                     isFilterSheetOpen, isMobileMenuOpen, activeFilterCount, resetFilters,
                     TRACK_CARRIERS, trackDraft, trackEditing, startTrackEdit, cancelTrackEdit, saveInlineTracking, saveCarrier,
                     isExpanded, toggleExpand, cardMenuOrder, runCardMenu, urgencyChip, deliveryLabel, timeSuffix, isFinishedStatus,
@@ -4647,7 +4852,7 @@
                     getRemainingBalance, getDeliveryUrgency, mapUrlOf, formatNumber, formatDate, getStatusClass,
                     getProgressWidth, isStepActive, getProgressColor, getProgressDotColor, handleStatusChange, unpaidConfirm, resolveUnpaid, unpaidOnly, paymentBadge, statusLabelOf, queueOpen, todayQueue, overdueCount, jumpToOrder, toastUndo, runToastUndo,
                     printSingleWorkOrder, openBatchPrintModal, openReceiptModal, triggerPrintReceipt,
-                    copyShippingAddress, exportDataJSON, importDataJSON,
+                    copyShippingAddress, exportDataJSON, importDataJSON, imp, openImportModal, closeImportModal, downloadImportTemplate, onImportFile, confirmImport, importBatches, fmtBatchTime, deleteImportBatch, downloadImportErrors,
                     handleFormImageUpload, rotateFormImage, removeFormImage, isCompressingImage,
                     imageUrlInput, MAX_ORDER_IMAGES, addFormImageFromUrl, getOrderImages,
                     galleryTarget, galleryIndex, openGallery, closeGallery, galleryImages, nextGalleryImage, prevGalleryImage,
