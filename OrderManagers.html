@@ -159,6 +159,9 @@
                 <button @click="isMobileMenuOpen = false; openMonthlyCoverModal()" class="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm text-slate-700 hover:bg-slate-50 text-left">
                     <i class="fa-solid fa-book-open w-5 text-center text-slate-400"></i> พิมพ์ปกประจำเดือน
                 </button>
+                <button @click="isMobileMenuOpen = false; openFillProvince()" class="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm text-slate-700 hover:bg-slate-50 text-left">
+                    <i class="fa-solid fa-location-dot w-5 text-center text-sky-500"></i> เติมจังหวัดออเดอร์เก่า
+                </button>
                 <button @click="isMobileMenuOpen = false; openDaysModal()" class="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm text-slate-700 hover:bg-slate-50 text-left">
                     <i class="fa-solid fa-truck-fast w-5 text-center text-sky-500"></i> ตารางระยะเวลาส่ง
                 </button>
@@ -476,6 +479,7 @@
                     <div class="relative">
                         <button type="button" @click.stop="isMoreMenuOpen = !isMoreMenuOpen" title="เมนูเพิ่มเติม" class="w-9 h-9 bg-white hover:bg-slate-50 text-slate-500 rounded-xl border border-slate-200 transition-all flex items-center justify-center"><i class="fa-solid fa-ellipsis"></i></button>
                         <div v-show="isMoreMenuOpen" class="absolute right-0 top-full mt-2 w-48 bg-white border border-slate-200 rounded-xl shadow-lg py-1 z-40">
+                            <button type="button" @click="isMoreMenuOpen = false; openFillProvince()" class="w-full px-3.5 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2.5"><i class="fa-solid fa-location-dot text-sky-500 w-4"></i> เติมจังหวัดออเดอร์เก่า</button>
                             <button type="button" @click="isMoreMenuOpen = false; openDaysModal()" class="w-full px-3.5 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2.5"><i class="fa-solid fa-truck-fast text-sky-500 w-4"></i> ตารางระยะเวลาส่ง</button>
                             <button type="button" @click="exportDataJSON(); isMoreMenuOpen = false" class="w-full px-3.5 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2.5"><i class="fa-solid fa-file-export text-slate-400 w-4"></i> Export ข้อมูลสำรอง</button>
                             <label class="w-full px-3.5 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 cursor-pointer"><i class="fa-solid fa-file-import text-slate-400 w-4"></i> Import ข้อมูล<input type="file" @change="importDataJSON" accept=".json" class="hidden"></label>
@@ -1593,13 +1597,13 @@
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold text-slate-700 mb-1">จังหวัดปลายทาง <span class="text-slate-400 font-normal">(ไม่บังคับ)</span></label>
-                                <select v-model="form.province" class="w-full px-3.5 py-3 sm:py-2 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500">
+                                <select v-model="form.province" @change="provinceAuto = false" class="w-full px-3.5 py-3 sm:py-2 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500">
                                     <option value="">— ไม่ระบุ —</option>
                                     <optgroup v-for="g in PROVINCE_GROUPS" :key="g.region" :label="g.region">
                                         <option v-for="p in g.provinces" :key="p" :value="p">{{ p }}</option>
                                     </optgroup>
                                 </select>
-                                <p v-if="form.province" class="text-[11px] text-sky-700 mt-1"><i class="fa-regular fa-clock mr-1"></i>ถึงโดยประมาณ {{ daysText(form.province) }}</p>
+                                <p v-if="form.province" class="text-[11px] text-sky-700 mt-1"><i class="fa-regular fa-clock mr-1"></i>ถึงโดยประมาณ {{ daysText(form.province) }}<span v-if="provinceAuto" class="text-slate-500"> · {{ provinceVia === 'postcode' ? 'เดาจากรหัสไปรษณีย์ ตรวจสอบอีกครั้ง' : 'ตรวจจับจากที่อยู่' }}</span></p>
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold text-slate-700 mb-1">ค่าจัดส่ง (บาท)</label>
@@ -1897,6 +1901,40 @@
                     <button type="submit" :class="txForm.type === 'income' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-rose-600 hover:bg-rose-700'" class="flex-1 py-2.5 text-white font-semibold rounded-xl text-sm shadow-sm">บันทึก</button>
                 </div>
             </form>
+        </div>
+
+        <div v-if="fillProv" class="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-slate-900/60 backdrop-blur-sm no-print" @click.self="closeFillProvince">
+            <div class="bg-white sm:rounded-2xl shadow-xl w-full h-full sm:h-auto sm:max-w-2xl sm:max-h-[92vh] overflow-hidden flex flex-col">
+                <div class="flex items-center justify-between p-4 sm:p-5 border-b border-slate-100 bg-gradient-to-r from-sky-500 to-cyan-500 shrink-0">
+                    <h3 class="text-base sm:text-lg font-bold text-white flex items-center gap-2"><i class="fa-solid fa-location-dot"></i> เติมจังหวัดออเดอร์เก่า</h3>
+                    <button @click="closeFillProvince" class="text-white/80 hover:text-white transition-colors p-2 -mr-2"><i class="fa-solid fa-xmark text-xl"></i></button>
+                </div>
+                <div class="px-4 sm:px-5 pt-3 pb-2 shrink-0 text-xs text-slate-600 space-y-1">
+                    <p v-if="fillProv.rows.length">พบ <b>{{ fillProv.rows.length }}</b> ออเดอร์พัสดุที่ยังไม่มีจังหวัดและจับจากที่อยู่ได้ ติ๊กเฉพาะที่ถูกต้อง แล้วกดเติม (แก้จังหวัดในแถวได้)</p>
+                    <p v-else class="py-4 text-center text-slate-500">ไม่มีออเดอร์ที่ต้องเติม</p>
+                    <p v-if="fillProv.skipped" class="text-slate-400">จับจังหวัดไม่ได้ {{ fillProv.skipped }} ออเดอร์ (ข้ามไว้ แก้เองได้ที่ฟอร์มออเดอร์)</p>
+                    <p v-if="fillProv.rows.some(r => r.via === 'postcode')" class="text-amber-600">แถวที่ติดป้าย "จากรหัสไปรษณีย์" เป็นการเดา จึงไม่ได้ติ๊กไว้ให้ ตรวจดูก่อนค่อยติ๊ก</p>
+                </div>
+                <div class="flex-1 overflow-y-auto px-4 sm:px-5 pb-4 space-y-2">
+                    <label v-for="r in fillProv.rows" :key="r.id" class="flex items-start gap-3 p-3 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50">
+                        <input type="checkbox" v-model="r.checked" class="mt-1 w-5 h-5 sm:w-4 sm:h-4 rounded text-sky-500 shrink-0">
+                        <div class="min-w-0 flex-1">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <span class="text-sm font-semibold text-slate-800">{{ r.name }}</span>
+                                <select v-model="r.province" @click.stop class="text-xs font-semibold text-sky-700 bg-sky-50 border border-sky-200 rounded-lg px-2 py-1">
+                                    <optgroup v-for="g in PROVINCE_GROUPS" :key="g.region" :label="g.region"><option v-for="p in g.provinces" :key="p" :value="p">{{ p }}</option></optgroup>
+                                </select>
+                                <span v-if="r.via === 'postcode'" class="text-[10px] font-semibold text-amber-700 bg-amber-50 rounded px-1.5 py-0.5">จากรหัสไปรษณีย์</span>
+                            </div>
+                            <p class="text-[11px] text-slate-500 mt-1 break-words">{{ r.address }}</p>
+                        </div>
+                    </label>
+                </div>
+                <div class="p-4 border-t border-slate-100 bg-slate-50 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 shrink-0">
+                    <button @click="closeFillProvince" class="w-full sm:w-auto px-4 py-2.5 bg-white hover:bg-slate-100 text-slate-600 border border-slate-200 font-medium rounded-xl text-sm">ปิด</button>
+                    <button v-if="fillProv.rows.length" @click="confirmFillProvince" :disabled="fillProv.busy" class="w-full sm:w-auto px-5 py-3 sm:py-2.5 bg-sky-500 hover:bg-sky-600 disabled:opacity-60 text-white font-semibold rounded-xl text-sm">{{ fillProv.busy ? 'กำลังเติม...' : 'เติมจังหวัดที่ติ๊กไว้ (' + fillProv.rows.filter(r => r.checked).length + ')' }}</button>
+                </div>
+            </div>
         </div>
 
         <div v-if="daysModal" class="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-slate-900/60 backdrop-blur-sm no-print" @click.self="closeDaysModal">
