@@ -234,6 +234,7 @@ async function boot(){
       $('loginScreen').hidden = true;
       $('app').hidden = false;
       loadCatalog();
+      loadShipFees();
     } else {
       if(user){
         fb.authApi.signOut(fb.auth);
@@ -279,6 +280,61 @@ async function doLogin(){
 }
 
 /* ───────────────── อ่าน/เขียน Firestore ───────────────── */
+
+/* ───────────────── ค่าส่งต่อสินค้า (ข้อมูลภายใน — ลูกค้าไม่เห็น) ─────────────────
+   เก็บแยกจาก catalog/products ใน shopPrivate/shipping เป็น { "รหัสสินค้า": { fee, note } }
+   Rules ต้องให้ shopPrivate อ่าน-เขียนได้เฉพาะคนล็อกอิน */
+let shipFees = {};
+let shipReadOk = false; // อ่านเอกสารสำเร็จแล้วเท่านั้นถึงยอมเขียนทับ (กันเขียนข้อมูลว่างทับของเดิมตอนอ่านไม่ได้)
+
+function shipRef(){
+  return fb.dbApi.doc(fb.db, window.PRIVATE_COLLECTION || 'shopPrivate', window.SHIPPING_DOC || 'shipping');
+}
+
+function shipOf(id){ return shipFees[String(id || '')] || null; }
+
+function shipTagHtml(p){
+  const s = shipOf(p.id);
+  return s && s.fee !== undefined && s.fee !== null && s.fee !== '' ? `<span class="tag tag-ship" title="ค่าส่งที่บันทึกไว้ (ลูกค้าไม่เห็น)">ส่ง ฿${esc(baht(s.fee))}</span>` : '';
+}
+
+async function loadShipFees(){
+  try{
+    const snap = await fb.dbApi.getDoc(shipRef());
+    let map = {};
+    if(snap.exists()){
+      const data = snap.data() || {};
+      try{ map = typeof data.json === 'string' ? JSON.parse(data.json) : {}; }catch(_){ map = {}; }
+    }
+    shipFees = map && typeof map === 'object' ? map : {};
+    shipReadOk = true;
+  }catch(err){
+    shipFees = {};
+    shipReadOk = false;
+    console.error(err);
+    toast('อ่านข้อมูลค่าส่งไม่ได้' + (err.code === 'permission-denied' ? ' — ต้องเพิ่มกฎ Firestore ให้ shopPrivate (ดูคำแนะนำที่ฉันให้ไว้)' : ': ' + (err.code || err.message)), true);
+  }
+  renderList();
+}
+
+async function persistShipFees(){
+  if(!shipReadOk){
+    toast('ยังบันทึกค่าส่งไม่ได้ เพราะอ่านข้อมูลเดิมไม่สำเร็จ (เช็กกฎ Firestore แล้วรีเฟรชหน้า)', true);
+    return false;
+  }
+  try{
+    await fb.dbApi.setDoc(shipRef(), {
+      json: JSON.stringify(shipFees),
+      count: Object.keys(shipFees).length,
+      updatedAt: new Date().toISOString()
+    });
+    return true;
+  }catch(err){
+    console.error(err);
+    toast('บันทึกค่าส่งไม่สำเร็จ: ' + (err.code || err.message), true);
+    return false;
+  }
+}
 
 function catalogRef(){
   return fb.dbApi.doc(fb.db, window.CATALOG_COLLECTION || 'catalog', window.CATALOG_DOC || 'products');
@@ -595,7 +651,7 @@ function cardHtml(p, i, filtering){
       </div>
       <div class="pc-body">
         <p class="pc-name">${esc(p.name || '(ยังไม่ตั้งชื่อ)')}</p>
-        <p class="pc-meta"><span>${esc(p.id || '—')}</span>${p.cat ? `<span>${esc(p.cat)}</span>` : ''}</p>
+        <p class="pc-meta"><span>${esc(p.id || '—')}</span>${p.cat ? `<span>${esc(p.cat)}</span>` : ''}${shipTagHtml(p)}</p>
         <p class="pc-price">${esc(priceTxt)}${priceTxt.startsWith('เริ่มต้น') || pi.text === '—' ? '' : '<small> บาท</small>'}</p>
         ${vinfo ? `<span class="pc-multi">เลือกได้ ${vinfo.rows.length} ${vinfo.unit}</span>` : ''}
         ${warns.length ? `<p class="pc-warns">${warns.join('')}</p>` : ''}
@@ -722,7 +778,7 @@ function renderList(){
         ${thumbHtml(mainImageOf(p), 'row-thumb')}
         <div class="td-name">
           <p class="row-name">${esc(p.name || '(ยังไม่ตั้งชื่อ)')}${vinfo ? `<button class="multi-badge" data-act="toggle-variants" data-i="${i}" aria-expanded="${isOpen}" aria-controls="vp-${i}" title="กดเพื่อดูแบบทั้งหมด">${vinfo.rows.length} ${vinfo.unit}<span class="caret" aria-hidden="true">▾</span></button>` : ''}</p>
-          <p class="row-sub"><span>${esc(p.id || '—')}</span>${sizeTagText(p) ? `<span>${esc(sizeTagText(p))}</span>` : ''}${flowerHtml}${warns.join('')}</p>
+          <p class="row-sub"><span>${esc(p.id || '—')}</span>${sizeTagText(p) ? `<span>${esc(sizeTagText(p))}</span>` : ''}${flowerHtml}${shipTagHtml(p)}${warns.join('')}</p>
           ${vinfo && vinfo.summary ? `<p class="row-variants">${esc(vinfo.summary)}</p>` : ''}
         </div>
         <span class="td-status"><button class="badge ${p.ready ? 'badge-ok' : ''}" data-act="ready-toggle" data-i="${i}" title="กดเพื่อสลับสถานะ">${p.ready ? 'พร้อมส่ง' : 'ปกติ'}</button></span>
@@ -778,9 +834,15 @@ async function deleteProduct(i){
   const p = catalog[i];
   const ok = await askConfirm('ลบสินค้า', `ลบ “${p.name || p.id}” ออกจากหน้าร้านถาวร กู้คืนไม่ได้`, 'ลบสินค้า');
   if(!ok) return;
+  const delId = String(p.id || '');
   catalog.splice(i, 1);
   renderList();
   await saveCatalog('ลบแล้ว');
+  if(delId && shipFees[delId] && !catalog.some(x => String(x.id) === delId)){
+    const prev = shipFees[delId];
+    delete shipFees[delId];
+    if(!(await persistShipFees())) shipFees[delId] = prev;
+  }
 }
 
 // หาตำแหน่งสินค้าที่ "ยังขายอยู่" ตัวถัดไปในทิศนั้น (ข้ามตัวที่ซ่อน กันกดเลื่อนแล้วไม่เห็นอะไรเปลี่ยน) -1 = ไม่มี
@@ -844,6 +906,10 @@ function priceMode(p){
 function openEditor(i){
   draftIndex = i;
   draft = i < 0 ? blankProduct() : clone(catalog[i]);
+  { // ค่าส่ง (ข้อมูลภายใน) — ติดไว้กับ draft เฉพาะตอนแก้ ไม่ถูกเขียนลงข้อมูลสินค้า (cleanProduct ไม่เอาไปด้วย)
+    const s = i < 0 ? null : shipOf(draft.id);
+    draft._ship = { fee: s && s.fee !== undefined && s.fee !== null ? String(s.fee) : '', note: s && s.note ? String(s.note) : '' };
+  }
   $('editorTitle').textContent = i < 0 ? 'เพิ่มสินค้าใหม่' : 'แก้ไขสินค้า';
   $('editorSub').textContent = i < 0 ? 'กรอกข้อมูลแล้วกดบันทึก' : (draft.id || '');
   $('editorProblem').hidden = true;
@@ -901,8 +967,33 @@ function renderAllPanels(){
   renderMainPanel();
   renderPricePanel();
   renderAddonsPanel();
+  renderShipPanel();
   renderMediaPanel();
   renderReviewsPanel();
+}
+
+function renderShipPanel(){
+  const s = draft._ship || { fee: '', note: '' };
+  $('panelShip').innerHTML = `
+    <div class="ship-row">
+      <label class="field">
+        <span>ค่าส่ง (บาท)</span>
+        <input type="number" min="0" step="1" inputmode="decimal" data-bind="_ship.fee" value="${esc(s.fee)}" placeholder="ยังไม่ระบุ">
+      </label>
+      <label class="field">
+        <span>หมายเหตุ</span>
+        <input type="text" data-bind="_ship.note" value="${esc(s.note)}" placeholder="เช่น กล่องใหญ่ / ห่อกันกระแทกเพิ่ม">
+      </label>
+    </div>
+    <p class="field-hint">เก็บไว้ดูเองในร้านเท่านั้น ลูกค้าไม่เห็น และไม่มีผลกับยอดหรือค่าส่งในตะกร้า</p>`;
+  updateShipSummary();
+}
+
+function updateShipSummary(){
+  const el = $('sumShip');
+  if(!el || !draft) return;
+  const f = String((draft._ship || {}).fee ?? '').trim();
+  el.textContent = f === '' ? 'ยังไม่ระบุ (ไม่บังคับ)' : '฿' + baht(f);
 }
 
 /* --- การ์ด 1: ข้อมูลสินค้า (ชื่อ · หมวด · ชนิด · ขนาด · รายละเอียด · พร้อมส่ง · ราคา · รหัส) --- */
@@ -1534,6 +1625,7 @@ function onDraftInput(e){
     else if(type === 'number') val = num(el.value);
     else val = el.value;
     setPath(draft, el.dataset.bind, val);
+    if(el.dataset.bind.startsWith('_ship.')){ updateShipSummary(); return; }
 
     // เปลี่ยนหมวด → ตัวเลือกขนาดเปลี่ยนตาม ต้องวาดแผงข้าง/การ์ดราคาใหม่ และเตือนถ้ามีค่าเดิมที่ไม่เข้าหมวดใหม่
     if(el.dataset.bind === 'cat'){
@@ -2320,8 +2412,28 @@ async function saveDraft(){
   else catalog[draftIndex] = cleaned;
 
   renderList();
+  const shipIn = draft._ship || { fee: '', note: '' };
   const ok = await saveCatalog(draftIndex < 0 ? 'เพิ่มสินค้าแล้ว' : 'บันทึกการแก้ไขแล้ว');
   if(ok){
+    // ค่าส่ง (ข้อมูลภายใน) — ย้ายคีย์ตามถ้าเปลี่ยนรหัสสินค้า แล้วเขียนเฉพาะเมื่อมีอะไรเปลี่ยนจริง
+    {
+      const before = JSON.stringify(shipFees);
+      if(oldId && oldId !== cleaned.id) delete shipFees[oldId];
+      const feeTxt = String(shipIn.fee ?? '').trim();
+      const noteTxt = String(shipIn.note ?? '').trim();
+      if(feeTxt === '' && !noteTxt) delete shipFees[cleaned.id];
+      else{
+        const entry = {};
+        if(feeTxt !== '' && Number.isFinite(Number(feeTxt)) && Number(feeTxt) >= 0) entry.fee = Number(feeTxt);
+        if(noteTxt) entry.note = noteTxt;
+        shipFees[cleaned.id] = entry;
+      }
+      if(JSON.stringify(shipFees) !== before){
+        const prev = JSON.parse(before);
+        if(!(await persistShipFees())){ shipFees = prev; }
+        renderList();
+      }
+    }
     // เปลี่ยนรหัสสินค้า → ย้ายป้ายรูปรีวิวตามไปด้วย ไม่งั้นรีวิวจะหลุดจากสินค้านี้
     if(oldId && cleaned.id !== oldId && Object.values(reviewTags).some(ids => ids.includes(oldId))){
       const next = clone(reviewTags);

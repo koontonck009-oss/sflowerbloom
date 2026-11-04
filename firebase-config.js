@@ -25,6 +25,11 @@ window.ADMIN_EMAIL = "admin@sflowerbloom.local";
 window.CATALOG_COLLECTION = "catalog";
 window.CATALOG_DOC = "products";
 
+/* ข้อมูลภายในร้าน (ลูกค้าอ่านไม่ได้) — ค่าส่งต่อสินค้า เก็บแยกจากข้อมูลสินค้า
+   ต้องตั้ง Firestore Rules ให้ shopPrivate/{doc} อ่าน-เขียนได้เฉพาะที่ล็อกอิน */
+window.PRIVATE_COLLECTION = "shopPrivate";
+window.SHIPPING_DOC = "shipping";
+
 /* ชนิดดอกไม้ "ค่าเริ่มต้น" ใช้ร่วมกันทั้งหน้าร้านและหลังบ้าน
    ปกติไม่ต้องแก้ที่นี่แล้ว — เพิ่ม/ลบ/เรียงชนิดดอกไม้ หมวดหมู่ และขนาดได้ที่หลังบ้าน
    เมนู ⋯ เพิ่มเติม › จัดการหมวดหมู่ / ชนิดดอกไม้ / ขนาด (ค่าที่บันทึกไว้จะใช้แทนรายการนี้) */

@@ -297,6 +297,9 @@ button,input,select,textarea{ font-family:inherit; font-size:inherit; color:inhe
 }
 .tag-ready{ background:var(--ok-soft); color:var(--ok); }
 .tag-warn{ background:var(--warn-soft); color:var(--warn); }
+.tag-ship{ background:var(--panel-2, #f1f3f5); color:var(--ink-2, #555); }
+.ship-row{ display:grid; grid-template-columns:minmax(120px, 180px) 1fr; gap:12px; }
+@media (max-width:560px){ .ship-row{ grid-template-columns:1fr; } }
 
 .row-price{
   font-weight:700;

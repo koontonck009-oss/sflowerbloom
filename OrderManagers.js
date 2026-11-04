@@ -1,4 +1,4 @@
-        // 🔥 ตั้งค่า Firebase ตรงนี้ — เอาค่ามาจาก Firebase Console
+// 🔥 ตั้งค่า Firebase ตรงนี้ — เอาค่ามาจาก Firebase Console
         // Project settings (รูปเฟือง) > General > Your apps > SDK setup and configuration
         const firebaseConfig = {
             apiKey: "AIzaSyAKFvEnppUTj2iW8UXsh4-fCnMBvtF1UP8",
@@ -391,6 +391,82 @@
                     includeNote: true
                 });
 
+
+                // ───────── ระยะเวลาส่งพัสดุตามจังหวัด (ข้อมูลภายในร้าน เก็บที่ shopPrivate/shippingDays) ─────────
+                // ค่าเริ่มต้นเป็นแค่ค่าประมาณตั้งต้นรายภาค — แก้เป็นของจริงได้ที่เมนู "ตารางระยะเวลาส่ง"
+                const PROVINCE_GROUPS = [
+                    { region: 'กรุงเทพฯและปริมณฑล', min: 1, max: 2, provinces: ['กรุงเทพมหานคร', 'นนทบุรี', 'ปทุมธานี', 'สมุทรปราการ', 'นครปฐม', 'สมุทรสาคร'] },
+                    { region: 'ภาคกลาง', min: 1, max: 2, provinces: ['นครสวรรค์', 'อุทัยธานี', 'ชัยนาท', 'สิงห์บุรี', 'ลพบุรี', 'อ่างทอง', 'พระนครศรีอยุธยา', 'สระบุรี', 'สุพรรณบุรี', 'นครนายก'] },
+                    { region: 'ภาคเหนือ', min: 2, max: 3, provinces: ['เชียงใหม่', 'เชียงราย', 'ลำปาง', 'ลำพูน', 'แม่ฮ่องสอน', 'น่าน', 'พะเยา', 'แพร่', 'อุตรดิตถ์', 'ตาก', 'สุโขทัย', 'พิษณุโลก', 'พิจิตร', 'กำแพงเพชร', 'เพชรบูรณ์'] },
+                    { region: 'ภาคตะวันออก', min: 2, max: 3, provinces: ['ชลบุรี', 'ระยอง', 'จันทบุรี', 'ตราด', 'ฉะเชิงเทรา', 'ปราจีนบุรี', 'สระแก้ว'] },
+                    { region: 'ภาคตะวันตก', min: 2, max: 3, provinces: ['กาญจนบุรี', 'ราชบุรี', 'เพชรบุรี', 'ประจวบคีรีขันธ์', 'สมุทรสงคราม'] },
+                    { region: 'ภาคตะวันออกเฉียงเหนือ', min: 2, max: 3, provinces: ['กาฬสินธุ์', 'ขอนแก่น', 'ชัยภูมิ', 'นครพนม', 'นครราชสีมา', 'บึงกาฬ', 'บุรีรัมย์', 'มหาสารคาม', 'มุกดาหาร', 'ยโสธร', 'ร้อยเอ็ด', 'เลย', 'สกลนคร', 'สุรินทร์', 'ศรีสะเกษ', 'หนองคาย', 'หนองบัวลำภู', 'อุดรธานี', 'อุบลราชธานี', 'อำนาจเจริญ'] },
+                    { region: 'ภาคใต้', min: 3, max: 4, provinces: ['กระบี่', 'ชุมพร', 'ตรัง', 'นครศรีธรรมราช', 'นราธิวาส', 'ปัตตานี', 'พังงา', 'พัทลุง', 'ภูเก็ต', 'ระนอง', 'สงขลา', 'สตูล', 'สุราษฎร์ธานี', 'ยะลา'] }
+                ];
+                const ALL_PROVINCES = PROVINCE_GROUPS.flatMap(g => g.provinces);
+                const shippingDays = ref({});      // ค่าที่บันทึกไว้ { จังหวัด: {min, max} } (ว่าง = ใช้ค่าเริ่มต้นรายภาค)
+                const daysModal = ref(null);       // { draft, region, q, busy }
+
+                function defaultDaysFor(province) {
+                    const g = PROVINCE_GROUPS.find(x => x.provinces.includes(province));
+                    return g ? { min: g.min, max: g.max } : null;
+                }
+                function daysFor(province) {
+                    if (!province) return null;
+                    const s = shippingDays.value[province];
+                    if (s && Number.isFinite(Number(s.min)) && Number.isFinite(Number(s.max))) return { min: Number(s.min), max: Number(s.max) };
+                    return defaultDaysFor(province);
+                }
+                function daysText(province) {
+                    const d = daysFor(province);
+                    if (!d) return '';
+                    return d.min === d.max ? d.min + ' วัน' : d.min + '–' + d.max + ' วัน';
+                }
+                function openDaysModal() {
+                    const draft = {};
+                    ALL_PROVINCES.forEach(p => { const d = daysFor(p); draft[p] = { min: d.min, max: d.max }; });
+                    const region = {};
+                    PROVINCE_GROUPS.forEach(g => { region[g.region] = { min: g.min, max: g.max }; });
+                    daysModal.value = { draft, region, q: '', busy: false };
+                }
+                function closeDaysModal() { daysModal.value = null; }
+                const daysModalGroups = computed(() => {
+                    if (!daysModal.value) return [];
+                    const q = String(daysModal.value.q || '').trim();
+                    return PROVINCE_GROUPS
+                        .map(g => ({ region: g.region, provinces: q ? g.provinces.filter(p => p.includes(q)) : g.provinces }))
+                        .filter(g => g.provinces.length);
+                });
+                function applyRegionDays(region) {
+                    const m = daysModal.value;
+                    if (!m) return;
+                    const g = PROVINCE_GROUPS.find(x => x.region === region);
+                    const v = m.region[region];
+                    const min = Math.max(0, Math.round(Number(v.min)));
+                    const max = Math.max(min, Math.round(Number(v.max)));
+                    if (!Number.isFinite(min) || !Number.isFinite(max)) return;
+                    g.provinces.forEach(p => { m.draft[p] = { min, max }; });
+                }
+                function saveDaysModal() {
+                    const m = daysModal.value;
+                    if (!m || m.busy) return;
+                    const out = {};
+                    for (const p of ALL_PROVINCES) {
+                        const min = Math.round(Number(m.draft[p].min));
+                        const max = Math.round(Number(m.draft[p].max));
+                        if (!Number.isFinite(min) || !Number.isFinite(max) || min < 0 || max < 0) { showToast('ตัวเลขวันของ ' + p + ' ไม่ถูกต้อง'); return; }
+                        if (max < min) { showToast(p + ': จำนวนวันมากสุดต้องไม่น้อยกว่าน้อยสุด'); return; }
+                        out[p] = { min, max };
+                    }
+                    m.busy = true;
+                    db.collection('shopPrivate').doc('shippingDays').set({ json: JSON.stringify(out), updatedAt: new Date().toISOString() })
+                        .then(() => { shippingDays.value = out; showToast('บันทึกตารางระยะเวลาส่งแล้ว'); closeDaysModal(); })
+                        .catch((err) => {
+                            m.busy = false;
+                            showToast(err && err.code === 'permission-denied' ? 'บันทึกไม่ได้ ต้องเพิ่มกฎ Firestore ให้ shopPrivate ก่อน' : 'บันทึกตารางไม่สำเร็จ ตรวจสอบการเชื่อมต่อ');
+                        });
+                }
+
                 // ชื่อเดือนไทยเต็ม ใช้สร้างค่า "ประจำเดือน" ให้ตรงกับวันที่จริง
                 const THAI_MONTHS_FULL = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
                 const monthLabelOf = (dateStr) => {
@@ -416,6 +492,7 @@
                     expressCompany: 'ไปรษณีย์ไทย (EMS)',
                     trackingNumber: '',
                     shippingFee: 0,
+                    province: '',
                     location: '',
                     mapLink: '',
                     totalAmount: 1500,
@@ -1631,6 +1708,7 @@
                             expressCompany: 'ไปรษณีย์ไทย (EMS)',
                             trackingNumber: '',
                             shippingFee: lastOrder ? (lastOrder.shippingFee || 0) : 0,
+                            province: '',
                             location: lastOrder && lastOrder.deliveryType === 'pickup' ? lastOrder.location : '',
                             mapLink: lastOrder && lastOrder.deliveryType === 'pickup' ? (lastOrder.mapLink || '') : '',
                             totalAmount: '',
@@ -2439,6 +2517,17 @@
                         console.error('Firestore (transactions) error:', err);
                         showToast('โหลดข้อมูลบัญชีไม่สำเร็จ ตรวจสอบ Firestore rules ของ transactions');
                     });
+
+                    // ตารางระยะเวลาส่งตามจังหวัด — อ่านไม่ได้ (ยังไม่ตั้งกฎ) ก็ใช้ค่าเริ่มต้นรายภาคไปก่อน ไม่กระทบส่วนอื่น
+                    db.collection('shopPrivate').doc('shippingDays').onSnapshot((snap) => {
+                        let map = {};
+                        if (snap.exists) {
+                            try { map = JSON.parse((snap.data() || {}).json || '{}') || {}; } catch (_) { map = {}; }
+                        }
+                        shippingDays.value = map;
+                    }, (err) => {
+                        console.error('Firestore (shopPrivate/shippingDays) error:', err);
+                    });
                 }
 
                 function handleLogin() {
@@ -2500,6 +2589,7 @@
                 return {
                     orders, ordersLoaded, searchQuery, filterType, statusFilter, datePreset, sortBy, sortOptions, currentView,
                     isFilterSheetOpen, isMobileMenuOpen, activeFilterCount, resetFilters,
+                    PROVINCE_GROUPS, ALL_PROVINCES, daysFor, daysText, daysModal, daysModalGroups, openDaysModal, closeDaysModal, applyRegionDays, saveDaysModal,
                     TRACK_CARRIERS, trackDraft, trackEditing, startTrackEdit, cancelTrackEdit, saveInlineTracking, saveCarrier,
                     isExpanded, toggleExpand, cardMenuOrder, runCardMenu, urgencyChip, deliveryLabel, timeSuffix, isFinishedStatus,
                     quickEdit, quickForm, quickInput, quickSuggestions, quickSuggestIndex, quickSuggest, quickChoiceFor, onQuickInput, onQuickKeydown, pickQuickProduct, pickQuickChoice, quickOrder, quickTitle, quickPay, quickNewTotal, openQuickEdit, closeQuickEdit, saveQuickEdit, quickPayFull,
