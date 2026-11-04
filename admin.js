@@ -15,6 +15,8 @@ let fb = null;           // { auth, db, authApi, dbApi }
 let catalog = [];        // รายการสินค้าทั้งหมด
 let reviewHidden = new Set(); // รูปรีวิวที่ "ลบออกจากเว็บ" (ซ่อน) เก็บในช่อง reviewsJson คีย์ __hidden
 let reviewTags = {};      // ป้ายสินค้าของรูปรีวิว { 'review12.jpg': ['s13'] } เก็บในเอกสารเดียวกับสินค้า (ช่อง reviewsJson)
+const DEFAULT_FREE_PICKUP_MIN = 399;
+let freePickupMin = DEFAULT_FREE_PICKUP_MIN; // ยอดสั่งซื้อขั้นต่ำที่นัดรับฟรี (เก็บในเอกสารเดียวกัน ช่อง freePickupMin) ใช้บนภาพแคตตาล็อกและหน้าร้าน
 let ordersClosed = false; // สวิตช์ "ปิดระบบสั่งทำ/ตะกร้า" (เก็บในเอกสารเดียวกัน ช่อง orderClosed) — ยังแสดงราคา แต่ลูกค้าสั่งผ่านเว็บไม่ได้
 let pricesHidden = false; // สวิตช์ "ซ่อนราคาบนหน้าร้าน" (เก็บในเอกสาร catalog/products ช่อง hidePrices)
 let draft = null;        // สินค้าที่กำลังแก้ไขอยู่
@@ -350,6 +352,7 @@ async function loadCatalog(){
       catalog = Array.isArray(list) ? list : [];
       pricesHidden = data.hidePrices === true;
       ordersClosed = data.orderClosed === true;
+      freePickupMin = parseFreeMin(data.freePickupMin);
       let opts = null;
       try{ if(typeof data.optionsJson === 'string') opts = JSON.parse(data.optionsJson); }catch(_){ opts = null; }
       applyShopOptions(opts);
@@ -363,9 +366,11 @@ async function loadCatalog(){
       catalog = [];
       pricesHidden = false;
       ordersClosed = false;
+      freePickupMin = DEFAULT_FREE_PICKUP_MIN;
       applyShopOptions(null);
     }
     applyPricesHiddenUI(true);
+    applyFreeMinUI(true);
     setSaveState(catalog.length ? 'ข้อมูลตรงกับหน้าร้านแล้ว' : 'ยังไม่มีสินค้าในระบบ');
     renderList();
   } catch(err){
@@ -467,6 +472,58 @@ async function toggleOrdersClosed(){
       ? 'บันทึกไม่ได้: กฎความปลอดภัยของ Firestore ยังไม่อนุญาตให้เพิ่มช่อง orderClosed'
       : 'บันทึกไม่สำเร็จ: ' + (err.code || err.message), true);
     console.error(err);
+  }
+}
+
+/* ───────────────── ยอดสั่งซื้อขั้นต่ำที่นัดรับฟรี ───────────────── */
+
+function parseFreeMin(v){
+  const n = Math.round(Number(v));
+  return (Number.isFinite(n) && n >= 1 && n <= 100000) ? n : DEFAULT_FREE_PICKUP_MIN;
+}
+
+function applyFreeMinUI(ready){
+  const inp = $('freeMinInput');
+  if(!inp) return;
+  inp.value = String(freePickupMin);
+  if(ready){ inp.disabled = false; $('freeMinSaveBtn').disabled = false; }
+  $('freeMinHint').textContent = `ตอนนี้นัดรับฟรีเมื่อสั่งครบ ${freePickupMin.toLocaleString('en-US')} บาทขึ้นไป — ใช้ทั้งในตะกร้าหน้าร้าน การคิดค่าส่ง และภาพแคตตาล็อก`;
+}
+
+async function saveFreeMin(){
+  const raw = $('freeMinInput').value.trim();
+  const n = Math.round(Number(raw));
+  if(!raw || !Number.isFinite(n) || n < 1 || n > 100000){
+    toast('กรอกยอดเป็นตัวเลข 1 – 100,000 บาท', true);
+    return;
+  }
+  if(n === freePickupMin){ toast('ยอดนี้ตั้งไว้อยู่แล้ว'); return; }
+  const ok = await askConfirm(
+    'เปลี่ยนยอดนัดรับฟรี?',
+    `จาก ${freePickupMin.toLocaleString('en-US')} เป็น ${n.toLocaleString('en-US')} บาท หน้าร้านจะคิดค่าส่งและแสดงข้อความตามยอดใหม่ทันที`,
+    'เปลี่ยนยอด'
+  );
+  if(!ok) return;
+  const btn = $('freeMinSaveBtn');
+  btn.disabled = true;
+  setSaveState('กำลังบันทึก…', 'is-saving');
+  try{
+    await fb.dbApi.setDoc(catalogRef(), {
+      freePickupMin: n,
+      freePickupMinUpdatedAt: new Date().toISOString()
+    }, { merge: true });
+    freePickupMin = n;
+    applyFreeMinUI(true);
+    setSaveState('บันทึกแล้ว · หน้าร้านอัปเดตทันที');
+    toast('ตั้งยอดนัดรับฟรีเป็น ' + n.toLocaleString('en-US') + ' บาทแล้ว');
+  } catch(err){
+    setSaveState('บันทึกไม่สำเร็จ', 'is-error');
+    toast(err.code === 'permission-denied'
+      ? 'บันทึกไม่ได้: กฎความปลอดภัยของ Firestore ยังไม่อนุญาตให้เพิ่มช่อง freePickupMin'
+      : 'บันทึกไม่สำเร็จ: ' + (err.code || err.message), true);
+    console.error(err);
+  } finally {
+    btn.disabled = false;
   }
 }
 
@@ -2496,8 +2553,12 @@ async function downloadBackup(){
    สร้างทุกสี/ไซซ์/คู่ผสมของสินค้า โหลดหลายภาพรวมเป็น ZIP ภาพเดียวโหลดเป็น JPG ตรงๆ */
 
 const POSTER = { W: 1200, H: 1800, PHOTO: 1200, PAD: 56, PINK: '#F62188', INK: '#111111', GRAY: '#5A5A5A' };
-const POSTER_CONDITIONS = ['ราคาไม่รวมค่าจัดส่ง', 'ลูกค้านครสวรรค์นัดรับฟรี (สั่งซื้อ 299 ขึ้นไป)'];
-const POSTER_NOTE = 'หมายเหตุ: หากต้องการเปลี่ยนสีดอกไม้ ช่อ ริบบิ้น กระดาษรองช่อ หรือเพิ่มการ์ดอวยพร สามารถแจ้งแอดมินได้เลยค่ะ';
+const posterConditions = () => ['ราคาไม่รวมค่าจัดส่ง', `ลูกค้านครสวรรค์นัดรับฟรี (สั่งซื้อ ${freePickupMin.toLocaleString('en-US')} ขึ้นไป)`];
+// ตัดบรรทัดเองตามความหมาย (ตัวตัดคำอัตโนมัติเคยหั่นคำว่า "แอดมิน" ข้ามบรรทัด)
+const POSTER_NOTE_LINES = [
+  'หมายเหตุ: หากต้องการเปลี่ยนสีดอกไม้ ช่อ ริบบิ้น กระดาษรองช่อ',
+  'หรือเพิ่มการ์ดอวยพร สามารถแจ้งแอดมินได้เลยค่ะ'
+];
 
 let posterBusy = false;
 let posterCancel = false;
@@ -2720,15 +2781,20 @@ async function posterRender(p, e){
     ctx.font = 'italic 400 28px Kanit, sans-serif';
     ctx.fillStyle = GRAY;
     let cy = 1362;
-    POSTER_CONDITIONS.forEach((c, i) => {
+    posterConditions().forEach((c, i) => {
       posterWrap(ctx, c, W - PAD - cx).forEach(l => { ctx.fillText(l, cx, cy); cy += 36; });
       if(i === 0) cy += 14;
     });
   }
 
   // ── หมายเหตุด้านล่างสุด ──
-  ctx.font = 'italic 400 26px Kanit, sans-serif';
-  const noteLines = posterWrap(ctx, POSTER_NOTE, maxW);
+  let nfs = 26;
+  ctx.font = `italic 400 ${nfs}px Kanit, sans-serif`;
+  while(nfs > 18 && POSTER_NOTE_LINES.some(l => ctx.measureText(l).width > maxW)){
+    nfs -= 1;
+    ctx.font = `italic 400 ${nfs}px Kanit, sans-serif`;
+  }
+  const noteLines = POSTER_NOTE_LINES;
   const noteLast = 1768;
   const noteFirst = noteLast - (noteLines.length - 1) * 36;
   ctx.fillStyle = GRAY;
@@ -3846,6 +3912,8 @@ $('catChips').addEventListener('click', e => {
 $('addBtn').addEventListener('click', () => openEditor(-1));
 $('hidePricesBtn').addEventListener('click', togglePricesHidden);
 $('closeOrdersBtn').addEventListener('click', toggleOrdersClosed);
+$('freeMinSaveBtn').addEventListener('click', saveFreeMin);
+$('freeMinInput').addEventListener('keydown', e => { if(e.key === 'Enter') saveFreeMin(); });
 $('catalogBtn').addEventListener('click', () => {
   const list = catalogTargets();
   const stamp = new Date().toISOString().slice(0, 10);

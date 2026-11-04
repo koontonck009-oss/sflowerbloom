@@ -19,6 +19,19 @@ let cloudHidePrices = true;   // ค่าที่อ่านได้ล่�
    ค่าเริ่มต้น = ไม่ปิด (ต่างจากราคา) — อ่านค่าไม่ได้/เน็ตช้า ร้านจะได้ไม่เสียออเดอร์ */
 let ORDERS_CLOSED = false;
 let cloudOrderClosed = false; // ค่าที่อ่านได้ล่าสุดจาก Firestore (ช่อง orderClosed)
+/* ---------- ยอดสั่งซื้อขั้นต่ำที่นัดรับฟรี (ตั้งค่าที่หลังบ้าน ช่อง freePickupMin) ----------
+   ค่าเริ่มต้น 399 — อ่านค่าไม่ได้/ค่าผิดปกติจะใช้ 399 */
+const DEFAULT_FREE_PICKUP_MIN = 399;
+let FREE_PICKUP_MIN = DEFAULT_FREE_PICKUP_MIN;
+let cloudFreePickupMin = DEFAULT_FREE_PICKUP_MIN;
+function parseFreePickupMin(v){
+  const n = Math.round(Number(v));
+  return (Number.isFinite(n) && n >= 1 && n <= 100000) ? n : DEFAULT_FREE_PICKUP_MIN;
+}
+function setFreePickupMin(v){
+  FREE_PICKUP_MIN = parseFreePickupMin(v);
+  document.querySelectorAll('.js-free-min').forEach(el => { el.textContent = FREE_PICKUP_MIN.toLocaleString('en-US'); });
+}
 function setOrdersClosed(v){
   ORDERS_CLOSED = !!v;
   document.documentElement.classList.toggle('orders-closed', ORDERS_CLOSED);
@@ -1981,7 +1994,7 @@ function drawCatalogPage(items, pageNo, pageCount, imgs, logo, summary){
   ctx.restore();
   const noteLines = [
     'ราคาไม่รวมค่าจัดส่ง',
-    'ลูกค้านครสวรรค์นัดรับฟรี (สั่งซื้อ 299 บาทขึ้นไป)',
+    `ลูกค้านครสวรรค์นัดรับฟรี (สั่งซื้อ ${FREE_PICKUP_MIN.toLocaleString('en-US')} บาทขึ้นไป)`,
     'หมายเหตุ: สามารถแจ้งแอดมินเพื่อปรับสี เพิ่มการ์ด หรือปรับรายละเอียดได้ค่ะ'
   ];
   const noteTextX = PAD + 50, noteMaxW = W - PAD * 2 - 50 - 24;
@@ -2548,14 +2561,14 @@ function minPickupDateStr(){
   return `${yyyy}-${mm}-${dd}`; // อนุญาตเลือกวันนี้ได้ (ช่อพร้อมส่ง/งานเร่ง) แอดมินจะแจ้งอีกครั้งถ้าทำไม่ทัน
 }
 const DELIVERY_HINTS = {
-  pickup: '📍 นัดรับได้ตั้งแต่พยุหะ ถึงตัวเมืองนครสวรรค์และใกล้เคียง สั่งครบ 299 บาทขึ้นไปนัดรับฟรี ต่ำกว่านั้นคิดค่าส่งตามระยะทางจริง มีบริการเก็บเงินปลายทาง (COD) สำหรับช่อพร้อมส่ง',
+  get pickup(){ return `📍 นัดรับได้ตั้งแต่พยุหะ ถึงตัวเมืองนครสวรรค์และใกล้เคียง สั่งครบ ${FREE_PICKUP_MIN.toLocaleString('en-US')} บาทขึ้นไปนัดรับฟรี ต่ำกว่านั้นคิดค่าส่งตามระยะทางจริง มีบริการเก็บเงินปลายทาง (COD) สำหรับช่อพร้อมส่ง`; },
   parcel: '📦 ค่าส่งพัสดุ ฿100 ต่อออเดอร์ (สำหรับต่างจังหวัด/นอกพื้นที่จัดส่ง)',
   unsure: 'แอดมินจะช่วยแนะนำวิธีรับสินค้าและแจ้งค่าจัดส่ง (ถ้ามี) ให้อีกครั้งค่ะ'
 };
 function calcShippingFee(deliveryMethod, subtotal){
   // คืนค่าตัวเลข = ยอดที่ทราบแน่นอน, null = ยังไม่ทราบ (รอแอดมินแจ้ง)
   if(deliveryMethod === 'parcel') return 100;
-  if(deliveryMethod === 'pickup') return subtotal >= 299 ? 0 : null; // นัดรับ: ครบ 299 ส่งฟรี ต่ำกว่านั้นคิดตามระยะทางจริง (แอดมินแจ้ง)
+  if(deliveryMethod === 'pickup') return subtotal >= FREE_PICKUP_MIN ? 0 : null; // นัดรับ: ครบยอดขั้นต่ำ (ตั้งที่หลังบ้าน) ส่งฟรี ต่ำกว่านั้นคิดตามระยะทางจริง (แอดมินแจ้ง)
   return null; // unsure หรือยังไม่เลือก
 }
 function onDeliveryMethodChange(){
@@ -3401,6 +3414,7 @@ async function fetchProductsFromFirestore(){
   const data = snap.data() || {};
   cloudHidePrices = data.hidePrices === true;
   cloudOrderClosed = data.orderClosed === true;
+  cloudFreePickupMin = parseFreePickupMin(data.freePickupMin);
   cloudOptions = null;
   try{ if(typeof data.optionsJson === 'string') cloudOptions = JSON.parse(data.optionsJson); }catch(_){ cloudOptions = null; }
   REVIEW_TAGS = {};
@@ -3418,7 +3432,7 @@ async function fetchProductsFromFirestore(){
   }catch(_){ REVIEW_TAGS = {}; REVIEW_HIDDEN = new Set(); }
   SITE_CFG = null;
   try{ if(typeof data.siteJson === 'string'){ const s = JSON.parse(data.siteJson); if(s && typeof s === 'object') SITE_CFG = s; } }catch(_){ SITE_CFG = null; }
-  cloudStamp = String(data.updatedAt || '') + '|' + cloudHidePrices + '|' + cloudOrderClosed + '|' + String(data.optionsUpdatedAt || '') + '|' + String(data.reviewsUpdatedAt || '') + '|' + String(data.siteUpdatedAt || '');
+  cloudStamp = String(data.updatedAt || '') + '|' + cloudHidePrices + '|' + cloudOrderClosed + '|' + cloudFreePickupMin + '|' + String(data.optionsUpdatedAt || '') + '|' + String(data.reviewsUpdatedAt || '') + '|' + String(data.siteUpdatedAt || '');
   const list = typeof data.json === 'string' ? JSON.parse(data.json) : data.list;
   return (Array.isArray(list) && list.length) ? list : null;
 }
@@ -3511,6 +3525,7 @@ async function loadProductsInner(){
       applyShopOptions(cloudOptions);
       setPricesHidden(cloudHidePrices);
       setOrdersClosed(cloudOrderClosed);
+      setFreePickupMin(cloudFreePickupMin);
       applySiteSettings(SITE_CFG);
       CATALOG_DOC_STAMP = cloudStamp;
       finishLoadingProducts();
@@ -3563,6 +3578,7 @@ async function loadPricesLate(firstPromise){
       applyShopOptions(cloudOptions);
       setPricesHidden(cloudHidePrices);
       setOrdersClosed(cloudOrderClosed);
+      setFreePickupMin(cloudFreePickupMin);
       CATALOG_DOC_STAMP = cloudStamp;
       setPricesPending(false);
       PRODUCTS = PRODUCTS.filter(p => !(p && p.hidden));

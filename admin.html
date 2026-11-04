@@ -103,6 +103,18 @@
       <button type="button" class="switch" id="closeOrdersBtn" role="switch" aria-checked="false" aria-label="ปิดระบบสั่งทำและตะกร้า" disabled><i></i></button>
     </div>
 
+    <div class="price-switch" id="freeMinBox">
+      <div class="ps-text">
+        <b>ยอดสั่งซื้อขั้นต่ำที่นัดรับฟรี</b>
+        <span id="freeMinHint">กำลังตรวจสอบค่า…</span>
+      </div>
+      <div class="free-min-form">
+        <input type="number" id="freeMinInput" min="1" max="100000" step="1" inputmode="numeric" aria-label="ยอดสั่งซื้อขั้นต่ำที่นัดรับฟรี (บาท)" disabled>
+        <span>บาท</span>
+        <button type="button" class="btn btn-primary btn-sm" id="freeMinSaveBtn" disabled>บันทึก</button>
+      </div>
+    </div>
+
     <div class="card list-card" id="listCard">
       <div class="tabs-row" id="catChips"></div>
       <div class="list-tools">

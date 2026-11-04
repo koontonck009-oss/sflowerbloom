@@ -958,6 +958,10 @@ body{ background:var(--bg); color:var(--ink); }
 .switch[aria-checked="true"] i{ transform:translateX(22px); }
 .switch:disabled{ opacity:.55; cursor:default; }
 .switch:focus-visible{ outline:3px solid rgba(246,33,136,.35); outline-offset:2px; }
+.free-min-form{ display:flex; align-items:center; gap:8px; flex-shrink:0; font-size:14px; color:var(--ink-2); }
+.free-min-form input{ width:96px; padding:8px 10px; font:inherit; font-size:16px; font-weight:600; color:var(--ink); text-align:right; border:1.5px solid var(--line); border-radius:8px; background:#fff; }
+.free-min-form input:focus{ outline:3px solid rgba(246,33,136,.25); border-color:var(--brand); }
+@media (max-width:640px){ #freeMinBox{ flex-direction:column; align-items:stretch; } .free-min-form{ justify-content:flex-end; } }
 
 /* ตอนซ่อนราคา: ไม่ให้สร้างภาพแคตตาล็อก (ภาพมีราคา) */
 body.prices-off #catalogBtn,
