@@ -392,170 +392,6 @@
                 });
 
 
-                // ───────── ระยะเวลาส่งพัสดุตามจังหวัด (ข้อมูลภายในร้าน เก็บที่ shopPrivate/shippingDays) ─────────
-                // ค่าเริ่มต้นเป็นแค่ค่าประมาณตั้งต้นรายภาค — แก้เป็นของจริงได้ที่เมนู "ตารางระยะเวลาส่ง"
-                const PROVINCE_GROUPS = [
-                    { region: 'กรุงเทพฯและปริมณฑล', min: 1, max: 2, provinces: ['กรุงเทพมหานคร', 'นนทบุรี', 'ปทุมธานี', 'สมุทรปราการ', 'นครปฐม', 'สมุทรสาคร'] },
-                    { region: 'ภาคกลาง', min: 1, max: 2, provinces: ['นครสวรรค์', 'อุทัยธานี', 'ชัยนาท', 'สิงห์บุรี', 'ลพบุรี', 'อ่างทอง', 'พระนครศรีอยุธยา', 'สระบุรี', 'สุพรรณบุรี', 'นครนายก'] },
-                    { region: 'ภาคเหนือ', min: 2, max: 3, provinces: ['เชียงใหม่', 'เชียงราย', 'ลำปาง', 'ลำพูน', 'แม่ฮ่องสอน', 'น่าน', 'พะเยา', 'แพร่', 'อุตรดิตถ์', 'ตาก', 'สุโขทัย', 'พิษณุโลก', 'พิจิตร', 'กำแพงเพชร', 'เพชรบูรณ์'] },
-                    { region: 'ภาคตะวันออก', min: 2, max: 3, provinces: ['ชลบุรี', 'ระยอง', 'จันทบุรี', 'ตราด', 'ฉะเชิงเทรา', 'ปราจีนบุรี', 'สระแก้ว'] },
-                    { region: 'ภาคตะวันตก', min: 2, max: 3, provinces: ['กาญจนบุรี', 'ราชบุรี', 'เพชรบุรี', 'ประจวบคีรีขันธ์', 'สมุทรสงคราม'] },
-                    { region: 'ภาคตะวันออกเฉียงเหนือ', min: 2, max: 3, provinces: ['กาฬสินธุ์', 'ขอนแก่น', 'ชัยภูมิ', 'นครพนม', 'นครราชสีมา', 'บึงกาฬ', 'บุรีรัมย์', 'มหาสารคาม', 'มุกดาหาร', 'ยโสธร', 'ร้อยเอ็ด', 'เลย', 'สกลนคร', 'สุรินทร์', 'ศรีสะเกษ', 'หนองคาย', 'หนองบัวลำภู', 'อุดรธานี', 'อุบลราชธานี', 'อำนาจเจริญ'] },
-                    { region: 'ภาคใต้', min: 3, max: 4, provinces: ['กระบี่', 'ชุมพร', 'ตรัง', 'นครศรีธรรมราช', 'นราธิวาส', 'ปัตตานี', 'พังงา', 'พัทลุง', 'ภูเก็ต', 'ระนอง', 'สงขลา', 'สตูล', 'สุราษฎร์ธานี', 'ยะลา'] }
-                ];
-                const ALL_PROVINCES = PROVINCE_GROUPS.flatMap(g => g.provinces);
-
-                // ───────── ตรวจจับจังหวัดจากที่อยู่ BEGIN ─────────
-                const PROVINCE_ALIASES = { 'กทม': 'กรุงเทพมหานคร', 'ก.ท.ม': 'กรุงเทพมหานคร', 'กรุงเทพ': 'กรุงเทพมหานคร', 'โคราช': 'นครราชสีมา', 'อยุธยา': 'พระนครศรีอยุธยา' };
-                const RISKY_PROVINCES = ['ตาก', 'เลย', 'ตรัง', 'น่าน', 'แพร่']; // ชื่อสั้นที่ซ้ำกับคำทั่วไป/ชื่ออำเภอ ต้องมีขอบเขตชัดเจนถึงจะนับ
-                const PROVINCE_NAME_LIST = ALL_PROVINCES.map(p => [p, p]).concat(Object.entries(PROVINCE_ALIASES)).sort((a, b) => b[0].length - a[0].length);
-                // รหัสไปรษณีย์ 2 หลักแรก → จังหวัด (ใช้เป็นตัวสำรองเท่านั้น และเฉพาะกลุ่มที่ชี้จังหวัดเดียวชัดเจน)
-                const POSTCODE_PREFIX = {
-                    '11': 'นนทบุรี', '12': 'ปทุมธานี', '20': 'ชลบุรี', '21': 'ระยอง', '22': 'จันทบุรี', '23': 'ตราด', '24': 'ฉะเชิงเทรา', '25': 'ปราจีนบุรี', '26': 'นครนายก', '27': 'สระแก้ว',
-                    '30': 'นครราชสีมา', '31': 'บุรีรัมย์', '32': 'สุรินทร์', '33': 'ศรีสะเกษ', '34': 'อุบลราชธานี', '35': 'ยโสธร', '36': 'ชัยภูมิ', '37': 'อำนาจเจริญ', '39': 'หนองบัวลำภู',
-                    '40': 'ขอนแก่น', '41': 'อุดรธานี', '42': 'เลย', '43': 'หนองคาย', '44': 'มหาสารคาม', '45': 'ร้อยเอ็ด', '46': 'กาฬสินธุ์', '47': 'สกลนคร', '48': 'นครพนม', '49': 'มุกดาหาร',
-                    '50': 'เชียงใหม่', '51': 'ลำพูน', '52': 'ลำปาง', '53': 'อุตรดิตถ์', '54': 'แพร่', '55': 'น่าน', '56': 'พะเยา', '57': 'เชียงราย', '58': 'แม่ฮ่องสอน',
-                    '60': 'นครสวรรค์', '61': 'อุทัยธานี', '62': 'กำแพงเพชร', '63': 'ตาก', '64': 'สุโขทัย', '65': 'พิษณุโลก', '66': 'พิจิตร', '67': 'เพชรบูรณ์',
-                    '70': 'ราชบุรี', '71': 'กาญจนบุรี', '72': 'สุพรรณบุรี', '73': 'นครปฐม', '74': 'สมุทรสาคร', '75': 'สมุทรสงคราม', '76': 'เพชรบุรี', '77': 'ประจวบคีรีขันธ์',
-                    '80': 'นครศรีธรรมราช', '81': 'กระบี่', '82': 'พังงา', '83': 'ภูเก็ต', '84': 'สุราษฎร์ธานี', '85': 'ระนอง', '86': 'ชุมพร',
-                    '90': 'สงขลา', '91': 'สตูล', '92': 'ตรัง', '93': 'พัทลุง', '94': 'ปัตตานี', '95': 'ยะลา', '96': 'นราธิวาส'
-                };
-                // คืน { province, via: 'name' | 'postcode' } หรือ null ถ้าจับไม่ได้
-                function detectProvince(text) {
-                    const s = String(text || '').replace(/ฏ/g, 'ฎ');
-                    if (!s.trim()) return null;
-                    const LETTER = /[\u0E01-\u0E4E]/;
-                    const hits = [];
-                    for (const [name, prov] of PROVINCE_NAME_LIST) {
-                        let i = -1;
-                        while ((i = s.indexOf(name, i + 1)) !== -1) {
-                            const after = s[i + name.length];
-                            if (after && LETTER.test(after) && after !== 'ฯ') continue;   // ชื่อต้องจบคำ (กัน ตากใบ / ตากฟ้า / ตากสิน)
-                            const head = s.slice(0, i);
-                            const explicit = /(?:จังหวัด|จ\.)\s*$/.test(head);
-                            if (!explicit && /(?:ถนน|ถ\.|ซอย|ซ\.|แยก)\s*$/.test(head)) continue;   // ชื่อถนน เช่น ถนนเพชรบุรี
-                            if (!explicit && RISKY_PROVINCES.includes(prov)) {
-                                const left = s[i - 1];
-                                if (left && LETTER.test(left) && !/เมือง$/.test(head)) continue;
-                            }
-                            hits.push({ pos: i, prov, explicit });
-                        }
-                    }
-                    if (hits.length) {
-                        const ex = hits.filter(x => x.explicit);
-                        const pool = ex.length ? ex : hits;
-                        const best = pool.reduce((a, b) => (b.pos >= a.pos ? b : a));
-                        return { province: best.prov, via: 'name' };
-                    }
-                    const pcs = s.match(/(?<!\d)\d{5}(?!\d)/g);
-                    if (pcs) {
-                        const p = POSTCODE_PREFIX[pcs[pcs.length - 1].slice(0, 2)];
-                        if (p) return { province: p, via: 'postcode' };
-                    }
-                    return null;
-                }
-                // ───────── ตรวจจับจังหวัดจากที่อยู่ END ─────────
-                const shippingDays = ref({});      // ค่าที่บันทึกไว้ { จังหวัด: {min, max} } (ว่าง = ใช้ค่าเริ่มต้นรายภาค)
-                const daysModal = ref(null);       // { draft, region, q, busy }
-
-                function defaultDaysFor(province) {
-                    const g = PROVINCE_GROUPS.find(x => x.provinces.includes(province));
-                    return g ? { min: g.min, max: g.max } : null;
-                }
-                function daysFor(province) {
-                    if (!province) return null;
-                    const s = shippingDays.value[province];
-                    if (s && Number.isFinite(Number(s.min)) && Number.isFinite(Number(s.max))) return { min: Number(s.min), max: Number(s.max) };
-                    return defaultDaysFor(province);
-                }
-                function daysText(province) {
-                    const d = daysFor(province);
-                    if (!d) return '';
-                    return d.min === d.max ? d.min + ' วัน' : d.min + '–' + d.max + ' วัน';
-                }
-                function openDaysModal() {
-                    const draft = {};
-                    ALL_PROVINCES.forEach(p => { const d = daysFor(p); draft[p] = { min: d.min, max: d.max }; });
-                    const region = {};
-                    PROVINCE_GROUPS.forEach(g => { region[g.region] = { min: g.min, max: g.max }; });
-                    daysModal.value = { draft, region, q: '', busy: false };
-                }
-                function closeDaysModal() { daysModal.value = null; }
-                const daysModalGroups = computed(() => {
-                    if (!daysModal.value) return [];
-                    const q = String(daysModal.value.q || '').trim();
-                    return PROVINCE_GROUPS
-                        .map(g => ({ region: g.region, provinces: q ? g.provinces.filter(p => p.includes(q)) : g.provinces }))
-                        .filter(g => g.provinces.length);
-                });
-                function applyRegionDays(region) {
-                    const m = daysModal.value;
-                    if (!m) return;
-                    const g = PROVINCE_GROUPS.find(x => x.region === region);
-                    const v = m.region[region];
-                    const min = Math.max(0, Math.round(Number(v.min)));
-                    const max = Math.max(min, Math.round(Number(v.max)));
-                    if (!Number.isFinite(min) || !Number.isFinite(max)) return;
-                    g.provinces.forEach(p => { m.draft[p] = { min, max }; });
-                }
-                function saveDaysModal() {
-                    const m = daysModal.value;
-                    if (!m || m.busy) return;
-                    const out = {};
-                    for (const p of ALL_PROVINCES) {
-                        const min = Math.round(Number(m.draft[p].min));
-                        const max = Math.round(Number(m.draft[p].max));
-                        if (!Number.isFinite(min) || !Number.isFinite(max) || min < 0 || max < 0) { showToast('ตัวเลขวันของ ' + p + ' ไม่ถูกต้อง'); return; }
-                        if (max < min) { showToast(p + ': จำนวนวันมากสุดต้องไม่น้อยกว่าน้อยสุด'); return; }
-                        out[p] = { min, max };
-                    }
-                    m.busy = true;
-                    db.collection('shopPrivate').doc('shippingDays').set({ json: JSON.stringify(out), updatedAt: new Date().toISOString() })
-                        .then(() => { shippingDays.value = out; showToast('บันทึกตารางระยะเวลาส่งแล้ว'); closeDaysModal(); })
-                        .catch((err) => {
-                            m.busy = false;
-                            showToast(err && err.code === 'permission-denied' ? 'บันทึกไม่ได้ ต้องเพิ่มกฎ Firestore ให้ shopPrivate ก่อน' : 'บันทึกตารางไม่สำเร็จ ตรวจสอบการเชื่อมต่อ');
-                        });
-                }
-
-
-                // ───────── เติมจังหวัดให้ออเดอร์เก่า (ดูตัวอย่างก่อนยืนยัน) ─────────
-                const provinceAuto = ref(false);      // จังหวัดในฟอร์มตอนนี้ถูกเติมอัตโนมัติ (ยังไม่ได้เลือกเอง)
-                const provinceVia = ref('');
-                const fillProv = ref(null);           // { rows:[{id,name,address,province,via,checked}], skipped, busy }
-                function openFillProvince() {
-                    const rows = [];
-                    let skipped = 0;
-                    orders.value.forEach(o => {
-                        if (o.deliveryType !== 'shipping' || o.province || !String(o.location || '').trim()) return;
-                        const d = detectProvince(o.location);
-                        if (!d) { skipped++; return; }
-                        rows.push({ id: o.id, name: o.customerName || '(ไม่มีชื่อ)', address: String(o.location).replace(/\s+/g, ' ').trim(), province: d.province, via: d.via, checked: d.via === 'name' });
-                    });
-                    fillProv.value = { rows, skipped, busy: false };
-                }
-                function closeFillProvince() { fillProv.value = null; }
-                async function confirmFillProvince() {
-                    const f = fillProv.value;
-                    if (!f || f.busy) return;
-                    const picked = f.rows.filter(r => r.checked && r.province);
-                    if (!picked.length) { showToast('ยังไม่ได้เลือกออเดอร์ที่จะเติม'); return; }
-                    f.busy = true;
-                    try {
-                        for (let i = 0; i < picked.length; i += 400) {
-                            const batch = db.batch();
-                            picked.slice(i, i + 400).forEach(r => batch.update(db.collection('orders').doc(r.id), { province: r.province }));
-                            await batch.commit();
-                        }
-                        showToast('เติมจังหวัดให้ ' + picked.length + ' ออเดอร์แล้ว');
-                        closeFillProvince();
-                    } catch (err) {
-                        f.busy = false;
-                        console.error(err);
-                        showToast('เติมจังหวัดไม่สำเร็จ ตรวจสอบการเชื่อมต่อ');
-                    }
-                }
-
                 // ชื่อเดือนไทยเต็ม ใช้สร้างค่า "ประจำเดือน" ให้ตรงกับวันที่จริง
                 const THAI_MONTHS_FULL = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
                 const monthLabelOf = (dateStr) => {
@@ -581,7 +417,6 @@
                     expressCompany: 'ไปรษณีย์ไทย (EMS)',
                     trackingNumber: '',
                     shippingFee: 0,
-                    province: '',
                     location: '',
                     mapLink: '',
                     totalAmount: 1500,
@@ -1758,22 +1593,7 @@
                     showToast('คัดลอกที่อยู่จัดส่งเรียบร้อย!');
                 }
 
-                // พิมพ์/วางที่อยู่ผู้รับ → เติมจังหวัดให้อัตโนมัติ (ไม่ทับค่าที่เลือกเอง)
-                let provinceTimer = null;
-                watch(() => form.value.location, (addr) => {
-                    clearTimeout(provinceTimer);
-                    provinceTimer = setTimeout(() => {
-                        if (!isModalOpen.value || form.value.deliveryType !== 'shipping') return;
-                        if (form.value.province && !provinceAuto.value) return;
-                        const d = detectProvince(addr);
-                        if (d) { form.value.province = d.province; provinceAuto.value = true; provinceVia.value = d.via; }
-                        else if (provinceAuto.value) { form.value.province = ''; provinceAuto.value = false; provinceVia.value = ''; }
-                    }, 400);
-                });
-
                 function openModal(order = null) {
-                    provinceAuto.value = false;
-                    provinceVia.value = '';
                     if (order) {
                         isEditing.value = true;
                         editingId.value = order.id;
@@ -1812,7 +1632,6 @@
                             expressCompany: 'ไปรษณีย์ไทย (EMS)',
                             trackingNumber: '',
                             shippingFee: lastOrder ? (lastOrder.shippingFee || 0) : 0,
-                            province: '',
                             location: lastOrder && lastOrder.deliveryType === 'pickup' ? lastOrder.location : '',
                             mapLink: lastOrder && lastOrder.deliveryType === 'pickup' ? (lastOrder.mapLink || '') : '',
                             totalAmount: '',
@@ -2095,26 +1914,6 @@
                     showToast('ส่งออกไฟล์ข้อมูลสำเร็จ');
                 }
 
-                function importDataJSON(event) {
-                    const file = event.target.files[0];
-                    if (!file) return;
-                    const reader = new FileReader();
-                    reader.onload = async (e) => {
-                        try {
-                            const imported = JSON.parse(e.target.result);
-                            if (Array.isArray(imported)) {
-                                const batch = db.batch();
-                                imported.forEach(o => {
-                                    const id = o.id || ('ORD-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6));
-                                    batch.set(db.collection('orders').doc(id), { ...o, id });
-                                });
-                                await batch.commit();
-                                showToast('นำเข้าข้อมูลสำเร็จ!');
-                            }
-                        } catch (err) { showToast('รูปแบบไฟล์ไม่ถูกต้อง'); }
-                    };
-                    reader.readAsText(file);
-                }
 
 
                 // ===== นำเข้าข้อมูลเก่าจาก Excel/CSV =====
@@ -2622,16 +2421,6 @@
                         showToast('โหลดข้อมูลบัญชีไม่สำเร็จ ตรวจสอบ Firestore rules ของ transactions');
                     });
 
-                    // ตารางระยะเวลาส่งตามจังหวัด — อ่านไม่ได้ (ยังไม่ตั้งกฎ) ก็ใช้ค่าเริ่มต้นรายภาคไปก่อน ไม่กระทบส่วนอื่น
-                    db.collection('shopPrivate').doc('shippingDays').onSnapshot((snap) => {
-                        let map = {};
-                        if (snap.exists) {
-                            try { map = JSON.parse((snap.data() || {}).json || '{}') || {}; } catch (_) { map = {}; }
-                        }
-                        shippingDays.value = map;
-                    }, (err) => {
-                        console.error('Firestore (shopPrivate/shippingDays) error:', err);
-                    });
                 }
 
                 function handleLogin() {
@@ -2693,8 +2482,6 @@
                 return {
                     orders, ordersLoaded, searchQuery, filterType, statusFilter, datePreset, sortBy, sortOptions, currentView,
                     isFilterSheetOpen, isMobileMenuOpen, activeFilterCount, resetFilters,
-                    detectProvince, provinceAuto, provinceVia, fillProv, openFillProvince, closeFillProvince, confirmFillProvince,
-                    PROVINCE_GROUPS, ALL_PROVINCES, daysFor, daysText, daysModal, daysModalGroups, openDaysModal, closeDaysModal, applyRegionDays, saveDaysModal,
                     TRACK_CARRIERS, trackDraft, trackEditing, startTrackEdit, cancelTrackEdit, saveInlineTracking, saveCarrier,
                     isExpanded, toggleExpand, cardMenuOrder, runCardMenu, urgencyChip, deliveryLabel, timeSuffix, isFinishedStatus,
                     quickEdit, quickForm, quickInput, quickSuggestions, quickSuggestIndex, quickSuggest, quickChoiceFor, onQuickInput, onQuickKeydown, pickQuickProduct, pickQuickChoice, quickOrder, quickTitle, quickPay, quickNewTotal, openQuickEdit, closeQuickEdit, saveQuickEdit, quickPayFull,
@@ -2707,7 +2494,7 @@
                     getRemainingBalance, getDeliveryUrgency, mapUrlOf, formatNumber, formatDate, getStatusClass,
                     getProgressWidth, isStepActive, getProgressColor, getProgressDotColor, handleStatusChange, unpaidConfirm, resolveUnpaid, unpaidOnly, paymentBadge, statusLabelOf, queueOpen, todayQueue, overdueCount, jumpToOrder, toastUndo, runToastUndo,
                     printSingleWorkOrder, openBatchPrintModal, openReceiptModal, triggerPrintReceipt,
-                    copyShippingAddress, exportDataJSON, importDataJSON, imp, openImportModal, closeImportModal, downloadImportTemplate, onImportFile, confirmImport, importBatches, fmtBatchTime, deleteImportBatch, downloadImportErrors,
+                    copyShippingAddress, exportDataJSON, imp, openImportModal, closeImportModal, downloadImportTemplate, onImportFile, confirmImport, importBatches, fmtBatchTime, deleteImportBatch, downloadImportErrors,
                     handleFormImageUpload, rotateFormImage, removeFormImage, isCompressingImage,
                     imageUrlInput, MAX_ORDER_IMAGES, addFormImageFromUrl, getOrderImages,
                     galleryTarget, galleryIndex, openGallery, closeGallery, galleryImages, nextGalleryImage, prevGalleryImage,
