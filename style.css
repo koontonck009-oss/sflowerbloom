@@ -257,6 +257,7 @@ html.catalog-sheet-open, html.catalog-sheet-open body{overflow:hidden;}
   transition:transform .15s ease;
 }
 .review-card:hover{transform:translateY(-3px);}
+.review-card-spacer{display:none;}
 .review-photo{
   width:100%; aspect-ratio:3/4; background:var(--cream);
   display:flex; align-items:center; justify-content:center; overflow:hidden;
@@ -1802,7 +1803,7 @@ footer{
    แถบเมนูล่างบนมือถือ (ติดขอบล่างเต็มความกว้าง) — <= 859px เท่านั้น คอมไม่เปลี่ยน
    หน้าแรก · หมวดหมู่ · พร้อมส่ง · รายการโปรด · ตะกร้า (ไอคอน SVG เส้น)
    ========================================================= */
-.bnav, .cat-sheet, #catOverlay, #sortOverlay, .bnav-chips, .qrow, .qr-info, .empty-clear-btn{display:none;}
+.bnav, .bnav-chips, .qr-info, .empty-clear-btn{display:none;}
 @media (max-width:859px){
   :root{--bnav-h:60px;}
   body{padding-bottom:calc(var(--bnav-h) + env(safe-area-inset-bottom, 0px));}
@@ -1848,30 +1849,8 @@ footer{
   .bnav-badge[hidden]{display:none;}
 
   /* ชิปแสดงตัวกรองที่ใช้อยู่ (ลอยเหนือแถบล่าง) — กดชิปเพื่อเอาตัวกรองนั้นออก */
-  /* แถวตัวกรองด่วน: ติดใต้แถบค้นหา (แถบค้นหาซ่อนตอนเลื่อนลง → แถวนี้ขยับขึ้นไปติดขอบบน) */
-  .qrow{
-    display:flex; align-items:center; gap:8px; position:sticky; top:var(--bar-h, 52px); z-index:999;
-    padding:8px 12px; overflow-x:auto; scrollbar-width:none; -webkit-overflow-scrolling:touch;
-    background:var(--cream); box-shadow:0 1px 0 var(--line); transition:top .22s ease;
-  }
-  .qrow::-webkit-scrollbar{display:none;}
-  html:has(.search-cart-bar.bar-hidden) .qrow{top:0;}
-  .qr-btn{
-    flex:0 0 auto; display:inline-flex; align-items:center; gap:6px; white-space:nowrap;
-    padding:8px 13px; border-radius:999px; border:1.5px solid var(--line); background:var(--paper); color:var(--plum);
-    font-family:'Kanit'; font-weight:600; font-size:14px; line-height:1.2; cursor:pointer;
-    -webkit-tap-highlight-color:transparent;
-  }
-  .qr-btn svg{width:16px; height:16px; flex:none;}
-  .qr-btn:active{transform:scale(.96);}
-  .qr-btn.active{background:var(--sage); border-color:var(--sage); color:#fff;}
-  .qr-btn.active .filter-count{background:#fff; color:var(--sage-dark);}
-  .qr-caret{font-size:11px; opacity:.7;}
-  .prices-hidden .qr-sort{display:none;}
-  /* จำนวนที่พบ + ชิปตัวกรองที่เลือกอยู่ (อยู่ในหน้า ไม่ติดหน้าจอ) */
+  /* ชิปตัวกรองที่เลือกอยู่ (อยู่ในหน้า ไม่ติดหน้าจอ) */
   .qr-info{display:block;}
-  .qr-count{display:block; padding:7px 14px 0; font-size:12.5px; font-weight:600; color:#8a7680;}
-  .qr-count:empty{display:none;}
   .bnav-chips{display:flex; flex-wrap:wrap; align-items:center; gap:8px; padding:8px 12px 0;}
   .bnav-chips[hidden]{display:none;}
   .bnav-chip{
@@ -1890,27 +1869,6 @@ footer{
   .empty-clear-btn{
     display:inline-block; margin-top:14px; padding:10px 22px; border-radius:999px; border:1.5px solid var(--sage);
     background:var(--paper); color:var(--sage-dark); font-family:'Kanit'; font-weight:600; font-size:14px; cursor:pointer;
-  }
-
-  /* แผงเลือกหมวดหมู่ */
-  .cat-sheet{display:flex; max-height:70vh;}
-  #catOverlay, #sortOverlay{display:block;}
-  .cat-sheet .filter-sheet-body{padding:10px 16px 6px;}
-  .cat-opt{
-    width:100%; display:flex; align-items:center; gap:12px; margin:0 0 8px; padding:12px 14px;
-    border:1.5px solid var(--line); border-radius:14px; background:var(--paper); color:var(--plum);
-    font-family:'Kanit'; font-size:15px; font-weight:600; text-align:left; cursor:pointer;
-  }
-  .cat-opt-ic{font-size:22px; width:30px; text-align:center; flex:none;}
-  .cat-opt-name{flex:1;}
-  .cat-opt-check{display:none; font-size:16px; font-weight:700; color:var(--sage);}
-  .cat-opt.active{border-color:var(--sage); background:rgba(var(--sage-rgb),0.07); color:var(--sage-dark);}
-  .cat-opt.active .cat-opt-check{display:inline;}
-  .cat-sheet .filter-sheet-footer{padding-top:10px;}
-  .cat-more-btn{
-    flex:1; display:flex; align-items:center; justify-content:center; gap:8px; padding:13px; border-radius:14px;
-    border:1.5px solid var(--sage); background:#fff; color:var(--sage-dark);
-    font-family:'Kanit'; font-weight:700; font-size:14.5px; cursor:pointer;
   }
 }
 
@@ -1954,11 +1912,11 @@ body{overflow-x:clip; max-width:100%; overscroll-behavior-x:none;}
 
   /* ---------- 1) แตะแล้วยุบลงเล็กน้อย (แทนไฮไลต์สีเทาของเบราว์เซอร์) ---------- */
   .card, .add-btn, .checkout-btn, .color-chip, .fav-heart, .fav-heart-inline, .qty-ctrl button,
-  .sw-btn, .cat-opt, .filter-apply-btn, .filter-clear-btn, .cat-more-btn, .page-back-btn,
+  .sw-btn, .cat-opt, .filter-apply-btn, .filter-clear-btn, .page-back-btn,
   .modal-close, .pn-btn, .chat-order-btn, .close-secondary-btn, .remove-btn{
     -webkit-tap-highlight-color:transparent;
   }
-  .qty-ctrl button, .cat-opt, .filter-apply-btn, .filter-clear-btn, .cat-more-btn, .checkout-btn,
+  .qty-ctrl button, .cat-opt, .filter-apply-btn, .filter-clear-btn, .checkout-btn,
   .pn-btn, .chat-order-btn, .close-secondary-btn, .remove-btn{
     transition:transform .12s ease, background-color .15s ease, color .15s ease, border-color .15s ease, box-shadow .15s ease;
   }
@@ -1966,7 +1924,7 @@ body{overflow-x:clip; max-width:100%; overscroll-behavior-x:none;}
   .card:hover{transform:none;}
   .card:active{transform:scale(.98);}
   .add-btn:active, .checkout-btn:active:not(:disabled), .filter-apply-btn:active, .filter-clear-btn:active,
-  .cat-more-btn:active, .chat-order-btn:active, .close-secondary-btn:active, .pn-btn:active{transform:scale(.97);}
+  .chat-order-btn:active, .close-secondary-btn:active, .pn-btn:active{transform:scale(.97);}
   .cat-opt:active{transform:scale(.98);}
   .color-chip:not(.disabled):active{transform:scale(.94);}
   .qty-ctrl button:active, .fav-heart:active, .fav-heart-inline:active,
@@ -2029,7 +1987,7 @@ body{overflow-x:clip; max-width:100%; overscroll-behavior-x:none;}
   .promo-overlay, .promo-overlay.open, .promo-modal, .promo-overlay.open .promo-modal,
   .review-lightbox img, .toast, .toast.show,
   .card, .add-btn, .checkout-btn, .color-chip, .fav-heart, .fav-heart-inline, .qty-ctrl button,
-  .sw-btn img, .cat-opt, .filter-apply-btn, .filter-clear-btn, .cat-more-btn, .page-back-btn,
+  .sw-btn img, .cat-opt, .filter-apply-btn, .filter-clear-btn, .page-back-btn,
   .modal-close, .pn-btn, .chat-order-btn, .close-secondary-btn, .remove-btn{
     transition-duration:.01ms !important; transition-delay:0s !important;
   }
@@ -2186,9 +2144,43 @@ html.no-anim *, html.no-anim *::before, html.no-anim *::after{
   .empty-actions .empty-clear-btn{margin-top:0;}
   .empty-clear-btn.primary{background:var(--sage); border-color:var(--sage); color:#fff;}
 }
-@media (max-width:380px){
-  .qrow{gap:6px; padding:8px 10px;}
-  .qr-btn{padding:8px 10px; font-size:13px; gap:5px;}
-  .qr-btn svg{width:14px; height:14px;}
-  .qr-btn .filter-count{min-width:18px; height:18px; font-size:11px;}
+
+/* ---------- มือถือ: รูปรีวิว 2 แถว × 3.5 คอลัมน์ อัตราส่วน 1:1 ไหลเป็นสายพาน (คอมไม่เปลี่ยน) ---------- */
+@media (max-width:859px){
+  .reviews-section{margin:14px 0 6px;}
+  .reviews-head{padding:0 12px; margin-bottom:8px;}
+  .reviews-head h3{font-size:17px;}
+  .reviews-scroll{
+    --rv-gap:8px;
+    --rv-s:calc((100vw - 12px - 3 * var(--rv-gap)) / 3.5);  /* 3 ใบเต็ม + ใบที่ 4 โผล่ครึ่งใบ */
+    position:relative;
+    display:grid; grid-template-rows:repeat(2, var(--rv-s)); grid-auto-flow:column; grid-auto-columns:var(--rv-s);
+    gap:var(--rv-gap); padding:0 0 4px 12px; scroll-snap-type:none;
+    scrollbar-width:none; overscroll-behavior-x:contain;
+  }
+  .reviews-scroll::-webkit-scrollbar{display:none;}
+  .review-card{width:auto; height:100%; border-radius:12px; box-shadow:0 2px 8px rgba(var(--sage-rgb),0.12);}
+  .review-card:hover{transform:none;}
+  .review-photo{aspect-ratio:1 / 1; height:100%;}
+  .review-card-spacer{display:block; visibility:hidden;}
+}
+
+/* ---------- มือถือ: หน้า "ตัวกรองสินค้า" (เปิดจากปุ่ม "หมวดหมู่") กระชับให้เห็นครบในหน้าเดียว ---------- */
+@media (max-width:859px){
+  #filterSheet{max-height:92vh; max-height:92dvh;}
+  #filterSheet .filter-sheet-header{padding:12px 16px;}
+  #filterSheet .filter-sheet-body{padding:2px 16px 4px;}
+  #filterSheet .filter-group{padding:9px 0;}
+  #filterSheet .filter-group-title{margin-bottom:6px;}
+  #filterSheet .filter-pills{gap:6px;}
+  #filterSheet .filter-pill{min-height:32px; padding:0 11px; font-size:12.5px;}
+  #filterSheet .fp-cats{flex-wrap:nowrap; gap:5px;}
+  #filterSheet .fp-cats .filter-pill{flex:1 1 auto; min-width:0; padding:0 4px; justify-content:center;}
+  #filterSheet .fseg{margin-top:8px;}
+  #filterSheet .fseg button{min-height:34px; font-size:12.5px;}
+  #filterSheet .price-slider{height:30px;}
+  #filterSheet .price-slider-labels{margin-top:2px;}
+  #filterSheet .price-num-input{padding:5px 8px;}
+  #filterSheet .filter-sheet-footer{padding:10px 16px calc(10px + env(safe-area-inset-bottom, 0px));}
+  #filterSheet .filter-clear-btn, #filterSheet .filter-apply-btn{padding:11px;}
 }

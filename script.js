@@ -929,8 +929,7 @@ function renderNav(){
 function stickyOffset(){
   const bar = document.getElementById('searchCartBar');
   const nav = document.getElementById('catNav');
-  const qrow = document.getElementById('qrow'); // มือถือ: แถวตัวกรองด่วนแทนแถบหมวดเดิม (คอม = 0 เพราะซ่อนอยู่)
-  return (bar ? bar.offsetHeight : 0) + (nav ? nav.offsetHeight : 0) + (qrow ? qrow.offsetHeight : 0);
+  return (bar ? bar.offsetHeight : 0) + (nav ? nav.offsetHeight : 0);
 }
 // ทำให้แถบหมวดหมู่ sticky ต่อท้ายแถบค้นหา (แทนที่จะซ้อนทับกันที่ top:0 เหมือนกัน)
 function updateStickyOffsets(){
@@ -1318,12 +1317,17 @@ function buildFilterPanelHtml(state, mode){
     </label>`;
   let moreHtml;
   if(isSheet){
-    // มือถือ: "พร้อมส่ง" กับ "เรียงราคา" ย้ายไปอยู่ในแถวตัวกรองด่วนแล้ว แผงนี้เหลือแค่ของที่ใช้น้อย พับเก็บไว้
-    const moreCount = (state.favorites ? 1 : 0) + (state.allSplit ? 1 : 0);
+    // มือถือ: กลุ่ม "เพิ่มเติม" เปิดไว้เสมอ (ไม่พับ) — พร้อมส่ง · รายการโปรด · แยกทุกสี/แบบ เป็นปุ่มแถวเดียว + แถบเรียงราคา
+    const chip = (on, label, fn) => `<button type="button" class="filter-pill is-multi ${on?'active':''}" aria-pressed="${on}" onclick="${fn}(${!on})">${label}</button>`;
+    const sortOn = !PRICES_HIDDEN && state.sortOrder !== 'none';
+    const moreCount = (state.ready ? 1 : 0) + (state.favorites ? 1 : 0) + (state.allSplit ? 1 : 0) + (sortOn ? 1 : 0);
+    const sortSeg = PRICES_HIDDEN ? '' : `
+      <div class="fseg" role="group" aria-label="เรียงตามราคา">
+        <button type="button" class="${state.sortOrder==='asc'?'active':''}" aria-pressed="${state.sortOrder==='asc'}" onclick="${setSortFn}('asc')">💰 ราคา ต่ำ → สูง</button>
+        <button type="button" class="${state.sortOrder==='desc'?'active':''}" aria-pressed="${state.sortOrder==='desc'}" onclick="${setSortFn}('desc')">💰 ราคา สูง → ต่ำ</button>
+      </div>`;
     moreHtml = group('เพิ่มเติม', moreCount,
-      sw('❤️ เฉพาะรายการโปรด', state.favorites, setFavFn) +
-      sw('🎨 แสดงแยกทุกสี/ทุกแบบ', state.allSplit, setAllSplitFn, '', 'สีหรือแบบที่ต่างกันจะแยกเป็นการ์ดของตัวเอง'),
-      'more', moreCount > 0);
+      `<div class="filter-pills">${chip(state.ready, '⚡ พร้อมส่ง', setReadyFn)}${chip(state.favorites, '❤️ รายการโปรด', setFavFn)}${chip(state.allSplit, '🎨 แยกทุกสี/แบบ', setAllSplitFn)}</div>${sortSeg}`);
   } else {
     const moreCount = (state.ready ? 1 : 0) + (state.favorites ? 1 : 0) + (state.allSplit ? 1 : 0);
     moreHtml = group('ตัวเลือกอื่น', moreCount,
@@ -1333,9 +1337,9 @@ function buildFilterPanelHtml(state, mode){
       'more', moreCount > 0);
   }
 
-  const catGroup = group('หมวดหมู่', 0, `<div class="filter-pills">${catHtml}</div>`);
-  // มือถือ: หมวดหมู่ → ชนิดดอกไม้ → ขนาด → ราคา → เพิ่มเติม (ไม่มีเรียงราคา/พร้อมส่ง) · คอมคงลำดับเดิม
-  if(isSheet) return catGroup + flowerHtml + sizeHtml + priceHtml + moreHtml;
+  const catGroup = group('หมวดหมู่', 0, `<div class="filter-pills fp-cats">${catHtml}</div>`);
+  // มือถือ: หมวดหมู่ → เพิ่มเติม (พร้อมส่ง/โปรด/แยกแบบ/เรียงราคา) → ชนิดดอกไม้ → ขนาด → ราคา · คอมคงลำดับเดิม
+  if(isSheet) return catGroup + moreHtml + flowerHtml + sizeHtml + priceHtml;
   return catGroup + sizeHtml + flowerHtml + priceHtml + sortHtml + moreHtml;
 }
 
@@ -1413,10 +1417,9 @@ function setDraftFlowerType(t){
   renderFilterSheetBody();
 }
 function clearFilterDraft(){
-  // "ล้าง" ในแผงล้างเฉพาะสิ่งที่เห็นในแผง — พร้อมส่ง/เรียงราคา อยู่ในแถวด่วนด้านนอก จึงคงค่าเดิมไว้
+  // "ล้าง" ในแผงล้างทุกอย่างที่เห็นในแผง (รวมพร้อมส่ง/เรียงราคา/รายการโปรด) — ยังไม่มีผลกับหน้าสินค้าจนกว่าจะกด "ดู N รายการ"
   filterDraft = { cats:new Set(), customMin:PRICE_SLIDER_MIN, customMax:PRICE_SLIDER_MAX,
-    sortOrder: filterDraft ? filterDraft.sortOrder : 'none', ready: filterDraft ? filterDraft.ready : false,
-    favorites:false, allSplit:false, sizes:new Set(), flowerTypes:new Set() };
+    sortOrder:'none', ready:false, favorites:false, allSplit:false, sizes:new Set(), flowerTypes:new Set() };
   renderFilterSheetBody();
 }
 function applyFilterDraft(){
@@ -3717,9 +3720,10 @@ function renderReviews(imagesIn){
   const statEl = document.getElementById('reviewsStat');
   const section = document.getElementById('reviewsSection');
   // โคลนการ์ดแรกๆ ไปต่อท้าย (มองไม่เห็นความต่าง) เพื่อให้วนกลับจุดเริ่มได้แบบไร้รอยต่อ ไม่ต้องกระตุกย้อนยาว
-  const cloneCount = Math.min(REVIEWS.length, 8);
+  const cloneCount = Math.min(REVIEWS.length, 12); // เลขคู่ (มือถือ 2 แถว) และพอให้เต็มจอทั้งตอนสายพานวนกลับ
   scrollEl.innerHTML =
     REVIEWS.map((src, i) => reviewCardHTML(src, i)).join('') +
+    (REVIEWS.length % 2 ? '<div class="review-card-spacer" aria-hidden="true"></div>' : '') + // จำนวนคี่: เติมช่องว่าง 1 ช่องให้ชุดจริงลงตัว 2 แถว (มือถือ) สายพานจะวนต่อกันไม่เหลื่อม
     REVIEWS.slice(0, cloneCount).map((src, i) => reviewCardHTML(src, i, true)).join('');
   if(statEl) statEl.textContent = `${REVIEWS.length}+ รีวิวจากลูกค้าจริง`;
   section.hidden = false;
@@ -3754,10 +3758,39 @@ function animateScrollLeft(el, to, duration){
   }
   reviewScrollRAF = requestAnimationFrame(tick);
 }
+/* มือถือ (<860px): รีวิวเรียง 2 แถว ไหลต่อเนื่องเป็นสายพาน (ความเร็วคงที่ px/วินาที) แทนการเลื่อนทีละใบ
+   ใช้การ์ดโคลนต่อท้ายเหมือนกัน — เลื่อนถึงจุดที่โคลนเริ่ม ก็หักกลับต้นทางแบบไม่เห็นรอยต่อ
+   หยุดเมื่อแตะ/ลาก แล้วไหลต่อเองหลังไม่มีการโต้ตอบ · เครื่องที่ตั้ง "ลดการเคลื่อนไหว" จะไม่ไหลเอง */
+const REVIEW_BELT_SPEED = 26; // px ต่อวินาที
+const reviewMobileMQ = window.matchMedia('(max-width:859px)');
+let reviewBeltRAF = null;
+function startReviewBelt(){
+  const el = document.getElementById('reviewsScroll');
+  if(!el || !el.children.length) return;
+  if(window.matchMedia('(prefers-reduced-motion:reduce)').matches) return;
+  let acc = el.scrollLeft, last = performance.now();
+  function tick(now){
+    reviewBeltRAF = requestAnimationFrame(tick);
+    const dt = Math.min(now - last, 64); last = now;
+    if(document.hidden) return;
+    if(document.getElementById('reviewsAllModal')?.classList.contains('open')) return;
+    if(document.getElementById('reviewLightbox')?.classList.contains('open')) return;
+    const first = el.querySelector('.review-card');
+    const clone = el.querySelector('.review-card-clone');
+    if(!first || !clone) return;
+    const loopW = clone.offsetLeft - first.offsetLeft; // ความกว้างของชุดการ์ดจริง (ก่อนถึงโคลน)
+    if(loopW <= 0) return;
+    acc += REVIEW_BELT_SPEED * dt / 1000;
+    while(acc >= loopW) acc -= loopW;
+    el.scrollLeft = acc;
+  }
+  reviewBeltRAF = requestAnimationFrame(tick);
+}
 function startReviewAutoScroll(){
   stopReviewAutoScroll();
   const scrollEl = document.getElementById('reviewsScroll');
   if(!scrollEl || !scrollEl.children.length) return;
+  if(reviewMobileMQ.matches){ startReviewBelt(); return; }
   reviewAutoTimer = setInterval(() => {
     if(document.hidden) return;
     if(document.getElementById('reviewsAllModal')?.classList.contains('open')) return;
@@ -3798,6 +3831,7 @@ function reviewManualStep(dir){
 }
 let reviewManualX = null, reviewManualT = 0;
 function stopReviewAutoScroll(){
+  if(reviewBeltRAF){ cancelAnimationFrame(reviewBeltRAF); reviewBeltRAF = null; }
   if(reviewAutoTimer){ clearInterval(reviewAutoTimer); reviewAutoTimer = null; }
   clearTimeout(reviewJumpTimer);
   cancelAnimationFrame(reviewScrollRAF);
@@ -3814,6 +3848,7 @@ function initReviewAutoScroll(){
     ['pointerdown','touchstart','wheel','mouseenter'].forEach(evt => {
       scrollEl.addEventListener(evt, pauseReviewAutoScroll, { passive: true });
     });
+    reviewMobileMQ.addEventListener('change', () => { scrollEl.scrollLeft = 0; startReviewAutoScroll(); });
     document.addEventListener('visibilitychange', () => {
       if(document.hidden) stopReviewAutoScroll(); else startReviewAutoScroll();
     });
@@ -4095,57 +4130,6 @@ function bnavSyncHome(){
   const home = document.getElementById('bnavHome');
   if(home) home.classList.toggle('active', window.scrollY < 120 && !bnavAnyFilter());
 }
-function renderCatSheet(){
-  const body = document.getElementById('catSheetBody');
-  if(!body) return;
-  const allMode = activeCats.size === 0;
-  body.innerHTML = CATS.map(c => {
-    const on = c === 'ทั้งหมด' ? allMode : activeCats.has(c);
-    return `<button type="button" class="cat-opt${on ? ' active' : ''}" onclick="pickCatFromSheet('${c}')">
-      <span class="cat-opt-ic" aria-hidden="true">${CAT_ICONS[c] || '🌸'}</span>
-      <span class="cat-opt-name">${c}</span><span class="cat-opt-check" aria-hidden="true">✓</span></button>`;
-  }).join('');
-}
-function openCatSheet(){
-  renderCatSheet();
-  document.getElementById('catOverlay').classList.add('open');
-  document.getElementById('catSheet').classList.add('open');
-  document.body.style.overflow = 'hidden';
-}
-function closeCatSheet(){
-  document.getElementById('catOverlay').classList.remove('open');
-  document.getElementById('catSheet').classList.remove('open');
-  document.body.style.overflow = '';
-}
-function pickCatFromSheet(c){ closeCatSheet(); selectCategory(c); }
-function catSheetMoreFilters(){ closeCatSheet(); openFilterSheet(); }
-/* ---------- แผงเรียงสินค้า (มือถือ) ---------- */
-const SORT_OPTS = [['none','✨','แนะนำ (ค่าเริ่มต้น)'], ['asc','⬆️','ราคา ต่ำ → สูง'], ['desc','⬇️','ราคา สูง → ต่ำ']];
-function renderSortSheet(){
-  const body = document.getElementById('sortSheetBody');
-  if(!body) return;
-  body.innerHTML = SORT_OPTS.map(o => `<button type="button" class="cat-opt${activeSortOrder === o[0] ? ' active' : ''}" onclick="pickSort('${o[0]}')">
-      <span class="cat-opt-ic" aria-hidden="true">${o[1]}</span><span class="cat-opt-name">${o[2]}</span><span class="cat-opt-check" aria-hidden="true">✓</span></button>`).join('');
-}
-function openSortSheet(){
-  renderSortSheet();
-  document.getElementById('sortOverlay').classList.add('open');
-  document.getElementById('sortSheet').classList.add('open');
-  document.body.style.overflow = 'hidden';
-}
-function closeSortSheet(){
-  document.getElementById('sortOverlay').classList.remove('open');
-  document.getElementById('sortSheet').classList.remove('open');
-  document.body.style.overflow = '';
-}
-function pickSort(order){
-  activeSortOrder = order;
-  closeSortSheet();
-  renderCatalog();
-  renderFilterSidebar();
-  updateFilterBadge();
-  scrollToCatalogTop();
-}
 // อัปเดตสถานะทุกช่องในแถบล่างให้ตรงกับตัวกรองจริง (เรียกจาก renderNav / updateFilterBadge / updateCartUI)
 function updateBottomNav(){
   const catBtn = document.getElementById('bnavCat');
@@ -4156,36 +4140,12 @@ function updateBottomNav(){
   catBtn.classList.toggle('active', !!picked);
   const fav = document.getElementById('bnavFav');
   fav.classList.toggle('active', showFavoritesOnly); fav.setAttribute('aria-pressed', String(!!showFavoritesOnly));
-  // ตัวกรองหลายกลุ่มที่อยู่ในแผง "ตัวกรอง" (พร้อมส่ง/เรียงราคา มีปุ่มของตัวเองในแถวด่วนแล้ว จึงไม่นับซ้ำ)
-  const priceOn = customPriceMin !== PRICE_SLIDER_MIN || customPriceMax !== PRICE_SLIDER_MAX;
-  const inPanel = [activeCats.size > 0, priceOn, showAllVariantsSplit, activeFlowerTypes.size > 0, activeSizes.size > 0].filter(Boolean).length;
-  const mc = document.getElementById('catMoreCount');
-  if(mc){ mc.textContent = inPanel; mc.hidden = inPanel === 0; }
-  // แถวตัวกรองด่วน (มือถือ): ปุ่มตัวกรอง + พร้อมส่ง + เรียงราคา
-  const qf = document.getElementById('qrFilter');
-  if(qf){
-    qf.classList.toggle('active', inPanel > 0);
-    const qfc = document.getElementById('qrFilterCount');
-    if(qfc){ qfc.textContent = inPanel; qfc.hidden = inPanel === 0; }
-    const qr = document.getElementById('qrReady');
-    qr.classList.toggle('active', showReadyOnly); qr.setAttribute('aria-pressed', String(!!showReadyOnly));
-    const qs = document.getElementById('qrSort');
-    qs.classList.toggle('active', activeSortOrder !== 'none');
-    document.getElementById('qrSortLabel').textContent = activeSortOrder === 'asc' ? 'ราคา ต่ำ→สูง' : (activeSortOrder === 'desc' ? 'ราคา สูง→ต่ำ' : 'เรียงราคา');
-    // จำนวนที่พบ (นับแบบเดียวกับปุ่ม "แสดง N รายการ" ในแผงตัวกรอง)
-    const qc = document.getElementById('qrCount');
-    if(qc){
-      // มีตัวกรอง/คำค้นอยู่ = แถบ "พบสินค้า N รายการ + โหลดแคตตาล็อก" ใต้ชิปบอกอยู่แล้ว ไม่แสดงซ้ำ
-      qc.textContent = (typeof PRODUCTS !== 'undefined' && PRODUCTS.length && !bnavAnyFilter()) ? 'พบสินค้า ' + countResultsForState(sidebarState()) + ' รายการ' : '';
-    }
-  }
-  // ชิปตัวกรองที่ใช้อยู่ใต้แถวด่วน (วาดใหม่เฉพาะตอนเนื้อหาเปลี่ยน) — พร้อมส่ง/เรียงราคา ไม่ทำชิปซ้ำเพราะปุ่มในแถวบอกสถานะอยู่แล้ว
+  // ชิปตัวกรองที่ใช้อยู่ (วาดใหม่เฉพาะตอนเนื้อหาเปลี่ยน) — กดชิปเพื่อเอาตัวกรองนั้นออก
   const box = document.getElementById('bnavChips');
   if(box){
-    const chips = bnavChipList().filter(function(c){ return c[0] !== 'ready' && c[0] !== 'sort'; });
-    const alsoActive = (showReadyOnly ? 1 : 0) + (activeSortOrder !== 'none' ? 1 : 0);
+    const chips = bnavChipList();
     const html = chips.map(function(c){ return '<button type="button" class="bnav-chip" data-k="' + c[0] + '" aria-label="เอาตัวกรองนี้ออก: ' + escapeHtml(c[1]) + '">' + escapeHtml(c[1]) + ' <i aria-hidden="true">✕</i></button>'; }).join('') +
-      (chips.length + alsoActive > 1 ? '<button type="button" class="bnav-chip-clear" data-k="all">ล้างทั้งหมด</button>' : '');
+      (chips.length > 1 ? '<button type="button" class="bnav-chip-clear" data-k="all">ล้างทั้งหมด</button>' : '');
     if(box.dataset.sig !== html){ box.innerHTML = html; box.dataset.sig = html; }
     box.hidden = chips.length === 0;
     document.documentElement.classList.toggle('has-chips', chips.length > 0);

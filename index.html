@@ -140,17 +140,8 @@
 
 <nav class="cat-nav" id="catNav"></nav>
 
-<!-- แถวตัวกรองด่วน (มือถือเท่านั้น): ติดใต้แถบค้นหา — ตัวกรอง · พร้อมส่ง · เรียงราคา + จำนวนที่พบ + ชิปตัวกรองที่เลือกอยู่ -->
-<div class="qrow" id="qrow">
-  <button type="button" class="qr-btn" id="qrFilter" onclick="openFilterSheet()" aria-label="เปิดตัวกรองสินค้า">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="4 4 20 4 14 12.5 14 19 10 21 10 12.5 4 4"></polygon></svg>
-    <span>ตัวกรอง</span><span class="filter-count" id="qrFilterCount" hidden></span>
-  </button>
-  <button type="button" class="qr-btn" id="qrReady" onclick="bnavToggle('ready')" aria-pressed="false">⚡ พร้อมส่ง</button>
-  <button type="button" class="qr-btn qr-sort" id="qrSort" onclick="openSortSheet()" aria-label="เรียงสินค้าตามราคา"><span id="qrSortLabel">เรียงราคา</span><span class="qr-caret" aria-hidden="true">▾</span></button>
-</div>
+<!-- ชิปตัวกรองที่เลือกอยู่ (มือถือ) — ตัวเลือกหมวด/พร้อมส่ง/เรียง/ตัวกรองอื่น อยู่ในแผง "หมวดหมู่" ของแถบล่าง -->
 <div class="qr-info" id="qrInfo">
-  <span class="qr-count" id="qrCount"></span>
   <div class="bnav-chips" id="bnavChips" hidden aria-label="ตัวกรองที่ใช้อยู่"></div>
 </div>
 
@@ -181,7 +172,7 @@
   <button type="button" class="bnav-item" id="bnavHome" onclick="bnavHome()">
     <span class="bnav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 9.5V21h5v-6h4v6h5V9.5"/></svg></span><span class="bnav-lb">หน้าแรก</span>
   </button>
-  <button type="button" class="bnav-item" id="bnavCat" onclick="openCatSheet()">
+  <button type="button" class="bnav-item" id="bnavCat" onclick="openFilterSheet()">
     <span class="bnav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="12" cy="6.4" rx="2.5" ry="3.4" transform="rotate(0 12 12)"/><ellipse cx="12" cy="6.4" rx="2.5" ry="3.4" transform="rotate(72 12 12)"/><ellipse cx="12" cy="6.4" rx="2.5" ry="3.4" transform="rotate(144 12 12)"/><ellipse cx="12" cy="6.4" rx="2.5" ry="3.4" transform="rotate(216 12 12)"/><ellipse cx="12" cy="6.4" rx="2.5" ry="3.4" transform="rotate(288 12 12)"/><circle cx="12" cy="12" r="1.8"/></svg></span><span class="bnav-lb" id="bnavCatLabel">หมวดหมู่</span>
   </button>
   <button type="button" class="bnav-item bnav-heart" id="bnavFav" onclick="bnavToggle('fav')" aria-pressed="false">
@@ -191,29 +182,6 @@
     <span class="bnav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg><b class="bnav-badge" id="bnavCartBadge" hidden>0</b></span><span class="bnav-lb">ตะกร้า</span>
   </button>
 </nav>
-
-<!-- แผงเลือกหมวดหมู่ (มือถือ) เปิดจากช่อง "หมวดหมู่" ในแถบเมนูล่าง -->
-<div class="filter-overlay" id="catOverlay" onclick="closeCatSheet()"></div>
-<div class="filter-sheet cat-sheet" id="catSheet" role="dialog" aria-label="เลือกหมวดหมู่">
-  <div class="filter-sheet-header">
-    <h3>เลือกหมวดหมู่</h3>
-    <button class="filter-sheet-close" onclick="closeCatSheet()" aria-label="ปิด">✕</button>
-  </div>
-  <div class="filter-sheet-body" id="catSheetBody"></div>
-  <div class="filter-sheet-footer">
-    <button type="button" class="cat-more-btn" onclick="catSheetMoreFilters()">⚙️ ตัวกรองเพิ่มเติม <span class="filter-count" id="catMoreCount" hidden></span></button>
-  </div>
-</div>
-
-<!-- แผงเรียงสินค้า (มือถือ) เปิดจากปุ่ม "เรียงราคา" ในแถวตัวกรองด่วน -->
-<div class="filter-overlay" id="sortOverlay" onclick="closeSortSheet()"></div>
-<div class="filter-sheet cat-sheet" id="sortSheet" role="dialog" aria-label="เรียงสินค้า">
-  <div class="filter-sheet-header">
-    <h3>เรียงสินค้า</h3>
-    <button class="filter-sheet-close" onclick="closeSortSheet()" aria-label="ปิด">✕</button>
-  </div>
-  <div class="filter-sheet-body" id="sortSheetBody"></div>
-</div>
 
 <div class="overlay" id="overlay" onclick="closeCart()"></div>
 <aside class="drawer" id="drawer">
