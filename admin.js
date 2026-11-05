@@ -4666,3 +4666,16 @@ boot();
     });
   }, { passive:true });
 })();
+
+/* ───── ป๊อปอัป: ปุ่ม ✕ มุมขวาบน (กดแล้วเท่ากับกดปุ่มยกเลิก/ปิดของป๊อปอัปนั้น) ───── */
+(function(){
+  const map = { varScrim:'varCancel', optScrim:'optCancel', siteScrim:'siteCancel', revScrim:'revCancel', imgScrim:'imgCancel' };
+  Object.keys(map).forEach(scrimId => {
+    const card = $(scrimId) && $(scrimId).querySelector('.vm-card');
+    if(!card) return;
+    const x = document.createElement('button');
+    x.type = 'button'; x.className = 'vm-x'; x.setAttribute('aria-label', 'ปิด'); x.textContent = '✕';
+    x.addEventListener('click', () => { const b = $(map[scrimId]); if(b) b.click(); });
+    card.appendChild(x);
+  });
+})();
