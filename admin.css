@@ -1541,3 +1541,122 @@ body.vm-chip-dragging, body.vm-chip-dragging *{ cursor:grabbing !important; user
 .addon-pick-note{ margin:8px 0 0; font-size:12px; color:#888; }
 .addon-pick-item{ display:flex; flex-direction:column; align-items:center; gap:3px; width:64px; }
 .addon-pick-item small{ font-size:11px; color:#666; text-align:center; line-height:1.2; word-break:break-word; }
+/* =========================================================
+   จัด UI รอบ 1: หน้ารายการสินค้า + เมนูซ้าย
+   ========================================================= */
+
+/* ── การ์ดตั้งค่าร้าน (รวมสวิตช์ 3 อันไว้ในกล่องเดียว) ── */
+.shop-settings{
+  margin:0 0 16px; padding:14px 16px 16px;
+  background:var(--panel); border-radius:var(--radius); box-shadow:var(--shadow);
+}
+.ss-title{ margin:0 0 10px; font-size:13px; font-weight:600; letter-spacing:.02em; color:var(--ink-2); }
+.ss-grid{ display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:12px; }
+.ss-row.price-switch{
+  margin:0; padding:12px 14px; gap:12px; box-shadow:none;
+  border:1px solid var(--line); background:var(--bg); align-items:flex-start;
+}
+.ss-row.price-switch.is-on{ background:var(--warn-soft); border-color:#E9B88F; }
+.ss-row .ps-text{ gap:4px; }
+.ss-row .ps-text b{ font-size:14px; }
+.ss-more{ font-size:12.5px; color:var(--ink-2); line-height:1.5; }
+.ss-more summary{ cursor:pointer; color:var(--ink-3); list-style:none; width:max-content; }
+.ss-more summary::-webkit-details-marker{ display:none; }
+.ss-more summary::before{ content:"▸ "; }
+.ss-more[open] summary::before{ content:"▾ "; }
+.ss-more summary:hover{ color:var(--brand-dark); }
+.ss-more[open] > span{ display:block; margin-top:4px; font-size:12.5px; color:var(--ink-2); }
+.ss-more > span{ font-size:12.5px; }
+.ss-row .switch{ margin-top:2px; }
+#freeMinBox.ss-row{ flex-direction:row; align-items:flex-start; }
+#freeMinBox .free-min-form{ flex-wrap:wrap; justify-content:flex-end; gap:6px; }
+#freeMinBox .free-min-form input{ width:84px; padding:6px 8px; }
+@media (max-width:1100px){ .ss-grid{ grid-template-columns:1fr; gap:8px; } }
+@media (max-width:640px){
+  .shop-settings{ padding:12px; }
+  #freeMinBox.ss-row{ flex-direction:row; align-items:center; }
+}
+
+/* ── แถบค้นหา/กรอง แบ่งเป็น 2 แถว ── */
+.list-tools{ flex-direction:column; align-items:stretch; gap:8px; padding:12px 14px 10px; }
+.lt-main{ display:flex; align-items:center; gap:10px; min-width:0; }
+.lt-main .search-wrap{ flex:1 1 auto; min-width:0; }
+.lt-main .flower-filter{ flex:0 0 auto; }
+.lt-sub{ display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:20px; }
+.lt-sub .list-meta{ width:auto; flex:1; min-width:0; }
+.lt-sub .grid-selall{ margin-left:auto; order:0; }
+@media (max-width:760px){
+  .lt-main{ flex-wrap:wrap; }
+  .lt-main .search-wrap{ flex:1 1 100%; }
+  .lt-main .flower-filter{ flex:1 1 0; min-width:0; max-width:none; }
+  .lt-sub .list-meta{ width:auto; }
+  .list-tools .grid-selall{ order:0; }
+}
+
+/* ── เมนูซ้าย: แยกกลุ่มให้ชัด ── */
+.sb-label{ margin:16px 10px 4px; }
+.sb-item.sb-pop::after{ content:"›"; margin-left:auto; font-size:18px; line-height:1; color:var(--ink-3); }
+.sb-item.sb-pop:hover::after{ color:var(--ink-2); }
+.sb-danger{
+  margin-top:auto; padding-top:10px;
+  display:flex; flex-direction:column; gap:2px;
+}
+.sb-danger .sb-label{ color:var(--danger); opacity:.8; margin-top:6px; }
+.sb-danger .sb-item.is-danger{ border:1px dashed #E7B4B4; }
+
+/* ── เมนูซ้าย: บีบให้พอดีจอ ไม่ต้องเลื่อน ── */
+.sidebar{ gap:2px; padding:12px 10px 10px; height:100vh; height:100dvh; }
+.sb-brand{ padding:2px 8px 10px; margin-bottom:4px; }
+.sb-brand .topbar-logo{ width:34px; height:34px; }
+.sb-brand div{ line-height:1.2; }
+.sb-nav{ gap:1px; }
+.sb-label{ margin:10px 10px 2px; line-height:1.2; }
+.sb-item{ padding:7px 11px; line-height:1.25; gap:10px; }
+.sb-danger{ padding-top:6px; gap:0; }
+.sb-danger .sb-item.is-danger{ padding:6px 11px; font-size:13.5px; }
+.sb-foot{ padding-top:6px; gap:1px; }
+.sb-foot .save-state{ padding:0 11px 4px; line-height:1.3; }
+@media (max-height:640px){
+  .sb-brand span{ display:none; }
+  .sb-item{ padding:5px 10px; font-size:14px; }
+  .sb-label{ margin-top:6px; }
+}
+
+/* =========================================================
+   จัด UI รอบ 2: หน้าแก้ไขสินค้า
+   ========================================================= */
+.ed-sticky{ position:sticky; top:0; z-index:30; background:var(--bg); }
+.ed-sticky .ed-bar{ position:static; padding-bottom:8px; }
+.ed-dirty{ display:inline-block; margin-left:10px; padding:2px 9px; border-radius:999px; background:var(--warn-soft); color:var(--warn); font-size:12px; font-weight:600; vertical-align:middle; }
+.ed-title .drawer-sub{ display:inline; }
+.ed-dirty[hidden]{ display:none; }
+
+.ed-jump{ display:flex; gap:6px; padding:0 0 10px; overflow-x:auto; scrollbar-width:none; border-bottom:1px solid var(--line); }
+.ed-jump::-webkit-scrollbar{ display:none; }
+.ed-jump button{
+  flex:none; padding:6px 13px; border:1px solid var(--line); border-radius:999px;
+  background:var(--panel); font:inherit; font-size:13.5px; font-weight:500; color:var(--ink-2); cursor:pointer;
+}
+.ed-jump button:hover{ background:var(--line-soft); color:var(--ink); }
+.ed-jump button.is-active{ background:var(--brand-soft); border-color:var(--brand); color:var(--brand-dark); font-weight:600; }
+
+.ed-main > .ed-card, .ed-main > details.ed-card{ scroll-margin-top:124px; }
+.ed-side{ top:128px; }
+@media (max-width:900px){
+  .ed-main > .ed-card, .ed-main > details.ed-card{ scroll-margin-top:112px; }
+  .ed-sticky .ed-bar{ padding:10px 0 8px; }
+}
+
+/* การ์ดที่พับได้ */
+.ed-fold{ padding:0; }
+.ed-fold > summary.card-head{
+  margin:0; padding:14px 16px; cursor:pointer; list-style:none; user-select:none;
+  display:flex; align-items:baseline; gap:10px;
+}
+.ed-fold > summary.card-head::-webkit-details-marker{ display:none; }
+.ed-fold > summary.card-head::before{ content:"▸"; color:var(--ink-3); font-size:13px; flex:none; width:12px; }
+.ed-fold[open] > summary.card-head::before{ content:"▾"; }
+.ed-fold > summary.card-head:hover h3{ color:var(--brand-dark); }
+.ed-fold > summary.card-head small{ margin-left:auto; text-align:right; }
+.ed-fold[open] > summary.card-head{ padding-bottom:0; margin-bottom:12px; }
+.ed-fold > .card-body{ padding:0 16px 16px; }

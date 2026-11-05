@@ -4632,3 +4632,37 @@ $('siteFile').addEventListener('change', e => { const el = e.target; siteUploadF
 $('siteLogoFile').addEventListener('change', e => { const f = e.target.files[0]; siteUploadLogo(f).then(() => { e.target.value = ''; }); });
 
 boot();
+
+/* ───── หน้าแก้ไขสินค้า: ป้าย "ยังไม่ได้บันทึก" + เมนูข้ามไปแต่ละส่วน ───── */
+(function(){
+  const page = $('editorPage'), badge = $('edDirty'), jump = $('edJump');
+  if(!page || !badge || !jump) return;
+  let base = null;
+  const snap = () => { try{ return draft ? JSON.stringify(draft) : null; }catch(e){ return null; } };
+  const check = () => { badge.hidden = page.hidden || base === null || snap() === base; };
+  new MutationObserver(() => {
+    if(page.hidden){ base = null; badge.hidden = true; return; }
+    setTimeout(() => { base = snap(); check(); }, 0);
+  }).observe(page, { attributes:true, attributeFilter:['hidden'] });
+  ['input', 'change', 'click'].forEach(ev => page.addEventListener(ev, () => setTimeout(check, 0), true));
+
+  const ids = [...jump.querySelectorAll('[data-jump]')].map(b => b.dataset.jump);
+  const setActive = id => jump.querySelectorAll('[data-jump]').forEach(b => b.classList.toggle('is-active', b.dataset.jump === id));
+  jump.addEventListener('click', e => {
+    const b = e.target.closest('[data-jump]'); if(!b) return;
+    const el = $(b.dataset.jump); if(!el) return;
+    if(el.tagName === 'DETAILS') el.open = true;
+    setActive(b.dataset.jump);
+    el.scrollIntoView({ behavior:'smooth', block:'start' });
+  });
+  let raf = 0;
+  window.addEventListener('scroll', () => {
+    if(page.hidden || raf) return;
+    raf = requestAnimationFrame(() => {
+      raf = 0;
+      let cur = ids[0];
+      for(const id of ids){ const el = $(id); if(el && el.getBoundingClientRect().top <= 150) cur = id; }
+      setActive(cur);
+    });
+  }, { passive:true });
+})();

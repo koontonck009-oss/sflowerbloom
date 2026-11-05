@@ -49,15 +49,17 @@
       <div><b>S.Flower Bloom</b><span>ระบบจัดการสินค้า</span></div>
     </div>
     <nav class="sb-nav">
-      <span class="sb-label">จัดการร้าน</span>
       <a class="sb-item is-active" href="#" id="navProducts" aria-current="page"><svg class="sb-ico" viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7l7-4 7 4v8l-7 4-7-4V7z"/><path d="M3 7l7 4 7-4M10 11v8"/></svg><span>สินค้า</span></a>
-      <button type="button" class="sb-item" id="optionsBtn" title="เพิ่ม แก้ชื่อ เรียงลำดับ หมวดหมู่ ชนิดดอกไม้ และขนาดของร้าน"><svg class="sb-ico" viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3h6l8 8-6 6-8-8V3z"/><circle cx="6.5" cy="6.5" r="1"/></svg><span>หมวดหมู่ / ชนิด / ขนาด</span></button>
-      <button type="button" class="sb-item" id="siteBtn" title="แบนเนอร์ ป๊อปอัป ข้อความหน้าร้าน ชื่อ โลโก้ สี และ FAQ"><svg class="sb-ico" viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="4" width="15" height="12" rx="2"/><path d="M2.5 8h15M6 12h4"/></svg><span>แต่งหน้าร้าน</span></button>
-      <button type="button" class="sb-item" id="reviewsBtn" title="ผูกรูปรีวิวลูกค้ากับสินค้า ให้ไปโผล่ในแกลเลอรีของสินค้านั้น"><svg class="sb-ico" viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 2.5l2.3 4.7 5.2.7-3.8 3.6.9 5.1L10 14.1 5.4 16.6l.9-5.1L2.5 7.9l5.2-.7L10 2.5z"/></svg><span>รีวิวลูกค้า</span></button>
-      <button type="button" class="sb-item" id="catalogBtn" title="ดาวน์โหลดภาพแคตตาล็อก (JPG)"><svg class="sb-ico" viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="14" height="14" rx="2"/><circle cx="7.5" cy="7.5" r="1.3"/><path d="M17 13l-4-4-7 8"/></svg><span id="catalogLabel">แคตตาล็อก</span></button>
-      <span class="sb-label">ข้อมูล</span>
+      <span class="sb-label">หน้าร้านของลูกค้า</span>
+      <button type="button" class="sb-item sb-pop" id="siteBtn" title="แบนเนอร์ ป๊อปอัป ข้อความหน้าร้าน ชื่อ โลโก้ สี และ FAQ"><svg class="sb-ico" viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="4" width="15" height="12" rx="2"/><path d="M2.5 8h15M6 12h4"/></svg><span>แต่งหน้าร้าน</span></button>
+      <button type="button" class="sb-item sb-pop" id="reviewsBtn" title="ผูกรูปรีวิวลูกค้ากับสินค้า ให้ไปโผล่ในแกลเลอรีของสินค้านั้น"><svg class="sb-ico" viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 2.5l2.3 4.7 5.2.7-3.8 3.6.9 5.1L10 14.1 5.4 16.6l.9-5.1L2.5 7.9l5.2-.7L10 2.5z"/></svg><span>รีวิวลูกค้า</span></button>
+      <button type="button" class="sb-item sb-pop" id="optionsBtn" title="เพิ่ม แก้ชื่อ เรียงลำดับ หมวดหมู่ ชนิดดอกไม้ และขนาดของร้าน"><svg class="sb-ico" viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3h6l8 8-6 6-8-8V3z"/><circle cx="6.5" cy="6.5" r="1"/></svg><span>หมวดหมู่ / ชนิด / ขนาด</span></button>
+      <span class="sb-label">เครื่องมือ</span>
+      <button type="button" class="sb-item sb-pop" id="catalogBtn" title="ดาวน์โหลดภาพแคตตาล็อก (JPG)"><svg class="sb-ico" viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="14" height="14" rx="2"/><circle cx="7.5" cy="7.5" r="1.3"/><path d="M17 13l-4-4-7 8"/></svg><span id="catalogLabel">แคตตาล็อก</span></button>
       <button type="button" class="sb-item" id="backupBtn" title="เก็บสำรองไว้เผื่อข้อมูลหาย"><svg class="sb-ico" viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3v10M6 9l4 4 4-4M4 16h12"/></svg><span>ดาวน์โหลดไฟล์สำรอง</span></button>
+      <div class="sb-danger">
       <button type="button" class="sb-item is-danger" id="importBtn" title="สินค้าเดิมทั้งหมดจะถูกเขียนทับ"><svg class="sb-ico" viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13V3M6 7l4-4 4 4M4 16h12"/></svg><span>นำเข้าจากไฟล์</span></button>
+      </div>
     </nav>
     <div class="sb-foot">
       <p class="save-state" id="saveState">พร้อมใช้งาน</p>
@@ -87,41 +89,43 @@
       </div>
     </div>
 
-    <div class="price-switch" id="priceSwitch">
-      <div class="ps-text">
-        <b>ซ่อนราคาบนหน้าร้าน</b>
-        <span id="priceSwitchHint">กำลังตรวจสอบสถานะ…</span>
+    <section class="shop-settings" aria-label="ตั้งค่าร้าน">
+      <h3 class="ss-title">ตั้งค่าร้าน</h3>
+      <div class="ss-grid">
+        <div class="ss-row price-switch" id="priceSwitch">
+          <div class="ps-text">
+            <b>ซ่อนราคาบนหน้าร้าน</b>
+            <details class="ss-more"><summary>รายละเอียด</summary><span id="priceSwitchHint">กำลังตรวจสอบสถานะ…</span></details>
+          </div>
+          <button type="button" class="switch" id="hidePricesBtn" role="switch" aria-checked="false" aria-label="ซ่อนราคาบนหน้าร้าน" disabled><i></i></button>
+        </div>
+        <div class="ss-row price-switch" id="orderSwitch">
+          <div class="ps-text">
+            <b>ปิดระบบสั่งทำ / ตะกร้า</b>
+            <details class="ss-more"><summary>รายละเอียด</summary><span id="orderSwitchHint">กำลังตรวจสอบสถานะ…</span></details>
+          </div>
+          <button type="button" class="switch" id="closeOrdersBtn" role="switch" aria-checked="false" aria-label="ปิดระบบสั่งทำและตะกร้า" disabled><i></i></button>
+        </div>
+        <div class="ss-row price-switch" id="freeMinBox">
+          <div class="ps-text">
+            <b>ยอดสั่งซื้อขั้นต่ำที่นัดรับฟรี</b>
+            <details class="ss-more"><summary>รายละเอียด</summary><span id="freeMinHint">กำลังตรวจสอบค่า…</span></details>
+          </div>
+          <div class="free-min-form">
+            <input type="number" id="freeMinInput" min="1" max="100000" step="1" inputmode="numeric" aria-label="ยอดสั่งซื้อขั้นต่ำที่นัดรับฟรี (บาท)" disabled>
+            <span>บาท</span>
+            <button type="button" class="btn btn-primary btn-sm" id="freeMinSaveBtn" disabled>บันทึก</button>
+          </div>
+        </div>
       </div>
-      <button type="button" class="switch" id="hidePricesBtn" role="switch" aria-checked="false" aria-label="ซ่อนราคาบนหน้าร้าน" disabled><i></i></button>
-    </div>
-
-    <div class="price-switch" id="orderSwitch">
-      <div class="ps-text">
-        <b>ปิดระบบสั่งทำ / ตะกร้า</b>
-        <span id="orderSwitchHint">กำลังตรวจสอบสถานะ…</span>
-      </div>
-      <button type="button" class="switch" id="closeOrdersBtn" role="switch" aria-checked="false" aria-label="ปิดระบบสั่งทำและตะกร้า" disabled><i></i></button>
-    </div>
-
-    <div class="price-switch" id="freeMinBox">
-      <div class="ps-text">
-        <b>ยอดสั่งซื้อขั้นต่ำที่นัดรับฟรี</b>
-        <span id="freeMinHint">กำลังตรวจสอบค่า…</span>
-      </div>
-      <div class="free-min-form">
-        <input type="number" id="freeMinInput" min="1" max="100000" step="1" inputmode="numeric" aria-label="ยอดสั่งซื้อขั้นต่ำที่นัดรับฟรี (บาท)" disabled>
-        <span>บาท</span>
-        <button type="button" class="btn btn-primary btn-sm" id="freeMinSaveBtn" disabled>บันทึก</button>
-      </div>
-    </div>
+    </section>
 
     <div class="card list-card" id="listCard">
       <div class="tabs-row" id="catChips"></div>
       <div class="list-tools">
+        <div class="lt-main">
         <div class="search-wrap"><input type="search" id="searchBox" placeholder="ค้นหาชื่อสินค้า หรือรหัส เช่น s05"></div>
         <select id="flowerFilter" class="bulk-select flower-filter" aria-label="กรองตามชนิดดอกไม้"></select>
-        <span class="list-meta" id="listMeta"></span>
-        <label class="grid-selall" id="gridSelAllWrap"><input type="checkbox" id="selAll2"><span>เลือกทั้งหมด</span></label>
         <div class="view-switch" role="group" aria-label="รูปแบบการแสดงสินค้า">
           <button type="button" class="vs-btn" id="viewGrid" data-view="grid" aria-pressed="true" title="มุมมองการ์ด">
             <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><rect x="2" y="2" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="11" y="2" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="2" y="11" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="11" y="11" width="7" height="7" rx="1.5" fill="currentColor"/></svg>
@@ -131,6 +135,11 @@
             <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><rect x="2" y="3" width="16" height="3" rx="1.2" fill="currentColor"/><rect x="2" y="8.5" width="16" height="3" rx="1.2" fill="currentColor"/><rect x="2" y="14" width="16" height="3" rx="1.2" fill="currentColor"/></svg>
             <span>รายการ</span>
           </button>
+        </div>
+        </div>
+        <div class="lt-sub">
+        <span class="list-meta" id="listMeta"></span>
+        <label class="grid-selall" id="gridSelAllWrap"><input type="checkbox" id="selAll2"><span>เลือกทั้งหมด</span></label>
         </div>
       </div>
       <div class="bulkbar" id="bulkBar" hidden>
@@ -158,25 +167,36 @@
   </main>
 
     <section class="editor-page" id="editorPage" hidden aria-label="แก้ไขสินค้า">
+      <div class="ed-sticky">
       <div class="ed-bar">
         <button class="icon-btn ed-back" id="editorClose" aria-label="กลับไปรายการสินค้า" title="กลับไปรายการสินค้า">←</button>
         <div class="ed-title">
           <h2 id="editorTitle">แก้ไขสินค้า</h2>
           <p class="drawer-sub" id="editorSub"></p>
+          <span class="ed-dirty" id="edDirty" hidden>● ยังไม่ได้บันทึก</span>
         </div>
         <button class="btn btn-ghost" id="cancelBtn">ยกเลิก</button>
         <button class="btn btn-primary" id="saveBtn">บันทึกสินค้า</button>
+      </div>
+      <nav class="ed-jump" id="edJump" aria-label="ข้ามไปยังส่วนต่างๆ">
+        <button type="button" data-jump="cardMain" class="is-active">ข้อมูลสินค้า</button>
+        <button type="button" data-jump="cardPrice">ตัวแปร / ราคา</button>
+        <button type="button" data-jump="cardAddons">ของเสริม</button>
+        <button type="button" data-jump="cardShip">ค่าส่ง</button>
+        <button type="button" data-jump="cardMedia">รูปสินค้า</button>
+        <button type="button" data-jump="cardReviews">รูปรีวิว</button>
+      </nav>
       </div>
       <p class="editor-problem" id="editorProblem" hidden></p>
 
       <div class="ed-grid" id="editorBody">
         <div class="ed-main">
-          <div class="ed-card"><div class="card-head"><h3>ข้อมูลสินค้า</h3></div><div class="card-body" id="panelMain"></div></div>
-          <div class="ed-card"><div class="card-head"><h3>ตัวแปร</h3><small id="sumPrice"></small></div><div class="card-body" id="panelPrice"></div></div>
-          <div class="ed-card"><div class="card-head"><h3>ของเสริม</h3><small id="sumAddons"></small></div><div class="card-body" id="panelAddons"></div></div>
-          <div class="ed-card"><div class="card-head"><h3>ค่าส่ง (ดูเองในร้าน)</h3><small id="sumShip"></small></div><div class="card-body" id="panelShip"></div></div>
-          <div class="ed-card"><div class="card-head"><h3>รูปสินค้า</h3><small id="sumMedia"></small></div><div class="card-body" id="panelMedia"></div></div>
-          <div class="ed-card"><div class="card-head"><h3>รูปรีวิวลูกค้า</h3><small id="sumReviews"></small></div><div class="card-body" id="panelReviews"></div></div>
+          <div class="ed-card" id="cardMain"><div class="card-head"><h3>ข้อมูลสินค้า</h3></div><div class="card-body" id="panelMain"></div></div>
+          <div class="ed-card" id="cardPrice"><div class="card-head"><h3>ตัวแปร</h3><small id="sumPrice"></small></div><div class="card-body" id="panelPrice"></div></div>
+          <details class="ed-card ed-fold" id="cardAddons"><summary class="card-head"><h3>ของเสริม</h3><small id="sumAddons"></small></summary><div class="card-body" id="panelAddons"></div></details>
+          <details class="ed-card ed-fold" id="cardShip"><summary class="card-head"><h3>ค่าส่ง (ดูเองในร้าน)</h3><small id="sumShip"></small></summary><div class="card-body" id="panelShip"></div></details>
+          <div class="ed-card" id="cardMedia"><div class="card-head"><h3>รูปสินค้า</h3><small id="sumMedia"></small></div><div class="card-body" id="panelMedia"></div></div>
+          <details class="ed-card ed-fold" id="cardReviews"><summary class="card-head"><h3>รูปรีวิวลูกค้า</h3><small id="sumReviews"></small></summary><div class="card-body" id="panelReviews"></div></details>
         </div>
         <div class="ed-side">
           <div class="ed-card" id="posterCard">
