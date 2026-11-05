@@ -21,7 +21,8 @@ let ordersClosed = false; // สวิตช์ "ปิดระบบสั่�
 let pricesHidden = false; // สวิตช์ "ซ่อนราคาบนหน้าร้าน" (เก็บในเอกสาร catalog/products ช่อง hidePrices)
 let draft = null;        // สินค้าที่กำลังแก้ไขอยู่
 let draftIndex = -1;     // -1 = สินค้าใหม่
-let filterCat = 'ทั้งหมด';
+let filterCat = 'ทั้งหมด';   // หมวดหมู่ ('ทั้งหมด' หรือชื่อหมวด)
+let filterStatus = '';      // สถานะ: '' = ทั้งหมด · '__fix__' ต้องแก้ไข · '__multi__' มีหลายแบบ · '__hidden__' ซ่อนอยู่ (ใช้ร่วมกับหมวดหมู่ได้)
 let filterFlower = '';   // '' = ทุกชนิด · '__none__' = ช่อดอกไม้ที่ยังไม่ระบุชนิด · '__off__' = ชนิดนอกรายการหน้าร้าน · อื่นๆ = ชื่อชนิด
 let searchTerm = '';
 // มุมมองสินค้า: 'grid' (การ์ดเหมือนหน้าร้าน — ค่าเริ่มต้น) หรือ 'list' (ตาราง) จำค่าที่เลือกไว้ในเบราว์เซอร์
@@ -73,7 +74,7 @@ function flowerMatchesFilter(p, f){
   return String(p.flowerType ?? '').trim() === f;
 }
 // ตัวเลือก "ขนาด/ป้ายกำกับ" ของแต่ละหมวด — ค่าด้านล่างเป็นค่าเริ่มต้น ใช้เมื่อยังไม่เคยแก้ในเมนู
-// "⋯ เพิ่มเติม › จัดการหมวดหมู่ / ชนิดดอกไม้ / ขนาด" (ถ้าแก้ในเมนูแล้ว ระบบใช้ค่าที่บันทึกใน Firestore แทน
+// "เมนูซ้าย › หมวดหมู่ / ชนิด / ขนาด" (ถ้าแก้ในเมนูแล้ว ระบบใช้ค่าที่บันทึกใน Firestore แทน
 // และหน้าร้านอ่านชุดเดียวกัน ไม่ต้องแก้โค้ดสองฝั่งอีก) ตัวแปรนี้ถูกเปลี่ยนค่าในที่เดิมโดย applyShopOptions
 const CATEGORY_SIZE_TAGS = {
   'ช่อดอกไม้': ['เล็ก', 'กลาง', 'ใหญ่', 'ใส่เงิน'],
@@ -412,6 +413,19 @@ async function saveCatalog(successMsg){
 
 /* ───────────────── สวิตช์ซ่อนราคาหน้าร้าน ───────────────── */
 
+/* ───── ตั้งค่าร้าน: แถบสถานะบนหน้ารายการ + หน้าต่างตั้งค่า (สวิตช์/ช่องยอดนัดรับฟรีเดิมย้ายเข้าไปอยู่ในหน้าต่างนี้ ทำงานเหมือนเดิมทุกอย่าง) ───── */
+function renderSettingsStrip(){
+  const strip = $('settingsStrip');
+  if(!strip) return;
+  strip.hidden = false;
+  const set = (id, text, warn) => { const el = $(id); el.textContent = text; el.classList.toggle('is-warn', !!warn); };
+  set('ssPrice', pricesHidden ? 'ราคา: ซ่อนอยู่' : 'ราคา: แสดง', pricesHidden);
+  set('ssOrder', (ordersClosed || pricesHidden) ? 'สั่งซื้อ: ปิดอยู่' : 'สั่งซื้อ: เปิด', ordersClosed || pricesHidden);
+  set('ssFree', `นัดรับฟรี ${Number(freePickupMin).toLocaleString('en-US')} บาทขึ้นไป`, false);
+}
+function openSettingsModal(){ $('settingsScrim').hidden = false; }
+function closeSettingsModal(){ $('settingsScrim').hidden = true; }
+
 function applyPricesHiddenUI(ready){
   const btn = $('hidePricesBtn');
   $('priceSwitch').classList.toggle('is-on', pricesHidden);
@@ -422,6 +436,7 @@ function applyPricesHiddenUI(ready){
     ? 'เปิดอยู่ — หน้าร้านไม่แสดงราคา และปิดตะกร้า/การสั่งซื้อ ลูกค้าต้องแคปหน้าจอแล้วทักเพจ (ปุ่มภาพแคตตาล็อกถูกซ่อนไว้)'
     : 'ปิดอยู่ — หน้าร้านแสดงราคาตามปกติ';
   applyOrdersClosedUI(ready);
+  renderSettingsStrip();
 }
 
 /* ───────────────── สวิตช์ปิดระบบสั่งทำ/ตะกร้า (ยังแสดงราคา) ───────────────── */
@@ -441,6 +456,7 @@ function applyOrdersClosedUI(ready){
     if(pricesHidden) hint += ' (ตอนนี้ซ่อนราคาอยู่ จึงปิดตะกร้า/การสั่งซื้อไปพร้อมกันแล้ว)';
   }
   $('orderSwitchHint').textContent = hint;
+  renderSettingsStrip();
 }
 
 async function toggleOrdersClosed(){
@@ -488,6 +504,7 @@ function applyFreeMinUI(ready){
   inp.value = String(freePickupMin);
   if(ready){ inp.disabled = false; $('freeMinSaveBtn').disabled = false; }
   $('freeMinHint').textContent = `ตอนนี้นัดรับฟรีเมื่อสั่งครบ ${freePickupMin.toLocaleString('en-US')} บาทขึ้นไป — ใช้ทั้งในตะกร้าหน้าร้าน การคิดค่าส่ง และภาพแคตตาล็อก`;
+  renderSettingsStrip();
 }
 
 async function saveFreeMin(){
@@ -680,7 +697,6 @@ function cardHtml(p, i, filtering){
   const rs = readyStateOf(p);
   const fs = flowerStateOf(p);
   const warns = [];
-  if(pi.text === '—') warns.push('<span class="tag tag-warn">ยังไม่มีราคา</span>');
   if(!mainImageOf(p)) warns.push('<span class="tag tag-warn">ยังไม่มีรูป</span>');
   if(fs === 'off') warns.push(`<span class="tag tag-warn">⚠ ${esc(String(p.flowerType).trim())}</span>`);
   if(fs === 'none') warns.push('<span class="tag tag-warn">ยังไม่ระบุชนิด</span>');
@@ -730,9 +746,10 @@ function visibleProducts(){
   return catalog
     .map((p, i) => ({ p, i }))
     // สินค้าที่ซ่อนอยู่จะโผล่เฉพาะแท็บ "ซ่อนอยู่" ส่วนแท็บอื่นเห็นแต่สินค้าที่ยังขาย
-    .filter(({ p }) => filterCat === '__hidden__' ? !!p.hidden : !p.hidden)
-    .filter(({ p }) => filterCat === 'ทั้งหมด' || filterCat === '__hidden__' ||
-      (filterCat === '__fix__' ? needsFix(p) : filterCat === '__multi__' ? isMulti(p) : p.cat === filterCat))
+    .filter(({ p }) => filterStatus === '__hidden__' ? !!p.hidden : !p.hidden)
+    .filter(({ p }) => filterStatus !== '__fix__' || needsFix(p))
+    .filter(({ p }) => filterStatus !== '__multi__' || isMulti(p))
+    .filter(({ p }) => filterCat === 'ทั้งหมด' || p.cat === filterCat)
     .filter(({ p }) => !q ||
       String(p.name || '').toLowerCase().includes(q) ||
       String(p.id || '').toLowerCase().includes(q) ||
@@ -747,9 +764,9 @@ function renderBulk(rows){
   const vis = rows.map(r => r.i);
   const all = vis.length > 0 && vis.every(i => selected.has(i));
   const some = !all && vis.some(i => selected.has(i));
-  ['selAll', 'selAll2'].forEach(id => { $(id).checked = all; $(id).indeterminate = some; });
-  $('bulkHide').hidden = filterCat === '__hidden__';
-  $('bulkUnhide').hidden = filterCat !== '__hidden__';
+  ['selAll2'].forEach(id => { $(id).checked = all; $(id).indeterminate = some; });
+  $('bulkHide').hidden = filterStatus === '__hidden__';
+  $('bulkUnhide').hidden = filterStatus !== '__hidden__';
   updateCatalogBtn(rows);
 }
 
@@ -759,21 +776,29 @@ function renderList(){
   const fixCount = catalog.filter(needsFix).length;
   const multiCount = catalog.filter(p => !p.hidden && isMulti(p)).length;
   const hiddenCount = catalog.filter(p => p.hidden).length;
-  if(filterCat === '__fix__' && !fixCount) filterCat = 'ทั้งหมด';
-  if(filterCat === '__multi__' && !multiCount) filterCat = 'ทั้งหมด';
-  if(filterCat === '__hidden__' && !hiddenCount) filterCat = 'ทั้งหมด';
-  if(!['ทั้งหมด', '__fix__', '__multi__', '__hidden__'].includes(filterCat) && !allCats().includes(filterCat)) filterCat = 'ทั้งหมด';
-  // กลุ่มสินค้าที่กำลังดูอยู่ (แท็บซ่อนอยู่ = เฉพาะที่ซ่อน, แท็บอื่น = เฉพาะที่ยังขาย)
-  const pool = catalog.filter(p => filterCat === '__hidden__' ? p.hidden : !p.hidden);
+  if(filterStatus === '__fix__' && !fixCount) filterStatus = '';
+  if(filterStatus === '__multi__' && !multiCount) filterStatus = '';
+  if(filterStatus === '__hidden__' && !hiddenCount) filterStatus = '';
+  if(filterCat !== 'ทั้งหมด' && !allCats().includes(filterCat)) filterCat = 'ทั้งหมด';
+  // กลุ่มสินค้าที่กำลังดูอยู่ (สถานะ "ซ่อนอยู่" = เฉพาะที่ซ่อน, อย่างอื่น = เฉพาะที่ยังขาย)
+  const pool = catalog.filter(p => filterStatus === '__hidden__' ? p.hidden : !p.hidden);
 
-  const tabs = [['ทั้งหมด', 'ทั้งหมด']];
-  if(fixCount) tabs.push(['__fix__', `ต้องแก้ไข ${fixCount}`]);
-  if(multiCount) tabs.push(['__multi__', `มีหลายแบบ ${multiCount}`]);
-  allCats().slice(1).forEach(c => tabs.push([c, c]));
-  if(hiddenCount) tabs.push(['__hidden__', `ซ่อนอยู่ ${hiddenCount}`]);
-  $('catChips').innerHTML = tabs.map(([k, l]) =>
-    `<button class="chip${k === filterCat ? ' is-active' : ''}${k === '__fix__' ? ' is-fix' : ''}${k === '__hidden__' ? ' is-hiddentab' : ''}" data-cat="${esc(k)}">${esc(l)}</button>`
+  // แท็บ = หมวดหมู่อย่างเดียว · สถานะ (ต้องแก้ไข/มีหลายแบบ/ซ่อนอยู่) ย้ายไปอยู่ในตัวกรอง
+  $('catChips').innerHTML = allCats().map(c =>
+    `<button class="chip${c === filterCat ? ' is-active' : ''}" data-cat="${esc(c)}">${esc(c)}</button>`
   ).join('');
+  const statusOpts = [['', 'ทุกสถานะ']];
+  if(fixCount) statusOpts.push(['__fix__', `⚠ ต้องแก้ไข (${fixCount})`]);
+  if(multiCount) statusOpts.push(['__multi__', `มีหลายแบบ (${multiCount})`]);
+  if(hiddenCount) statusOpts.push(['__hidden__', `ซ่อนอยู่ (${hiddenCount})`]);
+  $('statusFilter').innerHTML = statusOpts.map(([v, l]) => `<option value="${esc(v)}"${v === filterStatus ? ' selected' : ''}>${esc(l)}</option>`).join('');
+  $('statusFilter').classList.toggle('is-active', !!filterStatus);
+  $('statusFilter').hidden = statusOpts.length < 2;
+  // คำเตือน "ต้องแก้ไข" ยังเห็นชัดอยู่ข้างจำนวนรายการ (กดเพื่อกรอง/กดอีกครั้งเพื่อล้าง)
+  const fp = $('fixPill');
+  fp.hidden = !fixCount;
+  fp.textContent = filterStatus === '__fix__' ? `⚠ ต้องแก้ไข ${fixCount} · ล้างตัวกรอง` : `⚠ ต้องแก้ไข ${fixCount}`;
+  fp.classList.toggle('is-active', filterStatus === '__fix__');
 
   const cats = catChoices();
   $('bulkCat').innerHTML = '<option value="">เปลี่ยนหมวดหมู่เป็น…</option>' +
@@ -794,7 +819,7 @@ function renderList(){
   $('flowerFilter').classList.toggle('is-active', !!filterFlower);
 
   const rows = visibleProducts();
-  const filtering = filterCat !== 'ทั้งหมด' || !!searchTerm.trim() || !!filterFlower;
+  const filtering = filterCat !== 'ทั้งหมด' || !!filterStatus || !!searchTerm.trim() || !!filterFlower;
 
   $('emptyState').hidden = catalog.length > 0;
   $('listCard').hidden = !catalog.length;
@@ -804,8 +829,8 @@ function renderList(){
   if(!rows.length){
     $('productList').innerHTML =
       (!pool.length && hiddenCount
-        ? '<div class="empty"><p class="empty-title">ตอนนี้ไม่มีสินค้าที่ขายอยู่</p><p>สินค้าทั้งหมดถูกซ่อนไว้ ดูและเลิกซ่อนได้ที่แท็บ “ซ่อนอยู่”</p></div>'
-        : '<div class="empty"><p class="empty-title">ไม่พบสินค้าที่ค้นหา</p><p>ลองเปลี่ยนคำค้นหรือเลือกแท็บอื่น</p></div>');
+        ? '<div class="empty"><p class="empty-title">ตอนนี้ไม่มีสินค้าที่ขายอยู่</p><p>สินค้าทั้งหมดถูกซ่อนไว้ ดูและเลิกซ่อนได้ที่ตัวกรอง “สถานะ: ซ่อนอยู่”</p></div>'
+        : '<div class="empty"><p class="empty-title">ไม่พบสินค้าที่ค้นหา</p><p>ลองเปลี่ยนคำค้นหรือเลือกหมวดอื่น</p></div>');
     renderBulk(rows);
     return;
   }
@@ -820,7 +845,6 @@ function renderList(){
     const pi = priceInfo(p);
     const warns = [];
     if(p.hidden) warns.push('<span class="tag tag-hidden">ซ่อนอยู่</span>');
-    if(pi.text === '—') warns.push('<span class="tag tag-warn">ยังไม่มีราคา</span>');
     if(!mainImageOf(p)) warns.push('<span class="tag tag-warn">ยังไม่มีรูป</span>');
     const fs = flowerStateOf(p);
     const flowerHtml = fs === 'ok' ? `<span class="row-flower">🌸 ${esc(String(p.flowerType).trim())}</span>`
@@ -1108,7 +1132,7 @@ function renderMainPanel(){
         <span>ราคา (บาท)</span>
         <input type="number" min="0" step="1" data-bind="price" data-type="number" value="${num(draft.price) || ''}">
       </label>
-      <p class="field-hint">${(draft.colors || []).length ? 'ราคานี้ใช้กับทุกสีในการ์ด “ตัวแปร”' : 'ถ้าสินค้ามีหลายแบบที่ราคาต่างกัน ให้เพิ่มตัวแปรในการ์ดถัดไป แล้วตั้งราคาที่นั่นแทน'}</p>`;
+      <p class="field-hint">${(draft.colors || []).length ? 'ราคานี้ใช้กับทุกสีในการ์ด “ตัวแปร”' : 'ถ้ามีหลายแบบที่ราคาต่างกัน ให้ใช้การ์ด “ตัวแปร” แล้วตั้งราคาที่นั่นแทน'}</p>`;
   }else{
     const shown = mode === 'sizes' ? (num(draft.price) || Math.min(...(draft.sizes || []).map(s => num(s.price)).filter(Boolean), Infinity)) : 0;
     priceField = `
@@ -3901,6 +3925,8 @@ $('logoutBtn').addEventListener('click', async () => {
 
 $('searchBox').addEventListener('input', e => { searchTerm = e.target.value; renderList(); });
 $('flowerFilter').addEventListener('change', e => { filterFlower = e.target.value; renderList(); });
+$('statusFilter').addEventListener('change', e => { filterStatus = e.target.value; renderList(); });
+$('fixPill').addEventListener('click', () => { filterStatus = filterStatus === '__fix__' ? '' : '__fix__'; renderList(); });
 
 $('catChips').addEventListener('click', e => {
   const chip = e.target.closest('[data-cat]');
@@ -4089,7 +4115,7 @@ $('productList').addEventListener('change', e => {
   if(holder) holder.classList.toggle('is-selected', el.checked);
   renderBulk(visibleProducts());
 });
-['selAll', 'selAll2'].forEach(id => $(id).addEventListener('change', e => {
+['selAll2'].forEach(id => $(id).addEventListener('change', e => {
   visibleProducts().forEach(({ i }) => { if(e.target.checked) selected.add(i); else selected.delete(i); });
   renderList();
 }));
@@ -4237,7 +4263,6 @@ drawerBody.addEventListener('input', updateSummaries);
 drawerBody.addEventListener('change', updateSummaries);
 
 $('editorClose').addEventListener('click', closeEditor);
-$('cancelBtn').addEventListener('click', closeEditor);
 $('saveBtn').addEventListener('click', saveDraft);
 
 $('confirmYes').addEventListener('click', () => closeConfirm(true));
@@ -4248,6 +4273,7 @@ document.addEventListener('keydown', e => {
   if(e.key !== 'Escape') return;
   if(!$('confirmScrim').hidden) closeConfirm(false);
   else if(!$('revScrim').hidden) closeReviewsModal();
+  else if(!$('settingsScrim').hidden) closeSettingsModal();
   else if(!$('siteScrim').hidden) closeSiteModal();
   else if(!$('optScrim').hidden) closeOptionsModal();
   else if(!$('imgScrim').hidden) closeImgModal();
@@ -4586,6 +4612,9 @@ async function saveSite(){
 
 /* ───── เหตุการณ์ ───── */
 $('siteBtn').addEventListener('click', openSiteModal);
+$('settingsBtn').addEventListener('click', openSettingsModal);
+['ssPrice', 'ssOrder', 'ssFree'].forEach(id => $(id).addEventListener('click', openSettingsModal));
+$('settingsScrim').addEventListener('click', e => { if(e.target === $('settingsScrim')) closeSettingsModal(); });
 $('siteCancel').addEventListener('click', () => closeSiteModal());
 $('siteSave').addEventListener('click', saveSite);
 $('siteTabs').addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if(b && site){ site.tab = b.dataset.tab; renderSiteModal(); } });
@@ -4653,11 +4682,12 @@ boot();
     const el = $(b.dataset.jump); if(!el) return;
     if(el.tagName === 'DETAILS') el.open = true;
     setActive(b.dataset.jump);
+    lockUntil = Date.now() + 1100; // กันแถบเด้งกลับระหว่างเลื่อน (การ์ดท้ายๆ ที่หน้าเลื่อนไม่ถึงบนสุด)
     el.scrollIntoView({ behavior:'smooth', block:'start' });
   });
-  let raf = 0;
+  let raf = 0, lockUntil = 0;
   window.addEventListener('scroll', () => {
-    if(page.hidden || raf) return;
+    if(page.hidden || raf || Date.now() < lockUntil) return;
     raf = requestAnimationFrame(() => {
       raf = 0;
       let cur = ids[0];
@@ -4678,4 +4708,12 @@ boot();
     x.addEventListener('click', () => { const b = $(map[scrimId]); if(b) b.click(); });
     card.appendChild(x);
   });
+  // หน้าต่างตั้งค่าร้านไม่มีปุ่มท้ายหน้าต่าง: ✕ ปิดเอง
+  const sc = $('settingsScrim') && $('settingsScrim').querySelector('.vm-card');
+  if(sc){
+    const x = document.createElement('button');
+    x.type = 'button'; x.className = 'vm-x'; x.setAttribute('aria-label', 'ปิด'); x.textContent = '✕';
+    x.addEventListener('click', closeSettingsModal);
+    sc.appendChild(x);
+  }
 })();

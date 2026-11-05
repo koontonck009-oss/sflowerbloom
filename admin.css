@@ -746,7 +746,6 @@ body{ background:var(--bg); color:var(--ink); }
   .ed-grid{ grid-template-columns:1fr; }
   .ed-side{ position:static; }
   .ed-title h2{ font-size:17px; }
-  #cancelBtn{ display:none; }
   .pv{ max-width:260px; }
 }
 
@@ -854,7 +853,7 @@ body{ background:var(--bg); color:var(--ink); }
 
 /* ตอนซ่อนราคา: ไม่ให้สร้างภาพแคตตาล็อก (ภาพมีราคา) */
 body.prices-off #catalogBtn,
-body.prices-off #posterCard{ display:none !important; }
+body.prices-off #posterOneBtn{ display:none !important; }
 /* ───── การ์ดตัวแปร / ช่องที่ล็อกเมื่อมีตัวแปร ───── */
 .is-locked{ opacity:.6; }
 .is-locked input:disabled{ cursor:not-allowed; background:#f3f0f2; }
@@ -1373,11 +1372,6 @@ body.vm-chip-dragging, body.vm-chip-dragging *{ cursor:grabbing !important; user
    ========================================================= */
 
 /* ── การ์ดตั้งค่าร้าน (รวมสวิตช์ 3 อันไว้ในกล่องเดียว) ── */
-.shop-settings{
-  margin:0 0 16px; padding:14px 16px 16px;
-  background:var(--panel); border-radius:var(--radius); box-shadow:var(--shadow);
-}
-.ss-title{ margin:0 0 10px; font-size:13px; font-weight:600; letter-spacing:.02em; color:var(--ink-2); }
 .ss-grid{ display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:12px; }
 .ss-row.price-switch{
   margin:0; padding:12px 14px; gap:12px; box-shadow:none;
@@ -1400,8 +1394,7 @@ body.vm-chip-dragging, body.vm-chip-dragging *{ cursor:grabbing !important; user
 #freeMinBox .free-min-form input{ width:84px; padding:6px 8px; }
 @media (max-width:1100px){ .ss-grid{ grid-template-columns:1fr; gap:8px; } }
 @media (max-width:640px){
-  .shop-settings{ padding:12px; }
-  #freeMinBox.ss-row{ flex-direction:row; align-items:center; }
+    #freeMinBox.ss-row{ flex-direction:row; align-items:center; }
 }
 
 /* ── แถบค้นหา/กรอง แบ่งเป็น 2 แถว ── */
@@ -1424,9 +1417,6 @@ body.vm-chip-dragging, body.vm-chip-dragging *{ cursor:grabbing !important; user
 
 .sb-item.sb-pop::after{ content:"›"; margin-left:auto; font-size:18px; line-height:1; color:var(--ink-3); }
 .sb-item.sb-pop:hover::after{ color:var(--ink-2); }
-.sb-danger{ margin-top:auto; display:flex; flex-direction:column; }
-.sb-danger .sb-label{ color:var(--danger); opacity:.8; margin-top:6px; }
-.sb-danger .sb-item.is-danger{ border:1px dashed #E7B4B4; }
 
 /* ── เมนูซ้าย: บีบให้พอดีจอ ไม่ต้องเลื่อน ── */
 .sidebar{ gap:2px; padding:12px 10px 10px; height:100vh; height:100dvh; }
@@ -1436,8 +1426,6 @@ body.vm-chip-dragging, body.vm-chip-dragging *{ cursor:grabbing !important; user
 .sb-nav{ gap:1px; }
 .sb-label{ margin:10px 10px 2px; line-height:1.2; }
 .sb-item{ padding:7px 11px; line-height:1.25; gap:10px; }
-.sb-danger{ padding-top:6px; gap:0; }
-.sb-danger .sb-item.is-danger{ padding:6px 11px; font-size:13.5px; }
 .sb-foot{ padding-top:6px; gap:1px; }
 .sb-foot .save-state{ padding:0 11px 4px; line-height:1.3; }
 @media (max-height:640px){
@@ -1510,3 +1498,53 @@ body.vm-chip-dragging, body.vm-chip-dragging *{ cursor:grabbing !important; user
 #freeMinBox.ss-row{ flex-wrap:wrap; }
 #freeMinBox .ps-text{ flex:1 1 100%; }
 #freeMinBox .free-min-form{ justify-content:flex-start; }
+
+/* ───── รอบ 1 จัด UI ใหม่ ───── */
+.set-strip{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:0 0 14px; }
+.set-chip{ border:1px solid var(--line); background:var(--panel); border-radius:999px; padding:6px 13px; font:inherit; font-size:13px; font-weight:500; color:var(--ink-2); cursor:pointer; }
+.set-chip:hover{ background:var(--line-soft); color:var(--ink); }
+.set-chip.is-warn{ background:var(--warn-soft); border-color:#E9B88F; color:var(--warn); }
+.settings-card .ss-grid{ grid-template-columns:1fr; }
+.settings-card .vm-body{ min-height:0; padding:14px 24px 18px; overflow-y:auto; }
+.fix-pill{ border:1px solid #E9B88F; background:var(--warn-soft); color:var(--warn); border-radius:999px; padding:3px 11px; font:inherit; font-size:12.5px; font-weight:500; cursor:pointer; white-space:nowrap; }
+.fix-pill.is-active{ background:var(--warn); border-color:var(--warn); color:#fff; }
+.list-tools .grid-selall, .lt-sub .grid-selall{ display:inline-flex; }
+.sb-data{ margin-top:auto; display:flex; flex-direction:column; padding-top:6px; }
+.sb-data .sb-label{ margin:6px 10px 2px; }
+.sb-data .sb-item.is-danger{ margin-top:2px; }
+.lt-sub{ flex-wrap:wrap; }
+@media (max-width:760px){ .lt-sub .grid-selall{ margin-left:auto; } }
+.settings-card .ss-more summary{ display:none; }
+.settings-card .ss-more > span{ display:block; margin-top:2px; }
+.sb-data .sb-item.is-danger{ border:1px dashed #E7B4B4; padding:6px 11px; font-size:13.5px; }
+@media (max-width:760px){
+  .page-head{ margin-bottom:10px; }
+  .set-strip{ flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; margin-bottom:10px; }
+  .set-strip::-webkit-scrollbar{ display:none; }
+  .set-chip{ flex:none; white-space:nowrap; }
+}
+
+/* ───── รอบ 2: หน้าแก้ไขสินค้า ───── */
+.ed-bar .ed-poster{ flex:none; white-space:nowrap; }
+@media (max-width:560px){ .ed-poster-txt{ display:none; } .ed-bar .ed-poster{ padding-left:12px; padding-right:12px; } }
+
+/* ───── รอบ 3: ขนาดหน้าต่างป๊อปอัป ───── */
+.vm-card{ max-height:92vh; max-height:92dvh; }
+.vm-card.site-card{ width:min(880px,100%); height:min(92vh,860px); height:min(92dvh,860px); }
+.vm-card.om-card:not(.site-card):not(.settings-card){ width:min(640px,100%); }
+.vm-card.rv-card{ height:min(92vh,860px); height:min(92dvh,860px); max-height:92dvh; }
+@media (max-width:640px){
+  /* หน้าต่างงานหนัก (ตัวแปร / หมวดหมู่ / แต่งหน้าร้าน / รีวิว) เต็มจอบนมือถือ */
+  #varScrim, #optScrim, #siteScrim, #revScrim{ padding:0; align-items:stretch; }
+  #varScrim .vm-card, #optScrim .vm-card, #siteScrim .vm-card, #revScrim .vm-card{
+    width:100%; height:100vh; height:100dvh; max-height:none; border-radius:0;
+  }
+  #varScrim .vm-foot, #optScrim .vm-foot, #siteScrim .vm-foot, #revScrim .vm-foot{ padding-bottom:calc(10px + env(safe-area-inset-bottom, 0px)); }
+  /* หน้าต่างเล็ก (ตั้งค่าร้าน / รูปเพิ่มเติม) ชิดขอบน้อยลงและไม่สูงเกินจอ */
+  #settingsScrim, #imgScrim{ padding:12px; }
+}
+
+/* รอบลบของซ้ำ */
+.page-head{ justify-content:flex-end; }
+.page-head .page-actions{ margin-left:auto; }
+#sumPrice, #sumMedia{ display:none; }

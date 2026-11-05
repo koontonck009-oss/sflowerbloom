@@ -51,14 +51,16 @@
     <nav class="sb-nav">
       <a class="sb-item is-active" href="#" id="navProducts" aria-current="page"><svg class="sb-ico" viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7l7-4 7 4v8l-7 4-7-4V7z"/><path d="M3 7l7 4 7-4M10 11v8"/></svg><span>สินค้า</span></a>
       <span class="sb-label">หน้าร้านของลูกค้า</span>
+      <button type="button" class="sb-item sb-pop" id="settingsBtn" title="ซ่อนราคา ปิดระบบสั่งทำ และยอดนัดรับฟรี"><svg class="sb-ico" viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10" cy="10" r="2.6"/><path d="M10 2.5v2M10 15.5v2M2.5 10h2M15.5 10h2M4.7 4.7l1.4 1.4M13.9 13.9l1.4 1.4M4.7 15.3l1.4-1.4M13.9 6.1l1.4-1.4"/></svg><span>ตั้งค่าร้าน</span></button>
       <button type="button" class="sb-item sb-pop" id="siteBtn" title="แบนเนอร์ ป๊อปอัป ข้อความหน้าร้าน ชื่อ โลโก้ สี และ FAQ"><svg class="sb-ico" viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="4" width="15" height="12" rx="2"/><path d="M2.5 8h15M6 12h4"/></svg><span>แต่งหน้าร้าน</span></button>
       <button type="button" class="sb-item sb-pop" id="reviewsBtn" title="ผูกรูปรีวิวลูกค้ากับสินค้า ให้ไปโผล่ในแกลเลอรีของสินค้านั้น"><svg class="sb-ico" viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 2.5l2.3 4.7 5.2.7-3.8 3.6.9 5.1L10 14.1 5.4 16.6l.9-5.1L2.5 7.9l5.2-.7L10 2.5z"/></svg><span>รีวิวลูกค้า</span></button>
       <button type="button" class="sb-item sb-pop" id="optionsBtn" title="เพิ่ม แก้ชื่อ เรียงลำดับ หมวดหมู่ ชนิดดอกไม้ และขนาดของร้าน"><svg class="sb-ico" viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3h6l8 8-6 6-8-8V3z"/><circle cx="6.5" cy="6.5" r="1"/></svg><span>หมวดหมู่ / ชนิด / ขนาด</span></button>
       <span class="sb-label">เครื่องมือ</span>
       <button type="button" class="sb-item sb-pop" id="catalogBtn" title="ดาวน์โหลดภาพแคตตาล็อก (JPG)"><svg class="sb-ico" viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="14" height="14" rx="2"/><circle cx="7.5" cy="7.5" r="1.3"/><path d="M17 13l-4-4-7 8"/></svg><span id="catalogLabel">แคตตาล็อก</span></button>
-      <button type="button" class="sb-item" id="backupBtn" title="เก็บสำรองไว้เผื่อข้อมูลหาย"><svg class="sb-ico" viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3v10M6 9l4 4 4-4M4 16h12"/></svg><span>ดาวน์โหลดไฟล์สำรอง</span></button>
-      <div class="sb-danger">
-      <button type="button" class="sb-item is-danger" id="importBtn" title="สินค้าเดิมทั้งหมดจะถูกเขียนทับ"><svg class="sb-ico" viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13V3M6 7l4-4 4 4M4 16h12"/></svg><span>นำเข้าจากไฟล์</span></button>
+      <div class="sb-data">
+        <span class="sb-label">ข้อมูลสำรอง</span>
+        <button type="button" class="sb-item" id="backupBtn" title="เก็บสำรองไว้เผื่อข้อมูลหาย"><svg class="sb-ico" viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3v10M6 9l4 4 4-4M4 16h12"/></svg><span>ดาวน์โหลดไฟล์สำรอง</span></button>
+        <button type="button" class="sb-item is-danger" id="importBtn" title="สินค้าเดิมทั้งหมดจะถูกเขียนทับ"><svg class="sb-ico" viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13V3M6 7l4-4 4 4M4 16h12"/></svg><span>นำเข้าจากไฟล์</span></button>
       </div>
     </nav>
     <div class="sb-foot">
@@ -79,46 +81,17 @@
 
   <main class="page">
     <div class="page-head">
-      <div>
-        <h2>สินค้า</h2>
-        <p class="page-sub">เพิ่ม แก้ไข และจัดการสินค้าทั้งหมดของร้านในที่เดียว</p>
-      </div>
       <div class="page-actions">
         <button class="btn btn-primary" id="addBtn">+ เพิ่มสินค้า</button>
         <input type="file" id="importFile" accept=".json,application/json" hidden>
       </div>
     </div>
 
-    <section class="shop-settings" aria-label="ตั้งค่าร้าน">
-      <h3 class="ss-title">ตั้งค่าร้าน</h3>
-      <div class="ss-grid">
-        <div class="ss-row price-switch" id="priceSwitch">
-          <div class="ps-text">
-            <b>ซ่อนราคาบนหน้าร้าน</b>
-            <details class="ss-more"><summary>รายละเอียด</summary><span id="priceSwitchHint">กำลังตรวจสอบสถานะ…</span></details>
-          </div>
-          <button type="button" class="switch" id="hidePricesBtn" role="switch" aria-checked="false" aria-label="ซ่อนราคาบนหน้าร้าน" disabled><i></i></button>
-        </div>
-        <div class="ss-row price-switch" id="orderSwitch">
-          <div class="ps-text">
-            <b>ปิดระบบสั่งทำ / ตะกร้า</b>
-            <details class="ss-more"><summary>รายละเอียด</summary><span id="orderSwitchHint">กำลังตรวจสอบสถานะ…</span></details>
-          </div>
-          <button type="button" class="switch" id="closeOrdersBtn" role="switch" aria-checked="false" aria-label="ปิดระบบสั่งทำและตะกร้า" disabled><i></i></button>
-        </div>
-        <div class="ss-row price-switch" id="freeMinBox">
-          <div class="ps-text">
-            <b>ยอดสั่งซื้อขั้นต่ำที่นัดรับฟรี</b>
-            <details class="ss-more"><summary>รายละเอียด</summary><span id="freeMinHint">กำลังตรวจสอบค่า…</span></details>
-          </div>
-          <div class="free-min-form">
-            <input type="number" id="freeMinInput" min="1" max="100000" step="1" inputmode="numeric" aria-label="ยอดสั่งซื้อขั้นต่ำที่นัดรับฟรี (บาท)" disabled>
-            <span>บาท</span>
-            <button type="button" class="btn btn-primary btn-sm" id="freeMinSaveBtn" disabled>บันทึก</button>
-          </div>
-        </div>
-      </div>
-    </section>
+    <div class="set-strip" id="settingsStrip" aria-label="สถานะตั้งค่าร้าน" hidden>
+      <button type="button" class="set-chip" id="ssPrice"></button>
+      <button type="button" class="set-chip" id="ssOrder"></button>
+      <button type="button" class="set-chip" id="ssFree"></button>
+    </div>
 
     <div class="card list-card" id="listCard">
       <div class="tabs-row" id="catChips"></div>
@@ -126,6 +99,7 @@
         <div class="lt-main">
         <div class="search-wrap"><input type="search" id="searchBox" placeholder="ค้นหาชื่อสินค้า หรือรหัส เช่น s05"></div>
         <select id="flowerFilter" class="bulk-select flower-filter" aria-label="กรองตามชนิดดอกไม้"></select>
+        <select id="statusFilter" class="bulk-select flower-filter" aria-label="กรองตามสถานะสินค้า"></select>
         <div class="view-switch" role="group" aria-label="รูปแบบการแสดงสินค้า">
           <button type="button" class="vs-btn" id="viewGrid" data-view="grid" aria-pressed="true" title="มุมมองการ์ด">
             <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><rect x="2" y="2" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="11" y="2" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="2" y="11" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="11" y="11" width="7" height="7" rx="1.5" fill="currentColor"/></svg>
@@ -139,6 +113,7 @@
         </div>
         <div class="lt-sub">
         <span class="list-meta" id="listMeta"></span>
+        <button type="button" class="fix-pill" id="fixPill" hidden></button>
         <label class="grid-selall" id="gridSelAllWrap"><input type="checkbox" id="selAll2"><span>เลือกทั้งหมด</span></label>
         </div>
       </div>
@@ -153,7 +128,7 @@
         <button class="btn btn-ghost btn-sm" id="bulkClear">ยกเลิกการเลือก</button>
       </div>
       <div class="tbl-head">
-        <span class="sel-cell"><input type="checkbox" id="selAll" title="เลือกทั้งหมดที่แสดง"></span>
+        <span class="sel-cell"></span>
         <span></span><span></span>
         <span>สินค้า</span><span class="td-status">สถานะ</span><span class="td-price">ราคา</span><span class="td-cat">หมวดหมู่</span><span></span>
       </div>
@@ -162,7 +137,7 @@
 
     <div class="empty" id="emptyState" hidden>
       <p class="empty-title">ยังไม่มีสินค้าในระบบ</p>
-      <p>กด “⋯ เพิ่มเติม” แล้วเลือก “นำเข้าจากไฟล์” จากนั้นเลือก products.json เพื่อย้ายสินค้าทั้งหมดขึ้น Firestore ครั้งเดียวจบ</p>
+      <p>กด “นำเข้าจากไฟล์” ที่เมนูด้านซ้าย (ส่วน “ข้อมูลสำรอง”) จากนั้นเลือก products.json เพื่อย้ายสินค้าทั้งหมดขึ้น Firestore ครั้งเดียวจบ</p>
     </div>
   </main>
 
@@ -175,15 +150,15 @@
           <p class="drawer-sub" id="editorSub"></p>
           <span class="ed-dirty" id="edDirty" hidden>● ยังไม่ได้บันทึก</span>
         </div>
-        <button class="btn btn-ghost" id="cancelBtn">ยกเลิก</button>
+        <button class="btn btn-ghost ed-poster" id="posterOneBtn" title="โหลดภาพแคตตาล็อกของสินค้านี้ — ใช้ข้อมูลที่กำลังแก้อยู่ ไม่ต้องกดบันทึกก่อน ถ้ามีหลายสี/แบบจะได้เป็นไฟล์ ZIP"><span aria-hidden="true">⬇</span><span class="ed-poster-txt"> ภาพแคตตาล็อก</span></button>
         <button class="btn btn-primary" id="saveBtn">บันทึกสินค้า</button>
       </div>
       <nav class="ed-jump" id="edJump" aria-label="ข้ามไปยังส่วนต่างๆ">
         <button type="button" data-jump="cardMain" class="is-active">ข้อมูลสินค้า</button>
+        <button type="button" data-jump="cardMedia">รูปสินค้า</button>
         <button type="button" data-jump="cardPrice">ตัวแปร / ราคา</button>
         <button type="button" data-jump="cardAddons">ของเสริม</button>
         <button type="button" data-jump="cardShip">ค่าส่ง</button>
-        <button type="button" data-jump="cardMedia">รูปสินค้า</button>
         <button type="button" data-jump="cardReviews">รูปรีวิว</button>
       </nav>
       </div>
@@ -192,18 +167,13 @@
       <div class="ed-grid" id="editorBody">
         <div class="ed-main">
           <div class="ed-card" id="cardMain"><div class="card-head"><h3>ข้อมูลสินค้า</h3></div><div class="card-body" id="panelMain"></div></div>
+          <div class="ed-card" id="cardMedia"><div class="card-head"><h3>รูปสินค้า</h3><small id="sumMedia"></small></div><div class="card-body" id="panelMedia"></div></div>
           <div class="ed-card" id="cardPrice"><div class="card-head"><h3>ตัวแปร</h3><small id="sumPrice"></small></div><div class="card-body" id="panelPrice"></div></div>
           <details class="ed-card ed-fold" id="cardAddons"><summary class="card-head"><h3>ของเสริม</h3><small id="sumAddons"></small></summary><div class="card-body" id="panelAddons"></div></details>
           <details class="ed-card ed-fold" id="cardShip"><summary class="card-head"><h3>ค่าส่ง (ดูเองในร้าน)</h3><small id="sumShip"></small></summary><div class="card-body" id="panelShip"></div></details>
-          <div class="ed-card" id="cardMedia"><div class="card-head"><h3>รูปสินค้า</h3><small id="sumMedia"></small></div><div class="card-body" id="panelMedia"></div></div>
           <details class="ed-card ed-fold" id="cardReviews"><summary class="card-head"><h3>รูปรีวิวลูกค้า</h3><small id="sumReviews"></small></summary><div class="card-body" id="panelReviews"></div></details>
         </div>
         <div class="ed-side">
-          <div class="ed-card" id="posterCard">
-            <div class="card-head"><h3>ภาพแคตตาล็อก</h3></div>
-            <button class="btn btn-ghost btn-block" id="posterOneBtn">โหลดภาพแคตตาล็อกของสินค้านี้</button>
-            <p class="ed-hint">ใช้ข้อมูลที่กำลังแก้อยู่ ไม่ต้องกดบันทึกก่อน · ถ้ามีหลายสี/แบบจะได้เป็นไฟล์ ZIP</p>
-          </div>
           <div class="ed-card">
             <div class="card-head"><h3>ตัวอย่างที่ลูกค้าเห็น</h3></div>
             <div class="pv">
@@ -251,6 +221,42 @@
       <p class="vm-hint" id="optHint"></p>
       <button type="button" class="vm-btn" id="optCancel">ยกเลิก</button>
       <button type="button" class="vm-btn vm-save" id="optSave">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<!-- ตั้งค่าร้าน: ซ่อนราคา / ปิดระบบสั่งทำ / ยอดนัดรับฟรี (สวิตช์มีผลทันทีหลังยืนยัน) -->
+<div class="confirm-scrim" id="settingsScrim" hidden>
+  <div class="vm-card om-card settings-card" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+    <h3 class="vm-title" id="settingsTitle">ตั้งค่าร้าน</h3>
+    <div class="vm-body">
+      <div class="ss-grid">
+        <div class="ss-row price-switch" id="priceSwitch">
+          <div class="ps-text">
+            <b>ซ่อนราคาบนหน้าร้าน</b>
+            <details class="ss-more" open><summary>รายละเอียด</summary><span id="priceSwitchHint">กำลังตรวจสอบสถานะ…</span></details>
+          </div>
+          <button type="button" class="switch" id="hidePricesBtn" role="switch" aria-checked="false" aria-label="ซ่อนราคาบนหน้าร้าน" disabled><i></i></button>
+        </div>
+        <div class="ss-row price-switch" id="orderSwitch">
+          <div class="ps-text">
+            <b>ปิดระบบสั่งทำ / ตะกร้า</b>
+            <details class="ss-more" open><summary>รายละเอียด</summary><span id="orderSwitchHint">กำลังตรวจสอบสถานะ…</span></details>
+          </div>
+          <button type="button" class="switch" id="closeOrdersBtn" role="switch" aria-checked="false" aria-label="ปิดระบบสั่งทำและตะกร้า" disabled><i></i></button>
+        </div>
+        <div class="ss-row price-switch" id="freeMinBox">
+          <div class="ps-text">
+            <b>ยอดสั่งซื้อขั้นต่ำที่นัดรับฟรี</b>
+            <details class="ss-more" open><summary>รายละเอียด</summary><span id="freeMinHint">กำลังตรวจสอบค่า…</span></details>
+          </div>
+          <div class="free-min-form">
+            <input type="number" id="freeMinInput" min="1" max="100000" step="1" inputmode="numeric" aria-label="ยอดสั่งซื้อขั้นต่ำที่นัดรับฟรี (บาท)" disabled>
+            <span>บาท</span>
+            <button type="button" class="btn btn-primary btn-sm" id="freeMinSaveBtn" disabled>บันทึก</button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
