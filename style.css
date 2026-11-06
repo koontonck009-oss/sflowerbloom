@@ -2634,6 +2634,9 @@ a:focus-visible, button:focus-visible, summary:focus-visible,
 
   /* แผงเมนู = ตัวกรองเดิม เลื่อนลงจากบนใต้แถบบน */
   html.menu-open .search-cart-bar{z-index:1202;}
+  /* ล็อกการเลื่อนที่ html (ไม่ใช่ body) — html มี overflow-x:hidden อยู่ ถ้าล็อกที่ body แถบ sticky จะหลุดเลื่อนหายไปกับหน้า */
+  html.menu-open{overflow:hidden;}
+  html.menu-open .search-cart-bar.bar-hidden{transform:none; transition:none;} /* เปิดเมนูแล้วแถบบนต้องอยู่เสมอ */
   #filterSheet{
     top:var(--menu-top, 56px); bottom:auto; left:0; right:0;
     width:auto; height:auto; border-right:none; /* ล้างค่าจากแผงเลื่อนเข้าจากซ้ายเดิม (width:92vw / height:100dvh) */
@@ -2647,4 +2650,43 @@ a:focus-visible, button:focus-visible, summary:focus-visible,
   #filterSheet .filter-sheet-close{display:none;} /* ปิดด้วย ✕ บนแถบบนแทน (ไม่ให้ซ้ำ) */
   #filterSheet .filter-sheet-header{padding:10px 14px 8px;} /* อยู่ใต้แถบบนแล้ว ไม่ต้องเว้น safe-area ด้านบนซ้ำ */
   #filterSheet .filter-sheet-footer{padding-bottom:12px;}
+}
+
+/* =========================================================
+   มือถือ: โซน "สินค้าแนะนำ" เป็นแถวการ์ดเลื่อนข้าง (คอมยังเป็นกริดเดิม)
+   ลบบล็อกนี้ทั้งหมดเพื่อย้อนกลับเป็นกริดสองคอลัมน์ได้ทันที
+   ========================================================= */
+@media (max-width:859px){
+  #catalog .grid.featured-row{
+    display:flex; grid-template-columns:none; gap:8px;
+    overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch;
+    scroll-snap-type:x proximity; overscroll-behavior-x:contain;
+    scrollbar-width:none;
+    margin:0 -6px; padding:2px 6px 10px; /* ชิดขอบจอ แต่การ์ดใบแรกเริ่มตรงแนวเดียวกับหัวข้อ */
+    scroll-padding-left:6px;
+  }
+  #catalog .grid.featured-row::-webkit-scrollbar{display:none;}
+  #catalog .grid.featured-row > .card{
+    flex:0 0 44%; min-width:0; max-width:200px; scroll-snap-align:start;
+  }
+  /* ชื่อสินค้ายาวสุด 2 บรรทัด ให้การ์ดสูงเท่ากัน */
+  #catalog .grid.featured-row .card h4{
+    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+    min-height:2.6em;
+  }
+}
+
+/* =========================================================
+   รีวิวลูกค้า (มือถือ): สายพานไหลด้วย transform ให้เนียน ไม่กระตุก
+   รางการ์ด .reviews-track: คอม = display:contents (ไม่มีผลกับเลย์เอาต์เดิม) · มือถือ = เป็นกริด 2 แถวแทน .reviews-scroll
+   ลบบล็อกนี้ + คืนโค้ด startReviewBelt เดิมเพื่อย้อนกลับ
+   ========================================================= */
+.reviews-track{display:contents;}
+@media (max-width:859px){
+  .reviews-scroll{display:block;}
+  .reviews-track{
+    display:grid; width:max-content;
+    grid-template-rows:repeat(2, var(--rv-s)); grid-auto-flow:column; grid-auto-columns:var(--rv-s);
+    gap:var(--rv-gap);
+  }
 }

@@ -1399,14 +1399,14 @@ function openFilterSheet(){
   const mb = document.getElementById('menuBtn'); if(mb) mb.setAttribute('aria-expanded', 'true');
   document.getElementById('filterOverlay').classList.add('open');
   sheet.classList.add('open');
-  document.body.style.overflow = 'hidden';
+  if(typeof sfbHeaderLock === 'function') sfbHeaderLock(600);
 }
 function closeFilterSheet(){
   document.documentElement.classList.remove('menu-open');
   const mb = document.getElementById('menuBtn'); if(mb) mb.setAttribute('aria-expanded', 'false');
   document.getElementById('filterOverlay').classList.remove('open');
   document.getElementById('filterSheet').classList.remove('open');
-  document.body.style.overflow = '';
+  if(typeof sfbHeaderLock === 'function') sfbHeaderLock(600);
 }
 function toggleFilterSheet(){
   const sheet = document.getElementById('filterSheet');
@@ -1710,8 +1710,8 @@ function renderCatalog(){
     );
     totalMatches += recommended.length;
     const recommendedHtml = recommended.length ? `
-      <div class="section-title featured"><h3><svg class="ic" aria-hidden="true"><use href="#i-star"/></svg> สินค้าแนะนำ (พร้อมส่ง)</h3><span>${recommended.length} รายการ</span></div>
-      <div class="grid">
+      <div class="section-title featured"><h3><svg class="ic" aria-hidden="true"><use href="#i-star"/></svg> สินค้าแนะนำ</h3><span>${recommended.length} รายการ</span></div>
+      <div class="grid featured-row">
         ${recommended.map(v => renderProductCard(v.product, v)).join('')}
       </div>
     ` : '';
@@ -2473,6 +2473,7 @@ function sfbHeaderLock(ms){
   function update(){
     ticking = false;
     if(!sfbAnimOk()){ setHidden(false); return; }
+    if(document.documentElement.classList.contains('menu-open')){ lastY = window.pageYOffset; acc = 0; setHidden(false); return; } // เปิดเมนู ☰ อยู่: แถบบนต้องค้างไว้ ไม่ซ่อน
     const y = Math.max(0, window.pageYOffset);
     if(y > document.documentElement.scrollHeight - window.innerHeight + 1) return; // ดึงเกินขอบล่าง (iOS เด้งกลับ) ไม่นับ
     const dy = y - lastY;
@@ -3735,10 +3736,10 @@ function renderReviews(imagesIn){
   const section = document.getElementById('reviewsSection');
   // โคลนการ์ดแรกๆ ไปต่อท้าย (มองไม่เห็นความต่าง) เพื่อให้วนกลับจุดเริ่มได้แบบไร้รอยต่อ ไม่ต้องกระตุกย้อนยาว
   const cloneCount = Math.min(REVIEWS.length, 12); // เลขคู่ (มือถือ 2 แถว) และพอให้เต็มจอทั้งตอนสายพานวนกลับ
-  scrollEl.innerHTML =
+  scrollEl.innerHTML = '<div class="reviews-track" id="reviewsTrack">' +
     REVIEWS.map((src, i) => reviewCardHTML(src, i)).join('') +
     (REVIEWS.length % 2 ? '<div class="review-card-spacer" aria-hidden="true"></div>' : '') + // จำนวนคี่: เติมช่องว่าง 1 ช่องให้ชุดจริงลงตัว 2 แถว (มือถือ) สายพานจะวนต่อกันไม่เหลื่อม
-    REVIEWS.slice(0, cloneCount).map((src, i) => reviewCardHTML(src, i, true)).join('');
+    REVIEWS.slice(0, cloneCount).map((src, i) => reviewCardHTML(src, i, true)).join('') + '</div>';
   if(statEl) statEl.textContent = `${REVIEWS.length}+ รีวิวจากลูกค้าจริง`;
   section.hidden = false;
   initReviewAutoScroll();
@@ -3778,25 +3779,45 @@ function animateScrollLeft(el, to, duration){
 const REVIEW_BELT_SPEED = 26; // px ต่อวินาที
 const reviewMobileMQ = window.matchMedia('(max-width:859px)');
 let reviewBeltRAF = null;
+let reviewBeltX = null; // ตำแหน่งสายพานตอนกำลังไหล (px) — null = ไม่ได้ไหลอยู่
+// ไหลด้วย transform (translate3d) บนรางการ์ด แทนการสั่ง scrollLeft ทุกเฟรม:
+// scrollLeft ถูกปัดเป็นพิกเซลเต็มและบังคับ layout ทุกเฟรม ที่ 26px/วินาที (~0.4px/เฟรม) จึงเห็นเป็นขั้นๆ กระตุก
+// transform ขยับทศนิยมได้ ไหลบน GPU เนียนกว่า · พอลูกค้าแตะ/ลาก จะส่งต่อตำแหน่งให้ scrollLeft (commitReviewBelt)
+function commitReviewBelt(){
+  const el = document.getElementById('reviewsScroll');
+  const track = document.getElementById('reviewsTrack');
+  if(reviewBeltX === null) return;
+  const x = reviewBeltX; reviewBeltX = null;
+  if(track){ track.style.transform = ''; track.style.willChange = ''; }
+  if(el) el.scrollLeft = x;
+}
 function startReviewBelt(){
   const el = document.getElementById('reviewsScroll');
-  if(!el || !el.children.length) return;
+  const track = document.getElementById('reviewsTrack');
+  if(!el || !track || !track.children.length) return;
   if(window.matchMedia('(prefers-reduced-motion:reduce)').matches) return;
-  let acc = el.scrollLeft, last = performance.now();
+  let acc = el.scrollLeft, last = performance.now(), loopW = 0, frames = 0;
+  el.scrollLeft = 0;
+  track.style.willChange = 'transform';
+  reviewBeltX = acc;
+  track.style.transform = 'translate3d(' + (-acc) + 'px,0,0)';
+  function measure(){
+    const first = track.querySelector('.review-card');
+    const clone = track.querySelector('.review-card-clone');
+    loopW = (first && clone) ? clone.offsetLeft - first.offsetLeft : 0; // ความกว้างของชุดการ์ดจริง (ก่อนถึงโคลน)
+  }
   function tick(now){
     reviewBeltRAF = requestAnimationFrame(tick);
     const dt = Math.min(now - last, 64); last = now;
     if(document.hidden) return;
     if(document.getElementById('reviewsAllModal')?.classList.contains('open')) return;
     if(document.getElementById('reviewLightbox')?.classList.contains('open')) return;
-    const first = el.querySelector('.review-card');
-    const clone = el.querySelector('.review-card-clone');
-    if(!first || !clone) return;
-    const loopW = clone.offsetLeft - first.offsetLeft; // ความกว้างของชุดการ์ดจริง (ก่อนถึงโคลน)
+    if(!loopW || frames++ % 120 === 0) measure(); // วัดซ้ำทุก ~2 วินาที เผื่อหมุนจอ/เปลี่ยนขนาด ไม่วัดทุกเฟรม
     if(loopW <= 0) return;
     acc += REVIEW_BELT_SPEED * dt / 1000;
     while(acc >= loopW) acc -= loopW;
-    el.scrollLeft = acc;
+    reviewBeltX = acc;
+    track.style.transform = 'translate3d(' + (-acc) + 'px,0,0)';
   }
   reviewBeltRAF = requestAnimationFrame(tick);
 }
@@ -3846,6 +3867,7 @@ function reviewManualStep(dir){
 let reviewManualX = null, reviewManualT = 0;
 function stopReviewAutoScroll(){
   if(reviewBeltRAF){ cancelAnimationFrame(reviewBeltRAF); reviewBeltRAF = null; }
+  commitReviewBelt();
   if(reviewAutoTimer){ clearInterval(reviewAutoTimer); reviewAutoTimer = null; }
   clearTimeout(reviewJumpTimer);
   cancelAnimationFrame(reviewScrollRAF);
@@ -3862,7 +3884,7 @@ function initReviewAutoScroll(){
     ['pointerdown','touchstart','wheel','mouseenter'].forEach(evt => {
       scrollEl.addEventListener(evt, pauseReviewAutoScroll, { passive: true });
     });
-    reviewMobileMQ.addEventListener('change', () => { scrollEl.scrollLeft = 0; startReviewAutoScroll(); });
+    reviewMobileMQ.addEventListener('change', () => { stopReviewAutoScroll(); scrollEl.scrollLeft = 0; startReviewAutoScroll(); });
     document.addEventListener('visibilitychange', () => {
       if(document.hidden) stopReviewAutoScroll(); else startReviewAutoScroll();
     });
