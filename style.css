@@ -2667,13 +2667,14 @@ a:focus-visible, button:focus-visible, summary:focus-visible,
   }
   #catalog .grid.featured-row::-webkit-scrollbar{display:none;}
   #catalog .grid.featured-row > .card{
-    flex:0 0 44%; min-width:0; max-width:200px; scroll-snap-align:start;
+    flex:0 0 calc((100% - 2px) / 1.5); min-width:0; scroll-snap-align:start; /* ใบแรกเต็มใบ + ใบที่สองโผล่ครึ่งใบ */
   }
   /* ชื่อสินค้ายาวสุด 2 บรรทัด ให้การ์ดสูงเท่ากัน */
   #catalog .grid.featured-row .card h4{
     display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
-    min-height:2.6em;
+    min-height:2.6em; font-size:15.5px;
   }
+  #catalog .grid.featured-row .card .price{font-size:18px;}
 }
 
 /* =========================================================
@@ -2689,4 +2690,30 @@ a:focus-visible, button:focus-visible, summary:focus-visible,
     grid-template-rows:repeat(2, var(--rv-s)); grid-auto-flow:column; grid-auto-columns:var(--rv-s);
     gap:var(--rv-gap);
   }
+}
+
+/* =========================================================
+   ปุ่มลัดไปหมวด (ใต้ Recommended): รูปสุ่มจากสินค้า + ชื่อหมวด กดแล้วเลื่อนไปหัวข้อนั้น
+   มือถือ 2 คอลัมน์ · คอม 4 คอลัมน์ · ลบบล็อกนี้ + jumpTilesHtml() เพื่อย้อนกลับ
+   ========================================================= */
+.jump-tiles{display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:8px; margin:30px 0 0; padding-bottom:30px; /* ใช้ padding ด้านล่าง เพราะ margin จะซ้อนทับ (collapse) กับระยะบนของหัวข้อหมวดถัดไป */}
+.jump-tile{
+  position:relative; display:block; width:100%; aspect-ratio:1 / 1; padding:0; border:0; border-radius:16px;
+  overflow:hidden; cursor:pointer; background:var(--cream); box-shadow:var(--soft-shadow, 0 4px 14px rgba(52,38,46,0.08));
+  -webkit-tap-highlight-color:transparent; transition:transform .15s ease;
+}
+.jump-tile:active{transform:scale(.97);}
+.jump-tile img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block;}
+.jump-tile::after{
+  content:""; position:absolute; inset:auto 0 0 0; height:55%; pointer-events:none;
+  background:linear-gradient(to top, rgba(52,38,46,0.62), rgba(52,38,46,0));
+}
+.jump-tile-label{
+  position:absolute; left:8px; right:8px; bottom:12px; z-index:1; text-align:center;
+  font-family:'Kanit',sans-serif; font-weight:700; font-size:18px; line-height:1.2; color:#fff;
+  text-shadow:0 2px 6px rgba(0,0,0,0.45);
+}
+/* คอมมีตัวกรองด้านซ้ายอยู่แล้ว ไม่ต้องมีปุ่มลัด */
+@media (min-width:860px){
+  .jump-tiles{display:none;}
 }

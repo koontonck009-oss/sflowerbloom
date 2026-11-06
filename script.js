@@ -1684,6 +1684,34 @@ function renderProductCard(p, variant, narrow){
     </div>
   `;
 }
+// ---------- ปุ่มลัดไปหมวด (ใต้โซน Recommended): รูปสุ่มจากสินค้าจริงในหมวด กดแล้วเลื่อนไปหัวข้อหมวดนั้น ----------
+const jumpTilePick = {}; // หมวด -> id สินค้าที่สุ่มได้ (สุ่มครั้งเดียวต่อการโหลดหน้า ไม่เปลี่ยนรูปทุกครั้งที่กรอง)
+function jumpTileImageOf(p){
+  const v = hasNewOptions(p) ? coverVariantOf(p) : null;
+  return (v && (v.image || (v.images && v.images[0]))) || p.image || (p.images && p.images[0]) || null;
+}
+function jumpTilesHtml(){
+  const tiles = CATS.slice(1).map(cat => {
+    const pool = PRODUCTS.filter(p => p.cat === cat && matchesSearch(p) && flowerMatches(p));
+    if(!pool.length) return '';
+    const withImg = pool.filter(jumpTileImageOf);
+    let pick = withImg.find(p => p.id === jumpTilePick[cat]);
+    if(!pick && withImg.length){ pick = withImg[Math.floor(Math.random() * withImg.length)]; jumpTilePick[cat] = pick.id; }
+    const src = pick ? jumpTileImageOf(pick) : null;
+    return `<button type="button" class="jump-tile" onclick="jumpToCat('${cat}')" aria-label="ไปที่หมวด ${cat}">
+      ${src ? `<img src="${src}" alt="" loading="lazy" decoding="async" onerror="this.remove()">` : ''}
+      <span class="jump-tile-label">${cat}</span>
+    </button>`;
+  }).join('');
+  return tiles ? `<div class="jump-tiles" role="group" aria-label="ไปยังหมวดสินค้า">${tiles}</div>` : '';
+}
+function jumpToCat(cat){
+  const el = document.getElementById(catSectionId(cat));
+  if(!el) return;
+  sfbHeaderLock(1500); // เลื่อนด้วยโค้ด: ห้ามแถบบนซ่อนระหว่างเลื่อน (ระยะคำนวณรวมแถบไว้แล้ว)
+  const top = el.getBoundingClientRect().top + window.pageYOffset - (stickyOffset() + 8);
+  window.scrollTo({ top, behavior: 'smooth' });
+}
 function renderCatalog(){
   const main = document.getElementById('catalog');
   const range = activePriceBounds();
@@ -1710,10 +1738,11 @@ function renderCatalog(){
     );
     totalMatches += recommended.length;
     const recommendedHtml = recommended.length ? `
-      <div class="section-title featured"><h3><svg class="ic" aria-hidden="true"><use href="#i-star"/></svg> สินค้าแนะนำ</h3><span>${recommended.length} รายการ</span></div>
+      <div class="section-title featured"><h3><svg class="ic" aria-hidden="true"><use href="#i-star"/></svg> Recommended</h3><span>${recommended.length} รายการ</span></div>
       <div class="grid featured-row">
         ${recommended.map(v => renderProductCard(v.product, v)).join('')}
       </div>
+      ${jumpTilesHtml()}
     ` : '';
     html += `<div class="cat-section" id="${catSectionId('ทั้งหมด')}" data-cat="ทั้งหมด">${recommendedHtml}</div>`;
   }
