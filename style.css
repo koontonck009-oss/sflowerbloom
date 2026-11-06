@@ -2183,3 +2183,240 @@ html.no-anim *, html.no-anim *::before, html.no-anim *::after{
   #filterSheet .filter-sheet-footer{padding:10px 16px calc(10px + env(safe-area-inset-bottom, 0px));}
   #filterSheet .filter-clear-btn, #filterSheet .filter-apply-btn{padding:11px;}
 }
+
+/* =========================================================
+   Soft Luxury + Glass (เฉพาะจุด)  — ชั้นสไตล์เพิ่มท้ายไฟล์
+   หลักการ: การ์ดสินค้า = ขาวทึบ ขอบบางสีบลัช (รูปเด่น/เว็บเร็ว)
+            กระจก = แถบบนมือถือ, ตะกร้า, bottom sheet, ป้ายบนรูป, ฉากหลังมืด
+   ลบบล็อกนี้ทั้งหมดเพื่อย้อนกลับเป็นแบบเดิมได้ทันที
+   ========================================================= */
+:root{
+  --glass-bg: rgba(255,246,249,0.78);
+  --glass-bg-strong: rgba(255,255,255,0.90);
+  --glass-line: rgba(255,255,255,0.70);
+  --glass-blur: 14px;
+  --gold-line: rgba(201,166,107,0.55);
+  --soft-shadow: 0 6px 22px rgba(46,16,36,0.06);
+}
+
+/* แสงชมพูจางๆ ด้านบนหน้า ให้กระจกมีของให้ทับ (เลื่อนหายไปพร้อมหน้า ไม่ตรึง) */
+body::before{
+  content:""; position:absolute; top:0; left:0; width:100%; height:420px;
+  z-index:-1; pointer-events:none;
+  background:
+    radial-gradient(60% 90% at 12% 0%, rgba(251,213,228,0.75), transparent 70%),
+    radial-gradient(50% 80% at 92% 0%, rgba(201,166,107,0.16), transparent 70%);
+}
+
+/* ---------- แถบค้นหา/ตะกร้า (กระจกบนมือถือที่ลอยค้าง) ---------- */
+.search-cart-bar{
+  background:var(--glass-bg);
+  -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.4);
+  backdrop-filter:blur(var(--glass-blur)) saturate(1.4);
+  border-bottom:1px solid rgba(235,217,225,0.6);
+}
+.search-wrap{background:rgba(255,255,255,0.82); border-color:rgba(235,217,225,0.9);}
+.cart-btn-top{
+  background:rgba(255,255,255,0.82);
+  -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
+  border-color:var(--glass-line);
+}
+@media (min-width:860px){
+  /* จอคอมแถบไม่ลอยค้างอยู่แล้ว ปล่อยโปร่งให้เห็นแสงชมพูด้านหลัง */
+  .search-cart-bar{
+    background:transparent; border-bottom:none;
+    -webkit-backdrop-filter:none; backdrop-filter:none;
+  }
+}
+
+/* ---------- การ์ดสินค้า: ขาวทึบ ขอบบาง เส้นทองตอน hover ---------- */
+.card{border-color:var(--line);}
+.card:hover{border-color:var(--gold-line);}
+@media (max-width:859px){
+  .card{box-shadow:var(--soft-shadow);}
+  .card:hover{box-shadow:0 10px 28px rgba(46,16,36,0.10);}
+}
+@media (min-width:860px){
+  .card:hover{box-shadow:0 8px 22px rgba(46,16,36,0.09);}
+}
+
+/* ---------- ป้าย/ปุ่มที่วางทับรูปสินค้า ---------- */
+.badge-ready{
+  background:rgba(47,122,88,0.88);
+  border:1px solid rgba(255,255,255,0.35);
+  -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);
+}
+.badge-new{
+  background:rgba(201,166,107,0.90);
+  border:1px solid rgba(255,255,255,0.45);
+  -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);
+}
+.fav-heart{
+  background:rgba(255,255,255,0.80);
+  border:1px solid var(--glass-line);
+  -webkit-backdrop-filter:blur(10px) saturate(1.3); backdrop-filter:blur(10px) saturate(1.3);
+}
+
+/* ---------- ตะกร้า (drawer) + bottom sheet ---------- */
+.drawer{
+  background:rgba(255,246,249,0.88);
+  -webkit-backdrop-filter:blur(18px) saturate(1.3); backdrop-filter:blur(18px) saturate(1.3);
+  border-left:1px solid var(--glass-line);
+}
+.filter-sheet, .reviews-all-modal, .catalog-sheet-panel{
+  background:var(--glass-bg-strong);
+  -webkit-backdrop-filter:blur(18px) saturate(1.3); backdrop-filter:blur(18px) saturate(1.3);
+  border-top:1px solid var(--glass-line);
+}
+
+/* ---------- ฉากหลังมืดตอนเปิดตะกร้า/ตัวกรอง/แคตตาล็อก ---------- */
+.overlay, .filter-overlay, .catalog-sheet-backdrop{
+  -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px);
+}
+
+/* ---------- เส้นทองเล็กใต้หัวข้อส่วน ---------- */
+.section-title h3{position:relative; padding-bottom:8px;}
+.section-title h3::after{
+  content:""; position:absolute; left:0; bottom:0;
+  width:28px; height:2px; border-radius:2px; background:var(--gold);
+}
+
+/* ---------- Fallback: เบราว์เซอร์ที่ไม่รองรับ blur หรือผู้ใช้ปิดความโปร่งใส ---------- */
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+  .search-cart-bar{background:var(--cream);}
+  .drawer{background:var(--cream);}
+  .filter-sheet, .reviews-all-modal, .catalog-sheet-panel{background:var(--paper);}
+  .badge-ready{background:var(--success);}
+  .badge-new{background:var(--gold);}
+  .fav-heart{background:rgba(255,255,255,0.95);}
+}
+@media (prefers-reduced-transparency:reduce){
+  .search-cart-bar, .drawer{background:var(--cream); -webkit-backdrop-filter:none; backdrop-filter:none;}
+  .filter-sheet, .reviews-all-modal, .catalog-sheet-panel{background:var(--paper); -webkit-backdrop-filter:none; backdrop-filter:none;}
+  .overlay, .filter-overlay, .catalog-sheet-backdrop{-webkit-backdrop-filter:none; backdrop-filter:none;}
+}
+
+
+/* =========================================================
+   Premium Card (รอบ 2) — ปรับการ์ดสินค้าให้หรูขึ้น (CSS ล้วน)
+   1) รูปเว้นขอบเหมือนกรอบแกลเลอรี + ซูมนุ่มตอน hover + เงาไล่ล่างรูป
+   2) ตัวหนังสือบางลง + เส้นทองคั่นชื่อ/ราคา
+   3) ป้ายพร้อมส่ง/ใหม่ เป็นกระจกบางชุดเดียวกัน
+   4) การ์ดมุม 16px ขอบในกว้างขึ้น
+   ลบบล็อกนี้ทิ้งเพื่อย้อนกลับเป็นรอบก่อนได้
+   ========================================================= */
+
+/* ---------- 4) พื้นการ์ด ---------- */
+.card{border-radius:16px;}
+.card-body{padding:14px 18px 18px;}
+
+/* ---------- 1) รูปสินค้า: เว้นขอบ + มุมโค้งของตัวเอง ---------- */
+.thumb-wrap{padding:8px;}
+.thumb{position:relative; border-radius:10px;}
+.thumb:hover{opacity:1;}
+.thumb img{transition:transform .6s cubic-bezier(.2,.7,.2,1);}
+.thumb::after{
+  content:""; position:absolute; left:0; right:0; bottom:0; height:38%;
+  background:linear-gradient(to top, rgba(46,16,36,0.22), rgba(46,16,36,0));
+  pointer-events:none;
+}
+@media (hover:hover) and (prefers-reduced-motion:no-preference){
+  .card:hover .thumb img{transform:scale(1.04);}
+  .card:hover{transform:translateY(-3px);}
+}
+
+/* ปุ่มหัวใจ + ป้าย ย้ายเข้ามาอยู่บนตัวรูป (เพราะรูปเว้นขอบแล้ว) */
+.badge-ready, .badge-new{top:16px;}
+.badge-ready{left:16px;}
+.badge-new{right:16px;}
+.fav-heart{bottom:16px; right:16px; width:30px; height:30px; font-size:16px;}
+
+/* ---------- 3) ป้ายพร้อมส่ง / ใหม่ — กระจกขาวบาง จุดสีนำหน้า ---------- */
+.badge-ready, .badge-new{
+  display:flex; align-items:center; gap:5px;
+  padding:3px 10px 3px 8px; font-weight:600; letter-spacing:.2px;
+  background:rgba(255,255,255,0.84);
+  border:1px solid rgba(255,255,255,0.75);
+  box-shadow:0 3px 10px rgba(46,16,36,0.12);
+  -webkit-backdrop-filter:blur(8px) saturate(1.3); backdrop-filter:blur(8px) saturate(1.3);
+}
+.badge-ready{color:var(--success);}
+.badge-new{color:#8A6A2F;}
+.badge-ready::before, .badge-new::before{
+  content:""; width:6px; height:6px; border-radius:50%; flex-shrink:0;
+}
+.badge-ready::before{background:var(--success);}
+.badge-new::before{background:var(--gold);}
+
+/* ---------- 2) ตัวหนังสือ: บางลง เว้นจังหวะ + เส้นทองคั่นราคา ---------- */
+.card h4{
+  font-weight:500; letter-spacing:.2px; line-height:1.35; color:var(--plum);
+  margin:0 0 8px; min-height:2.7em;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+}
+.card .price-row{
+  padding-top:10px;
+  border-top:1px solid rgba(201,166,107,0.40);
+}
+.card .price{font-weight:600; letter-spacing:.2px;}
+
+/* ---------- มือถือ/จอแคบ: การ์ดเล็ก ลดระยะให้พอดี 2 คอลัมน์ ---------- */
+@media (max-width:859px){
+  .card-body{padding:10px 12px 14px;}
+  .thumb-wrap{padding:6px;}
+  .badge-ready, .badge-new{top:12px;}
+  .badge-ready{left:12px;}
+  .badge-new{right:12px;}
+  .fav-heart{bottom:12px; right:12px; width:28px; height:28px; font-size:15px;}
+  .card h4{margin-bottom:6px;}
+  .card .price-row{padding-top:8px;}
+}
+
+/* ---------- Fallback ถ้าไม่รองรับ blur ---------- */
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+  .badge-ready, .badge-new{background:rgba(255,255,255,0.95);}
+}
+
+
+/* =========================================================
+   Premium Card (รอบ 3) — รูปเต็มการ์ด ไม่เหลือพื้นที่ว่างขาวๆ
+   - รูปชิดขอบการ์ดทั้งสามด้าน (การ์ดมี overflow:hidden + มุมโค้งตัดมุมรูปให้เอง)
+   - ตัดช่องว่างจากคำอธิบายที่ว่าง และจากการล็อกความสูงชื่อ 2 บรรทัด
+   - ลบบล็อกนี้ทิ้งเพื่อย้อนกลับเป็นรอบก่อนได้
+   ========================================================= */
+.thumb-wrap{padding:0;}
+.thumb{border-radius:0;}
+
+/* ป้าย/หัวใจ ชิดมุมรูปมากขึ้น */
+.badge-ready, .badge-new{top:10px;}
+.badge-ready{left:10px;}
+.badge-new{right:10px;}
+.fav-heart{bottom:10px; right:10px;}
+
+/* ตัดช่องว่าง: คำอธิบายว่างไม่ต้องกินที่ / ชื่อไม่ล็อกความสูง */
+.card .desc:empty{display:none;}
+.card h4{min-height:0; margin-bottom:6px;}
+.card-body{padding:12px 16px 14px;}
+.card .price-row{margin-top:auto; padding-top:8px;}
+
+@media (max-width:859px){
+  .thumb-wrap{padding:0;}
+  .badge-ready, .badge-new{top:8px;}
+  .badge-ready{left:8px;}
+  .badge-new{right:8px;}
+  .fav-heart{bottom:8px; right:8px;}
+  .card-body{padding:9px 11px 11px;}
+  .card h4{margin-bottom:5px;}
+  .card .price-row{padding-top:7px;}
+}
+
+
+/* =========================================================
+   Premium Card (รอบ 4) — ไม่มีสโตก/เส้นขอบการ์ด และไม่มีเส้นใต้ชื่อสินค้า
+   ใช้เงานุ่มๆ แทนเส้นขอบเพื่อให้การ์ดแยกจากพื้นหลัง
+   ลบบล็อกนี้ทิ้งเพื่อย้อนกลับเป็นรอบก่อนได้
+   ========================================================= */
+.card, .card:hover{border-color:transparent;}
+.card{box-shadow:0 4px 18px rgba(46,16,36,0.07);}
+.card:hover{box-shadow:0 12px 30px rgba(46,16,36,0.12);}
+.card .price-row{border-top:none;}
