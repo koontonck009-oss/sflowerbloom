@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="th" class="prices-hidden">
+<html lang="th" class="prices-hidden orders-closed">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -80,7 +80,6 @@
 
 
 <div class="search-cart-bar" id="searchCartBar">
-  <button type="button" class="menu-btn" onclick="openFilterSheet()" aria-label="หมวดหมู่และตัวกรองสินค้า"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span class="menu-badge" id="menuBadge" hidden></span></button>
   <div class="brand-mark" onclick="brandTap()">
     <img id="brandLogo" src="images/logo.png?v=2" alt="โลโก้ร้าน" onerror="this.parentElement.innerHTML='<svg viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot;><path d=&quot;M12 2c1.5 2 1.5 4 0 6-1.5-2-1.5-4 0-6z&quot; fill=&quot;#F0568C&quot;/><path d=&quot;M12 22c-3-3-6-6-6-10a6 6 0 0112 0c0 4-3 7-6 10z&quot; fill=&quot;#F0568C&quot; opacity=&quot;0.9&quot;/></svg>'">
   </div>
@@ -90,11 +89,12 @@
     <input type="text" id="searchInput" class="search-input" placeholder="ค้นหาสินค้า เช่น กุหลาบ, กรอบรูป..." oninput="handleSearch(this.value)" onkeydown="if(event.key==='Enter'){ event.preventDefault(); handleSearchSubmit(); }" enterkeyhint="search" autocomplete="off">
     <button type="button" class="search-clear" id="searchClearBtn" style="display:none;" onclick="clearSearch()" aria-label="ล้างคำค้นหา">✕</button>
   </div>
-  <a class="chat-top-btn" href="https://m.me/S.Flower.Bloom44" target="_blank" rel="noopener" aria-label="ทักแชตเพจ S.Flower Bloom"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.3 9 9 0 0 1-3.6-.7L3 20.5l1.6-4.7A8.3 8.3 0 0 1 3 11.5a8.5 8.5 0 0 1 9-8.5 8.5 8.5 0 0 1 9 8.5z"/></svg></a>
+  <a class="chat-top-btn" href="https://m.me/S.Flower.Bloom44" target="_blank" rel="noopener" aria-label="ทักแชตเพจ S.Flower Bloom"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.3 9 9 0 0 1-3.6-.7L3 20.5l1.6-4.7A8.3 8.3 0 0 1 3 11.5a8.5 8.5 0 0 1 9-8.5 8.5 8.5 0 0 1 9 8.5z"/></svg><span>ทักแชตเลย</span></a>
   <button class="cart-btn-top" onclick="openCart()" aria-label="ตะกร้าสินค้า">
     <svg class="ic" aria-hidden="true"><use href="#i-bag"/></svg>
     <span class="badge" id="cartBadge">0</span>
   </button>
+  <button type="button" class="menu-btn" id="menuBtn" onclick="toggleFilterSheet()" aria-label="เมนู หมวดหมู่และตัวกรองสินค้า" aria-expanded="false" aria-controls="filterSheet"><svg class="ic-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg><svg class="ic-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg><span class="menu-badge" id="menuBadge" hidden></span></button>
 </div>
 <header class="top">
   <div class="brand-row">

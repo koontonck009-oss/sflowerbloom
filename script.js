@@ -16,9 +16,9 @@ let PRICES_HIDDEN = true;
 let cloudHidePrices = true;   // ค่าที่อ่านได้ล่าสุดจาก Firestore
 /* ---------- โหมดปิดระบบสั่งทำ/ตะกร้า (สวิตช์ "ปิดระบบสั่งทำ / ตะกร้า" ที่หลังบ้าน) ----------
    ยังแสดงราคาตามปกติ แต่ปิดตะกร้า/ปุ่มสั่งทำ ให้ลูกค้าแคปหน้าจอแล้วทักเพจ
-   ค่าเริ่มต้น = ไม่ปิด (ต่างจากราคา) — อ่านค่าไม่ได้/เน็ตช้า ร้านจะได้ไม่เสียออเดอร์ */
-let ORDERS_CLOSED = false;
-let cloudOrderClosed = false; // ค่าที่อ่านได้ล่าสุดจาก Firestore (ช่อง orderClosed)
+   ค่าเริ่มต้น = ปิดไว้ก่อน (เหมือนราคา) — จะเปิดสั่งทำ/ตะกร้าก็ต่อเมื่อหลังบ้านตั้ง orderClosed เป็น false ชัดเจนเท่านั้น */
+let ORDERS_CLOSED = true;
+let cloudOrderClosed = true; // ค่าที่อ่านได้ล่าสุดจาก Firestore (ช่อง orderClosed)
 /* ---------- ยอดสั่งซื้อขั้นต่ำที่นัดรับฟรี (ตั้งค่าที่หลังบ้าน ช่อง freePickupMin) ----------
    ค่าเริ่มต้น 399 — อ่านค่าไม่ได้/ค่าผิดปกติจะใช้ 399 */
 const DEFAULT_FREE_PICKUP_MIN = 399;
@@ -1390,14 +1390,27 @@ function openFilterSheet(){
   };
   renderFilterSheetBody();
   const fsb = document.getElementById('filterSheetBody'); if(fsb) fsb.scrollTop = 0; // เปิดใหม่ทุกครั้งเริ่มจากบนสุด (หมวดหมู่)
+  // มือถือ: แผงเลื่อนลงจากใต้แถบบน — ดึงแถบบนให้โผล่ก่อน แล้ววัดความสูงเพื่อวางแผงใต้แถบ
+  const bar = document.getElementById('searchCartBar');
+  if(bar) bar.classList.remove('bar-hidden');
+  const sheet = document.getElementById('filterSheet');
+  if(bar && sheet) sheet.style.setProperty('--menu-top', bar.offsetHeight + 'px');
+  document.documentElement.classList.add('menu-open');
+  const mb = document.getElementById('menuBtn'); if(mb) mb.setAttribute('aria-expanded', 'true');
   document.getElementById('filterOverlay').classList.add('open');
-  document.getElementById('filterSheet').classList.add('open');
+  sheet.classList.add('open');
   document.body.style.overflow = 'hidden';
 }
 function closeFilterSheet(){
+  document.documentElement.classList.remove('menu-open');
+  const mb = document.getElementById('menuBtn'); if(mb) mb.setAttribute('aria-expanded', 'false');
   document.getElementById('filterOverlay').classList.remove('open');
   document.getElementById('filterSheet').classList.remove('open');
   document.body.style.overflow = '';
+}
+function toggleFilterSheet(){
+  const sheet = document.getElementById('filterSheet');
+  if(sheet && sheet.classList.contains('open')) closeFilterSheet(); else openFilterSheet();
 }
 function toggleDraftCategory(c){
   filterDraft.cats = filterDraft.cats.has(c) ? new Set() : new Set([c]);
@@ -3417,7 +3430,7 @@ async function fetchProductsFromFirestore(){
   if(!snap.exists()) return null;
   const data = snap.data() || {};
   cloudHidePrices = data.hidePrices === true;
-  cloudOrderClosed = data.orderClosed === true;
+  cloudOrderClosed = data.orderClosed !== false; // ไม่มีช่องนี้ = ปิดไว้ก่อน เปิดเฉพาะเมื่อหลังบ้านสั่ง false
   cloudFreePickupMin = parseFreePickupMin(data.freePickupMin);
   cloudOptions = null;
   try{ if(typeof data.optionsJson === 'string') cloudOptions = JSON.parse(data.optionsJson); }catch(_){ cloudOptions = null; }

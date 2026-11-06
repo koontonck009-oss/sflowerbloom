@@ -2610,3 +2610,41 @@ a:focus-visible, button:focus-visible, summary:focus-visible,
 .filter-pill.active .ic, .cat-quick.active .ic{color:inherit;}
 .fab-cart .ic{vertical-align:-0.22em;}
 .section-title .ic{width:.9em; height:.9em; color:var(--gold); vertical-align:-0.1em; margin-right:2px;}
+
+/* =========================================================
+   มือถือ: แถบบนแบบเว็บอ้างอิง — โลโก้/ชื่อร้านซ้าย · "ทักแชตเลย" · (ตะกร้าเมื่อเปิดสั่งทำ) · ☰ ขวาสุด
+   ☰ เปิดแผงตัวกรองที่เลื่อนลงจากใต้แถบบน (ลบบล็อกนี้ทั้งหมดเพื่อย้อนกลับ)
+   ========================================================= */
+@media (max-width:859px){
+  .search-cart-bar{padding:8px 14px; gap:8px; align-items:center;}
+  .brand-name{font-size:16px; letter-spacing:.2px;}
+
+  /* ปุ่มทักแชต = แคปซูลมีข้อความ */
+  .chat-top-btn{
+    width:auto; height:36px; padding:0 14px; border-radius:999px; gap:6px;
+    font-family:'Kanit',sans-serif; font-weight:600; font-size:13.5px; line-height:1; white-space:nowrap;
+    background:var(--sage); color:#fff;
+  }
+  .chat-top-btn svg{width:16px; height:16px;}
+
+  /* ☰ ↔ ✕ */
+  .menu-btn .ic-close{display:none;}
+  html.menu-open .menu-btn .ic-open{display:none;}
+  html.menu-open .menu-btn .ic-close{display:block;}
+
+  /* แผงเมนู = ตัวกรองเดิม เลื่อนลงจากบนใต้แถบบน */
+  html.menu-open .search-cart-bar{z-index:1202;}
+  #filterSheet{
+    top:var(--menu-top, 56px); bottom:auto; left:0; right:0;
+    width:auto; height:auto; border-right:none; /* ล้างค่าจากแผงเลื่อนเข้าจากซ้ายเดิม (width:92vw / height:100dvh) */
+    border-radius:0 0 20px 20px;
+    max-height:calc(100vh - var(--menu-top, 56px) - 12px);
+    max-height:calc(100dvh - var(--menu-top, 56px) - 12px);
+    transform:translateY(-100%);
+    box-shadow:0 10px 30px rgba(52,38,46,0.2);
+  }
+  #filterSheet.open{transform:translateY(0);}
+  #filterSheet .filter-sheet-close{display:none;} /* ปิดด้วย ✕ บนแถบบนแทน (ไม่ให้ซ้ำ) */
+  #filterSheet .filter-sheet-header{padding:10px 14px 8px;} /* อยู่ใต้แถบบนแล้ว ไม่ต้องเว้น safe-area ด้านบนซ้ำ */
+  #filterSheet .filter-sheet-footer{padding-bottom:12px;}
+}

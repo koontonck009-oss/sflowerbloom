@@ -17,7 +17,7 @@ let reviewHidden = new Set(); // รูปรีวิวที่ "ลบออ
 let reviewTags = {};      // ป้ายสินค้าของรูปรีวิว { 'review12.jpg': ['s13'] } เก็บในเอกสารเดียวกับสินค้า (ช่อง reviewsJson)
 const DEFAULT_FREE_PICKUP_MIN = 399;
 let freePickupMin = DEFAULT_FREE_PICKUP_MIN; // ยอดสั่งซื้อขั้นต่ำที่นัดรับฟรี (เก็บในเอกสารเดียวกัน ช่อง freePickupMin) ใช้บนภาพแคตตาล็อกและหน้าร้าน
-let ordersClosed = false; // สวิตช์ "ปิดระบบสั่งทำ/ตะกร้า" (เก็บในเอกสารเดียวกัน ช่อง orderClosed) — ยังแสดงราคา แต่ลูกค้าสั่งผ่านเว็บไม่ได้
+let ordersClosed = true; // สวิตช์ "ปิดระบบสั่งทำ/ตะกร้า" (เก็บในเอกสารเดียวกัน ช่อง orderClosed) — ยังแสดงราคา แต่ลูกค้าสั่งผ่านเว็บไม่ได้
 let pricesHidden = false; // สวิตช์ "ซ่อนราคาบนหน้าร้าน" (เก็บในเอกสาร catalog/products ช่อง hidePrices)
 let draft = null;        // สินค้าที่กำลังแก้ไขอยู่
 let draftIndex = -1;     // -1 = สินค้าใหม่
@@ -352,7 +352,7 @@ async function loadCatalog(){
       const list = typeof data.json === 'string' ? JSON.parse(data.json) : data.list;
       catalog = Array.isArray(list) ? list : [];
       pricesHidden = data.hidePrices === true;
-      ordersClosed = data.orderClosed === true;
+      ordersClosed = data.orderClosed !== false; // ไม่มีช่องนี้ = ปิดสั่งทำไว้ก่อน (ตรงกับหน้าร้าน)
       freePickupMin = parseFreeMin(data.freePickupMin);
       let opts = null;
       try{ if(typeof data.optionsJson === 'string') opts = JSON.parse(data.optionsJson); }catch(_){ opts = null; }
