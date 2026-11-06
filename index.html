@@ -25,7 +25,7 @@
 <link rel="icon" type="image/png" sizes="192x192" href="images/favicon.png?v=2">
 <link rel="apple-touch-icon" sizes="180x180" href="images/apple-touch-icon.png?v=2">
 <link rel="manifest" href="site.webmanifest?v=2">
-<meta name="theme-color" content="#D0145C">
+<meta name="theme-color" content="#FFFDFC">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
@@ -50,15 +50,17 @@
 <body>
 
 <div class="search-cart-bar" id="searchCartBar">
-  <div class="brand-mark">
-    <img id="brandLogo" src="images/logo.png?v=2" alt="โลโก้ร้าน" onerror="this.parentElement.innerHTML='<svg viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot;><path d=&quot;M12 2c1.5 2 1.5 4 0 6-1.5-2-1.5-4 0-6z&quot; fill=&quot;#EB1065&quot;/><path d=&quot;M12 22c-3-3-6-6-6-10a6 6 0 0112 0c0 4-3 7-6 10z&quot; fill=&quot;#EB1065&quot; opacity=&quot;0.9&quot;/></svg>'">
+  <button type="button" class="menu-btn" onclick="openFilterSheet()" aria-label="หมวดหมู่และตัวกรองสินค้า"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span class="menu-badge" id="menuBadge" hidden></span></button>
+  <div class="brand-mark" onclick="brandTap()">
+    <img id="brandLogo" src="images/logo.png?v=2" alt="โลโก้ร้าน" onerror="this.parentElement.innerHTML='<svg viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot;><path d=&quot;M12 2c1.5 2 1.5 4 0 6-1.5-2-1.5-4 0-6z&quot; fill=&quot;#F0568C&quot;/><path d=&quot;M12 22c-3-3-6-6-6-10a6 6 0 0112 0c0 4-3 7-6 10z&quot; fill=&quot;#F0568C&quot; opacity=&quot;0.9&quot;/></svg>'">
   </div>
-  <span class="brand-name" id="brandName">S.Flower Bloom</span>
+  <span class="brand-name" id="brandName" onclick="brandTap()">S.Flower Bloom</span>
   <div class="search-wrap">
     <svg viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
     <input type="text" id="searchInput" class="search-input" placeholder="ค้นหาสินค้า เช่น กุหลาบ, กรอบรูป..." oninput="handleSearch(this.value)" onkeydown="if(event.key==='Enter'){ event.preventDefault(); handleSearchSubmit(); }" enterkeyhint="search" autocomplete="off">
     <button type="button" class="search-clear" id="searchClearBtn" style="display:none;" onclick="clearSearch()" aria-label="ล้างคำค้นหา">✕</button>
   </div>
+  <a class="chat-top-btn" href="https://m.me/S.Flower.Bloom44" target="_blank" rel="noopener" aria-label="ทักแชตเพจ S.Flower Bloom"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.3 9 9 0 0 1-3.6-.7L3 20.5l1.6-4.7A8.3 8.3 0 0 1 3 11.5a8.5 8.5 0 0 1 9-8.5 8.5 8.5 0 0 1 9 8.5z"/></svg></a>
   <button class="cart-btn-top" onclick="openCart()" aria-label="ตะกร้าสินค้า">
     🧺
     <span class="badge" id="cartBadge">0</span>
@@ -166,22 +168,6 @@
     <button class="filter-apply-btn" onclick="applyFilterDraft()">แสดงผลลัพธ์</button>
   </div>
 </div>
-
-<!-- แถบเมนูล่าง (มือถือเท่านั้น): หน้าแรก · หมวดหมู่ · รายการโปรด · ตะกร้า -->
-<nav class="bnav" id="bottomNav" aria-label="เมนูหลัก">
-  <button type="button" class="bnav-item" id="bnavHome" onclick="bnavHome()">
-    <span class="bnav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 9.5V21h5v-6h4v6h5V9.5"/></svg></span><span class="bnav-lb">หน้าแรก</span>
-  </button>
-  <button type="button" class="bnav-item" id="bnavCat" onclick="openFilterSheet()">
-    <span class="bnav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="12" cy="6.4" rx="2.5" ry="3.4" transform="rotate(0 12 12)"/><ellipse cx="12" cy="6.4" rx="2.5" ry="3.4" transform="rotate(72 12 12)"/><ellipse cx="12" cy="6.4" rx="2.5" ry="3.4" transform="rotate(144 12 12)"/><ellipse cx="12" cy="6.4" rx="2.5" ry="3.4" transform="rotate(216 12 12)"/><ellipse cx="12" cy="6.4" rx="2.5" ry="3.4" transform="rotate(288 12 12)"/><circle cx="12" cy="12" r="1.8"/></svg></span><span class="bnav-lb" id="bnavCatLabel">หมวดหมู่</span>
-  </button>
-  <button type="button" class="bnav-item bnav-heart" id="bnavFav" onclick="bnavToggle('fav')" aria-pressed="false">
-    <span class="bnav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21.2l7.8-7.7 1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg></span><span class="bnav-lb">รายการโปรด</span>
-  </button>
-  <button type="button" class="bnav-item bnav-cart" id="bnavCart" onclick="openCart()">
-    <span class="bnav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg><b class="bnav-badge" id="bnavCartBadge" hidden>0</b></span><span class="bnav-lb">ตะกร้า</span>
-  </button>
-</nav>
 
 <div class="overlay" id="overlay" onclick="closeCart()"></div>
 <aside class="drawer" id="drawer">

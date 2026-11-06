@@ -6,25 +6,26 @@
 
 :root{
   /* ชุดสี A "Raspberry Silk" — ชื่อตัวแปรเดิมคงไว้เพื่อไม่ให้จุดไหนหลุด (--sage ตอนนี้คือชมพูหลัก) */
-  --cream:#FFF6F9;          /* พื้นหลังหน้า (มิสต์) */
-  --sage:#D0145C;           /* ชมพูหลัก: ปุ่ม, แท็บที่เลือก, สวิตช์ */
-  --sage-rgb:208,20,92;
-  --sage-light:#EB1065;
-  --tint-1:#FFF1F6;
-  --tint-2:#FBD5E4;
-  --tint-3:#FBE4EE;
-  --tint-4:#F8DAE7;
-  --sage-dark:#A10E48;      /* ชมพูเข้ม: hover, หัวข้อ */
-  --rose:#EB1065;           /* ชมพูโลโก้: เส้นตกแต่ง/ไอคอนใหญ่ (ไม่ใช้เป็นพื้นของตัวหนังสือขาว) */
-  --rose-dark:#A10E48;      /* ราคา, ลิงก์, ข้อความเน้น */
-  --peach:#FBD5E4;          /* บลัช */
-  --plum:#2E1024;           /* ข้อความหลัก */
+  --cream:#FFFDFC;          /* พื้นหลังหน้า (มิสต์) */
+  --sage:#E2417C;           /* ชมพูหลัก: ปุ่ม, แท็บที่เลือก, สวิตช์ */
+  --sage-rgb:226,65,124;
+  --sage-light:#F0568C;
+  --tint-1:#FFF3F7;
+  --tint-2:#FFD9E6;
+  --tint-3:#FFE6EE;
+  --tint-4:#FDDCE8;
+  --sage-dark:#C0305F;      /* ชมพูเข้ม: hover, หัวข้อ */
+  --rose:#F0568C;           /* ชมพูโลโก้: เส้นตกแต่ง/ไอคอนใหญ่ (ไม่ใช้เป็นพื้นของตัวหนังสือขาว) */
+  --rose-dark:#C0305F;      /* ราคา, ลิงก์, ข้อความเน้น */
+  --leaf:#55B88A;           /* เขียวใบไม้: เส้นตกแต่งเล็กๆ ไม่ใช้เป็นพื้นของตัวหนังสือขาว */
+  --peach:#FFD9E6;          /* บลัช */
+  --plum:#34262E;           /* ข้อความหลัก */
   --paper:#FFFFFF;
-  --gold:#C9A66B;           /* แชมเปญโกลด์: ป้าย "ใหม่", เส้นตกแต่ง */
-  --muted:#7B6772;          /* ข้อความรอง */
+  --gold:#E8B84A;           /* แชมเปญโกลด์: ป้าย "ใหม่", เส้นตกแต่ง */
+  --muted:#857079;          /* ข้อความรอง */
   --success:#2F7A58;        /* ป้าย "พร้อมส่ง" */
-  --line:#EBD9E1;
-  --shadow: 0 8px 28px rgba(46,16,36,0.08);
+  --line:#F3DDE5;
+  --shadow: 0 8px 28px rgba(52,38,46,0.08);
 }
 *{box-sizing:border-box;}
 html{scroll-behavior:smooth;}
@@ -117,7 +118,7 @@ h1,h2,h3,.display{font-family:'Kanit',sans-serif; font-weight:600;}
 .hero-row{width:calc(100% - 12vw); margin:14px auto 16px;}
 .hero-banner{max-width:700px; margin:0 auto;}  /* ความกว้างสูงสุดของแบนเนอร์บนคอม (700px สูงราว 308px) */
 .hero-banner[hidden]{display:none;}
-.hero-banner img{display:block; width:100%; height:auto; aspect-ratio:1891 / 831; object-fit:cover; border-radius:22px; box-shadow:0 8px 24px rgba(46,16,36,0.11);}
+.hero-banner img{display:block; width:100%; height:auto; aspect-ratio:1891 / 831; object-fit:cover; border-radius:22px; box-shadow:0 8px 24px rgba(52,38,46,0.11);}
 .reviews-nav{display:none;}
 /* มือถือ: แถบ "พบสินค้า N รายการ" + ปุ่มโหลดแคตตาล็อก (ขึ้นเฉพาะตอนมีตัวกรอง/คำค้นหา) */
 @media (max-width:859px){
@@ -125,14 +126,14 @@ h1,h2,h3,.display{font-family:'Kanit',sans-serif; font-weight:600;}
     display:flex; align-items:center; justify-content:space-between; gap:10px;
     margin:10px 12px 6px; padding:7px 7px 7px 14px;
     background:var(--paper); border:1px solid var(--line); border-radius:999px;
-    box-shadow:0 2px 10px rgba(46,16,36,0.06);
+    box-shadow:0 2px 10px rgba(52,38,46,0.06);
     font-family:'Kanit'; font-weight:600; font-size:13px; color:var(--rose-dark);
   }
   .catalog-results-bar.has-dl span{min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
   .catalog-results-bar .catalog-dl-btn{
     flex-shrink:0; padding:9px 14px; font-size:12.5px; border-color:transparent; color:#fff;
     background:var(--sage);
-    box-shadow:0 3px 10px rgba(46,16,36,0.2);
+    box-shadow:0 3px 10px rgba(52,38,46,0.2);
   }
   .catalog-results-bar .catalog-dl-btn:active{transform:scale(.97);}
   .catalog-results-bar .catalog-dl-btn:disabled{background:var(--paper); color:var(--sage-dark); border-color:var(--sage); box-shadow:none;}
@@ -140,7 +141,7 @@ h1,h2,h3,.display{font-family:'Kanit',sans-serif; font-weight:600;}
 @media (max-width:859px){
   .hero-row{width:auto; margin:0;}
   .hero-banner{width:auto; max-width:none; margin:8px 12px 4px;}
-  .hero-banner img{border-radius:14px; box-shadow:0 4px 14px rgba(46,16,36,0.1);}
+  .hero-banner img{border-radius:14px; box-shadow:0 4px 14px rgba(52,38,46,0.1);}
 }
 @media (min-width:860px){
   .hero-row .reviews-section{margin:22px 0 0;}
@@ -155,7 +156,7 @@ h1,h2,h3,.display{font-family:'Kanit',sans-serif; font-weight:600;}
     position:absolute; top:0; bottom:0; left:calc(var(--hero-w) + var(--hero-gap)); right:0; margin:0; min-width:0;
     display:flex; flex-direction:column; padding:16px 18px 14px; overflow:hidden;
     background:var(--paper);
-    border:1px solid var(--line); border-radius:22px; box-shadow:0 8px 24px rgba(46,16,36,0.08);
+    border:1px solid var(--line); border-radius:22px; box-shadow:0 8px 24px rgba(52,38,46,0.08);
   }
   .hero-row .reviews-section[hidden]{display:none;}
   .hero-row.no-banner .reviews-section{position:static;}
@@ -170,13 +171,13 @@ h1,h2,h3,.display{font-family:'Kanit',sans-serif; font-weight:600;}
     -webkit-mask-image:linear-gradient(90deg, #000 calc(100% - 40px), transparent); mask-image:linear-gradient(90deg, #000 calc(100% - 40px), transparent);
   }
   .hero-row .reviews-scroll::-webkit-scrollbar{display:none;}
-  .hero-row .review-card{height:100%; width:auto; aspect-ratio:3 / 4; border-radius:14px; box-shadow:0 4px 12px rgba(46,16,36,0.11);}
+  .hero-row .review-card{height:100%; width:auto; aspect-ratio:3 / 4; border-radius:14px; box-shadow:0 4px 12px rgba(52,38,46,0.11);}
   .hero-row .review-photo{aspect-ratio:auto; flex:1 1 auto; min-height:0;}
   .reviews-nav{
     display:flex; align-items:center; justify-content:center; position:absolute; top:50%; z-index:2;
     width:34px; height:34px; padding:0 0 3px; border-radius:50%; border:1px solid var(--line);
     background:rgba(255,255,255,0.96); color:var(--rose-dark); font-size:22px; line-height:1; cursor:pointer;
-    box-shadow:0 4px 14px rgba(46,16,36,0.16); opacity:0; transform:translateY(-50%) scale(.9);
+    box-shadow:0 4px 14px rgba(52,38,46,0.16); opacity:0; transform:translateY(-50%) scale(.9);
     transition:opacity .2s ease, transform .15s ease;
   }
   .reviews-nav.prev{left:-8px;}
@@ -204,10 +205,10 @@ h1,h2,h3,.display{font-family:'Kanit',sans-serif; font-weight:600;}
 /* ---------- มือถือ: หน้าต่างแสดงรูปแคตตาล็อกที่สร้างเสร็จ (บันทึกทีละรูป) ---------- */
 html.catalog-sheet-open, html.catalog-sheet-open body{overflow:hidden;}
 .catalog-sheet{position:fixed; inset:0; z-index:1500; display:flex; align-items:flex-end; justify-content:center;}
-.catalog-sheet-backdrop{position:absolute; inset:0; background:rgba(46,16,36,0.55); animation:csFade .2s ease both;}
+.catalog-sheet-backdrop{position:absolute; inset:0; background:rgba(52,38,46,0.55); animation:csFade .2s ease both;}
 .catalog-sheet-panel{
   position:relative; width:100%; max-width:520px; max-height:92vh; max-height:92dvh; display:flex; flex-direction:column;
-  background:var(--paper); border-radius:22px 22px 0 0; box-shadow:0 -10px 40px rgba(46,16,36,0.25);
+  background:var(--paper); border-radius:22px 22px 0 0; box-shadow:0 -10px 40px rgba(52,38,46,0.25);
   animation:csUp .3s cubic-bezier(.2,.8,.2,1) both; font-family:'Kanit';
 }
 .catalog-sheet-head{display:flex; align-items:flex-start; justify-content:space-between; gap:10px; padding:16px 16px 10px;}
@@ -220,7 +221,7 @@ html.catalog-sheet-open, html.catalog-sheet-open body{overflow:hidden;}
 .catalog-sheet-item figcaption{display:flex; align-items:center; justify-content:space-between; gap:10px; margin:0 0 8px; font-size:13px; font-weight:600; color:var(--rose-dark);}
 .catalog-sheet-save, .catalog-sheet-all{
   border:none; cursor:pointer; font-family:'Kanit'; font-weight:600; color:#fff;
-  background:var(--sage); box-shadow:0 3px 10px rgba(46,16,36,0.2);
+  background:var(--sage); box-shadow:0 3px 10px rgba(52,38,46,0.2);
 }
 .catalog-sheet-save{padding:9px 16px; border-radius:999px; font-size:13px;}
 .catalog-sheet-foot{padding:10px 16px calc(12px + env(safe-area-inset-bottom, 0px)); border-top:1px solid var(--line);}
@@ -253,7 +254,7 @@ html.catalog-sheet-open, html.catalog-sheet-open body{overflow:hidden;}
    card. Name/stars sit in a small strip under the photo — optional, kept short. */
 .review-card{
   flex:0 0 auto; width:170px; scroll-snap-align:start;
-  background:var(--paper); border:1px solid var(--line); border-radius:16px;
+  background:var(--paper); border:0; border-radius:16px;
   box-shadow:var(--shadow); overflow:hidden; cursor:pointer;
   display:flex; flex-direction:column;
   transition:transform .15s ease;
@@ -292,7 +293,7 @@ html.catalog-sheet-open, html.catalog-sheet-open body{overflow:hidden;}
 /* ---------- Promo popup: auto-opens on page load, image carousel + close (X) ---------- */
 .promo-overlay{
   position:fixed; inset:0; z-index:1400;
-  background:rgba(46,16,36,0.55);
+  background:rgba(52,38,46,0.55);
   display:flex; align-items:center; justify-content:center;
   opacity:0; visibility:hidden; pointer-events:none;
   transition:opacity .25s ease;
@@ -338,7 +339,7 @@ html.catalog-sheet-open, html.catalog-sheet-open body{overflow:hidden;}
 }
 .review-lightbox{
   position:fixed; inset:0; z-index:1300;
-  background:rgba(20,6,15,0.88);
+  background:rgba(24,14,20,0.88);
   display:flex; align-items:center; justify-content:center;
   opacity:0; visibility:hidden; transition:opacity .2s ease, visibility .2s ease;
   padding:24px;
@@ -379,7 +380,7 @@ html.catalog-sheet-open, html.catalog-sheet-open body{overflow:hidden;}
   max-height:88vh;
   background:var(--paper);
   border-radius:22px 22px 0 0;
-  box-shadow:0 -10px 40px rgba(46,16,36,0.22);
+  box-shadow:0 -10px 40px rgba(52,38,46,0.22);
   z-index:1041;
   display:flex;
   flex-direction:column;
@@ -422,7 +423,7 @@ html.catalog-sheet-open, html.catalog-sheet-open body{overflow:hidden;}
     width:min(760px, 92vw);
     max-height:85vh;
     border-radius:24px;
-    box-shadow:0 20px 60px rgba(46,16,36,0.25);
+    box-shadow:0 20px 60px rgba(52,38,46,0.25);
     transform:translate(-50%,-50%) translateY(14px);
   }
   .reviews-all-modal.open{transform:translate(-50%,-50%) translateY(0);}
@@ -528,7 +529,7 @@ main{padding:18px 3vw 80px;}
 }
 .fswitch-input{
   -webkit-appearance:none; appearance:none; flex-shrink:0; margin:0; cursor:pointer;
-  width:36px; height:20px; border-radius:999px; background:rgba(46,16,36,0.18); position:relative; transition:background .15s;
+  width:36px; height:20px; border-radius:999px; background:rgba(52,38,46,0.18); position:relative; transition:background .15s;
 }
 .fswitch-input::after{
   content:''; position:absolute; top:2px; left:2px; width:16px; height:16px; border-radius:50%;
@@ -612,7 +613,7 @@ main{padding:18px 3vw 80px;}
 
 /* ---------- Mobile: bottom sheet ---------- */
 .filter-overlay{
-  position:fixed; inset:0; background:rgba(46,16,36,0.45);
+  position:fixed; inset:0; background:rgba(52,38,46,0.45);
   opacity:0; visibility:hidden; transition:opacity .2s ease, visibility .2s ease;
   z-index:1200;
 }
@@ -623,7 +624,7 @@ main{padding:18px 3vw 80px;}
   max-height:80vh; display:flex; flex-direction:column;
   transform:translateY(100%); transition:transform .25s ease, visibility .25s ease;
   visibility:hidden; pointer-events:none;
-  box-shadow:0 -8px 30px rgba(46,16,36,0.2);
+  box-shadow:0 -8px 30px rgba(52,38,46,0.2);
 }
 .filter-sheet.open{transform:translateY(0); visibility:visible; pointer-events:auto;}
 .filter-sheet-header{
@@ -647,7 +648,7 @@ main{padding:18px 3vw 80px;}
 .filter-apply-btn{
   flex:2; padding:13px; border-radius:14px; border:none; background:var(--sage);
   color:#fff; font-family:'Kanit'; font-weight:700; font-size:14.5px; cursor:pointer;
-  box-shadow:0 6px 16px rgba(46,16,36,0.18);
+  box-shadow:0 6px 16px rgba(52,38,46,0.18);
 }
 
 /* ---------- Desktop: persistent left sidebar ---------- */
@@ -693,7 +694,7 @@ main{padding:18px 3vw 80px;}
   /* การ์ดสินค้า/กริด: แบนลง เส้นขอบบางแทนเงาหนัก แน่นขึ้น */
   .grid{grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:8px;}
   .card{border-radius:10px; box-shadow:none; border:1px solid var(--line);}
-  .card:hover{box-shadow:0 4px 14px rgba(46,16,36,0.10);}
+  .card:hover{box-shadow:0 4px 14px rgba(52,38,46,0.10);}
 }
 .section-title{
   margin:34px 0 18px;
@@ -826,7 +827,7 @@ main{padding:18px 3vw 80px;}
 
 /* ---------- Cart drawer ---------- */
 .overlay{
-  position:fixed; inset:0; background:rgba(46,16,36,0.35);
+  position:fixed; inset:0; background:rgba(52,38,46,0.35);
   opacity:0; pointer-events:none; transition:opacity .25s ease;
   z-index:1029;
 }
@@ -900,7 +901,7 @@ main{padding:18px 3vw 80px;}
   display:flex; align-items:center; justify-content:center; gap:10px;
   cursor:pointer; transition:background .15s ease;
   text-decoration:none; box-sizing:border-box;
-  box-shadow:0 6px 16px rgba(46,16,36,0.18);
+  box-shadow:0 6px 16px rgba(52,38,46,0.18);
 }
 .checkout-btn:hover{background:var(--sage-dark);}
 .checkout-btn:disabled{background:#d8cfd2; cursor:not-allowed;}
@@ -924,7 +925,7 @@ main{padding:18px 3vw 80px;}
   position:fixed; right:20px; bottom:24px; z-index:1025;
   background:var(--sage); color:#fff; border:none; border-radius:999px;
   padding:14px 22px; font-weight:700; font-size:14.5px;
-  box-shadow:0 10px 26px rgba(46,16,36,0.18);
+  box-shadow:0 10px 26px rgba(52,38,46,0.18);
   cursor:pointer; display:flex; align-items:center; gap:6px;
   transition:transform .15s ease;
 }
@@ -949,14 +950,14 @@ main{padding:18px 3vw 80px;}
 .page-back-btn{
   position:absolute; top:14px; left:14px; z-index:2;
   width:40px; height:40px; border-radius:50%; border:none;
-  background:rgba(46,16,36,0.42);
+  background:rgba(52,38,46,0.42);
   -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);
-  box-shadow:0 6px 16px rgba(46,16,36,0.30);
+  box-shadow:0 6px 16px rgba(52,38,46,0.30);
   color:#fff; font-size:19px; cursor:pointer;
   display:flex; align-items:center; justify-content:center;
   transition:background .15s ease, transform .15s ease;
 }
-.page-back-btn:hover{background:rgba(46,16,36,0.6); transform:translateY(-1px);}
+.page-back-btn:hover{background:rgba(52,38,46,0.6); transform:translateY(-1px);}
 /* Mobile (default): everything scrolls as one page (photo + details together). */
 .product-page-scroll{
   flex:1;
@@ -1012,7 +1013,7 @@ main{padding:18px 3vw 80px;}
   padding:14px 20px calc(14px + env(safe-area-inset-bottom, 0px));
   background:var(--paper);
   border-top:1px solid var(--line);
-  box-shadow:0 -6px 16px rgba(46,16,36,0.06);
+  box-shadow:0 -6px 16px rgba(52,38,46,0.06);
 }
 .add-btn.secondary{background:#fff; color:var(--sage); border:1.5px solid var(--sage); justify-content:center; padding:12px;}
 .add-btn.secondary:hover{background:var(--cream);}
@@ -1135,7 +1136,7 @@ main{padding:18px 3vw 80px;}
   .page-img{
     width:min(100%, calc(100vh - 170px)); height:auto; aspect-ratio:1/1;
     border-radius:24px;
-    box-shadow:0 12px 36px rgba(46,16,36,0.11);
+    box-shadow:0 12px 36px rgba(52,38,46,0.11);
   }
   .page-img img.pd-fade{animation:pdFade .3s ease;}
 
@@ -1146,7 +1147,7 @@ main{padding:18px 3vw 80px;}
     width:44px; height:44px; border-radius:50%; border:none;
     background:rgba(255,255,255,0.92);
     -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px);
-    box-shadow:0 4px 14px rgba(46,16,36,0.18);
+    box-shadow:0 4px 14px rgba(52,38,46,0.18);
     font-size:21px; line-height:1; color:var(--muted); cursor:pointer;
     transition:transform .15s ease, color .15s ease;
   }
@@ -1256,10 +1257,10 @@ main{padding:18px 3vw 80px;}
     transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
   }
   .page-body .modal-actions-desktop .add-btn.secondary{flex:1; border-width:2px;}
-  .page-body .modal-actions-desktop .checkout-btn{flex:1.6; box-shadow:0 8px 20px rgba(46,16,36,0.18);}
+  .page-body .modal-actions-desktop .checkout-btn{flex:1.6; box-shadow:0 8px 20px rgba(52,38,46,0.18);}
   .page-body .modal-actions-desktop .add-btn.secondary:hover,
   .page-body .modal-actions-desktop .checkout-btn:hover{transform:translateY(-2px);}
-  .page-body .modal-actions-desktop .checkout-btn:hover{box-shadow:0 12px 26px rgba(46,16,36,0.18);}
+  .page-body .modal-actions-desktop .checkout-btn:hover{box-shadow:0 12px 26px rgba(52,38,46,0.18);}
 
   /* Order info strip (matches the FAQ) */
   .pd-info{
@@ -1333,7 +1334,7 @@ main{padding:18px 3vw 80px;}
   max-height:92vh;
   background:var(--paper);
   border-radius:22px 22px 0 0;
-  box-shadow:0 -10px 40px rgba(46,16,36,0.22);
+  box-shadow:0 -10px 40px rgba(52,38,46,0.22);
   z-index:1041;
   display:flex;
   flex-direction:column;
@@ -1380,7 +1381,7 @@ main{padding:18px 3vw 80px;}
   padding:14px 22px calc(14px + env(safe-area-inset-bottom, 0px));
   border-top:1px solid var(--line);
   background:var(--paper);
-  box-shadow:0 -6px 16px rgba(46,16,36,0.05);
+  box-shadow:0 -6px 16px rgba(52,38,46,0.05);
 }
 #orderSuccessView{
   padding:30px 24px calc(24px + env(safe-area-inset-bottom, 0px));
@@ -1458,7 +1459,7 @@ main{padding:18px 3vw 80px;}
     width:min(480px, 92vw);
     max-height:85vh;
     border-radius:24px;
-    box-shadow:0 20px 60px rgba(46,16,36,0.25);
+    box-shadow:0 20px 60px rgba(52,38,46,0.25);
     transform:translate(-50%,-50%) translateY(14px);
   }
   .order-modal.open{transform:translate(-50%,-50%) translateY(0);}
@@ -1633,7 +1634,7 @@ footer{
     position:fixed; left:0; right:0; bottom:0; margin:0; z-index:5;
     padding:10px 16px calc(10px + env(safe-area-inset-bottom, 0px));
     background:var(--paper); border-top:1px solid var(--line);
-    box-shadow:0 -6px 16px rgba(46,16,36,0.06);
+    box-shadow:0 -6px 16px rgba(52,38,46,0.06);
   }
   .order-closed-bar .ocb-text{flex:1; min-width:0; font-size:12.5px; font-weight:500; line-height:1.4; color:var(--plum);}
   .order-closed-bar .ocb-text b{font-weight:700; color:var(--rose-dark);}
@@ -1808,14 +1809,14 @@ footer{
   body{padding-bottom:calc(var(--bnav-h) + env(safe-area-inset-bottom, 0px));}
 
   /* แทนที่แถบชิปด้านบน / ปุ่มตะกร้ามุมบน / ปุ่มตะกร้าลอย */
-  .cat-nav, .cart-btn-top, .fab-cart{display:none !important;}
+  .cat-nav, .fab-cart{display:none !important;}
   .toast{bottom:calc(var(--bnav-h) + 14px + env(safe-area-inset-bottom, 0px));}
 
   .bnav{
     display:flex; position:fixed; left:0; right:0; bottom:0; z-index:1030;
     padding:6px 4px calc(6px + env(safe-area-inset-bottom, 0px));
     background:var(--paper); border-top:1px solid var(--line);
-    box-shadow:0 -4px 16px rgba(46,16,36,0.08);
+    box-shadow:0 -4px 16px rgba(52,38,46,0.08);
   }
   /* ขึ้นคีย์บอร์ดตอนพิมพ์ค้นหา — ซ่อนแถบไว้ชั่วคราวไม่ให้ลอยบังช่องพิมพ์ */
   body:has(#searchInput:focus) .bnav{display:none;}
@@ -2158,7 +2159,7 @@ html.no-anim *, html.no-anim *::before, html.no-anim *::after{
     scrollbar-width:none; overscroll-behavior-x:contain;
   }
   .reviews-scroll::-webkit-scrollbar{display:none;}
-  .review-card{width:auto; height:100%; border-radius:12px; box-shadow:0 2px 8px rgba(46,16,36,0.1);}
+  .review-card{width:auto; height:100%; border-radius:12px; box-shadow:0 2px 8px rgba(52,38,46,0.1);}
   .review-card:hover{transform:none;}
   .review-photo{aspect-ratio:1 / 1; height:100%;}
   .review-card-spacer{display:block; visibility:hidden;}
@@ -2191,12 +2192,12 @@ html.no-anim *, html.no-anim *::before, html.no-anim *::after{
    ลบบล็อกนี้ทั้งหมดเพื่อย้อนกลับเป็นแบบเดิมได้ทันที
    ========================================================= */
 :root{
-  --glass-bg: rgba(255,246,249,0.78);
+  --glass-bg: rgba(255,253,252,0.78);
   --glass-bg-strong: rgba(255,255,255,0.90);
   --glass-line: rgba(255,255,255,0.70);
   --glass-blur: 14px;
-  --gold-line: rgba(201,166,107,0.55);
-  --soft-shadow: 0 6px 22px rgba(46,16,36,0.06);
+  --gold-line: rgba(232,184,74,0.55);
+  --soft-shadow: 0 6px 22px rgba(52,38,46,0.06);
 }
 
 /* แสงชมพูจางๆ ด้านบนหน้า ให้กระจกมีของให้ทับ (เลื่อนหายไปพร้อมหน้า ไม่ตรึง) */
@@ -2204,8 +2205,8 @@ body::before{
   content:""; position:absolute; top:0; left:0; width:100%; height:420px;
   z-index:-1; pointer-events:none;
   background:
-    radial-gradient(60% 90% at 12% 0%, rgba(251,213,228,0.75), transparent 70%),
-    radial-gradient(50% 80% at 92% 0%, rgba(201,166,107,0.16), transparent 70%);
+    radial-gradient(60% 90% at 12% 0%, rgba(255,217,230,0.75), transparent 70%),
+    radial-gradient(50% 80% at 92% 0%, rgba(85,184,138,0.14), transparent 70%);
 }
 
 /* ---------- แถบค้นหา/ตะกร้า (กระจกบนมือถือที่ลอยค้าง) ---------- */
@@ -2213,9 +2214,9 @@ body::before{
   background:var(--glass-bg);
   -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.4);
   backdrop-filter:blur(var(--glass-blur)) saturate(1.4);
-  border-bottom:1px solid rgba(235,217,225,0.6);
+  border-bottom:1px solid rgba(243,221,229,0.6);
 }
-.search-wrap{background:rgba(255,255,255,0.82); border-color:rgba(235,217,225,0.9);}
+.search-wrap{background:rgba(255,255,255,0.82); border-color:rgba(243,221,229,0.9);}
 .cart-btn-top{
   background:rgba(255,255,255,0.82);
   -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
@@ -2231,13 +2232,13 @@ body::before{
 
 /* ---------- การ์ดสินค้า: ขาวทึบ ขอบบาง เส้นทองตอน hover ---------- */
 .card{border-color:var(--line);}
-.card:hover{border-color:var(--gold-line);}
+.card:hover{border-color:rgba(85,184,138,0.55);}
 @media (max-width:859px){
   .card{box-shadow:var(--soft-shadow);}
-  .card:hover{box-shadow:0 10px 28px rgba(46,16,36,0.10);}
+  .card:hover{box-shadow:0 10px 28px rgba(52,38,46,0.10);}
 }
 @media (min-width:860px){
-  .card:hover{box-shadow:0 8px 22px rgba(46,16,36,0.09);}
+  .card:hover{box-shadow:0 8px 22px rgba(52,38,46,0.09);}
 }
 
 /* ---------- ป้าย/ปุ่มที่วางทับรูปสินค้า ---------- */
@@ -2247,7 +2248,7 @@ body::before{
   -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);
 }
 .badge-new{
-  background:rgba(201,166,107,0.90);
+  background:rgba(232,184,74,0.90);
   border:1px solid rgba(255,255,255,0.45);
   -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);
 }
@@ -2259,7 +2260,7 @@ body::before{
 
 /* ---------- ตะกร้า (drawer) + bottom sheet ---------- */
 .drawer{
-  background:rgba(255,246,249,0.88);
+  background:rgba(255,253,252,0.88);
   -webkit-backdrop-filter:blur(18px) saturate(1.3); backdrop-filter:blur(18px) saturate(1.3);
   border-left:1px solid var(--glass-line);
 }
@@ -2317,7 +2318,7 @@ body::before{
 .thumb img{transition:transform .6s cubic-bezier(.2,.7,.2,1);}
 .thumb::after{
   content:""; position:absolute; left:0; right:0; bottom:0; height:38%;
-  background:linear-gradient(to top, rgba(46,16,36,0.22), rgba(46,16,36,0));
+  background:linear-gradient(to top, rgba(52,38,46,0.22), rgba(52,38,46,0));
   pointer-events:none;
 }
 @media (hover:hover) and (prefers-reduced-motion:no-preference){
@@ -2337,11 +2338,11 @@ body::before{
   padding:3px 10px 3px 8px; font-weight:600; letter-spacing:.2px;
   background:rgba(255,255,255,0.84);
   border:1px solid rgba(255,255,255,0.75);
-  box-shadow:0 3px 10px rgba(46,16,36,0.12);
+  box-shadow:0 3px 10px rgba(52,38,46,0.12);
   -webkit-backdrop-filter:blur(8px) saturate(1.3); backdrop-filter:blur(8px) saturate(1.3);
 }
 .badge-ready{color:var(--success);}
-.badge-new{color:#8A6A2F;}
+.badge-new{color:#7A5A00;}
 .badge-ready::before, .badge-new::before{
   content:""; width:6px; height:6px; border-radius:50%; flex-shrink:0;
 }
@@ -2356,7 +2357,7 @@ body::before{
 }
 .card .price-row{
   padding-top:10px;
-  border-top:1px solid rgba(201,166,107,0.40);
+  border-top:1px solid rgba(85,184,138,0.35);
 }
 .card .price{font-weight:600; letter-spacing:.2px;}
 
@@ -2417,6 +2418,49 @@ body::before{
    ลบบล็อกนี้ทิ้งเพื่อย้อนกลับเป็นรอบก่อนได้
    ========================================================= */
 .card, .card:hover{border-color:transparent;}
-.card{box-shadow:0 4px 18px rgba(46,16,36,0.07);}
-.card:hover{box-shadow:0 12px 30px rgba(46,16,36,0.12);}
+.card{box-shadow:0 4px 18px rgba(52,38,46,0.07);}
+.card:hover{box-shadow:0 12px 30px rgba(52,38,46,0.12);}
 .card .price-row{border-top:none;}
+
+/* =========================================================
+   มือถือ: แถบบน = ☰ ตัวกรองสินค้า + โลโก้/ชื่อร้าน + ทักแชต + ตะกร้า (<= 859px เท่านั้น คอมไม่เปลี่ยน)
+   ☰ เปิดแผงตัวกรองสินค้า (หมวดหมู่ · พร้อมส่ง · รายการโปรด · เรียงราคา · ชนิดดอกไม้ · ช่วงราคา)
+   (ช่องค้นหายังอยู่ใน HTML/JS เพราะเวอร์ชันคอมใช้ แค่ซ่อนบนมือถือ)
+   ========================================================= */
+.menu-btn, .chat-top-btn{display:none;}
+@media (max-width:859px){
+  :root{--bnav-h:0px;}
+  .search-wrap{display:none;}
+  .search-cart-bar{gap:8px;}
+  .brand-mark, .brand-name{cursor:pointer; -webkit-tap-highlight-color:transparent;}
+  .brand-name{display:block; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; font-size:17px;}
+  .menu-btn, .chat-top-btn{
+    position:relative; flex-shrink:0; width:40px; height:40px; padding:0; border-radius:50%;
+    display:inline-flex; align-items:center; justify-content:center; text-decoration:none;
+    cursor:pointer; -webkit-tap-highlight-color:transparent;
+  }
+  .menu-btn{border:1.5px solid var(--line); background:var(--paper); color:var(--plum); box-shadow:var(--shadow);}
+  .chat-top-btn{border:none; background:var(--sage); color:#fff; box-shadow:0 3px 10px rgba(var(--sage-rgb),0.28);}
+  .menu-btn:active, .chat-top-btn:active{transform:scale(.94);}
+  .menu-btn svg, .chat-top-btn svg{width:20px; height:20px; display:block;}
+  .menu-badge{
+    position:absolute; top:-4px; right:-4px; min-width:20px; height:20px; padding:0 5px; border-radius:999px;
+    display:flex; align-items:center; justify-content:center;
+    background:var(--sage); color:#fff; border:2px solid var(--cream);
+    font-family:'Kanit'; font-size:11px; font-weight:700; line-height:1;
+  }
+  .menu-badge[hidden]{display:none;}
+  .cart-btn-top{display:flex;}
+  .cart-btn-top .badge.zero{display:none;}
+  .cart-btn-top.bnav-bounce{animation:sfbNavBounce .5s var(--sfb-out);}
+  .cart-btn-top .badge.badge-bump{animation:sfbBadgeBump .4s var(--sfb-spring);}
+  html.anim-lite .cart-btn-top.bnav-bounce, html.anim-lite .cart-btn-top .badge.badge-bump{animation:none;}
+
+  /* แผงตัวกรองสินค้าตอนทำหน้าที่เป็นเมนูหลัก: หมวดหมู่ใหญ่ กดง่าย หัวข้อชัด */
+  #filterSheet .filter-sheet-header h3{font-size:17px; font-weight:700; color:var(--sage-dark);}
+  #filterSheet .filter-group{padding:12px 0;}
+  #filterSheet .filter-group-title{margin-bottom:8px; font-size:13.5px;}
+  #filterSheet .filter-pill{min-height:36px; padding:0 12px; font-size:13px;}
+  #filterSheet .fp-cats .filter-pill{min-height:42px; padding:0 6px; font-size:14px; font-weight:600;}
+  #filterSheet .filter-sheet-body{padding:4px 16px 8px;}
+}

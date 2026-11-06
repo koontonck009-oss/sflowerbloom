@@ -66,10 +66,10 @@ const GAS_URL = 'https://script.google.com/macros/s/AKfycbwfNGO22TxU0kBqbNbn7eaS
 /* --------------------------------------------------------- */
 
 const ICONS = {
-  bouquet: `<svg viewBox="0 0 64 64"><g fill="none" stroke="#D0145C" stroke-width="2.5"><path d="M32 30 L26 56" stroke="#A10E48"/><path d="M32 30 L38 56" stroke="#A10E48"/><path d="M32 30 L32 58" stroke="#A10E48"/></g><circle cx="32" cy="20" r="9" fill="#D0145C"/><circle cx="20" cy="26" r="8" fill="#FBD5E4"/><circle cx="44" cy="26" r="8" fill="#FBD5E4"/><circle cx="26" cy="16" r="6" fill="#A10E48"/><circle cx="38" cy="16" r="6" fill="#A10E48"/></svg>`,
-  frame: `<svg viewBox="0 0 64 64"><rect x="10" y="8" width="44" height="48" rx="3" fill="none" stroke="#A10E48" stroke-width="4"/><rect x="18" y="16" width="28" height="32" fill="#FBD5E4" opacity="0.6"/><circle cx="26" cy="26" r="4" fill="#D0145C"/><path d="M18 44 L28 32 L36 40 L46 28 L46 48 L18 48 Z" fill="#A10E48" opacity="0.6"/></svg>`,
-  pot: `<svg viewBox="0 0 64 64"><path d="M18 26 H46 L41 54 H23 Z" fill="#D0145C"/><rect x="16" y="20" width="32" height="8" rx="2" fill="#A10E48"/><path d="M32 20 C20 20 20 4 32 8 C44 4 44 20 32 20 Z" fill="#EB1065"/></svg>`,
-  other: `<svg viewBox="0 0 64 64"><rect x="12" y="14" width="40" height="36" rx="4" fill="#FBD5E4"/><path d="M12 22 H52" stroke="#A10E48" stroke-width="3"/><circle cx="32" cy="14" r="6" fill="#D0145C"/></svg>`
+  bouquet: `<svg viewBox="0 0 64 64"><g fill="none" stroke="#E2417C" stroke-width="2.5"><path d="M32 30 L26 56" stroke="#C0305F"/><path d="M32 30 L38 56" stroke="#C0305F"/><path d="M32 30 L32 58" stroke="#C0305F"/></g><circle cx="32" cy="20" r="9" fill="#E2417C"/><circle cx="20" cy="26" r="8" fill="#FFD9E6"/><circle cx="44" cy="26" r="8" fill="#FFD9E6"/><circle cx="26" cy="16" r="6" fill="#C0305F"/><circle cx="38" cy="16" r="6" fill="#C0305F"/></svg>`,
+  frame: `<svg viewBox="0 0 64 64"><rect x="10" y="8" width="44" height="48" rx="3" fill="none" stroke="#C0305F" stroke-width="4"/><rect x="18" y="16" width="28" height="32" fill="#FFD9E6" opacity="0.6"/><circle cx="26" cy="26" r="4" fill="#E2417C"/><path d="M18 44 L28 32 L36 40 L46 28 L46 48 L18 48 Z" fill="#C0305F" opacity="0.6"/></svg>`,
+  pot: `<svg viewBox="0 0 64 64"><path d="M18 26 H46 L41 54 H23 Z" fill="#E2417C"/><rect x="16" y="20" width="32" height="8" rx="2" fill="#C0305F"/><path d="M32 20 C20 20 20 4 32 8 C44 4 44 20 32 20 Z" fill="#F0568C"/></svg>`,
+  other: `<svg viewBox="0 0 64 64"><rect x="12" y="14" width="40" height="36" rx="4" fill="#FFD9E6"/><path d="M12 22 H52" stroke="#C0305F" stroke-width="3"/><circle cx="32" cy="14" r="6" fill="#E2417C"/></svg>`
 };
 
 function renderThumb(p, variantLabel){
@@ -1389,6 +1389,7 @@ function openFilterSheet(){
     flowerTypes: new Set(activeFlowerTypes)
   };
   renderFilterSheetBody();
+  const fsb = document.getElementById('filterSheetBody'); if(fsb) fsb.scrollTop = 0; // เปิดใหม่ทุกครั้งเริ่มจากบนสุด (หมวดหมู่)
   document.getElementById('filterOverlay').classList.add('open');
   document.getElementById('filterSheet').classList.add('open');
   document.body.style.overflow = 'hidden';
@@ -1895,7 +1896,7 @@ function drawCatalogPage(items, pageNo, pageCount, imgs, logo, summary){
   ctx.scale(K, K); // ตัวคูณเดียวกันทั้งสองแกน (1800/1080 = 3200/1920) รูปสินค้าไม่ถูกยืดหรือบีบ
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
-  const PINK = '#D0145C', PINK_DARK = '#A10E48', PLUM = '#2E1024', CREAM = '#FFF6F9';
+  const PINK = '#E2417C', PINK_DARK = '#C0305F', PLUM = '#34262E', CREAM = '#FFFDFC';
   ctx.textBaseline = 'alphabetic';
 
   // พื้นหลัง
@@ -1941,7 +1942,7 @@ function drawCatalogPage(items, pageNo, pageCount, imgs, logo, summary){
 
     // การ์ด
     ctx.save();
-    ctx.shadowColor = 'rgba(46,16,36,0.10)'; ctx.shadowBlur = 10 * K; ctx.shadowOffsetY = 2 * K;
+    ctx.shadowColor = 'rgba(52,38,46,0.10)'; ctx.shadowBlur = 10 * K; ctx.shadowOffsetY = 2 * K;
     ctx.fillStyle = '#fff';
     catalogRoundRect(ctx, x, y, cellW, cellH, 14); ctx.fill();
     ctx.restore();
@@ -1955,7 +1956,7 @@ function drawCatalogPage(items, pageNo, pageCount, imgs, logo, summary){
       const sw = photo / sc, sh = photoH / sc;
       ctx.drawImage(img, (img.width - sw)/2, (img.height - sh)/2, sw, sh, x, y, photo, photoH);
     } else {
-      ctx.fillStyle = '#FBD5E4'; ctx.fillRect(x, y, photo, photoH);
+      ctx.fillStyle = '#FFD9E6'; ctx.fillRect(x, y, photo, photoH);
       ctx.font = '72px sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = PINK;
       ctx.fillText('🌸', x + photo/2, y + photoH/2 + 24);
       ctx.textAlign = 'left';
@@ -1971,7 +1972,7 @@ function drawCatalogPage(items, pageNo, pageCount, imgs, logo, summary){
       ctx.fillStyle = fg; ctx.fillText(label, px + 10, by + 21);
     };
     if(it.ready) drawBadge('พร้อมส่ง', x + 8, y + 8, '#2F7A58', 'left');
-    if(it.isNew) drawBadge('ใหม่', x + cellW - 8, y + 8, '#C9A66B', 'right', PLUM);
+    if(it.isNew) drawBadge('ใหม่', x + cellW - 8, y + 8, '#E8B84A', 'right', PLUM);
 
     // ชื่อ + ราคา
     const tx = x + 10, tw2 = cellW - 20;
@@ -1988,9 +1989,9 @@ function drawCatalogPage(items, pageNo, pageCount, imgs, logo, summary){
 
   // แถบข้อความหมายเหตุ
   ctx.save();
-  ctx.fillStyle = '#FFF1F6';
+  ctx.fillStyle = '#FFF3F7';
   catalogRoundRect(ctx, PAD, noteY, W - PAD * 2, NOTE_H, 18); ctx.fill();
-  ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(208,20,92,0.28)';
+  ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(226,65,124,0.28)';
   catalogRoundRect(ctx, PAD, noteY, W - PAD * 2, NOTE_H, 18); ctx.stroke();
   ctx.restore();
   const noteLines = [
@@ -2191,13 +2192,14 @@ function cartTotal(){
 function updateCartUI(){
   saveCart();
   document.getElementById('cartBadge').textContent = cartCount();
+  document.getElementById('cartBadge').classList.toggle('zero', cartCount() === 0); // มือถือซ่อนเลข 0 (CSS)
   const pdCount = document.getElementById('pdCartCount'); // ตัวเลขบนปุ่มตะกร้าในแถบบนของหน้าสินค้า (จอคอม)
   if(pdCount){ const n = cartCount(); pdCount.textContent = n; pdCount.classList.toggle('is-zero', !n); }
   const wrap = document.getElementById('drawerItems');
   const entries = Object.entries(cart);
   if(!entries.length){
     wrap.innerHTML = `<div class="empty-cart">
-      <svg viewBox="0 0 64 64" fill="none"><path d="M18 26 H46 L41 54 H23 Z" stroke="#7B6772" stroke-width="3"/></svg>
+      <svg viewBox="0 0 64 64" fill="none"><path d="M18 26 H46 L41 54 H23 Z" stroke="#857079" stroke-width="3"/></svg>
       <div>ยังไม่มีสินค้าในตะกร้า</div>
     </div>`;
   } else {
@@ -2301,8 +2303,8 @@ function sfbCartBump(){
   setTimeout(function(){
     const drawer = document.getElementById('drawer');
     if(drawer && drawer.classList.contains('open')) return;
-    sfbAnimPlay(document.getElementById('bnavCartBadge'), 'badge-bump');
-    sfbAnimPlay(document.querySelector('#bnavCart .bnav-ic'), 'bnav-bounce');
+    sfbAnimPlay(document.getElementById('cartBadge'), 'badge-bump');
+    sfbAnimPlay(document.querySelector('.cart-btn-top'), 'bnav-bounce');
   }, wait);
 }
 
@@ -2379,11 +2381,12 @@ var __sfbBumpDelay;   // var (กัน TDZ เหมือนตัวแปร
 function sfbFlyToCart(){
   if(!sfbAnimOk() || document.documentElement.classList.contains('anim-lite')) return false;
   const src = document.querySelector('#modalImg img');
-  const navBtn = document.getElementById('bnavCart');
-  const target = navBtn && navBtn.querySelector('.bnav-ic');
+  const navBtn = document.querySelector('.cart-btn-top');
+  const target = navBtn;
   if(!src || !target || typeof src.animate !== 'function') return false;
   if(getComputedStyle(navBtn).display === 'none') return false;
   const s = src.getBoundingClientRect(), t = target.getBoundingClientRect();
+  if(t.bottom <= 0) return false; // แถบบนซ่อนอยู่ (เลื่อนลง) ไม่มีเป้าหมายให้บิน
   if(!s.width || !s.height || !t.width) return false;
   const size = 120;
   const sx = s.left + s.width / 2 - size / 2, sy = s.top + s.height / 2 - size / 2;
@@ -4130,14 +4133,7 @@ function bnavSyncHome(){
 }
 // อัปเดตสถานะทุกช่องในแถบล่างให้ตรงกับตัวกรองจริง (เรียกจาก renderNav / updateFilterBadge / updateCartUI)
 function updateBottomNav(){
-  const catBtn = document.getElementById('bnavCat');
-  if(!catBtn) return;
-  const picked = activeCats.size > 0 ? [...activeCats][0] : '';
-  // ป้ายคงที่ "หมวดหมู่" (เดิมเปลี่ยนตามหมวดที่เลื่อนผ่าน จนดูเหมือนแท็บหมวดมากกว่าปุ่มเปิดเมนู) — เลือกหมวดแล้วค่อยโชว์ชื่อหมวดที่เลือก
-  document.getElementById('bnavCatLabel').textContent = picked || 'หมวดหมู่';
-  catBtn.classList.toggle('active', !!picked);
-  const fav = document.getElementById('bnavFav');
-  fav.classList.toggle('active', showFavoritesOnly); fav.setAttribute('aria-pressed', String(!!showFavoritesOnly));
+  syncMenuBadge();
   // ชิปตัวกรองที่ใช้อยู่ (วาดใหม่เฉพาะตอนเนื้อหาเปลี่ยน) — กดชิปเพื่อเอาตัวกรองนั้นออก
   const box = document.getElementById('bnavChips');
   if(box){
@@ -4155,3 +4151,13 @@ function updateBottomNav(){
 window.addEventListener('scroll', function(){
   if(window.scrollX !== 0) window.scrollTo(0, window.scrollY);
 }, { passive:true });
+
+/* ---------- มือถือ: ปุ่ม ☰ เปิดแผงตัวกรองสินค้า — เลขบนปุ่มบอกจำนวนตัวกรองที่ใช้อยู่ ---------- */
+function brandTap(){ if(window.matchMedia('(max-width:859px)').matches) bnavHome(); }
+function syncMenuBadge(){
+  const b = document.getElementById('menuBadge');
+  if(!b) return;
+  const fc = document.getElementById('filterCount');
+  const n = fc && !fc.hidden ? fc.textContent : '';
+  b.textContent = n; b.hidden = !n;
+}
