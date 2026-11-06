@@ -66,10 +66,10 @@ const GAS_URL = 'https://script.google.com/macros/s/AKfycbwfNGO22TxU0kBqbNbn7eaS
 /* --------------------------------------------------------- */
 
 const ICONS = {
-  bouquet: `<svg viewBox="0 0 64 64"><g fill="none" stroke="#E2417C" stroke-width="2.5"><path d="M32 30 L26 56" stroke="#C0305F"/><path d="M32 30 L38 56" stroke="#C0305F"/><path d="M32 30 L32 58" stroke="#C0305F"/></g><circle cx="32" cy="20" r="9" fill="#E2417C"/><circle cx="20" cy="26" r="8" fill="#FFD9E6"/><circle cx="44" cy="26" r="8" fill="#FFD9E6"/><circle cx="26" cy="16" r="6" fill="#C0305F"/><circle cx="38" cy="16" r="6" fill="#C0305F"/></svg>`,
-  frame: `<svg viewBox="0 0 64 64"><rect x="10" y="8" width="44" height="48" rx="3" fill="none" stroke="#C0305F" stroke-width="4"/><rect x="18" y="16" width="28" height="32" fill="#FFD9E6" opacity="0.6"/><circle cx="26" cy="26" r="4" fill="#E2417C"/><path d="M18 44 L28 32 L36 40 L46 28 L46 48 L18 48 Z" fill="#C0305F" opacity="0.6"/></svg>`,
-  pot: `<svg viewBox="0 0 64 64"><path d="M18 26 H46 L41 54 H23 Z" fill="#E2417C"/><rect x="16" y="20" width="32" height="8" rx="2" fill="#C0305F"/><path d="M32 20 C20 20 20 4 32 8 C44 4 44 20 32 20 Z" fill="#F0568C"/></svg>`,
-  other: `<svg viewBox="0 0 64 64"><rect x="12" y="14" width="40" height="36" rx="4" fill="#FFD9E6"/><path d="M12 22 H52" stroke="#C0305F" stroke-width="3"/><circle cx="32" cy="14" r="6" fill="#E2417C"/></svg>`
+  bouquet: `<svg viewBox="0 0 64 64"><g fill="none" stroke="#E2417C" stroke-width="2.5"><path d="M32 30 L26 56" stroke="#ed1065"/><path d="M32 30 L38 56" stroke="#ed1065"/><path d="M32 30 L32 58" stroke="#ed1065"/></g><circle cx="32" cy="20" r="9" fill="#E2417C"/><circle cx="20" cy="26" r="8" fill="#FFD9E6"/><circle cx="44" cy="26" r="8" fill="#FFD9E6"/><circle cx="26" cy="16" r="6" fill="#ed1065"/><circle cx="38" cy="16" r="6" fill="#ed1065"/></svg>`,
+  frame: `<svg viewBox="0 0 64 64"><rect x="10" y="8" width="44" height="48" rx="3" fill="none" stroke="#ed1065" stroke-width="4"/><rect x="18" y="16" width="28" height="32" fill="#FFD9E6" opacity="0.6"/><circle cx="26" cy="26" r="4" fill="#E2417C"/><path d="M18 44 L28 32 L36 40 L46 28 L46 48 L18 48 Z" fill="#ed1065" opacity="0.6"/></svg>`,
+  pot: `<svg viewBox="0 0 64 64"><path d="M18 26 H46 L41 54 H23 Z" fill="#E2417C"/><rect x="16" y="20" width="32" height="8" rx="2" fill="#ed1065"/><path d="M32 20 C20 20 20 4 32 8 C44 4 44 20 32 20 Z" fill="#F0568C"/></svg>`,
+  other: `<svg viewBox="0 0 64 64"><rect x="12" y="14" width="40" height="36" rx="4" fill="#FFD9E6"/><path d="M12 22 H52" stroke="#ed1065" stroke-width="3"/><circle cx="32" cy="14" r="6" fill="#E2417C"/></svg>`
 };
 
 function renderThumb(p, variantLabel){
@@ -1548,7 +1548,7 @@ function cardSwatchHtml(p, narrow){
   const nD = info.items.length - SHOW_D, nM = info.items.length - SHOW_M;
   const more = (nD > 0 ? `<span class="sw-more sw-more-d">+${nD}</span>` : '')
              + (nM > 0 ? `<span class="sw-more sw-more-m">+${nM}</span>` : '');
-  return `<div class="sw-row"><div class="sw-strip" onmouseleave="cardSwatchLeave(this)">${btns}${more}</div></div>`;
+  return `<div class="sw-row"><div class="sw-strip" onmouseleave="cardSwatchLeave(this)">${btns}${more}</div><span class="sw-name" data-def="${label}">${label}</span></div>`;
 }
 function cardSwatchOrig(card){
   if(!card._swOrig){
@@ -1569,6 +1569,8 @@ function cardSwatchBadge(card, ready){
 function cardSwatchShow(card, btn){
   const thumb = card.querySelector('.thumb'); if(!thumb) return;
   cardSwatchOrig(card);
+  const swName = card.querySelector('.sw-name');
+  if(swName) swName.textContent = btn.getAttribute('title') || swName.dataset.def;
   const img = document.createElement('img');
   img.className = 'sw-in'; img.decoding = 'async'; img.alt = btn.getAttribute('title') || '';
   img.onerror = () => { thumb.innerHTML = window.iconFallbackFor(btn.dataset.pid); };
@@ -1581,7 +1583,7 @@ const cardCanHover = () => window.matchMedia && window.matchMedia('(hover: hover
 function cardSwatchPick(btn){
   const card = btn.closest('.card'); if(!card) return;
   cardSwatchShow(card, btn);
-  card._swCur = { html: card.querySelector('.thumb').innerHTML, ready: btn.dataset.ready === '1' };
+  card._swCur = { html: card.querySelector('.thumb').innerHTML, ready: btn.dataset.ready === '1', label: btn.getAttribute('title') || '' };
   btn.parentElement.querySelectorAll('.sw-btn').forEach(b => b.setAttribute('aria-pressed', b === btn ? 'true' : 'false'));
   const idx = +btn.dataset.idx, key = btn.dataset.key, pid = btn.dataset.pid;
   card.onclick = () => openProductModal(pid, key === 'c' ? idx : null, key === 'o' ? idx : null, key === 's' ? idx : null);
@@ -1598,6 +1600,8 @@ function cardSwatchLeave(strip){
   const thumb = card.querySelector('.thumb'); if(!thumb) return;
   thumb.innerHTML = st.html;
   cardSwatchBadge(card, st.ready);
+  const swName = card.querySelector('.sw-name');
+  if(swName) swName.textContent = st.label || swName.dataset.def;
 }
 function renderProductCard(p, variant, narrow){
   const colorIndex = variant && variant.colorIndex != null ? variant.colorIndex : null;
@@ -1811,7 +1815,7 @@ function renderCatalog(){
   if(searchQuery && totalMatches === 0){
     main.innerHTML = `
       <div style="text-align:center; padding:60px 20px; color:var(--rose-dark);">
-        <p style="font-size:16px; font-weight:700; margin-bottom:6px;">ไม่พบสินค้าที่ตรงกับ "${searchQuery}"</p>
+        <p style="font-size:16px; font-weight:400; margin-bottom:6px;">ไม่พบสินค้าที่ตรงกับ "${searchQuery}"</p>
         <p style="font-size:13.5px; color:var(--plum);">ลองค้นหาด้วยคำอื่น หรือกดล้างคำค้นหาเพื่อดูสินค้าทั้งหมด</p>
         <button type="button" class="empty-clear-btn" onclick="clearSearch()">ล้างคำค้นหา</button>
       </div>`;
@@ -1819,7 +1823,7 @@ function renderCatalog(){
     const noFav = showFavoritesOnly && favorites.size === 0; // เปิดโปรดแต่ยังไม่เคยกดหัวใจ → บอกวิธีใช้ ไม่ใช่ "ไม่พบสินค้า"
     main.innerHTML = `
       <div style="text-align:center; padding:60px 20px; color:var(--rose-dark);">
-        <p style="font-size:16px; font-weight:700; margin-bottom:6px;">${noFav ? 'ยังไม่มีรายการโปรด' : 'ไม่พบสินค้าตามตัวกรองที่เลือก'}</p>
+        <p style="font-size:16px; font-weight:400; margin-bottom:6px;">${noFav ? 'ยังไม่มีรายการโปรด' : 'ไม่พบสินค้าตามตัวกรองที่เลือก'}</p>
         <p style="font-size:13.5px; color:var(--plum);">${noFav ? 'กดรูปหัวใจที่การ์ดสินค้าเพื่อเก็บไว้ดูทีหลังได้เลยนะ <svg class="ic" aria-hidden="true"><use href="#i-heart"/></svg>' : 'ลองล้างตัวกรอง หรือเลือกเงื่อนไขอื่นดูนะ'}</p>
         <div class="empty-actions">
           <button type="button" class="empty-clear-btn primary" onclick="bnavClearAll()">${noFav ? 'กลับไปดูสินค้า' : 'ล้างตัวกรองทั้งหมด'}</button>
@@ -1938,7 +1942,7 @@ function drawCatalogPage(items, pageNo, pageCount, imgs, logo, summary){
   ctx.scale(K, K); // ตัวคูณเดียวกันทั้งสองแกน (1800/1080 = 3200/1920) รูปสินค้าไม่ถูกยืดหรือบีบ
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
-  const PINK = '#E2417C', PINK_DARK = '#C0305F', PLUM = '#34262E', CREAM = '#FFFDFC';
+  const PINK = '#E2417C', PINK_DARK = '#ed1065', PLUM = '#34262E', CREAM = '#FFFDFC';
   ctx.textBaseline = 'alphabetic';
 
   // พื้นหลัง
@@ -1960,9 +1964,9 @@ function drawCatalogPage(items, pageNo, pageCount, imgs, logo, summary){
     textX = lx + d + 20;
   }
   ctx.fillStyle = '#fff';
-  ctx.font = '700 42px Kanit, sans-serif';
+  ctx.font = '400 42px Prompt, sans-serif';
   ctx.fillText(SITE_SHOP_NAME, textX, 52);
-  ctx.font = '500 23px Kanit, sans-serif';
+  ctx.font = '400 23px Prompt, sans-serif';
   ctx.fillText(catalogFitOneLine(ctx, summary, W - textX - 44), textX, 88);
 
   // กริดสินค้า
@@ -2007,7 +2011,7 @@ function drawCatalogPage(items, pageNo, pageCount, imgs, logo, summary){
 
     // ป้าย พร้อมส่ง / ใหม่
     const drawBadge = (label, bx, by, bg, align, fg = '#fff') => {
-      ctx.font = '600 17px Kanit, sans-serif';
+      ctx.font = '400 17px Prompt, sans-serif';
       const tw = ctx.measureText(label).width, bw = tw + 20, bh = 29;
       const px = align === 'right' ? bx - bw : bx;
       ctx.fillStyle = bg; catalogRoundRect(ctx, px, by, bw, bh, 13); ctx.fill();
@@ -2019,13 +2023,13 @@ function drawCatalogPage(items, pageNo, pageCount, imgs, logo, summary){
     // ชื่อ + ราคา
     const tx = x + 10, tw2 = cellW - 20;
     ctx.fillStyle = PLUM;
-    ctx.font = '600 19px Kanit, sans-serif';
+    ctx.font = '400 19px Prompt, sans-serif';
     const lines = catalogWrapText(ctx, it.name, tw2, 2);
     lines.forEach((ln, li) => ctx.fillText(ln, tx, y + photoH + 21 + li * 20));
     ctx.fillStyle = PINK_DARK;
     let ps = 24;
-    ctx.font = `700 ${ps}px Kanit, sans-serif`;
-    while(ctx.measureText(it.price).width > tw2 && ps > 15){ ps -= 1; ctx.font = `700 ${ps}px Kanit, sans-serif`; }
+    ctx.font = `500 ${ps}px Prompt, sans-serif`;
+    while(ctx.measureText(it.price).width > tw2 && ps > 15){ ps -= 1; ctx.font = `500 ${ps}px Prompt, sans-serif`; }
     ctx.fillText(it.price, tx, y + cellH - 9);
   });
 
@@ -2043,7 +2047,7 @@ function drawCatalogPage(items, pageNo, pageCount, imgs, logo, summary){
   ];
   const noteTextX = PAD + 50, noteMaxW = W - PAD * 2 - 50 - 24;
   ctx.fillStyle = PLUM;
-  ctx.font = '500 23px Kanit, sans-serif';
+  ctx.font = '400 23px Prompt, sans-serif';
   noteLines.forEach((t, i) => {
     const by = noteY + 34 + i * 31;
     ctx.fillStyle = PINK;
@@ -2056,11 +2060,11 @@ function drawCatalogPage(items, pageNo, pageCount, imgs, logo, summary){
   const fy = H - FOOT_H;
   ctx.fillStyle = PINK_DARK; ctx.fillRect(0, fy, W, FOOT_H);
   ctx.fillStyle = '#fff';
-  ctx.font = '500 21px Kanit, sans-serif';
+  ctx.font = '400 21px Prompt, sans-serif';
   const chat = (typeof PAGE_LINK === 'string' ? PAGE_LINK.replace(/^https?:\/\//, '') : '');
   ctx.fillText('สั่งซื้อทักแชท Facebook: ' + chat, PAD, fy + 37);
   ctx.textAlign = 'right';
-  ctx.font = '600 21px Kanit, sans-serif';
+  ctx.font = '400 21px Prompt, sans-serif';
   ctx.fillText(`หน้า ${pageNo}/${pageCount}`, W - PAD, fy + 37);
   ctx.textAlign = 'left';
   return cv;
@@ -2173,9 +2177,9 @@ async function downloadCatalogImages(){
   const setLabel = t => { const b = document.getElementById('catalogDlBtn'); if(b){ b.disabled = true; b.textContent = t; } };
   try{
     setLabel('กำลังเตรียมรูป...');
-    // รอให้ฟอนต์ Kanit พร้อมก่อนวาด ไม่งั้น canvas จะใช้ฟอนต์สำรอง
+    // รอให้ฟอนต์ Prompt พร้อมก่อนวาด ไม่งั้น canvas จะใช้ฟอนต์สำรอง
     try{
-      await Promise.all(['500','600','700'].map(w => document.fonts.load(`${w} 24px Kanit`, 'กขค')));
+      await Promise.all(['400','500'].map(w => document.fonts.load(`${w} 24px Prompt`, 'กขค')));
     }catch(e){}
     const logo = await catalogLoadImage('images/logo.png?v=2');
     const summary = catalogFilterSummary();
@@ -3304,7 +3308,7 @@ function renderModal(){
       const sel = currentOptionSelection(p);
       optionGroupsWrap.innerHTML = p.options.map((opt, oi) => `
         <div class="option-group">
-          <div style="font-size:12.5px; color:var(--plum); font-weight:600; margin:10px 0 4px;">${opt.name}<span class="pd-selval">${sel[oi] ? ': ' + sel[oi] : ''}</span></div>
+          <div style="font-size:12.5px; color:var(--plum); font-weight:400; margin:10px 0 4px;">${opt.name}<span class="pd-selval">${sel[oi] ? ': ' + sel[oi] : ''}</span></div>
           <div class="color-row">
             ${opt.values.map(val => {
               const isActive = sel[oi]===val;
@@ -3592,7 +3596,7 @@ async function loadProductsInner(){
   } catch(err){
     catalogEl.innerHTML = `
       <div style="text-align:center; padding:60px 20px; color:var(--rose-dark);">
-        <p style="font-size:16px; font-weight:700; margin-bottom:8px;"><svg class="ic" aria-hidden="true"><use href="#i-alert"/></svg> โหลดข้อมูลสินค้าไม่สำเร็จ</p>
+        <p style="font-size:16px; font-weight:400; margin-bottom:8px;"><svg class="ic" aria-hidden="true"><use href="#i-alert"/></svg> โหลดข้อมูลสินค้าไม่สำเร็จ</p>
         <p style="font-size:13.5px; color:var(--plum);">กรุณาตรวจสอบว่าไฟล์ products.json อยู่ในโฟลเดอร์เดียวกับเว็บไซต์<br>และเปิดเว็บผ่านลิงก์จริง ไม่ใช่การดับเบิลคลิกเปิดไฟล์โดยตรง</p>
       </div>`;
     console.error('โหลด products.json ไม่สำเร็จ:', err);

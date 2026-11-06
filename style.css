@@ -6,23 +6,25 @@
 
 :root{
   /* ชุดสี A "Raspberry Silk" — ชื่อตัวแปรเดิมคงไว้เพื่อไม่ให้จุดไหนหลุด (--sage ตอนนี้คือชมพูหลัก) */
+  --price-color:#EF2792;    /* สีราคา */
+  --page-bg:#FaFaFa;        /* พื้นหลังเว็บ: ขาว */
   --cream:#FFFDFC;          /* พื้นหลังหน้า (มิสต์) */
-  --sage:#CF2E67;           /* ชมพูหลัก: ปุ่ม, แท็บที่เลือก, สวิตช์ (ขาวบนสีนี้ 4.95:1 ผ่าน AA) */
+  --sage:#EF2792;           /* ชมพูหลัก: ปุ่ม, แท็บที่เลือก, สวิตช์ (ขาวบนสีนี้ 4.95:1 ผ่าน AA) */
   --sage-rgb:207,46,103;
   --sage-light:#F0568C;
   --tint-1:#FFF3F7;
   --tint-2:#FFD9E6;
   --tint-3:#FFE6EE;
   --tint-4:#FDDCE8;
-  --sage-dark:#B02357;      /* ชมพูเข้ม: hover, หัวข้อ */
+  --sage-dark:#EF2792;      /* ชมพูเข้ม: hover, หัวข้อ */
   --rose:#F0568C;           /* ชมพูโลโก้: เส้นตกแต่ง/ไอคอนใหญ่ (ไม่ใช้เป็นพื้นของตัวหนังสือขาว) */
-  --rose-dark:#C0305F;      /* ราคา, ลิงก์, ข้อความเน้น */
+  --rose-dark:#EF2792;      /* ราคา, ลิงก์, ข้อความเน้น */
   --leaf:#55B88A;           /* เขียวใบไม้: เส้นตกแต่งเล็กๆ ไม่ใช้เป็นพื้นของตัวหนังสือขาว */
   --peach:#FFD9E6;          /* บลัช */
-  --plum:#34262E;           /* ข้อความหลัก */
+  --plum:#58001e;           /* ข้อความหลัก */
   --paper:#FFFFFF;
   --gold:#E8B84A;           /* แชมเปญโกลด์: ป้าย "ใหม่", เส้นตกแต่ง */
-  --muted:#6F5B64;          /* ข้อความรอง (6.2:1 บนพื้นครีม) */
+  --muted:#58001e;          /* ข้อความรอง (6.2:1 บนพื้นครีม) */
   --success:#2F7A58;        /* ป้าย "พร้อมส่ง" */
   --line:#F3DDE5;
   --shadow: 0 8px 28px rgba(52,38,46,0.08);
@@ -33,13 +35,13 @@
 html{scroll-behavior:smooth;}
 body{
   margin:0;
-  background:var(--cream);
+  background:var(--page-bg);
 
   color:var(--plum);
-  font-family:'Kanit',sans-serif;
+  font-family:'Prompt',sans-serif;
   -webkit-font-smoothing:antialiased;
 }
-h1,h2,h3,.display{font-family:'Kanit',sans-serif; font-weight:600;}
+h1,h2,h3,.display{font-family:'Prompt',sans-serif; font-weight:400;}
 
 /* ---------- Header ---------- */
 .search-cart-bar{
@@ -50,7 +52,7 @@ h1,h2,h3,.display{font-family:'Kanit',sans-serif; font-weight:600;}
   align-items:center;
   gap:10px;
   padding:14px 6vw;
-  background:var(--cream);
+  background:var(--page-bg);
 }
 .brand-mark{
   width:42px;height:42px;
@@ -60,7 +62,7 @@ h1,h2,h3,.display{font-family:'Kanit',sans-serif; font-weight:600;}
 }
 .brand-mark svg{width:24px;height:24px;}
 .brand-mark img{width:100%;height:100%;object-fit:contain;}
-.brand-name{display:none; font-family:'Kanit'; font-weight:700; font-size:16px; color:var(--sage-dark); white-space:nowrap; flex-shrink:0;}
+.brand-name{display:none; font-family:'Prompt'; font-weight:400; font-size:16px; color:var(--sage-dark); white-space:nowrap; flex-shrink:0;}
 
 .search-wrap{
   flex:1;
@@ -79,7 +81,7 @@ h1,h2,h3,.display{font-family:'Kanit',sans-serif; font-weight:600;}
 .search-wrap svg{width:18px;height:18px;color:var(--rose-dark);flex-shrink:0;}
 .search-input{
   flex:1; min-width:0; border:none; outline:none; background:transparent;
-  font-family:'Kanit'; font-size:14.5px; color:var(--plum);
+  font-family:'Prompt'; font-size:14.5px; color:var(--plum);
   padding:11px 0;
 }
 .search-input::placeholder{color:var(--muted);}
@@ -105,13 +107,13 @@ h1,h2,h3,.display{font-family:'Kanit',sans-serif; font-weight:600;}
   background:var(--sage); color:#fff; font-size:11px;
   min-width:20px;height:20px;border-radius:50%;
   display:flex;align-items:center;justify-content:center;
-  font-family:'Kanit'; font-weight:700;
+  font-family:'Prompt'; font-weight:400;
   border:2px solid var(--cream);
 }
 
 .brand-row{display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; padding:0 6vw 14px;}
 .brand-row h1{margin:0;font-size:21px;color:var(--sage-dark);line-height:1.1;}
-.brand-row p{margin:0;font-size:12.5px;color:var(--rose-dark);letter-spacing:.3px;}
+.brand-row p{margin:0;font-size:12.5px;color:var(--rose-dark);letter-spacing:.3px; font-weight:300;}
 
 /* ---------- แถวบนสุด: แบนเนอร์ images/banner.jpg (1891x831) + รีวิวจากลูกค้า ----------
    มือถือ: แบนเนอร์เต็มความกว้าง แล้วรีวิวต่อใต้ (เหมือนเดิม)
@@ -129,7 +131,7 @@ h1,h2,h3,.display{font-family:'Kanit',sans-serif; font-weight:600;}
     margin:10px 12px 6px; padding:7px 7px 7px 14px;
     background:var(--paper); border:1px solid var(--line); border-radius:999px;
     box-shadow:0 2px 10px rgba(52,38,46,0.06);
-    font-family:'Kanit'; font-weight:600; font-size:13px; color:var(--rose-dark);
+    font-family:'Prompt'; font-weight:400; font-size:13px; color:var(--rose-dark);
   }
   .catalog-results-bar.has-dl span{min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
   .catalog-results-bar .catalog-dl-btn{
@@ -197,7 +199,7 @@ h1,h2,h3,.display{font-family:'Kanit',sans-serif; font-weight:600;}
 .catalog-results-bar{display:none;}
 .catalog-dl-btn{
   border:1.5px solid var(--sage); background:var(--paper); color:var(--sage-dark);
-  font-family:'Kanit'; font-weight:600; font-size:13px; line-height:1;
+  font-family:'Prompt'; font-weight:400; font-size:13px; line-height:1;
   padding:8px 16px; border-radius:999px; cursor:pointer; white-space:nowrap;
   transition:background .15s, color .15s;
 }
@@ -211,18 +213,18 @@ html.catalog-sheet-open, html.catalog-sheet-open body{overflow:hidden;}
 .catalog-sheet-panel{
   position:relative; width:100%; max-width:520px; max-height:92vh; max-height:92dvh; display:flex; flex-direction:column;
   background:var(--paper); border-radius:22px 22px 0 0; box-shadow:0 -10px 40px rgba(52,38,46,0.25);
-  animation:csUp .3s cubic-bezier(.2,.8,.2,1) both; font-family:'Kanit';
+  animation:csUp .3s cubic-bezier(.2,.8,.2,1) both; font-family:'Prompt';
 }
 .catalog-sheet-head{display:flex; align-items:flex-start; justify-content:space-between; gap:10px; padding:16px 16px 10px;}
 .catalog-sheet-head b{display:block; font-size:17px; color:var(--sage-dark);}
-.catalog-sheet-head span{display:block; margin-top:2px; font-size:12.5px; line-height:1.45; color:var(--plum); font-weight:500;}
+.catalog-sheet-head span{display:block; margin-top:2px; font-size:12.5px; line-height:1.45; color:var(--plum); font-weight:400;}
 .catalog-sheet-x{flex-shrink:0; width:34px; height:34px; border-radius:50%; border:none; background:rgba(var(--sage-rgb),0.12); color:var(--rose-dark); font-size:15px; cursor:pointer;}
 .catalog-sheet-list{flex:1 1 auto; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:4px 16px 12px; display:flex; flex-direction:column; gap:16px;}
 .catalog-sheet-item{margin:0;}
 .catalog-sheet-item img{display:block; width:100%; height:auto; aspect-ratio:9 / 16; object-fit:contain; background:#fff; border:1px solid var(--line); border-radius:16px; -webkit-touch-callout:default; user-select:auto;}
-.catalog-sheet-item figcaption{display:flex; align-items:center; justify-content:space-between; gap:10px; margin:0 0 8px; font-size:13px; font-weight:600; color:var(--rose-dark);}
+.catalog-sheet-item figcaption{display:flex; align-items:center; justify-content:space-between; gap:10px; margin:0 0 8px; font-size:13px; font-weight:400; color:var(--rose-dark);}
 .catalog-sheet-save, .catalog-sheet-all{
-  border:none; cursor:pointer; font-family:'Kanit'; font-weight:600; color:#fff;
+  border:none; cursor:pointer; font-family:'Prompt'; font-weight:400; color:#fff;
   background:var(--sage); box-shadow:var(--shadow-sm);
 }
 .catalog-sheet-save{padding:9px 16px; border-radius:999px; font-size:13px;}
@@ -237,15 +239,15 @@ html.catalog-sheet-open, html.catalog-sheet-open body{overflow:hidden;}
 .reviews-head{display:flex; align-items:baseline; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:14px;}
 .reviews-head h3{margin:0; font-size:20px; color:var(--sage-dark);}
 .reviews-stat{
-  font-size:12.5px; font-weight:700; color:var(--rose-dark); background:rgba(var(--sage-rgb),0.08);
+  font-size:12.5px; font-weight:400; color:var(--rose-dark); background:rgba(var(--sage-rgb),0.08);
   padding:5px 12px; border-radius:999px;
-  border:none; font-family:'Kanit'; cursor:pointer;
+  border:none; font-family:'Prompt'; cursor:pointer;
   display:inline-flex; align-items:center; gap:4px;
   transition:background .15s ease, transform .1s ease;
 }
 .reviews-stat:hover{background:rgba(var(--sage-rgb),0.16);}
 .reviews-stat:active{transform:scale(.97);}
-.reviews-stat::after{content:"›"; font-size:14px; font-weight:700; line-height:1;}
+.reviews-stat::after{content:"›"; font-size:14px; font-weight:400; line-height:1;}
 .reviews-scroll{
   display:flex; gap:14px; overflow-x:auto; -webkit-overflow-scrolling:touch;
   scroll-snap-type:x proximity; padding-bottom:4px;
@@ -279,17 +281,16 @@ html.catalog-sheet-open, html.catalog-sheet-open body{overflow:hidden;}
 }
 .faq-item summary{
   list-style:none; cursor:pointer; padding:16px 46px 16px 18px; position:relative;
-  font-weight:600; color:var(--plum); line-height:1.4;
+  font-weight:400; color:var(--plum); line-height:1.4;
 }
 .faq-item summary::-webkit-details-marker{display:none;}
 .faq-item summary::after{
   content:"+"; position:absolute; right:18px; top:50%; transform:translateY(-50%);
-  font-size:20px; font-weight:600; color:var(--rose-dark); transition:transform .15s ease;
+  font-size:20px; font-weight:400; color:var(--rose-dark); transition:transform .15s ease;
 }
 .faq-item[open] summary::after{transform:translateY(-50%) rotate(45deg);}
 .faq-item .faq-answer{
-  padding:0 18px 16px; margin:0; font-size:14px; line-height:1.6; color:var(--plum); opacity:.85;
-}
+  padding:0 18px 16px; margin:0; font-size:14px; line-height:1.6; color:var(--plum); opacity:.85; font-weight:300;}
 
 /* Lightbox for tapping a review photo to see it full-size */
 /* ---------- Promo popup: auto-opens on page load, image carousel + close (X) ---------- */
@@ -366,7 +367,7 @@ html.catalog-sheet-open, html.catalog-sheet-open body{overflow:hidden;}
 .review-lightbox-nav.next{right:16px;}
 .review-lightbox-counter{
   position:absolute; bottom:20px; left:50%; transform:translateX(-50%);
-  background:rgba(0,0,0,0.4); color:#fff; font-size:12.5px; font-weight:600;
+  background:rgba(0,0,0,0.4); color:#fff; font-size:12.5px; font-weight:400;
   padding:5px 14px; border-radius:999px; backdrop-filter:blur(4px);
 }
 @media (max-width:520px){
@@ -399,8 +400,8 @@ html.catalog-sheet-open, html.catalog-sheet-open body{overflow:hidden;}
   border-bottom:1px solid var(--line);
   display:flex; align-items:baseline; gap:10px; flex-wrap:wrap;
 }
-.reviews-all-head h4{margin:0; font-size:16.5px; color:var(--sage-dark); font-family:'Kanit'; font-weight:700;}
-.reviews-all-head span{font-size:12.5px; color:var(--muted); font-weight:600;}
+.reviews-all-head h4{margin:0; font-size:16.5px; color:var(--sage-dark); font-family:'Prompt'; font-weight:400;}
+.reviews-all-head span{font-size:12.5px; color:var(--muted); font-weight:300;}
 .reviews-all-body{
   flex:1; min-height:0; overflow-y:auto;
   -webkit-overflow-scrolling:touch;
@@ -440,7 +441,7 @@ html.catalog-sheet-open, html.catalog-sheet-open body{overflow:hidden;}
   scrollbar-width:none;
   padding:0 6vw;
   position:sticky; top:0; z-index:999;
-  background:var(--cream);
+  background:var(--page-bg);
   border-bottom:1px solid var(--line);
 }
 .cat-nav::-webkit-scrollbar{display:none;}
@@ -449,7 +450,7 @@ html.catalog-sheet-open, html.catalog-sheet-open body{overflow:hidden;}
   background:transparent;
   padding:14px 16px 12px;
   border-radius:0;
-  font-family:'Kanit'; font-weight:600; font-size:14.5px;
+  font-family:'Prompt'; font-weight:400; font-size:14.5px;
   color:var(--muted);
   cursor:pointer;
   white-space:nowrap;
@@ -465,7 +466,7 @@ html.catalog-sheet-open, html.catalog-sheet-open body{overflow:hidden;}
   transition:background .15s ease;
 }
 .cat-btn:hover{color:var(--plum);}
-.cat-btn.active{color:var(--sage-dark); font-weight:700;}
+.cat-btn.active{color:var(--sage-dark); font-weight:400;}
 .cat-btn.active::after{background:var(--rose);}
 
 .cat-filter-btn{
@@ -496,17 +497,17 @@ main{padding:18px 3vw 80px;}
 .filter-group:first-child, .filter-sidebar-head + .filter-group{border-top:none; padding-top:2px;}
 .filter-group-title{
   display:flex; align-items:center; gap:6px;
-  font-family:'Kanit'; font-weight:700; font-size:13px; color:var(--plum); margin-bottom:9px;
+  font-family:'Prompt'; font-weight:400; font-size:13px; color:var(--plum); margin-bottom:9px;
 }
 /* ตัวเลขจำนวนที่เลือกไว้ในกลุ่มนั้น */
 .fg-count{
   min-width:18px; height:18px; padding:0 5px; border-radius:999px; background:var(--sage); color:#fff;
-  font-size:11px; font-weight:600; display:inline-flex; align-items:center; justify-content:center;
+  font-size:11px; font-weight:400; display:inline-flex; align-items:center; justify-content:center;
 }
 .filter-pills{display:flex; gap:6px; flex-wrap:wrap;}
 .filter-pill{
   border:1.5px solid var(--line); background:#fff; color:var(--plum);
-  padding:0 12px; min-height:30px; border-radius:999px; font-family:'Kanit'; font-weight:500; font-size:12.5px;
+  padding:0 12px; min-height:30px; border-radius:999px; font-family:'Prompt'; font-weight:400; font-size:12.5px;
   cursor:pointer; white-space:nowrap; display:inline-flex; align-items:center; gap:4px;
 }
 .filter-pill:hover{border-color:var(--sage);}
@@ -519,7 +520,7 @@ main{padding:18px 3vw 80px;}
 .fseg{display:flex; border:1.5px solid var(--line); border-radius:10px; overflow:hidden; background:#fff;}
 .fseg button{
   flex:1; min-width:0; border:none; background:transparent; color:var(--plum); cursor:pointer;
-  font-family:'Kanit'; font-weight:500; font-size:12.5px; min-height:32px; padding:0 6px; white-space:nowrap;
+  font-family:'Prompt'; font-weight:400; font-size:12.5px; min-height:32px; padding:0 6px; white-space:nowrap;
 }
 .fseg button + button{border-left:1.5px solid var(--line);}
 .fseg button.active{background:var(--sage); color:#fff;}
@@ -527,7 +528,7 @@ main{padding:18px 3vw 80px;}
 /* ตัวเลือกเปิด-ปิด (พร้อมส่ง / รายการโปรด / แยกการ์ด) */
 .fswitch{
   display:flex; align-items:center; justify-content:space-between; gap:10px; padding:7px 0;
-  font-family:'Kanit'; font-weight:500; font-size:13px; color:var(--plum); cursor:pointer; user-select:none;
+  font-family:'Prompt'; font-weight:400; font-size:13px; color:var(--plum); cursor:pointer; user-select:none;
 }
 .fswitch-input{
   -webkit-appearance:none; appearance:none; flex-shrink:0; margin:0; cursor:pointer;
@@ -602,7 +603,7 @@ main{padding:18px 3vw 80px;}
 }
 .price-num-input{
   width:100%; min-width:0; border:none; outline:none; background:transparent;
-  font-family:'Kanit'; font-weight:700; font-size:13.5px; color:var(--sage-dark);
+  font-family:'Prompt'; font-weight:400; font-size:13.5px; color:var(--sage-dark);
   padding:6px 8px; text-align:center;
   -moz-appearance:textfield;
 }
@@ -610,7 +611,7 @@ main{padding:18px 3vw 80px;}
 .price-num-input::-webkit-inner-spin-button{-webkit-appearance:none; margin:0;}
 .price-num-field:focus-within{border-color:var(--sage);}
 .price-num-sep, .price-num-baht{
-  flex-shrink:0; font-family:'Kanit'; font-weight:600; font-size:12.5px; color:var(--rose-dark);
+  flex-shrink:0; font-family:'Prompt'; font-weight:400; font-size:12.5px; color:var(--rose-dark);
 }
 
 /* ---------- Mobile: bottom sheet ---------- */
@@ -645,11 +646,11 @@ main{padding:18px 3vw 80px;}
 }
 .filter-clear-btn{
   flex:1; padding:13px; border-radius:16px; border:1.5px solid var(--line); background:#fff;
-  color:var(--plum); font-family:'Kanit'; font-weight:700; font-size:14.5px; cursor:pointer;
+  color:var(--plum); font-family:'Prompt'; font-weight:400; font-size:14.5px; cursor:pointer;
 }
 .filter-apply-btn{
   flex:2; padding:13px; border-radius:16px; border:none; background:var(--sage);
-  color:#fff; font-family:'Kanit'; font-weight:700; font-size:14.5px; cursor:pointer;
+  color:#fff; font-family:'Prompt'; font-weight:400; font-size:14.5px; cursor:pointer;
   box-shadow:var(--shadow-sm);
 }
 
@@ -682,7 +683,7 @@ main{padding:18px 3vw 80px;}
   .filter-sidebar-title{font-size:16px; color:var(--plum); margin:0;}
   .filter-sidebar-clear{
     border:none; background:transparent; color:var(--rose-dark);
-    font-family:'Kanit'; font-weight:600; font-size:12.5px; cursor:pointer;
+    font-family:'Prompt'; font-weight:400; font-size:12.5px; cursor:pointer;
     padding:0; text-decoration:underline; text-underline-offset:2px; flex-shrink:0;
   }
   .filter-sidebar-clear:hover{color:var(--plum);}
@@ -690,7 +691,7 @@ main{padding:18px 3vw 80px;}
   /* แถบ "พบสินค้า N รายการ" เหนือกริด */
   .catalog-results-bar{
     display:flex; align-items:center; justify-content:space-between;
-    margin:0 0 14px; font-family:'Kanit'; font-weight:600; font-size:13.5px; color:var(--rose-dark);
+    margin:0 0 14px; font-family:'Prompt'; font-weight:400; font-size:13.5px; color:var(--rose-dark);
   }
 
   /* การ์ดสินค้า/กริด: แบนลง เส้นขอบบางแทนเงาหนัก แน่นขึ้น */
@@ -703,7 +704,7 @@ main{padding:18px 3vw 80px;}
   display:flex; align-items:baseline; gap:12px;
 }
 .section-title h3{font-size:24px;color:var(--sage-dark);margin:0;}
-.section-title span{font-size:13px;color:var(--rose-dark);font-weight:600;}
+.section-title span{font-size:13px;color:var(--rose-dark);font-weight:400;}
 .section-title.featured{margin-top:6px;}
 .section-title.featured h3{color:var(--sage-dark);}
 
@@ -730,7 +731,7 @@ main{padding:18px 3vw 80px;}
 }
 .option-badge{
   display:inline-block; align-self:flex-start;
-  font-size:11px; font-weight:700; color:var(--sage-dark);
+  font-size:11px; font-weight:400; color:var(--sage-dark);
   background:rgba(var(--sage-rgb),0.10);
   padding:3px 9px; border-radius:999px;
   margin:8px 0 0;
@@ -748,18 +749,18 @@ main{padding:18px 3vw 80px;}
 .thumb:hover{opacity:0.92;}
 .badge-ready{
   position:absolute; top:8px; left:8px; z-index:2;
-  background:var(--success); color:#fff; font-size:11px; font-weight:700;
+  background:var(--success); color:#fff; font-size:11px; font-weight:400;
   padding:4px 10px; border-radius:999px; box-shadow:var(--shadow-sm);
   pointer-events:none;
 }
 .badge-new{
   position:absolute; top:8px; right:8px; z-index:2;
-  background:var(--gold); color:var(--plum); font-size:11px; font-weight:700;
+  background:var(--gold); color:var(--plum); font-size:11px; font-weight:400;
   padding:4px 10px; border-radius:999px; box-shadow:var(--shadow-sm);
   pointer-events:none;
 }
 .badge-inline{
-  display:inline-block; font-size:11px; font-weight:700; color:#fff;
+  display:inline-block; font-size:11px; font-weight:400; color:#fff;
   padding:4px 10px; border-radius:999px; margin-right:6px;
 }
 .badge-inline.ready{background:var(--success);}
@@ -783,11 +784,11 @@ main{padding:18px 3vw 80px;}
 }
 .fav-heart-inline:hover{transform:scale(1.06);}
 .fav-heart-inline.active{color:var(--rose-dark); border-color:var(--rose);}
-.card h4{margin:0 0 4px; font-size:16.5px; font-weight:700;}
+.card h4{margin:0 0 4px; font-size:16.5px; font-weight:400;}
 .color-row{display:flex; gap:6px; flex-wrap:wrap; margin:-2px 0 10px;}
 .color-chip{
   border:1.5px solid var(--line); background:#fff; color:var(--plum);
-  font-family:'Kanit'; font-weight:600; font-size:11.5px;
+  font-family:'Prompt'; font-weight:400; font-size:11.5px;
   padding:5px 12px; border-radius:999px; cursor:pointer;
   transition:all .15s ease; position:relative;
 }
@@ -799,7 +800,7 @@ main{padding:18px 3vw 80px;}
 .color-chip.active::after{
   content:'✓'; position:absolute; top:-7px; right:-7px;
   width:15px; height:15px; border-radius:50%;
-  background:var(--sage); color:#fff; font-size:9px; font-weight:700;
+  background:var(--sage); color:#fff; font-size:9px; font-weight:400;
   display:flex; align-items:center; justify-content:center; line-height:1;
   box-shadow:0 0 0 2px #fff;
 }
@@ -810,16 +811,16 @@ main{padding:18px 3vw 80px;}
 }
 /* Short description: only shown in the catalog card on wider (desktop) screens — see mobile override below */
 .card .desc{font-size:13px; color:var(--muted); margin:0 0 10px; line-height:1.4;
-  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;}
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; font-weight:300;}
 .card .price-row{
   display:flex; align-items:center; justify-content:space-between;
   margin-top:auto;
 }
-.price{font-family:'Kanit'; font-weight:700; font-size:19px; color:var(--rose-dark);}
+.price{font-family:'Prompt'; font-weight:500; font-size:19px; color:var(--price-color);}
 .add-btn{
   border:none; background:var(--sage); color:#fff;
   padding:9px 16px; border-radius:999px;
-  font-weight:600; font-size:13.5px;
+  font-weight:400; font-size:13.5px;
   cursor:pointer; display:flex; align-items:center; gap:6px;
   transition:background .15s ease, transform .1s ease;
 }
@@ -857,9 +858,8 @@ main{padding:18px 3vw 80px;}
 }
 .drawer-items{flex:1; overflow-y:auto; padding:14px 22px;}
 .empty-cart{
-  text-align:center; margin-top:60px; color:var(--muted); font-size:14px;
-}
-.empty-cart svg{width:60px; height:60px; opacity:.5; margin-bottom:10px;}
+  text-align:center; margin-top:60px; color:var(--muted); font-size:14px; font-weight:300;}
+.empty-cart svg{width:60px; height:60px; opacity:.5; margin-bottom:10px; font-weight:300;}
 
 .cart-item{
   display:flex; gap:12px; align-items:center;
@@ -872,15 +872,15 @@ main{padding:18px 3vw 80px;}
 .cart-item .mini-thumb svg{width:32px;height:32px;}
 .cart-item .mini-thumb img{width:100%; height:100%; object-fit:cover; border-radius:10px;}
 .cart-item .info{flex:1; min-width:0;}
-.cart-item .info h5{margin:0 0 2px; font-size:14.5px; font-weight:700;}
-.cart-item .info .variant{font-weight:500; color:var(--rose-dark); font-size:13px;}
-.cart-item .info .unit{font-size:12px; color:var(--muted);}
+.cart-item .info h5{margin:0 0 2px; font-size:14.5px; font-weight:400;}
+.cart-item .info .variant{font-weight:400; color:var(--rose-dark); font-size:13px;}
+.cart-item .info .unit{font-size:12px; color:var(--muted); font-weight:300;}
 .qty-ctrl{display:flex; align-items:center; gap:8px;}
 .qty-ctrl button{
   width:24px; height:24px; border-radius:50%; border:1px solid var(--line);
-  background:#fff; cursor:pointer; font-weight:700; line-height:1;
+  background:#fff; cursor:pointer; font-weight:400; line-height:1;
 }
-.qty-ctrl span{min-width:16px; text-align:center; font-weight:600; font-size:14px;}
+.qty-ctrl span{min-width:16px; text-align:center; font-weight:400; font-size:14px;}
 .remove-btn{
   background:none; border:none; color:var(--rose-dark); font-size:12px;
   cursor:pointer; text-decoration:underline; margin-left:4px;
@@ -895,11 +895,11 @@ main{padding:18px 3vw 80px;}
   display:flex; justify-content:space-between; align-items:baseline;
   margin-bottom:14px;
 }
-.total-row span:first-child{font-size:14px; color:var(--muted);}
-.total-row .total-amt{font-family:'Kanit'; font-weight:700; font-size:24px; color:var(--sage-dark);}
+.total-row span:first-child{font-size:14px; color:var(--muted); font-weight:300;}
+.total-row .total-amt{font-family:'Prompt'; font-weight:500; font-size:24px; color:var(--price-color);}
 .checkout-btn{
   width:100%; padding:14px; border:none; border-radius:16px;
-  background:var(--sage); color:#fff; font-weight:700; font-size:16px;
+  background:var(--sage); color:#fff; font-weight:400; font-size:16px;
   display:flex; align-items:center; justify-content:center; gap:10px;
   cursor:pointer; transition:background .15s ease;
   text-decoration:none; box-sizing:border-box;
@@ -907,12 +907,12 @@ main{padding:18px 3vw 80px;}
 }
 .checkout-btn:hover{background:var(--sage-dark);}
 .checkout-btn:disabled{background:#d8cfd2; cursor:not-allowed;}
-.checkout-hint{font-size:11.5px; color:var(--muted); text-align:center; margin-top:10px;}
+.checkout-hint{font-size:11.5px; color:var(--muted); text-align:center; margin-top:10px; font-weight:300;}
 
 .toast{
   position:fixed; bottom:26px; left:50%; transform:translateX(-50%) translateY(20px);
   background:var(--plum); color:#fff; padding:12px 22px; border-radius:999px;
-  font-size:14px; font-weight:600; opacity:0; pointer-events:none;
+  font-size:14px; font-weight:400; opacity:0; pointer-events:none;
   transition:all .25s ease; z-index:1040; box-shadow:var(--shadow);
 }
 .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
@@ -920,13 +920,13 @@ main{padding:18px 3vw 80px;}
 .card-addon-toggle{display:flex; margin:2px 0 12px;}
 .clear-cart-btn{
   background:none; border:none; color:var(--rose-dark); font-size:12.5px;
-  text-decoration:underline; cursor:pointer; padding:0; font-family:'Kanit';
+  text-decoration:underline; cursor:pointer; padding:0; font-family:'Prompt';
 }
 
 .fab-cart{
   position:fixed; right:20px; bottom:24px; z-index:1025;
   background:var(--sage); color:#fff; border:none; border-radius:999px;
-  padding:14px 22px; font-weight:700; font-size:14.5px;
+  padding:14px 22px; font-weight:400; font-size:14.5px;
   box-shadow:0 10px 26px rgba(52,38,46,0.18);
   cursor:pointer; display:flex; align-items:center; gap:6px;
   transition:transform .15s ease;
@@ -1002,9 +1002,9 @@ main{padding:18px 3vw 80px;}
 .page-img svg{width:45%; height:45%;}
 .page-body{padding:22px 20px 12px;}
 .page-body h3{margin:0 0 8px; font-size:22px; color:var(--sage-dark);}
-.modal-desc{font-size:13.5px; color:var(--muted); line-height:1.5; margin:0 0 14px;}
-.modal-price{font-family:'Kanit'; font-weight:700; font-size:24px; color:var(--rose-dark); margin-bottom:16px;}
-.modal-qty{display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; font-size:14px; font-weight:600;}
+.modal-desc{font-size:13.5px; color:var(--muted); line-height:1.5; margin:0 0 14px; font-weight:300;}
+.modal-price{font-family:'Prompt'; font-weight:500; font-size:24px; color:var(--price-color); margin-bottom:16px;}
+.modal-qty{display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; font-size:14px; font-weight:400;}
 /* Buy buttons live inside the scrolling content but stick to the bottom of the
    screen once reached (position:sticky) — reads as a fixed bottom bar on mobile,
    and simply settles inline under the options on desktop where there's room to spare. */
@@ -1083,7 +1083,7 @@ main{padding:18px 3vw 80px;}
     display:inline-flex; align-items:center; gap:8px; flex:none;
     height:40px; padding:0 18px 0 14px;
     border:1.5px solid var(--line); border-radius:999px; background:#fff;
-    color:var(--plum); font:inherit; font-size:14px; font-weight:600; cursor:pointer;
+    color:var(--plum); font:inherit; font-size:14px; font-weight:400; cursor:pointer;
     transition:border-color .15s ease, color .15s ease, background .15s ease;
   }
   .pd-back:hover{border-color:var(--sage); color:var(--sage); background:var(--cream);}
@@ -1094,18 +1094,18 @@ main{padding:18px 3vw 80px;}
   .pd-crumbs button{border:0; background:none; padding:0; font:inherit; color:inherit; cursor:pointer;}
   .pd-crumbs button:hover{color:var(--sage); text-decoration:underline;}
   .pd-crumbs .pd-sep{opacity:.45;}
-  .pd-crumbs b{color:var(--sage-dark); font-weight:600; overflow:hidden; text-overflow:ellipsis;}
+  .pd-crumbs b{color:var(--sage-dark); font-weight:400; overflow:hidden; text-overflow:ellipsis;}
   .pd-cart{
     display:inline-flex; align-items:center; gap:8px; flex:none;
     height:40px; padding:0 16px;
     border:1.5px solid var(--sage); border-radius:999px; background:#fff;
-    color:var(--sage); font:inherit; font-size:14px; font-weight:600; cursor:pointer;
+    color:var(--sage); font:inherit; font-size:14px; font-weight:400; cursor:pointer;
     transition:background .15s ease, color .15s ease;
   }
   .pd-cart:hover{background:var(--sage); color:#fff;}
   .pd-cart-count{
     min-width:22px; height:22px; padding:0 6px; border-radius:10px;
-    background:var(--sage); color:#fff; font-size:12.5px; font-weight:700;
+    background:var(--sage); color:#fff; font-size:12.5px; font-weight:400;
     display:inline-flex; align-items:center; justify-content:center;
   }
   .pd-cart:hover .pd-cart-count{background:#fff; color:var(--sage);}
@@ -1171,7 +1171,7 @@ main{padding:18px 3vw 80px;}
   .pd-toprow #modalBadges{display:none;} /* desktop: ready/new badges sit on the photo instead */
   .pd-cat{
     display:inline-block;
-    font-size:12.5px; font-weight:600; color:var(--rose-dark);
+    font-size:12.5px; font-weight:400; color:var(--rose-dark);
     background:var(--cream); border:1px solid rgba(var(--sage-rgb),0.18);
     padding:4px 12px; border-radius:999px;
   }
@@ -1184,15 +1184,14 @@ main{padding:18px 3vw 80px;}
   .page-body .modal-desc{
     order:2;
     font-size:15px; line-height:1.7; color:var(--muted);
-    margin:0 0 22px; max-width:60ch;
-  }
+    margin:0 0 22px; max-width:60ch;  font-weight:300;}
 
   /* Price — big and plain (no tinted box), total on the right once quantity > 1 */
   .page-body .modal-price{
     order:3;
     display:flex; align-items:baseline; flex-wrap:wrap; gap:4px 10px;
     margin:0 0 22px; padding:0;
-    font-size:44px; line-height:1.1; color:var(--sage);
+    font-size:44px; line-height:1.1; color:var(--price-color);
   }
   .page-body .modal-price > span:not(.pd-total){font-size:16px !important; font-weight:500 !important;}
   .page-body .modal-price .pd-mx{display:none;} /* mobile-style "× 2 = ฿…" — desktop uses the total on the right */
@@ -1200,8 +1199,8 @@ main{padding:18px 3vw 80px;}
     display:flex; flex-direction:column; align-items:flex-end;
     margin-left:auto; align-self:center; line-height:1.15;
   }
-  .page-body .modal-price .pd-total-label{font-size:12.5px !important; font-weight:500 !important; color:var(--plum); opacity:.7;}
-  .page-body .modal-price .pd-total b{font-size:24px; font-weight:700; color:var(--sage-dark);}
+  .page-body .modal-price .pd-total-label{font-size:12.5px !important; font-weight:300 !important; color:var(--plum); opacity:.7;}
+  .page-body .modal-price .pd-total b{font-size:24px; font-weight:500; color:var(--price-color);}
 
   .pd-hr{display:block; height:0; border:0; border-top:1px solid var(--line); margin:0 0 20px;}
   .pd-hr-1{order:4;}
@@ -1213,9 +1212,9 @@ main{padding:18px 3vw 80px;}
   #modalColors::before{content:'สี' attr(data-sel);}
   #modalSizes::before{content:'ขนาด / แบบ' attr(data-sel);}
   #modalAddons::before{content:'ของเสริม' attr(data-sel);}
-  .pd-selval{display:inline; color:var(--sage-dark); font-weight:600;}
+  .pd-selval{display:inline; color:var(--sage-dark); font-weight:400;}
   #modalColors::before, #modalSizes::before, #modalAddons::before{
-    flex:0 0 100%; font-size:14px; font-weight:600; color:var(--plum); margin-bottom:-2px;
+    flex:0 0 100%; font-size:14px; font-weight:400; color:var(--plum); margin-bottom:-2px;
   }
   #modalOptionGroups .option-group > div:first-child{
     font-size:14px !important; color:var(--plum) !important; margin:0 0 8px !important;
@@ -1275,8 +1274,8 @@ main{padding:18px 3vw 80px;}
     flex:none; width:38px; height:38px; border-radius:10px; background:var(--cream);
     display:flex; align-items:center; justify-content:center; font-size:18px;
   }
-  .pd-info b{display:block; font-size:14px; color:var(--plum); font-weight:600;}
-  .pd-info small{display:block; font-size:13px; color:var(--muted); line-height:1.45;}
+  .pd-info b{display:block; font-size:14px; color:var(--plum); font-weight:400;}
+  .pd-info small{display:block; font-size:13px; color:var(--muted); line-height:1.45; font-weight:300;}
 
   /* ----- Related products ----- */
   .pd-related:not([hidden]){
@@ -1320,7 +1319,7 @@ main{padding:18px 3vw 80px;}
 @media (min-width:860px) and (max-height:820px){
   .pd-layout{padding-top:24px;}
   .page-body h3{font-size:28px;}
-  .page-body .modal-desc{font-size:14.5px; line-height:1.6; margin-bottom:16px;}
+  .page-body .modal-desc{font-size:14.5px; line-height:1.6; margin-bottom:16px; font-weight:300;}
   .page-body .modal-price{font-size:38px; margin-bottom:16px;}
   .page-body .modal-price .pd-total b{font-size:21px;}
   .page-body .color-row{margin-bottom:14px;}
@@ -1371,7 +1370,7 @@ main{padding:18px 3vw 80px;}
   border-bottom:1px solid var(--line);
 }
 .order-summary-heading{
-  margin:0; font-size:16.5px; color:var(--sage-dark); font-family:'Kanit'; font-weight:700;
+  margin:0; font-size:16.5px; color:var(--sage-dark); font-family:'Prompt'; font-weight:400;
 }
 .order-modal-scroll{
   flex:1; min-height:0; overflow-y:auto;
@@ -1401,26 +1400,26 @@ main{padding:18px 3vw 80px;}
 }
 .order-item-row:last-child{border-bottom:none;}
 .order-item-info{display:flex; flex-direction:column; gap:3px; min-width:0;}
-.order-item-name{font-size:14px; font-weight:700; color:var(--plum); line-height:1.35;}
-.order-item-meta{font-size:12px; color:var(--muted);}
+.order-item-name{font-size:14px; font-weight:400; color:var(--plum); line-height:1.35;}
+.order-item-meta{font-size:12px; color:var(--muted); font-weight:300;}
 .order-item-price{
-  font-family:'Kanit'; font-weight:700; font-size:15px; color:var(--rose-dark);
+  font-family:'Prompt'; font-weight:500; font-size:15px; color:var(--price-color);
   flex-shrink:0; white-space:nowrap; padding-top:1px;
 }
 
-.app-tip{font-size:11.5px; color:var(--muted); text-align:center; margin:14px 0 4px; line-height:1.5;}
+.app-tip{font-size:11.5px; color:var(--muted); text-align:center; margin:14px 0 4px; line-height:1.5; font-weight:300;}
 .fb-name-chip{
   display:flex; align-items:center; justify-content:space-between; gap:10px;
   background:var(--cream); border-radius:10px; padding:10px 14px; margin-bottom:14px;
   font-size:13.5px;
 }
 .fb-name-edit{
-  background:none; border:none; color:var(--sage-dark); font-weight:700; font-size:12.5px;
-  text-decoration:underline; cursor:pointer; flex-shrink:0; font-family:'Kanit'; padding:0;
+  background:none; border:none; color:var(--sage-dark); font-weight:400; font-size:12.5px;
+  text-decoration:underline; cursor:pointer; flex-shrink:0; font-family:'Prompt'; padding:0;
 }
 
 .copied-banner{
-  background:var(--sage); color:#fff; font-weight:700; font-size:16px;
+  background:var(--sage); color:#fff; font-weight:400; font-size:16px;
   text-align:center; border-radius:16px; padding:14px 12px; margin-bottom:14px;
 }
 .order-no-chip{
@@ -1428,28 +1427,28 @@ main{padding:18px 3vw 80px;}
 }
 .order-no-chip strong{
   display:inline-flex; align-items:center; gap:10px;
-  font-family:'Kanit'; font-weight:700; font-size:19px; color:var(--rose-dark);
+  font-family:'Prompt'; font-weight:400; font-size:19px; color:var(--rose-dark);
   background:var(--cream); border:1.5px dashed var(--rose); border-radius:10px;
   padding:6px 10px 6px 16px; margin-top:6px;
 }
 .order-no-copy-btn{
-  font-family:'Kanit'; font-weight:700; font-size:12px; color:#fff;
+  font-family:'Prompt'; font-weight:400; font-size:12px; color:#fff;
   background:var(--sage); border:none; border-radius:10px;
   padding:6px 10px; cursor:pointer; flex-shrink:0;
   transition:background .15s ease;
 }
 .order-no-copy-btn:hover{background:var(--rose-dark);}
 .paste-instruction{font-size:14.5px; line-height:1.6; color:var(--plum); text-align:center; margin:0 0 18px;}
-.paste-instruction strong{font-weight:700; color:var(--rose-dark);}
+.paste-instruction strong{font-weight:400; color:var(--rose-dark);}
 .success-actions{display:flex; flex-direction:column; gap:10px;}
 .chat-order-btn{
   display:block; text-align:center; text-decoration:none;
-  background:var(--sage); color:#fff; font-weight:700; font-size:15px;
+  background:var(--sage); color:#fff; font-weight:400; font-size:15px;
   border-radius:999px; padding:13px 20px; box-shadow:var(--shadow);
 }
 .close-secondary-btn{
   background:none; border:1.5px solid var(--line); color:var(--plum);
-  font-family:'Kanit'; font-weight:600; font-size:14px;
+  font-family:'Prompt'; font-weight:400; font-size:14px;
   border-radius:999px; padding:11px 20px; cursor:pointer;
 }
 
@@ -1469,22 +1468,22 @@ main{padding:18px 3vw 80px;}
 
 /* ---------- Order details form (date / delivery method / address) ---------- */
 .form-group{margin-bottom:18px;}
-.form-group label{display:block; font-size:13.5px; font-weight:700; margin-bottom:7px; color:var(--plum);}
+.form-group label{display:block; font-size:13.5px; font-weight:400; margin-bottom:7px; color:var(--plum);}
 .form-input{
   width:100%; padding:11px 13px; border-radius:16px; border:1.5px solid var(--line);
-  font-family:'Kanit'; font-size:14px; color:var(--plum); background:var(--cream);
+  font-family:'Prompt'; font-size:14px; color:var(--plum); background:var(--cream);
   resize:vertical; transition:border-color .15s ease, background .15s ease;
 }
 .form-input:focus{outline:none; border-color:var(--sage); background:#fff;}
-.checkbox-label{display:flex; align-items:center; gap:8px; font-size:13.5px; font-weight:600; cursor:pointer; color:var(--plum);}
+.checkbox-label{display:flex; align-items:center; gap:8px; font-size:13.5px; font-weight:400; cursor:pointer; color:var(--plum);}
 .checkbox-label input{width:18px; height:18px; cursor:pointer; accent-color:var(--sage);}
-.field-hint{font-size:12px; color:var(--muted); margin:6px 0 0; line-height:1.5;}
-.field-hint strong{color:var(--rose-dark);}
+.field-hint{font-size:12px; color:var(--muted); margin:6px 0 0; line-height:1.5; font-weight:300;}
+.field-hint strong{color:var(--rose-dark); font-weight:400;}
 .radio-group{display:flex; flex-direction:column; gap:8px;}
 .radio-option{
   display:flex; align-items:center; gap:10px;
   border:1.5px solid var(--line); border-radius:10px;
-  padding:10px 14px; cursor:pointer; font-size:13.5px; font-weight:600;
+  padding:10px 14px; cursor:pointer; font-size:13.5px; font-weight:400;
   color:var(--plum);
   transition:border-color .15s ease, background .15s ease;
 }
@@ -1501,13 +1500,12 @@ main{padding:18px 3vw 80px;}
 }
 .total-line.grand{
   margin-top:6px; padding-top:10px; border-top:1.5px dashed var(--line);
-  font-family:'Kanit'; font-weight:700; font-size:17px; color:var(--rose-dark);
+  font-family:'Prompt'; font-weight:500; font-size:17px; color:var(--price-color);
 }
-.total-line.grand span:first-child{font-family:'Kanit'; font-weight:700; font-size:14px; color:var(--plum);}
+.total-line.grand span:first-child{font-family:'Prompt'; font-weight:500; font-size:14px; color:var(--plum);}
 
 footer{
-  text-align:center; padding:26px 6vw 40px; font-size:13px; color:var(--muted);
-}
+  text-align:center; padding:26px 6vw 40px; font-size:13px; color:var(--muted); font-weight:300;}
 
 @media (max-width:520px){
   .search-cart-bar{padding:12px 5vw;}
@@ -1517,7 +1515,7 @@ footer{
   .cart-btn-top{width:40px;height:40px;font-size:17px;}
   .brand-row{padding:0 5vw 10px;}
   .brand-row h1{font-size:18px;}
-  .brand-row p{font-size:11px;}
+  .brand-row p{font-size:11px; font-weight:300;}
   .cat-nav{padding:0 5vw;}
   .cat-btn{padding:12px 12px 10px; font-size:13.5px;}
 
@@ -1527,7 +1525,7 @@ footer{
   .card-body{padding:10px 10px 12px;}
   .badge-ready, .badge-new{font-size:9.5px; padding:3px 8px; top:6px;}
   .card h4{font-size:13.5px; margin:0 0 3px; line-height:1.3;}
-  .card .desc{display:none;}
+  .card .desc{display:none; font-weight:300;}
   .option-badge{font-size:10px; padding:3px 8px; margin:6px 0 0;}
   .price{font-size:15px;}
 
@@ -1560,10 +1558,10 @@ footer{
 }
 .price-notice .pn-ico{font-size:24px; flex-shrink:0;}
 .price-notice p{margin:0; flex:1; min-width:0;}
-.price-notice b{color:var(--rose-dark); font-weight:700;}
+.price-notice b{color:var(--rose-dark); font-weight:400;}
 .price-notice .pn-btn{
   flex-shrink:0; padding:9px 16px; border-radius:999px; text-decoration:none;
-  background:var(--rose-dark); color:#fff; font-weight:600; font-size:13px; white-space:nowrap;
+  background:var(--rose-dark); color:#fff; font-weight:400; font-size:13px; white-space:nowrap;
 }
 @media (max-width:1210px){
   .prices-hidden .price-notice:not(.order-notice),
@@ -1588,20 +1586,20 @@ footer{
 .prices-hidden .modal-qty:not(#modalBillsRow){display:none !important;}
 
 /* ราคาบนการ์ดสินค้า → ข้อความสอบถามราคา */
-.price.price-ask{font-size:13px; font-weight:600; color:var(--rose-dark);}
+.price.price-ask{font-size:13px; font-weight:500; color:var(--price-color);}
 
 /* กล่องราคาในหน้าสินค้า → คำแนะนำให้แคปหน้าจอ + ปุ่มทักเพจ */
 .prices-hidden .page-body .modal-price.price-ask{
   display:block; padding:14px 16px; margin:0 0 18px;
-  font-family:'Kanit'; font-size:14px; font-weight:500; line-height:1.6; color:var(--plum);
+  font-family:'Prompt'; font-size:14px; font-weight:500; line-height:1.6; color:var(--plum);
   background:var(--tint-1);
   border:1px solid rgba(var(--sage-rgb),0.14); border-radius:16px;
 }
-.price-ask-text b{font-weight:700; color:var(--rose-dark);}
+.price-ask-text b{font-weight:500; color:var(--rose-dark);}
 .price-ask-btn{
   display:flex; align-items:center; justify-content:center;
   margin-top:12px; height:46px; border-radius:16px; text-decoration:none;
-  background:var(--rose-dark); color:#fff; font-weight:700; font-size:15px;
+  background:var(--rose-dark); color:#fff; font-weight:500; font-size:15px;
 }
 
 /* =========================================================
@@ -1623,7 +1621,7 @@ footer{
 .orders-closed .modal-qty:not(#modalBillsRow){display:none !important;}
 .orders-closed:not(.prices-hidden) .order-closed-box{
   display:block; order:5; padding:14px 16px; margin:0 0 18px;
-  font-family:'Kanit'; font-size:14px; font-weight:500; line-height:1.6; color:var(--plum);
+  font-family:'Prompt'; font-size:14px; font-weight:400; line-height:1.6; color:var(--plum);
   background:var(--tint-1);
   border:1px solid rgba(var(--sage-rgb),0.14); border-radius:16px;
 }
@@ -1638,12 +1636,12 @@ footer{
     background:var(--paper); border-top:1px solid var(--line);
     box-shadow:0 -6px 16px rgba(52,38,46,0.06);
   }
-  .order-closed-bar .ocb-text{flex:1; min-width:0; font-size:12.5px; font-weight:500; line-height:1.4; color:var(--plum);}
-  .order-closed-bar .ocb-text b{font-weight:700; color:var(--rose-dark);}
+  .order-closed-bar .ocb-text{flex:1; min-width:0; font-size:12.5px; font-weight:400; line-height:1.4; color:var(--plum);}
+  .order-closed-bar .ocb-text b{font-weight:400; color:var(--rose-dark);}
   .order-closed-bar .ocb-btn{
     flex-shrink:0; display:flex; align-items:center; justify-content:center;
     height:46px; padding:0 20px; border-radius:16px; text-decoration:none; white-space:nowrap;
-    background:var(--rose-dark); color:#fff; font-weight:700; font-size:15px;
+    background:var(--rose-dark); color:#fff; font-weight:400; font-size:15px;
   }
 }
 
@@ -1661,7 +1659,7 @@ footer{
 .sw-btn:hover img{transform:scale(1.06);}
 .sw-btn[aria-pressed="true"] img{box-shadow:0 0 0 2px #fff, 0 0 0 3.5px var(--sage);}
 .sw-btn:focus-visible{outline:2px solid var(--sage); outline-offset:-2px; border-radius:10px;}
-.sw-more{display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px; margin-left:2px; border-radius:50%; background:rgba(var(--sage-rgb),0.10); color:var(--sage-dark); font-size:11px; font-weight:700;}
+.sw-more{display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px; margin-left:2px; border-radius:50%; background:rgba(var(--sage-rgb),0.10); color:var(--sage-dark); font-size:11px; font-weight:400;}
 .sw-more-m{display:none;}
 .thumb img.sw-in{animation:swFade .2s ease;}
 @keyframes swFade{from{opacity:.35;} to{opacity:1;}}
@@ -1683,7 +1681,7 @@ footer{
 /* ---------- รูปรีวิวที่ผูกกับสินค้า ---------- */
 .pd-review-tag{
   position:absolute; left:12px; bottom:12px; z-index:2;
-  background:rgba(0,0,0,.55); color:#fff; font-size:12.5px; font-weight:600;
+  background:rgba(0,0,0,.55); color:#fff; font-size:12.5px; font-weight:400;
   padding:5px 12px; border-radius:999px; backdrop-filter:blur(4px); pointer-events:none;
 }
 .gallery-thumb{position:relative;}
@@ -1695,7 +1693,7 @@ footer{
 .review-grid-tag{
   position:absolute; left:0; right:0; bottom:0; padding:16px 8px 6px;
   background:linear-gradient(transparent, rgba(0,0,0,.6)); color:#fff;
-  font-size:11.5px; font-weight:600; line-height:1.25; pointer-events:none;
+  font-size:11.5px; font-weight:400; line-height:1.25; pointer-events:none;
   white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
 }
 .review-lightbox-prod{
@@ -1703,7 +1701,7 @@ footer{
   display:flex; flex-direction:column; align-items:center; gap:8px; max-width:calc(100% - 32px);
 }
 .review-lightbox-prod button{
-  border:none; cursor:pointer; font:inherit; font-size:14px; font-weight:700;
+  border:none; cursor:pointer; font:inherit; font-size:14px; font-weight:400;
   background:#fff; color:var(--sage-dark); padding:9px 18px; border-radius:999px;
   box-shadow:0 4px 14px rgba(0,0,0,.25); max-width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
 }
@@ -1733,16 +1731,16 @@ footer{
 
   /* ปุ่มตัวกรองมีข้อความ + ตัวเลขบอกจำนวนที่เปิดอยู่ */
   .cat-filter-btn{width:auto; height:auto; margin:0 2px 0 0; padding:8px 13px; gap:6px; border-radius:999px;
-                  background:var(--paper); font-family:'Kanit'; font-weight:600; font-size:14px;
+                  background:var(--paper); font-family:'Prompt'; font-weight:400; font-size:14px;
                   box-shadow:6px 0 8px -4px rgba(0,0,0,.08);}
   .cat-filter-btn .cat-filter-label{display:inline;}
   .cat-filter-btn .filter-badge-dot{display:none !important;}
   .filter-count{display:inline-flex; align-items:center; justify-content:center; min-width:20px; height:20px; padding:0 5px;
-                border-radius:999px; background:var(--sage); color:#fff; font-size:12px; font-weight:700; line-height:1;}
+                border-radius:999px; background:var(--sage); color:#fff; font-size:12px; font-weight:400; line-height:1;}
   .filter-count[hidden]{display:none;}
 
   /* ชิปด่วน "พร้อมส่ง" */
-  .cat-quick{flex-shrink:0; padding:8px 14px; border-radius:999px; font-family:'Kanit'; font-weight:600; font-size:14px;
+  .cat-quick{flex-shrink:0; padding:8px 14px; border-radius:999px; font-family:'Prompt'; font-weight:400; font-size:14px;
              color:var(--plum); background:var(--paper); border:1.5px solid var(--line); cursor:pointer; white-space:nowrap;
              margin-right:6px;}
   .cat-quick.active{background:var(--sage); border-color:var(--sage); color:#fff;}
@@ -1781,12 +1779,12 @@ footer{
   /* เว้นที่ท้ายหน้าไม่ให้แถบล่างบังสินค้าแนะนำ (โหมดปิดราคาไม่มีแถบ จึงไม่ต้องเว้น) */
   html:not(.prices-hidden):not(.orders-closed) .product-page-scroll{padding-bottom:calc(112px + env(safe-area-inset-bottom, 0px));}
   .mab-info{display:flex; align-items:baseline; justify-content:space-between; gap:12px; min-width:0;}
-  .mab-label{flex:1; min-width:0; font-size:13px; font-weight:600; color:var(--plum);
+  .mab-label{flex:1; min-width:0; font-size:13px; font-weight:400; color:var(--plum);
              overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
-  .mab-total{flex-shrink:0; font-family:'Kanit'; font-weight:700; font-size:20px; line-height:1.1; color:var(--sage-dark);}
-  .mab-info.need .mab-label{color:var(--sage-dark); font-weight:700;}
+  .mab-total{flex-shrink:0; font-family:'Prompt'; font-weight:500; font-size:20px; line-height:1.1; color:var(--price-color);}
+  .mab-info.need .mab-label{color:var(--sage-dark); font-weight:400;}
   .mab-btns{display:flex; gap:10px;}
-  .mab-btns .add-btn.secondary{flex:1; height:48px; padding:0 10px; border-radius:16px; font-size:15px; font-weight:700; white-space:nowrap;}
+  .mab-btns .add-btn.secondary{flex:1; height:48px; padding:0 10px; border-radius:16px; font-size:15px; font-weight:400; white-space:nowrap;}
   .mab-btns .add-btn.secondary.icon-only{flex:0 0 56px; width:56px; padding:0; font-size:22px; gap:0;}
   .mab-btns .checkout-btn{flex:1; width:auto; height:48px; padding:0 10px; border-radius:16px; font-size:16px;}
 
@@ -1797,7 +1795,7 @@ footer{
   .page-body .chip-thumb{display:block; flex:none; width:30px; height:30px; border-radius:50%; object-fit:cover; background:var(--cream);}
   .page-body .color-chip:has(.chip-thumb){padding:4px 16px 4px 4px;}
   .page-body .color-chip.active:has(.chip-thumb){padding:3px 15px 3px 3px;}
-  .page-body .pd-selval{display:inline; color:var(--sage-dark); font-weight:600;}
+  .page-body .pd-selval{display:inline; color:var(--sage-dark); font-weight:400;}
   .page-body .option-group > div:first-child{font-size:14px !important; color:var(--plum) !important; margin:0 0 8px !important;}
 }
 
@@ -1829,7 +1827,7 @@ footer{
     flex:1; min-width:0; height:48px;
     display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
     border:none; background:none; padding:0; cursor:pointer;
-    font-family:'Kanit'; font-size:11px; font-weight:600; color:var(--muted);
+    font-family:'Prompt'; font-size:11px; font-weight:400; color:var(--muted);
     -webkit-tap-highlight-color:transparent;
   }
   .bnav-ic{
@@ -1840,13 +1838,13 @@ footer{
   .bnav-ic svg{width:22px; height:22px; display:block;}
   .bnav-lb{max-width:100%; padding:0 2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; line-height:1.1;}
   .bnav-item:active .bnav-ic{transform:scale(.9);}
-  .bnav-item.active{color:var(--sage-dark); font-weight:700;}
+  .bnav-item.active{color:var(--sage-dark); font-weight:400;}
   .bnav-item.active .bnav-ic{background:rgba(var(--sage-rgb),0.14);}
   .bnav-heart.active .bnav-ic svg{fill:currentColor;}
   .bnav-badge{
     position:absolute; top:-5px; right:2px; min-width:17px; height:17px; padding:0 4px;
     border-radius:999px; background:var(--sage); color:#fff; border:2px solid var(--paper);
-    font-family:'Kanit'; font-size:10px; font-weight:700; line-height:13px; text-align:center; box-sizing:content-box;
+    font-family:'Prompt'; font-size:10px; font-weight:400; line-height:13px; text-align:center; box-sizing:content-box;
   }
   .bnav-badge[hidden]{display:none;}
 
@@ -1858,19 +1856,19 @@ footer{
   .bnav-chip{
     flex:0 0 auto; display:inline-flex; align-items:center; gap:7px; max-width:100%;
     padding:6px 10px 6px 13px; border-radius:999px; border:1px solid rgba(var(--sage-rgb),0.4);
-    background:var(--paper); color:var(--sage-dark); font-family:'Kanit'; font-weight:600; font-size:12.5px; line-height:1.2;
+    background:var(--paper); color:var(--sage-dark); font-family:'Prompt'; font-weight:400; font-size:12.5px; line-height:1.2;
     white-space:nowrap; cursor:pointer; -webkit-tap-highlight-color:transparent;
   }
   .bnav-chip i{font-style:normal; font-size:11px; opacity:.65; flex-shrink:0;}
   .bnav-chip:active{transform:scale(.96);}
   .bnav-chip-clear{
     flex:0 0 auto; border:none; background:none; padding:6px 6px; cursor:pointer;
-    font-family:'Kanit'; font-weight:600; font-size:12.5px; color:var(--rose-dark); text-decoration:underline; text-underline-offset:2px;
+    font-family:'Prompt'; font-weight:400; font-size:12.5px; color:var(--rose-dark); text-decoration:underline; text-underline-offset:2px;
   }
   /* ปุ่มล้างตัวกรองตอนไม่พบสินค้า (เฉพาะมือถือ) */
   .empty-clear-btn{
     display:inline-block; margin-top:14px; padding:10px 22px; border-radius:999px; border:1.5px solid var(--sage);
-    background:var(--paper); color:var(--sage-dark); font-family:'Kanit'; font-weight:600; font-size:14px; cursor:pointer;
+    background:var(--paper); color:var(--sage-dark); font-family:'Prompt'; font-weight:400; font-size:14px; cursor:pointer;
   }
 }
 
@@ -2084,7 +2082,7 @@ html.no-anim *, html.no-anim *::before, html.no-anim *::after{
     height:0 !important; padding-top:0; padding-bottom:0; border-bottom-width:0; overflow:hidden;
     transition:opacity .18s ease, transform .22s ease, height .24s ease .06s, padding .24s ease .06s;
   }
-  .empty-cart{animation:sfbFadeUp .35s var(--sfb-out) backwards;}
+  .empty-cart{animation:sfbFadeUp .35s var(--sfb-out) backwards; font-weight:300;}
 
   /* ฟอร์มสั่งซื้อ: ช่องที่อยู่/สถานที่นัดรับโผล่มาแบบจางเข้า (เดิมโผล่ทันที) */
   #pickupInfoGroup, #deliveryAddressGroup{animation:sfbFadeUp .3s var(--sfb-out) backwards;}
@@ -2134,9 +2132,9 @@ html.no-anim *, html.no-anim *::before, html.no-anim *::after{
   .page-img img.pd-slide-next, .page-img img.pd-slide-prev{animation:none !important;}
 }
 /* ---------- มือถือ เฟส 2: แผงตัวกรองให้เรียบง่าย ---------- */
-.fp-n{margin-left:6px; font-size:12px; font-weight:600; opacity:.6;}
+.fp-n{margin-left:6px; font-size:12px; font-weight:300; opacity:.6;}
 .filter-pill.active .fp-n{opacity:.85;}
-.fswitch small{display:block; margin-top:2px; font-size:12px; font-weight:500; color:var(--muted);}
+.fswitch small{display:block; margin-top:2px; font-size:12px; font-weight:300; color:var(--muted);}
 .filter-apply-btn:disabled{opacity:.45; cursor:not-allowed; box-shadow:none;}
 
 /* ---------- มือถือ เฟส 3: ตอนไม่พบสินค้า + จอเล็ก ---------- */
@@ -2194,7 +2192,7 @@ html.no-anim *, html.no-anim *::before, html.no-anim *::after{
    ลบบล็อกนี้ทั้งหมดเพื่อย้อนกลับเป็นแบบเดิมได้ทันที
    ========================================================= */
 :root{
-  --glass-bg: rgba(255,253,252,0.78);
+  --glass-bg: rgba(255,255,255,0.78);
   --glass-bg-strong: rgba(255,255,255,0.90);
   --glass-line: rgba(255,255,255,0.70);
   --glass-blur: 14px;
@@ -2206,9 +2204,7 @@ html.no-anim *, html.no-anim *::before, html.no-anim *::after{
 body::before{
   content:""; position:absolute; top:0; left:0; width:100%; height:420px;
   z-index:-1; pointer-events:none;
-  background:
-    radial-gradient(60% 90% at 12% 0%, rgba(255,217,230,0.75), transparent 70%),
-    radial-gradient(50% 80% at 92% 0%, rgba(85,184,138,0.14), transparent 70%);
+  background:none; /* พื้นขาวล้วน: เอาแสงชมพู/เขียวจางๆ ออก */
 }
 
 /* ---------- แถบค้นหา/ตะกร้า (กระจกบนมือถือที่ลอยค้าง) ---------- */
@@ -2286,7 +2282,7 @@ body::before{
 
 /* ---------- Fallback: เบราว์เซอร์ที่ไม่รองรับ blur หรือผู้ใช้ปิดความโปร่งใส ---------- */
 @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
-  .search-cart-bar{background:var(--cream);}
+  .search-cart-bar{background:var(--page-bg);}
   .drawer{background:var(--cream);}
   .filter-sheet, .reviews-all-modal, .catalog-sheet-panel{background:var(--paper);}
   .badge-ready{background:var(--success);}
@@ -2294,7 +2290,7 @@ body::before{
   .fav-heart{background:rgba(255,255,255,0.95);}
 }
 @media (prefers-reduced-transparency:reduce){
-  .search-cart-bar, .drawer{background:var(--cream); -webkit-backdrop-filter:none; backdrop-filter:none;}
+  .search-cart-bar, .drawer{background:var(--page-bg); -webkit-backdrop-filter:none; backdrop-filter:none;}
   .filter-sheet, .reviews-all-modal, .catalog-sheet-panel{background:var(--paper); -webkit-backdrop-filter:none; backdrop-filter:none;}
   .overlay, .filter-overlay, .catalog-sheet-backdrop{-webkit-backdrop-filter:none; backdrop-filter:none;}
 }
@@ -2337,7 +2333,7 @@ body::before{
 /* ---------- 3) ป้ายพร้อมส่ง / ใหม่ — กระจกขาวบาง จุดสีนำหน้า ---------- */
 .badge-ready, .badge-new{
   display:flex; align-items:center; gap:5px;
-  padding:3px 10px 3px 8px; font-weight:600; letter-spacing:.2px;
+  padding:3px 10px 3px 8px; font-weight:400; letter-spacing:.2px;
   background:rgba(255,255,255,0.84);
   border:1px solid rgba(255,255,255,0.75);
   box-shadow:0 3px 10px rgba(52,38,46,0.12);
@@ -2353,7 +2349,7 @@ body::before{
 
 /* ---------- 2) ตัวหนังสือ: บางลง เว้นจังหวะ + เส้นทองคั่นราคา ---------- */
 .card h4{
-  font-weight:500; letter-spacing:.2px; line-height:1.35; color:var(--plum);
+  font-weight:400; letter-spacing:.2px; line-height:1.35; color:var(--plum);
   margin:0 0 8px; min-height:2.7em;
   display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
 }
@@ -2361,7 +2357,7 @@ body::before{
   padding-top:10px;
   border-top:1px solid rgba(85,184,138,0.35);
 }
-.card .price{font-weight:600; letter-spacing:.2px;}
+.card .price{font-weight:500; letter-spacing:.2px;}
 
 /* ---------- มือถือ/จอแคบ: การ์ดเล็ก ลดระยะให้พอดี 2 คอลัมน์ ---------- */
 @media (max-width:859px){
@@ -2397,7 +2393,7 @@ body::before{
 .fav-heart{bottom:10px; right:10px;}
 
 /* ตัดช่องว่าง: คำอธิบายว่างไม่ต้องกินที่ / ชื่อไม่ล็อกความสูง */
-.card .desc:empty{display:none;}
+.card .desc:empty{display:none; font-weight:300;}
 .card h4{min-height:0; margin-bottom:6px;}
 .card-body{padding:12px 16px 14px;}
 .card .price-row{margin-top:auto; padding-top:8px;}
@@ -2449,7 +2445,7 @@ body::before{
     position:absolute; top:-4px; right:-4px; min-width:20px; height:20px; padding:0 5px; border-radius:999px;
     display:flex; align-items:center; justify-content:center;
     background:var(--sage); color:#fff; border:2px solid var(--cream);
-    font-family:'Kanit'; font-size:11px; font-weight:700; line-height:1;
+    font-family:'Prompt'; font-size:11px; font-weight:400; line-height:1;
   }
   .menu-badge[hidden]{display:none;}
   .cart-btn-top{display:flex;}
@@ -2459,11 +2455,11 @@ body::before{
   html.anim-lite .cart-btn-top.bnav-bounce, html.anim-lite .cart-btn-top .badge.badge-bump{animation:none;}
 
   /* แผงตัวกรองสินค้าตอนทำหน้าที่เป็นเมนูหลัก: หมวดหมู่ใหญ่ กดง่าย หัวข้อชัด */
-  #filterSheet .filter-sheet-header h3{font-size:17px; font-weight:700; color:var(--sage-dark);}
+  #filterSheet .filter-sheet-header h3{font-size:17px; font-weight:400; color:var(--sage-dark);}
   #filterSheet .filter-group{padding:12px 0;}
   #filterSheet .filter-group-title{margin-bottom:8px; font-size:13.5px;}
   #filterSheet .filter-pill{min-height:36px; padding:0 12px; font-size:13px;}
-  #filterSheet .fp-cats .filter-pill{min-height:42px; padding:0 6px; font-size:14px; font-weight:600;}
+  #filterSheet .fp-cats .filter-pill{min-height:42px; padding:0 6px; font-size:14px; font-weight:400;}
   #filterSheet .filter-sheet-body{padding:4px 16px 8px;}
 }
 
@@ -2622,7 +2618,7 @@ a:focus-visible, button:focus-visible, summary:focus-visible,
   /* ปุ่มทักแชต = แคปซูลมีข้อความ */
   .chat-top-btn{
     width:auto; height:36px; padding:0 14px; border-radius:999px; gap:6px;
-    font-family:'Kanit',sans-serif; font-weight:600; font-size:13.5px; line-height:1; white-space:nowrap;
+    font-family:'Prompt',sans-serif; font-weight:400; font-size:13.5px; line-height:1; white-space:nowrap;
     background:var(--sage); color:#fff;
   }
   .chat-top-btn svg{width:16px; height:16px;}
@@ -2710,10 +2706,72 @@ a:focus-visible, button:focus-visible, summary:focus-visible,
 }
 .jump-tile-label{
   position:absolute; left:8px; right:8px; bottom:12px; z-index:1; text-align:center;
-  font-family:'Kanit',sans-serif; font-weight:700; font-size:18px; line-height:1.2; color:#fff;
+  font-family:'Prompt',sans-serif; font-weight:400; font-size:18px; line-height:1.2; color:#fff;
   text-shadow:0 2px 6px rgba(0,0,0,0.45);
 }
 /* คอมมีตัวกรองด้านซ้ายอยู่แล้ว ไม่ต้องมีปุ่มลัด */
 @media (min-width:860px){
   .jump-tiles{display:none;}
 }
+
+/* =========================================================
+   Premium Card (รอบ 5) — การ์ดไม่มีพื้นขาว · รูปขอบเหลี่ยม · ชื่อกับราคาติดกัน
+   - ชื่อ/ราคาวางบนพื้นหน้าเว็บโดยตรง ไม่มีเงา/เส้นขอบ
+   - รูปมุมเหลี่ยม (การ์ดไม่โค้ง จึงไม่ตัดมุมรูป)
+   - ราคาไม่ถูกดันลงล่างสุดอีกต่อไป
+   ลบบล็อกนี้ทิ้งเพื่อย้อนกลับเป็นรอบ 4 ได้
+   ========================================================= */
+.card, .card:hover{
+  background:transparent;
+  box-shadow:none;
+  border:none;
+  border-radius:0;
+}
+.thumb-wrap, .thumb{border-radius:0;}
+.card-body{flex:0 0 auto; padding:8px 2px 4px;}
+.card h4{margin:0 0 2px; min-height:0;}
+.card .desc{margin:0 0 2px; font-weight:300;}
+.card .price-row{margin-top:0; padding-top:0; border-top:none;}
+@media (max-width:859px){
+  .card-body{padding:7px 2px 3px;}
+  .card h4{margin:0 0 1px;}
+  .card .price-row{padding-top:0;}
+}
+
+
+/* =========================================================
+   รอบ 6 — พื้นหลังเข้าโทนโลโก้ (ชมพูอ่อนจาก #F0A8C8 ของโลโก้) + ปุ่มลัดหมวดขอบเหลี่ยม
+   ลบบล็อกนี้ทิ้งเพื่อย้อนกลับได้
+   ========================================================= */
+:root{ --cream:#FDEFF5; }   /* พื้นหลังหน้า/แถบบน/ช่องว่างรูป ให้ชมพูอ่อนเข้ากับโลโก้ */
+.jump-tile{ border-radius:0; }
+
+
+/* =========================================================
+   รอบ 7 — การ์ดที่มีตัวเลือกสี/แบบ: รูปย่อขอบเหลี่ยมใหญ่ขึ้น · ชื่อสีใต้แถว · ปุ่ม +N กดง่าย
+   ชื่อสีแสดงตอนเลือก/ชี้ (ไม่ได้เลือก = บอกจำนวน เช่น "5 สี") · ลบบล็อกนี้ + 3 จุดใน script.js ที่มี sw-name เพื่อย้อนกลับ
+   ========================================================= */
+.sw-row{margin:0 0 6px; gap:0;}
+.sw-strip{margin-left:-3px;}
+.sw-btn{width:46px; height:46px; padding:3px;}
+.sw-btn img{border-radius:0; box-shadow:0 0 0 1px var(--line);}
+.sw-btn:hover img{transform:none; box-shadow:0 0 0 1px var(--sage-light);}
+.sw-btn[aria-pressed="true"] img{box-shadow:0 0 0 1.5px var(--cream), 0 0 0 3px var(--sage);}
+.sw-btn:focus-visible{border-radius:0;}
+.sw-more{width:40px; height:40px; margin-left:2px; border-radius:0; background:rgba(var(--sage-rgb),0.10); font-size:12.5px; cursor:pointer;}
+.sw-name{display:block; max-width:100%; margin-top:3px; font-size:11.5px; line-height:1.3; color:var(--muted);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:300;}
+@media (max-width:520px){
+  .sw-btn{width:42px; height:42px;}
+  .sw-more{width:36px; height:36px;}
+  .sw-name{font-size:11px; font-weight:300;}
+}
+
+/* =========================================================
+   ฟอนต์ Prompt — ข้อความหลัก 400 (Regular) / ข้อความรอง 100 (Thin) / ราคา 500 (Medium)
+   ========================================================= */
+b, strong{font-weight:400;}
+.modal-price strong, .pd-total b, .total-amt, .total-line.grand, .total-line.grand span{font-weight:500;}
+input, button, select, textarea{font-family:'Prompt',sans-serif;}
+.card .price, .price, .modal-price, .page-body .modal-price, .order-item-price, .total-amt, .total-line.grand, .mab-total{color:var(--price-color);}
+.page-body .modal-price .pd-total b{color:var(--price-color);}
