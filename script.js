@@ -66,10 +66,10 @@ const GAS_URL = 'https://script.google.com/macros/s/AKfycbwfNGO22TxU0kBqbNbn7eaS
 /* --------------------------------------------------------- */
 
 const ICONS = {
-  bouquet: `<svg viewBox="0 0 64 64"><g fill="none" stroke="#F62188" stroke-width="2.5"><path d="M32 30 L26 56" stroke="#E0399B"/><path d="M32 30 L38 56" stroke="#E0399B"/><path d="M32 30 L32 58" stroke="#E0399B"/></g><circle cx="32" cy="20" r="9" fill="#F62188"/><circle cx="20" cy="26" r="8" fill="#FFC6FF"/><circle cx="44" cy="26" r="8" fill="#FFC6FF"/><circle cx="26" cy="16" r="6" fill="#E0399B"/><circle cx="38" cy="16" r="6" fill="#E0399B"/></svg>`,
-  frame: `<svg viewBox="0 0 64 64"><rect x="10" y="8" width="44" height="48" rx="3" fill="none" stroke="#E0399B" stroke-width="4"/><rect x="18" y="16" width="28" height="32" fill="#FFC6FF" opacity="0.6"/><circle cx="26" cy="26" r="4" fill="#F62188"/><path d="M18 44 L28 32 L36 40 L46 28 L46 48 L18 48 Z" fill="#E0399B" opacity="0.6"/></svg>`,
-  pot: `<svg viewBox="0 0 64 64"><path d="M18 26 H46 L41 54 H23 Z" fill="#F62188"/><rect x="16" y="20" width="32" height="8" rx="2" fill="#E0399B"/><path d="M32 20 C20 20 20 4 32 8 C44 4 44 20 32 20 Z" fill="#FF8FCB"/></svg>`,
-  other: `<svg viewBox="0 0 64 64"><rect x="12" y="14" width="40" height="36" rx="4" fill="#FFC6FF"/><path d="M12 22 H52" stroke="#E0399B" stroke-width="3"/><circle cx="32" cy="14" r="6" fill="#F62188"/></svg>`
+  bouquet: `<svg viewBox="0 0 64 64"><g fill="none" stroke="#D0145C" stroke-width="2.5"><path d="M32 30 L26 56" stroke="#A10E48"/><path d="M32 30 L38 56" stroke="#A10E48"/><path d="M32 30 L32 58" stroke="#A10E48"/></g><circle cx="32" cy="20" r="9" fill="#D0145C"/><circle cx="20" cy="26" r="8" fill="#FBD5E4"/><circle cx="44" cy="26" r="8" fill="#FBD5E4"/><circle cx="26" cy="16" r="6" fill="#A10E48"/><circle cx="38" cy="16" r="6" fill="#A10E48"/></svg>`,
+  frame: `<svg viewBox="0 0 64 64"><rect x="10" y="8" width="44" height="48" rx="3" fill="none" stroke="#A10E48" stroke-width="4"/><rect x="18" y="16" width="28" height="32" fill="#FBD5E4" opacity="0.6"/><circle cx="26" cy="26" r="4" fill="#D0145C"/><path d="M18 44 L28 32 L36 40 L46 28 L46 48 L18 48 Z" fill="#A10E48" opacity="0.6"/></svg>`,
+  pot: `<svg viewBox="0 0 64 64"><path d="M18 26 H46 L41 54 H23 Z" fill="#D0145C"/><rect x="16" y="20" width="32" height="8" rx="2" fill="#A10E48"/><path d="M32 20 C20 20 20 4 32 8 C44 4 44 20 32 20 Z" fill="#EB1065"/></svg>`,
+  other: `<svg viewBox="0 0 64 64"><rect x="12" y="14" width="40" height="36" rx="4" fill="#FBD5E4"/><path d="M12 22 H52" stroke="#A10E48" stroke-width="3"/><circle cx="32" cy="14" r="6" fill="#D0145C"/></svg>`
 };
 
 function renderThumb(p, variantLabel){
@@ -1895,7 +1895,7 @@ function drawCatalogPage(items, pageNo, pageCount, imgs, logo, summary){
   ctx.scale(K, K); // ตัวคูณเดียวกันทั้งสองแกน (1800/1080 = 3200/1920) รูปสินค้าไม่ถูกยืดหรือบีบ
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
-  const PINK = '#F62188', PINK_DARK = '#C4106D', PLUM = '#3B1230', CREAM = '#FFF7FC';
+  const PINK = '#D0145C', PINK_DARK = '#A10E48', PLUM = '#2E1024', CREAM = '#FFF6F9';
   ctx.textBaseline = 'alphabetic';
 
   // พื้นหลัง
@@ -1903,9 +1903,7 @@ function drawCatalogPage(items, pageNo, pageCount, imgs, logo, summary){
 
   // หัวรูป
   const HEAD_H = 110;
-  const grad = ctx.createLinearGradient(0, 0, W, HEAD_H);
-  grad.addColorStop(0, PINK); grad.addColorStop(1, PINK_DARK);
-  ctx.fillStyle = grad; ctx.fillRect(0, 0, W, HEAD_H);
+  ctx.fillStyle = PINK; ctx.fillRect(0, 0, W, HEAD_H);
   let textX = 44;
   if(logo){
     const d = 72, lx = 44, ly = (HEAD_H - d) / 2;
@@ -1943,7 +1941,7 @@ function drawCatalogPage(items, pageNo, pageCount, imgs, logo, summary){
 
     // การ์ด
     ctx.save();
-    ctx.shadowColor = 'rgba(59,18,48,0.10)'; ctx.shadowBlur = 10 * K; ctx.shadowOffsetY = 2 * K;
+    ctx.shadowColor = 'rgba(46,16,36,0.10)'; ctx.shadowBlur = 10 * K; ctx.shadowOffsetY = 2 * K;
     ctx.fillStyle = '#fff';
     catalogRoundRect(ctx, x, y, cellW, cellH, 14); ctx.fill();
     ctx.restore();
@@ -1957,7 +1955,7 @@ function drawCatalogPage(items, pageNo, pageCount, imgs, logo, summary){
       const sw = photo / sc, sh = photoH / sc;
       ctx.drawImage(img, (img.width - sw)/2, (img.height - sh)/2, sw, sh, x, y, photo, photoH);
     } else {
-      ctx.fillStyle = '#FFE3F1'; ctx.fillRect(x, y, photo, photoH);
+      ctx.fillStyle = '#FBD5E4'; ctx.fillRect(x, y, photo, photoH);
       ctx.font = '72px sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = PINK;
       ctx.fillText('🌸', x + photo/2, y + photoH/2 + 24);
       ctx.textAlign = 'left';
@@ -1965,15 +1963,15 @@ function drawCatalogPage(items, pageNo, pageCount, imgs, logo, summary){
     ctx.restore();
 
     // ป้าย พร้อมส่ง / ใหม่
-    const drawBadge = (label, bx, by, bg, align) => {
+    const drawBadge = (label, bx, by, bg, align, fg = '#fff') => {
       ctx.font = '600 17px Kanit, sans-serif';
       const tw = ctx.measureText(label).width, bw = tw + 20, bh = 29;
       const px = align === 'right' ? bx - bw : bx;
       ctx.fillStyle = bg; catalogRoundRect(ctx, px, by, bw, bh, 13); ctx.fill();
-      ctx.fillStyle = '#fff'; ctx.fillText(label, px + 10, by + 21);
+      ctx.fillStyle = fg; ctx.fillText(label, px + 10, by + 21);
     };
-    if(it.ready) drawBadge('พร้อมส่ง', x + 8, y + 8, '#16A34A', 'left');
-    if(it.isNew) drawBadge('ใหม่', x + cellW - 8, y + 8, PINK, 'right');
+    if(it.ready) drawBadge('พร้อมส่ง', x + 8, y + 8, '#2F7A58', 'left');
+    if(it.isNew) drawBadge('ใหม่', x + cellW - 8, y + 8, '#C9A66B', 'right', PLUM);
 
     // ชื่อ + ราคา
     const tx = x + 10, tw2 = cellW - 20;
@@ -1990,9 +1988,9 @@ function drawCatalogPage(items, pageNo, pageCount, imgs, logo, summary){
 
   // แถบข้อความหมายเหตุ
   ctx.save();
-  ctx.fillStyle = '#FFE9F4';
+  ctx.fillStyle = '#FFF1F6';
   catalogRoundRect(ctx, PAD, noteY, W - PAD * 2, NOTE_H, 18); ctx.fill();
-  ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(246,33,136,0.28)';
+  ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(208,20,92,0.28)';
   catalogRoundRect(ctx, PAD, noteY, W - PAD * 2, NOTE_H, 18); ctx.stroke();
   ctx.restore();
   const noteLines = [
@@ -2199,7 +2197,7 @@ function updateCartUI(){
   const entries = Object.entries(cart);
   if(!entries.length){
     wrap.innerHTML = `<div class="empty-cart">
-      <svg viewBox="0 0 64 64" fill="none"><path d="M18 26 H46 L41 54 H23 Z" stroke="#8a7680" stroke-width="3"/></svg>
+      <svg viewBox="0 0 64 64" fill="none"><path d="M18 26 H46 L41 54 H23 Z" stroke="#7B6772" stroke-width="3"/></svg>
       <div>ยังไม่มีสินค้าในตะกร้า</div>
     </div>`;
   } else {
