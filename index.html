@@ -48,6 +48,36 @@
 </script>
 </head>
 <body>
+<!-- ไอคอน SVG ชุดเดียว (เส้นบาง สีตามธีม) แทนอีโมจิ -->
+<svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+<symbol id="i-bag" viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></symbol>
+<symbol id="i-chat" viewBox="0 0 24 24"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></symbol>
+<symbol id="i-camera" viewBox="0 0 24 24"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></symbol>
+<symbol id="i-flower" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/><circle cx="12" cy="6.8" r="3"/><circle cx="16.95" cy="10.4" r="3"/><circle cx="15.06" cy="16.2" r="3"/><circle cx="8.94" cy="16.2" r="3"/><circle cx="7.05" cy="10.4" r="3"/></symbol>
+<symbol id="i-pin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></symbol>
+<symbol id="i-package" viewBox="0 0 24 24"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></symbol>
+<symbol id="i-calendar" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol>
+<symbol id="i-truck" viewBox="0 0 24 24"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></symbol>
+<symbol id="i-car" viewBox="0 0 24 24"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></symbol>
+<symbol id="i-phone" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></symbol>
+<symbol id="i-card" viewBox="0 0 24 24"><rect width="20" height="14" x="2" y="5" rx="2"/><path d="M2 10h20"/></symbol>
+<symbol id="i-gift" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"/></symbol>
+<symbol id="i-bulb" viewBox="0 0 24 24"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></symbol>
+<symbol id="i-bolt" viewBox="0 0 24 24"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></symbol>
+<symbol id="i-ruler" viewBox="0 0 24 24"><path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.41 2.41 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0Z"/><path d="m14.5 12.5 2-2"/><path d="m11.5 9.5 2-2"/><path d="m8.5 6.5 2-2"/><path d="m17.5 15.5 2-2"/></symbol>
+<symbol id="i-heart" viewBox="0 0 24 24"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></symbol>
+<symbol id="i-palette" viewBox="0 0 24 24"><circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></symbol>
+<symbol id="i-receipt" viewBox="0 0 24 24"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 17.5v-11"/></symbol>
+<symbol id="i-star" viewBox="0 0 24 24"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"/></symbol>
+<symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></symbol>
+<symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></symbol>
+<symbol id="i-user" viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+<symbol id="i-banknote" viewBox="0 0 24 24"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+<symbol id="i-alert" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
+<symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+</svg>
+
 
 <div class="search-cart-bar" id="searchCartBar">
   <button type="button" class="menu-btn" onclick="openFilterSheet()" aria-label="หมวดหมู่และตัวกรองสินค้า"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span class="menu-badge" id="menuBadge" hidden></span></button>
@@ -62,7 +92,7 @@
   </div>
   <a class="chat-top-btn" href="https://m.me/S.Flower.Bloom44" target="_blank" rel="noopener" aria-label="ทักแชตเพจ S.Flower Bloom"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.3 9 9 0 0 1-3.6-.7L3 20.5l1.6-4.7A8.3 8.3 0 0 1 3 11.5a8.5 8.5 0 0 1 9-8.5 8.5 8.5 0 0 1 9 8.5z"/></svg></a>
   <button class="cart-btn-top" onclick="openCart()" aria-label="ตะกร้าสินค้า">
-    🧺
+    <svg class="ic" aria-hidden="true"><use href="#i-bag"/></svg>
     <span class="badge" id="cartBadge">0</span>
   </button>
 </div>
@@ -128,16 +158,16 @@
 
 <!-- ข้อความตอนปิดราคา (แสดงเฉพาะเมื่อ <html> มีคลาส prices-hidden) -->
 <div class="price-notice" id="priceNotice" role="note">
-  <span class="pn-ico" aria-hidden="true">📸</span>
+  <span class="pn-ico" aria-hidden="true"><svg class="ic" aria-hidden="true"><use href="#i-camera"/></svg></span>
   <p><b>ตอนนี้ร้านยังไม่แสดงราคาบนหน้าเว็บ</b> สนใจสินค้าไหน <b>แคปหน้าจอสินค้านั้น</b> <span class="pn-more">(ให้เห็นชื่อสินค้าและตัวเลือกที่เลือก)</span> แล้วส่งให้เพจเพื่อสอบถามราคาได้เลยค่ะ</p>
-  <a class="pn-btn" href="https://m.me/S.Flower.Bloom44" target="_blank" rel="noopener">💬 ทักเพจ</a>
+  <a class="pn-btn" href="https://m.me/S.Flower.Bloom44" target="_blank" rel="noopener"><svg class="ic" aria-hidden="true"><use href="#i-chat"/></svg> ทักเพจ</a>
 </div>
 
 <!-- ข้อความตอนปิดระบบสั่งทำ/ตะกร้า แต่ยังแสดงราคา (แสดงเฉพาะเมื่อ <html> มีคลาส orders-closed และไม่ได้ซ่อนราคา) -->
 <div class="price-notice order-notice" id="orderNotice" role="note">
-  <span class="pn-ico" aria-hidden="true">📸</span>
+  <span class="pn-ico" aria-hidden="true"><svg class="ic" aria-hidden="true"><use href="#i-camera"/></svg></span>
   <p><b>ตอนนี้ร้านปิดรับออเดอร์ผ่านหน้าเว็บชั่วคราว</b> สนใจสินค้าไหน <b>แคปหน้าจอสินค้านั้น</b> <span class="pn-more">(ให้เห็นชื่อสินค้า ตัวเลือกที่เลือก และราคา)</span> แล้วส่งให้เพจเพื่อสอบถามรายละเอียดเพิ่มเติมได้เลย</p>
-  <a class="pn-btn" href="https://m.me/S.Flower.Bloom44" target="_blank" rel="noopener">💬 ทักเพจ</a>
+  <a class="pn-btn" href="https://m.me/S.Flower.Bloom44" target="_blank" rel="noopener"><svg class="ic" aria-hidden="true"><use href="#i-chat"/></svg> ทักเพจ</a>
 </div>
 
 <nav class="cat-nav" id="catNav"></nav>
@@ -186,7 +216,7 @@
     </div>
     <p class="field-hint" style="margin:-6px 0 12px;">ยังไม่รวมค่าจัดส่ง — นัดรับฟรีเมื่อสั่งครบ ฿<span class="js-free-min">399</span> ขึ้นไป (ต่ำกว่านั้นคิดค่าส่งตามระยะทางจริง) / ส่งพัสดุต่างจังหวัด ฿100 ต่อออเดอร์</p>
     <button class="checkout-btn" id="checkoutBtn" onclick="startCheckout(buildCartOrderLines)">
-      🌸 ยืนยันสั่งทำสินค้า
+      <svg class="ic" aria-hidden="true"><use href="#i-flower"/></svg> ยืนยันสั่งทำสินค้า
     </button>
     <p class="checkout-hint">กดแล้วกรอกวันรับสินค้า/วิธีรับ/ชื่อ Facebook แอดมินจะทักกลับไปยืนยันอีกครั้ง</p>
   </div>
@@ -195,7 +225,7 @@
 <div class="toast" id="toast"></div>
 
 <button class="fab-cart" id="fabCart" onclick="openCart()" style="display:none;">
-  🧺 <span id="fabCount">0</span> ชิ้น · <span id="fabTotal">฿0</span>
+  <svg class="ic" aria-hidden="true"><use href="#i-bag"/></svg> <span id="fabCount">0</span> ชิ้น · <span id="fabTotal">฿0</span>
 </button>
 
 <div class="product-page" id="productModal">
@@ -204,7 +234,7 @@
     <div class="pd-topbar">
       <button type="button" class="pd-back" onclick="closeProductModal()"><span aria-hidden="true">←</span> กลับไปเลือกสินค้า</button>
       <nav class="pd-crumbs" id="pdCrumbs" aria-label="เส้นทางหน้า"></nav>
-      <button type="button" class="pd-cart" id="pdCartBtn" onclick="openCart()" aria-label="เปิดตะกร้าสินค้า">🧺 <span>ตะกร้า</span><b class="pd-cart-count is-zero" id="pdCartCount">0</b></button>
+      <button type="button" class="pd-cart" id="pdCartBtn" onclick="openCart()" aria-label="เปิดตะกร้าสินค้า"><svg class="ic" aria-hidden="true"><use href="#i-bag"/></svg> <span>ตะกร้า</span><b class="pd-cart-count is-zero" id="pdCartCount">0</b></button>
     </div>
     <div class="pd-layout" id="pdLayout">
     <button type="button" class="pd-close" onclick="closeProductModal()" aria-label="ปิด">✕</button>
@@ -215,7 +245,7 @@
         <div class="page-img" id="modalImg"></div>
         <button type="button" class="pd-heart-img" id="modalFavHeartImg" onclick="toggleModalFavorite()" aria-label="บันทึกไว้ในรายการโปรด">♡</button>
         <div class="pd-img-badges" id="modalImgBadges"></div>
-        <span class="pd-review-tag" id="modalReviewTag" hidden>📷 รีวิวจากลูกค้า</span>
+        <span class="pd-review-tag" id="modalReviewTag" hidden><svg class="ic" aria-hidden="true"><use href="#i-camera"/></svg> รีวิวจากลูกค้า</span>
       </div>
     </div>
     <div class="page-body">
@@ -245,8 +275,8 @@
       <div class="modal-price" id="modalPrice"></div>
       <!-- ตอนปิดระบบสั่งทำ/ตะกร้า (ยังแสดงราคา): อยู่ใต้ราคา แทนปุ่มใส่ตะกร้า/สั่งทำสินค้า -->
       <div class="order-closed-box" id="orderClosedBox">
-        <div class="price-ask-text">📸 <b>แคปหน้าจอสินค้านี้</b> (ให้เห็นชื่อสินค้า ตัวเลือกที่เลือก และราคา) แล้วส่งให้เพจเพื่อสั่งทำหรือสอบถามรายละเอียดได้เลยค่ะ</div>
-        <a class="price-ask-btn" href="https://m.me/S.Flower.Bloom44" target="_blank" rel="noopener">💬 ทักเพจสั่งทำ/สอบถาม</a>
+        <div class="price-ask-text"><svg class="ic" aria-hidden="true"><use href="#i-camera"/></svg> <b>แคปหน้าจอสินค้านี้</b> (ให้เห็นชื่อสินค้า ตัวเลือกที่เลือก และราคา) แล้วส่งให้เพจเพื่อสั่งทำหรือสอบถามรายละเอียดได้เลยค่ะ</div>
+        <a class="price-ask-btn" href="https://m.me/S.Flower.Bloom44" target="_blank" rel="noopener"><svg class="ic" aria-hidden="true"><use href="#i-chat"/></svg> ทักเพจสั่งทำ/สอบถาม</a>
       </div>
       <hr class="pd-hr pd-hr-1">
       <div class="modal-qty">
@@ -261,24 +291,24 @@
       <div class="modal-actions modal-actions-mobile">
         <div class="mab-info" id="mabInfo"></div>
         <div class="mab-btns">
-          <button class="add-btn secondary icon-only" onclick="addModalToCart()" aria-label="ใส่ตะกร้า">🧺</button>
+          <button class="add-btn secondary icon-only" onclick="addModalToCart()" aria-label="ใส่ตะกร้า"><svg class="ic" aria-hidden="true"><use href="#i-bag"/></svg></button>
           <button class="checkout-btn" onclick="startCheckout(buildModalOrderLines)">สั่งทำสินค้า</button>
         </div>
       </div>
       <!-- มือถือ ตอนปิดระบบสั่งทำ/ตะกร้า (ยังแสดงราคา): แถบติดล่างแทนแถบสั่งซื้อ -->
       <div class="order-closed-bar" id="orderClosedBar">
-        <div class="ocb-text">📸 <b>ปิดรับออเดอร์ผ่านเว็บชั่วคราว</b><br>แคปหน้าจอนี้ส่งให้เพจได้เลยค่ะ</div>
-        <a class="ocb-btn" href="https://m.me/S.Flower.Bloom44" target="_blank" rel="noopener">💬 ทักเพจ</a>
+        <div class="ocb-text"><svg class="ic" aria-hidden="true"><use href="#i-camera"/></svg> <b>ปิดรับออเดอร์ผ่านเว็บชั่วคราว</b><br>แคปหน้าจอนี้ส่งให้เพจได้เลยค่ะ</div>
+        <a class="ocb-btn" href="https://m.me/S.Flower.Bloom44" target="_blank" rel="noopener"><svg class="ic" aria-hidden="true"><use href="#i-chat"/></svg> ทักเพจ</a>
       </div>
       <div class="modal-actions modal-actions-desktop">
-        <button class="add-btn secondary" onclick="addModalToCart()">🧺 ใส่ตะกร้า</button>
+        <button class="add-btn secondary" onclick="addModalToCart()"><svg class="ic" aria-hidden="true"><use href="#i-bag"/></svg> ใส่ตะกร้า</button>
         <button class="checkout-btn" onclick="startCheckout(buildModalOrderLines)">สั่งทำสินค้า</button>
       </div>
       <!-- ข้อมูลการสั่งซื้อ (จอคอมเท่านั้น) ตรงกับ FAQ ด้านล่างของหน้าเว็บ -->
       <ul class="pd-info" aria-label="ข้อมูลการสั่งซื้อ">
-        <li><span class="pd-info-ic" aria-hidden="true">🌸</span><div><b>ทำตามออเดอร์</b><small>ใช้เวลาทำประมาณ 3–5 วัน</small></div></li>
-        <li><span class="pd-info-ic" aria-hidden="true">📍</span><div><b>นัดรับได้</b><small>ในตัวเมืองนครสวรรค์ และอำเภอพยุหะคีรี</small></div></li>
-        <li><span class="pd-info-ic" aria-hidden="true">📦</span><div><b>ส่งพัสดุ EMS</b><small>ผ่านไปรษณีย์ไทย แพ็กอย่างรัดกุม</small></div></li>
+        <li><span class="pd-info-ic" aria-hidden="true"><svg class="ic" aria-hidden="true"><use href="#i-flower"/></svg></span><div><b>ทำตามออเดอร์</b><small>ใช้เวลาทำประมาณ 3–5 วัน</small></div></li>
+        <li><span class="pd-info-ic" aria-hidden="true"><svg class="ic" aria-hidden="true"><use href="#i-pin"/></svg></span><div><b>นัดรับได้</b><small>ในตัวเมืองนครสวรรค์ และอำเภอพยุหะคีรี</small></div></li>
+        <li><span class="pd-info-ic" aria-hidden="true"><svg class="ic" aria-hidden="true"><use href="#i-package"/></svg></span><div><b>ส่งพัสดุ EMS</b><small>ผ่านไปรษณีย์ไทย แพ็กอย่างรัดกุม</small></div></li>
       </ul>
     </div>
     </div>
@@ -333,35 +363,35 @@
       <div id="fbNameDisplay"></div>
 
       <div class="form-group">
-        <label for="pickupDateInput">📅 วันที่ต้องการรับสินค้า</label>
+        <label for="pickupDateInput"><svg class="ic" aria-hidden="true"><use href="#i-calendar"/></svg> วันที่ต้องการรับสินค้า</label>
         <input type="date" id="pickupDateInput" class="form-input">
-        <p class="field-hint">💡 ช่อพร้อมส่งหรืองานเร่งเลือกวันใกล้ๆ ได้เลย แต่ถ้าเป็นช่อที่ต้องเตรียมพิเศษ แนะนำสั่งล่วงหน้า <strong>3-5 วัน</strong> — แอดมินจะทักแจ้งอีกครั้งหากทำไม่ทันวันที่เลือกไว้</p>
+        <p class="field-hint"><svg class="ic" aria-hidden="true"><use href="#i-bulb"/></svg> ช่อพร้อมส่งหรืองานเร่งเลือกวันใกล้ๆ ได้เลย แต่ถ้าเป็นช่อที่ต้องเตรียมพิเศษ แนะนำสั่งล่วงหน้า <strong>3-5 วัน</strong> — แอดมินจะทักแจ้งอีกครั้งหากทำไม่ทันวันที่เลือกไว้</p>
       </div>
 
       <div class="form-group">
-        <label>🚚 วิธีรับสินค้า</label>
+        <label><svg class="ic" aria-hidden="true"><use href="#i-truck"/></svg> วิธีรับสินค้า</label>
         <div class="radio-group">
-          <label class="radio-option"><input type="radio" name="deliveryMethod" value="pickup" onchange="onDeliveryMethodChange()"> 🚗 นัดรับสินค้า (พยุหะ–ตัวเมืองนครสวรรค์และใกล้เคียง)</label>
-          <label class="radio-option"><input type="radio" name="deliveryMethod" value="parcel" onchange="onDeliveryMethodChange()"> 📦 ส่งพัสดุ (ต่างจังหวัด)</label>
+          <label class="radio-option"><input type="radio" name="deliveryMethod" value="pickup" onchange="onDeliveryMethodChange()"> <svg class="ic" aria-hidden="true"><use href="#i-car"/></svg> นัดรับสินค้า (พยุหะ–ตัวเมืองนครสวรรค์และใกล้เคียง)</label>
+          <label class="radio-option"><input type="radio" name="deliveryMethod" value="parcel" onchange="onDeliveryMethodChange()"> <svg class="ic" aria-hidden="true"><use href="#i-package"/></svg> ส่งพัสดุ (ต่างจังหวัด)</label>
           <label class="radio-option"><input type="radio" name="deliveryMethod" value="unsure" onchange="onDeliveryMethodChange()"> ยังไม่แน่ใจ</label>
         </div>
         <p class="field-hint" id="deliveryMethodHint"></p>
       </div>
 
       <div class="form-group" id="pickupInfoGroup" style="display:none;">
-        <label for="pickupLocationInput">📍 สถานที่นัดรับ <span style="font-weight:400;">(ไม่บังคับ)</span></label>
+        <label for="pickupLocationInput"><svg class="ic" aria-hidden="true"><use href="#i-pin"/></svg> สถานที่นัดรับ <span style="font-weight:400;">(ไม่บังคับ)</span></label>
         <input type="text" id="pickupLocationInput" class="form-input" placeholder="เช่น เซเว่นหน้าตลาดพยุหะ, ปั๊มน้ำมัน..." style="margin-bottom:10px;">
-        <label for="pickupPhoneInput">📞 เบอร์โทรติดต่อวันนัดรับ <span style="font-weight:400;">(ไม่บังคับ)</span></label>
+        <label for="pickupPhoneInput"><svg class="ic" aria-hidden="true"><use href="#i-phone"/></svg> เบอร์โทรติดต่อวันนัดรับ <span style="font-weight:400;">(ไม่บังคับ)</span></label>
         <input type="tel" id="pickupPhoneInput" class="form-input" placeholder="เบอร์โทรที่ติดต่อได้ในวันนัดรับ">
       </div>
 
       <div class="form-group" id="deliveryAddressGroup" style="display:none;">
-        <label for="deliveryAddressInput">📍 ที่อยู่จัดส่ง</label>
+        <label for="deliveryAddressInput"><svg class="ic" aria-hidden="true"><use href="#i-pin"/></svg> ที่อยู่จัดส่ง</label>
         <textarea id="deliveryAddressInput" class="form-input" rows="2" placeholder="ที่อยู่สำหรับจัดส่ง พร้อมเบอร์โทรผู้รับ"></textarea>
       </div>
 
       <div class="form-group">
-        <label>💳 การชำระเงิน</label>
+        <label><svg class="ic" aria-hidden="true"><use href="#i-card"/></svg> การชำระเงิน</label>
         <div class="radio-group">
           <label class="radio-option"><input type="radio" name="paymentMethod" value="full" onchange="renderOrderTotalSummary()"> โอนเต็มยอด</label>
           <label class="radio-option" id="depositPaymentOption"><input type="radio" name="paymentMethod" value="deposit" onchange="renderOrderTotalSummary()"> มัดจำ 50% ส่วนที่เหลือชำระวันทำช่อดอกไม้เสร็จ</label>
@@ -370,10 +400,10 @@
       </div>
 
       <label class="checkbox-label card-addon-toggle">
-        <input type="checkbox" id="addCardCart"> 🎀 เพิ่มการ์ดอวยพร (ฟรี)
+        <input type="checkbox" id="addCardCart"> <svg class="ic" aria-hidden="true"><use href="#i-gift"/></svg> เพิ่มการ์ดอวยพร (ฟรี)
       </label>
       <textarea id="orderNoteInput" class="form-input" rows="2" placeholder="หมายเหตุ (เช่น อยากเปลี่ยน/เพิ่มสีช่อดอกไม้ ข้อความในการ์ด หรือข้อความอื่นๆ ถึงร้าน)"></textarea>
-      <p class="app-tip">💡 ยังไม่เคยทักแชทเพจใช่ไหม <a href="#" id="messengerLink" target="_blank" rel="noopener">เปิดแชท Facebook Messenger ที่นี่</a> เพื่อทักหาแอดมินไว้ก่อนได้เลยค่ะ (ใช้ชื่อเดียวกับที่แจ้งไว้)</p>
+      <p class="app-tip"><svg class="ic" aria-hidden="true"><use href="#i-bulb"/></svg> ยังไม่เคยทักแชทเพจใช่ไหม <a href="#" id="messengerLink" target="_blank" rel="noopener">เปิดแชท Facebook Messenger ที่นี่</a> เพื่อทักหาแอดมินไว้ก่อนได้เลยค่ะ (ใช้ชื่อเดียวกับที่แจ้งไว้)</p>
     </div>
 
     <div class="order-modal-footer">
@@ -391,9 +421,9 @@
     <div class="sfb-check" aria-hidden="true"><svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="24"/><path d="M15 27l8 8 14-16"/></svg></div>
     <div class="copied-banner"><span class="sfb-emoji">✅ </span>รับออเดอร์ของคุณแล้ว</div>
     <div class="order-no-chip" id="orderNoChip"></div>
-    <p class="paste-instruction">📌 <strong>ขั้นตอนต่อไป:</strong> กดปุ่ม "ทักแชทแจ้งเลขออเดอร์" ด้านล่าง ระบบจะคัดลอกเลขที่ออเดอร์ให้อัตโนมัติ แล้วเปิดแชท Facebook Messenger ของร้าน — เมื่อแชทเปิดขึ้นมา แค่วางข้อความที่คัดลอกไว้แล้วส่งได้เลย แอดมินจะได้เห็นเลขออเดอร์และยืนยันรายการ พร้อมแจ้งยอด/วิธีรับ-จัดส่งให้ค่ะ 🌸</p>
+    <p class="paste-instruction"><svg class="ic" aria-hidden="true"><use href="#i-pin"/></svg> <strong>ขั้นตอนต่อไป:</strong> กดปุ่ม "ทักแชทแจ้งเลขออเดอร์" ด้านล่าง ระบบจะคัดลอกเลขที่ออเดอร์ให้อัตโนมัติ แล้วเปิดแชท Facebook Messenger ของร้าน — เมื่อแชทเปิดขึ้นมา แค่วางข้อความที่คัดลอกไว้แล้วส่งได้เลย แอดมินจะได้เห็นเลขออเดอร์และยืนยันรายการ พร้อมแจ้งยอด/วิธีรับ-จัดส่งให้ค่ะ 🌸</p>
     <div class="modal-actions success-actions">
-      <a href="#" id="chatOrderBtn" class="chat-order-btn" onclick="chatWithOrderNo(event)">💬 ทักแชทแจ้งเลขออเดอร์</a>
+      <a href="#" id="chatOrderBtn" class="chat-order-btn" onclick="chatWithOrderNo(event)"><svg class="ic" aria-hidden="true"><use href="#i-chat"/></svg> ทักแชทแจ้งเลขออเดอร์</a>
       <button class="close-secondary-btn" onclick="closeOrderSummary()">ปิดหน้าต่าง</button>
     </div>
   </div>

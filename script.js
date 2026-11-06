@@ -57,9 +57,9 @@ function setPricesHidden(v){
   document.documentElement.classList.toggle('prices-hidden', PRICES_HIDDEN);
 }
 function priceAskHtml(){
-  if(PRICES_PENDING) return '<div class="price-ask-text">⏳ <b>กำลังโหลดราคา…</b> รอสักครู่นะคะ</div>';
-  return '<div class="price-ask-text">📸 <b>แคปหน้าจอสินค้านี้</b> (ให้เห็นชื่อสินค้าและตัวเลือกที่เลือก) แล้วส่งให้เพจเพื่อสอบถามราคาได้เลยค่ะ</div>'
-    + '<a class="price-ask-btn" href="' + PAGE_LINK + '" target="_blank" rel="noopener">💬 ทักเพจสอบถามราคา</a>';
+  if(PRICES_PENDING) return '<div class="price-ask-text"><svg class="ic" aria-hidden="true"><use href="#i-clock"/></svg> <b>กำลังโหลดราคา…</b> รอสักครู่นะคะ</div>';
+  return '<div class="price-ask-text"><svg class="ic" aria-hidden="true"><use href="#i-camera"/></svg> <b>แคปหน้าจอสินค้านี้</b> (ให้เห็นชื่อสินค้าและตัวเลือกที่เลือก) แล้วส่งให้เพจเพื่อสอบถามราคาได้เลยค่ะ</div>'
+    + '<a class="price-ask-btn" href="' + PAGE_LINK + '" target="_blank" rel="noopener"><svg class="ic" aria-hidden="true"><use href="#i-chat"/></svg> ทักเพจสอบถามราคา</a>';
 }
 // วาง URL ของ Google Apps Script Web App (หลัง Deploy แล้ว) แทนที่ค่าด้านล่างนี้
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwfNGO22TxU0kBqbNbn7eaSIo4W4qlXiqTVPcSo5wyLMWedZmOWLYDKiKzJcfHEW-TdnA/exec';
@@ -90,7 +90,7 @@ function renderThumb(p, variantLabel){
     src = (v && (v.image || (v.images && v.images[0]))) || p.image || (p.images && p.images[0]) || null;
     alt = p.name + (v ? ' ' + v.match.join(' ') : '');
     return src
-      ? `<img src="${src}" alt="${alt}" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML=window.iconFallbackFor('${p.id}')">`
+      ? `<img src="${src}" alt="${alt}" width="600" height="600" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML=window.iconFallbackFor('${p.id}')">`
       : iconFor(p);
   }
   let colorName = null, sizeName = null;
@@ -143,7 +143,7 @@ function renderThumb(p, variantLabel){
     src = p.images[0];
   }
   if(src){
-    return `<img src="${src}" alt="${alt}" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML=window.iconFallbackFor('${p.id}')">`;
+    return `<img src="${src}" alt="${alt}" width="600" height="600" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML=window.iconFallbackFor('${p.id}')">`;
   }
   return iconFor(p);
 }
@@ -914,7 +914,7 @@ function renderNav(){
       <span class="filter-count" id="filterCount" hidden></span>
       <span class="filter-badge-dot" id="filterBadgeDot"></span>
     </button>
-    <button type="button" class="cat-quick cat-quick-ready${showReadyOnly ? ' active' : ''}" onclick="quickToggleReady()">⚡ พร้อมส่ง</button>` + CATS.map(c => {
+    <button type="button" class="cat-quick cat-quick-ready${showReadyOnly ? ' active' : ''}" onclick="quickToggleReady()"><svg class="ic" aria-hidden="true"><use href="#i-bolt"/></svg> พร้อมส่ง</button>` + CATS.map(c => {
     // "ทั้งหมด" ไฮไลต์เมื่อไม่ได้เลือกหมวดเจาะจงไว้เลย ส่วนหมวดอื่นไฮไลต์เมื่ออยู่ใน activeCats จริง
     // หรือ (ตอนอยู่โหมด "ทั้งหมด") เมื่อ scrollspy กำลังเลื่อนผ่านหมวดนั้นอยู่พอดี
     const isActive = c === 'ทั้งหมด' ? allMode : (activeCats.has(c) || (allMode && scrollSpyCat === c));
@@ -1285,7 +1285,7 @@ function buildFilterPanelHtml(state, mode){
 
   // ตัวเลือกขนาด — เลือกได้หลายค่า ถ้าเลือกหลายหมวดจะรวมตัวเลือกของทุกหมวด
   const sizeList = unionSizeList(state.cats);
-  const sizeHtml = sizeList ? group('📏 ขนาด', state.sizes ? state.sizes.size : 0,
+  const sizeHtml = sizeList ? group('<svg class="ic" aria-hidden="true"><use href="#i-ruler"/></svg> ขนาด', state.sizes ? state.sizes.size : 0,
     `<div class="filter-pills">${sizeList.map(s => {
       const on = s === 'ทั้งหมด' ? !(state.sizes && state.sizes.size) : !!(state.sizes && state.sizes.has(s));
       return `<button class="filter-pill${s === 'ทั้งหมด' ? '' : ' is-multi'} ${on?'active':''}" aria-pressed="${on}" onclick="${mode==='sidebar' ? `setSize('${s}')` : `setDraftSize('${s}')`}">${s}</button>`;
@@ -1294,7 +1294,7 @@ function buildFilterPanelHtml(state, mode){
   // ชนิดดอกไม้ — แสดงตลอด เลือกได้หลายชนิด ("ทั้งหมด" = ไม่เลือกชนิดไหนเลย)
   // รายการชนิดมาจากสินค้าที่มีจริงในหมวดที่เลือก (ไม่เลือกหมวด = ทั้งร้าน)
   const flowerList = ['ทั้งหมด', ...flowerTypesInScope(state.cats)];
-  const flowerHtml = group('🌸 ชนิดดอกไม้', state.flowerTypes.size,
+  const flowerHtml = group('<svg class="ic" aria-hidden="true"><use href="#i-flower"/></svg> ชนิดดอกไม้', state.flowerTypes.size,
     `<div class="filter-pills">${flowerList.map(t => {
       const on = t === 'ทั้งหมด' ? state.flowerTypes.size === 0 : state.flowerTypes.has(t);
       const cnt = (mode === 'sheet' && t !== 'ทั้งหมด') ? `<span class="fp-n">${flowerTypeCount(t, state.cats)}</span>` : '';
@@ -1323,17 +1323,17 @@ function buildFilterPanelHtml(state, mode){
     const moreCount = (state.ready ? 1 : 0) + (state.favorites ? 1 : 0) + (state.allSplit ? 1 : 0) + (sortOn ? 1 : 0);
     const sortSeg = PRICES_HIDDEN ? '' : `
       <div class="fseg" role="group" aria-label="เรียงตามราคา">
-        <button type="button" class="${state.sortOrder==='asc'?'active':''}" aria-pressed="${state.sortOrder==='asc'}" onclick="${setSortFn}('asc')">💰 ราคา ต่ำ → สูง</button>
-        <button type="button" class="${state.sortOrder==='desc'?'active':''}" aria-pressed="${state.sortOrder==='desc'}" onclick="${setSortFn}('desc')">💰 ราคา สูง → ต่ำ</button>
+        <button type="button" class="${state.sortOrder==='asc'?'active':''}" aria-pressed="${state.sortOrder==='asc'}" onclick="${setSortFn}('asc')"><svg class="ic" aria-hidden="true"><use href="#i-banknote"/></svg> ราคา ต่ำ → สูง</button>
+        <button type="button" class="${state.sortOrder==='desc'?'active':''}" aria-pressed="${state.sortOrder==='desc'}" onclick="${setSortFn}('desc')"><svg class="ic" aria-hidden="true"><use href="#i-banknote"/></svg> ราคา สูง → ต่ำ</button>
       </div>`;
     moreHtml = group('เพิ่มเติม', moreCount,
-      `<div class="filter-pills">${chip(state.ready, '⚡ พร้อมส่ง', setReadyFn)}${chip(state.favorites, '❤️ รายการโปรด', setFavFn)}${chip(state.allSplit, '🎨 แยกทุกสี/แบบ', setAllSplitFn)}</div>${sortSeg}`);
+      `<div class="filter-pills">${chip(state.ready, '<svg class="ic" aria-hidden="true"><use href="#i-bolt"/></svg> พร้อมส่ง', setReadyFn)}${chip(state.favorites, '<svg class="ic" aria-hidden="true"><use href="#i-heart"/></svg> รายการโปรด', setFavFn)}${chip(state.allSplit, '<svg class="ic" aria-hidden="true"><use href="#i-palette"/></svg> แยกทุกสี/แบบ', setAllSplitFn)}</div>${sortSeg}`);
   } else {
     const moreCount = (state.ready ? 1 : 0) + (state.favorites ? 1 : 0) + (state.allSplit ? 1 : 0);
     moreHtml = group('ตัวเลือกอื่น', moreCount,
-      sw('⚡ พร้อมส่ง', state.ready, setReadyFn) +
-      sw('❤️ รายการโปรด', state.favorites, setFavFn) +
-      sw('🧾 แยกการ์ดทุกสี/แบบ', state.allSplit, setAllSplitFn, 'แสดงทุกสี/แบบเป็นการ์ดแยกกัน'),
+      sw('<svg class="ic" aria-hidden="true"><use href="#i-bolt"/></svg> พร้อมส่ง', state.ready, setReadyFn) +
+      sw('<svg class="ic" aria-hidden="true"><use href="#i-heart"/></svg> รายการโปรด', state.favorites, setFavFn) +
+      sw('<svg class="ic" aria-hidden="true"><use href="#i-receipt"/></svg> แยกการ์ดทุกสี/แบบ', state.allSplit, setAllSplitFn, 'แสดงทุกสี/แบบเป็นการ์ดแยกกัน'),
       'more', moreCount > 0);
   }
 
@@ -1697,7 +1697,7 @@ function renderCatalog(){
     );
     totalMatches += recommended.length;
     const recommendedHtml = recommended.length ? `
-      <div class="section-title featured"><h3>🌟 สินค้าแนะนำ (พร้อมส่ง)</h3><span>${recommended.length} รายการ</span></div>
+      <div class="section-title featured"><h3><svg class="ic" aria-hidden="true"><use href="#i-star"/></svg> สินค้าแนะนำ (พร้อมส่ง)</h3><span>${recommended.length} รายการ</span></div>
       <div class="grid">
         ${recommended.map(v => renderProductCard(v.product, v)).join('')}
       </div>
@@ -1778,7 +1778,7 @@ function renderCatalog(){
     main.innerHTML = `
       <div style="text-align:center; padding:60px 20px; color:var(--rose-dark);">
         <p style="font-size:16px; font-weight:700; margin-bottom:6px;">${noFav ? 'ยังไม่มีรายการโปรด' : 'ไม่พบสินค้าตามตัวกรองที่เลือก'}</p>
-        <p style="font-size:13.5px; color:var(--plum);">${noFav ? 'กดรูปหัวใจที่การ์ดสินค้าเพื่อเก็บไว้ดูทีหลังได้เลยนะ 🤍' : 'ลองล้างตัวกรอง หรือเลือกเงื่อนไขอื่นดูนะ'}</p>
+        <p style="font-size:13.5px; color:var(--plum);">${noFav ? 'กดรูปหัวใจที่การ์ดสินค้าเพื่อเก็บไว้ดูทีหลังได้เลยนะ <svg class="ic" aria-hidden="true"><use href="#i-heart"/></svg>' : 'ลองล้างตัวกรอง หรือเลือกเงื่อนไขอื่นดูนะ'}</p>
         <div class="empty-actions">
           <button type="button" class="empty-clear-btn primary" onclick="bnavClearAll()">${noFav ? 'กลับไปดูสินค้า' : 'ล้างตัวกรองทั้งหมด'}</button>
           ${noFav ? '' : '<button type="button" class="empty-clear-btn" onclick="openFilterSheet()">ปรับตัวกรอง</button>'}
@@ -2064,7 +2064,7 @@ function catalogCanShareFiles(files){
   catch(_){ return false; }
 }
 function catalogBtnLabel(){
-  return catalogIsMobile() ? '📥 โหลดแคตตาล็อก' : `📥 โหลดแคตตาล็อก (${catalogExportItems.length} รายการ)`;
+  return catalogIsMobile() ? 'โหลดแคตตาล็อก' : `โหลดแคตตาล็อก (${catalogExportItems.length} รายการ)`;
 }
 let catalogSheetUrls = [];
 function closeCatalogSheet(){
@@ -2093,11 +2093,11 @@ function openCatalogSheet(files){
         files.map((f, i) =>
           '<figure class="catalog-sheet-item">' +
             '<figcaption><span>หน้า ' + (i + 1) + '/' + n + '</span>' +
-            '<button type="button" class="catalog-sheet-save" data-i="' + i + '">💾 บันทึกรูปนี้</button></figcaption>' +
+            '<button type="button" class="catalog-sheet-save" data-i="' + i + '"><svg class="ic" aria-hidden="true"><use href="#i-download"/></svg> บันทึกรูปนี้</button></figcaption>' +
             '<img src="' + catalogSheetUrls[i] + '" alt="แคตตาล็อกหน้า ' + (i + 1) + '">' +
           '</figure>').join('') +
       '</div>' +
-      (canAll ? '<div class="catalog-sheet-foot"><button type="button" class="catalog-sheet-all">📤 บันทึกทั้งหมด (' + n + ' รูป)</button></div>' : '') +
+      (canAll ? '<div class="catalog-sheet-foot"><button type="button" class="catalog-sheet-all"><svg class="ic" aria-hidden="true"><use href="#i-upload"/></svg> บันทึกทั้งหมด (' + n + ' รูป)</button></div>' : '') +
     '</div>';
   wrap.addEventListener('click', async function(e){
     const t = e.target;
@@ -2551,7 +2551,7 @@ function renderFbNameDisplay(editing){
     const current = customerFbName ? escapeHtml(customerFbName) : '';
     wrap.innerHTML = `<input type="text" id="fbNameEditInput" class="form-input" placeholder="ชื่อ Facebook ที่ทักแชทร้าน" value="${current}" style="margin-bottom:14px;">`;
   } else {
-    wrap.innerHTML = `<div class="fb-name-chip"><span>👤 สั่งในนาม: <strong>${escapeHtml(customerFbName)}</strong></span><button type="button" class="fb-name-edit" onclick="renderFbNameDisplay(true)">แก้ไข</button></div>`;
+    wrap.innerHTML = `<div class="fb-name-chip"><span><svg class="ic" aria-hidden="true"><use href="#i-user"/></svg> สั่งในนาม: <strong>${escapeHtml(customerFbName)}</strong></span><button type="button" class="fb-name-edit" onclick="renderFbNameDisplay(true)">แก้ไข</button></div>`;
   }
 }
 
@@ -2988,7 +2988,7 @@ function renderModalThumbs(p){
   const rvSet = new Set(reviewPhotosOf(p));
   wrap.innerHTML = imgs.map((src, i) => `
     <button type="button" class="gallery-thumb ${i===modalImgIndex?'active':''}${rvSet.has(src)?' is-review':''}" onclick="setModalImgIndex(${i})" aria-label="${rvSet.has(src)?'ดูรูปรีวิวลูกค้า':'ดูรูปที่ '+(i+1)}">
-      <img src="${src}" alt="${p.name} มุมที่ ${i+1}" loading="lazy" decoding="async" onerror="this.closest('.gallery-thumb').style.display='none'">
+      <img src="${src}" alt="${p.name} มุมที่ ${i+1}" width="160" height="160" loading="lazy" decoding="async" onerror="this.closest('.gallery-thumb').style.display='none'">
     </button>
   `).join('');
 }
@@ -3549,7 +3549,7 @@ async function loadProductsInner(){
   } catch(err){
     catalogEl.innerHTML = `
       <div style="text-align:center; padding:60px 20px; color:var(--rose-dark);">
-        <p style="font-size:16px; font-weight:700; margin-bottom:8px;">⚠️ โหลดข้อมูลสินค้าไม่สำเร็จ</p>
+        <p style="font-size:16px; font-weight:700; margin-bottom:8px;"><svg class="ic" aria-hidden="true"><use href="#i-alert"/></svg> โหลดข้อมูลสินค้าไม่สำเร็จ</p>
         <p style="font-size:13.5px; color:var(--plum);">กรุณาตรวจสอบว่าไฟล์ products.json อยู่ในโฟลเดอร์เดียวกับเว็บไซต์<br>และเปิดเว็บผ่านลิงก์จริง ไม่ใช่การดับเบิลคลิกเปิดไฟล์โดยตรง</p>
       </div>`;
     console.error('โหลด products.json ไม่สำเร็จ:', err);
@@ -3708,7 +3708,7 @@ function reviewCardHTML(src, i, isClone){
   const extra = isClone ? ' review-card-clone" aria-hidden="true" tabindex="-1' : '';
   return `<div class="review-card${extra}" onclick="openReviewLightbox(REVIEWS, ${i})">
       <div class="review-photo">
-        <img src="${src}" alt="รีวิวจากลูกค้า" loading="lazy" decoding="async" onerror="this.closest('.review-card').style.display='none'">
+        <img src="${src}" alt="รีวิวจากลูกค้า" width="400" height="400" loading="lazy" decoding="async" onerror="this.closest('.review-card').style.display='none'">
       </div>
     </div>`;
 }
@@ -3881,7 +3881,7 @@ function renderReviewsAllGrid(){
   if(countEl) countEl.textContent = `${REVIEWS_ALL_SORTED.length} รูป`;
   grid.innerHTML = REVIEWS_ALL_SORTED.map((src, i) => `
     <div class="review-grid-photo" onclick="openReviewLightbox(REVIEWS_ALL_SORTED, ${i})">
-      <img src="${src}" alt="รีวิวจากลูกค้า" loading="lazy" decoding="async" onerror="this.closest('.review-grid-photo').style.display='none'">${reviewGridTag(src)}
+      <img src="${src}" alt="รีวิวจากลูกค้า" width="400" height="400" loading="lazy" decoding="async" onerror="this.closest('.review-grid-photo').style.display='none'">${reviewGridTag(src)}
     </div>`).join('');
 }
 function openReviewsAll(){
@@ -3989,7 +3989,7 @@ function renderPromoSlides(){
   const dots = document.getElementById('promoDots');
   if(!track || !dots) return;
   track.innerHTML = PROMO_SLIDES.map(s => {
-    const img = `<img src="${s.image}" alt="${s.alt || ''}" loading="lazy">`;
+    const img = `<img src="${s.image}" alt="${s.alt || ''}" width="1080" height="1080" loading="lazy" decoding="async">`;
     return `<div class="promo-slide">${s.link ? `<a href="${s.link}" target="_blank" rel="noopener">${img}</a>` : img}</div>`;
   }).join('');
   dots.innerHTML = PROMO_SLIDES.length > 1
