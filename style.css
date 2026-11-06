@@ -7,14 +7,14 @@
 :root{
   /* ชุดสี A "Raspberry Silk" — ชื่อตัวแปรเดิมคงไว้เพื่อไม่ให้จุดไหนหลุด (--sage ตอนนี้คือชมพูหลัก) */
   --cream:#FFFDFC;          /* พื้นหลังหน้า (มิสต์) */
-  --sage:#E2417C;           /* ชมพูหลัก: ปุ่ม, แท็บที่เลือก, สวิตช์ */
-  --sage-rgb:226,65,124;
+  --sage:#CF2E67;           /* ชมพูหลัก: ปุ่ม, แท็บที่เลือก, สวิตช์ (ขาวบนสีนี้ 4.95:1 ผ่าน AA) */
+  --sage-rgb:207,46,103;
   --sage-light:#F0568C;
   --tint-1:#FFF3F7;
   --tint-2:#FFD9E6;
   --tint-3:#FFE6EE;
   --tint-4:#FDDCE8;
-  --sage-dark:#C0305F;      /* ชมพูเข้ม: hover, หัวข้อ */
+  --sage-dark:#B02357;      /* ชมพูเข้ม: hover, หัวข้อ */
   --rose:#F0568C;           /* ชมพูโลโก้: เส้นตกแต่ง/ไอคอนใหญ่ (ไม่ใช้เป็นพื้นของตัวหนังสือขาว) */
   --rose-dark:#C0305F;      /* ราคา, ลิงก์, ข้อความเน้น */
   --leaf:#55B88A;           /* เขียวใบไม้: เส้นตกแต่งเล็กๆ ไม่ใช้เป็นพื้นของตัวหนังสือขาว */
@@ -22,7 +22,7 @@
   --plum:#34262E;           /* ข้อความหลัก */
   --paper:#FFFFFF;
   --gold:#E8B84A;           /* แชมเปญโกลด์: ป้าย "ใหม่", เส้นตกแต่ง */
-  --muted:#857079;          /* ข้อความรอง */
+  --muted:#6F5B64;          /* ข้อความรอง (6.2:1 บนพื้นครีม) */
   --success:#2F7A58;        /* ป้าย "พร้อมส่ง" */
   --line:#F3DDE5;
   --shadow: 0 8px 28px rgba(52,38,46,0.08);
@@ -2558,4 +2558,38 @@ body::before{
   #filterSheet .fseg{border:1px solid var(--line); border-radius:10px;}
   #filterSheet .fseg button + button{border-left:1px solid var(--line);}
   #filterSheet .price-num-field{border:1px solid var(--line); border-radius:10px;}
+}
+
+/* =========================================================
+   รอบ 1 — อ่านง่าย กดง่าย (ตัวอักษร/พื้นที่กด/โฟกัสคีย์บอร์ด)
+   วางท้ายไฟล์เพื่อให้ชนะกฎเดิมที่ความเฉพาะเจาะจงเท่ากัน
+   ========================================================= */
+
+/* โฟกัสคีย์บอร์ดชัดเจนทั้งหน้า (ไม่กระทบตอนแตะด้วยนิ้ว/เมาส์) */
+a:focus-visible, button:focus-visible, summary:focus-visible,
+[role="button"]:focus-visible, .card:focus-visible{
+  outline:2px solid var(--sage); outline-offset:2px;
+}
+.form-input:focus-visible, .search-wrap:focus-within{
+  outline:2px solid var(--sage); outline-offset:1px;
+}
+
+/* ป้ายเล็กๆ ไม่ต่ำกว่า 12px */
+.badge-ready, .badge-new, .badge-inline, .option-badge{font-size:12px;}
+.bnav-item{font-size:12px;}
+.sw-more{font-size:12px;}
+
+/* ขยายพื้นที่กดของหัวใจบนการ์ดเป็น ~44px โดยหน้าตาปุ่มยังเท่าเดิม */
+.fav-heart::after{content:""; position:absolute; inset:-6px;}
+
+@media (max-width:520px){
+  .grid{gap:10px;}
+  .badge-ready, .badge-new{font-size:12px; padding:3px 9px; top:6px;}
+  .badge-ready{left:6px;} .badge-new{right:6px;}
+  .card h4{font-size:14.5px; line-height:1.3;}
+  .option-badge{font-size:12px;}
+  .price{font-size:16px;}
+  .card .add-btn{min-height:44px; justify-content:center;}
+  .sw-btn{width:40px; height:40px;}
+  .color-chip{min-height:36px; font-size:12.5px;}
 }
