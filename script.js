@@ -1338,8 +1338,8 @@ function buildFilterPanelHtml(state, mode){
   }
 
   const catGroup = group('หมวดหมู่', 0, `<div class="filter-pills fp-cats">${catHtml}</div>`);
-  // มือถือ: หมวดหมู่ → เพิ่มเติม (พร้อมส่ง/โปรด/แยกแบบ/เรียงราคา) → ชนิดดอกไม้ → ขนาด → ราคา · คอมคงลำดับเดิม
-  if(isSheet) return catGroup + moreHtml + flowerHtml + sizeHtml + priceHtml;
+  // มือถือ: หมวดหมู่ → ชนิดดอกไม้ → ขนาด → เพิ่มเติม (พร้อมส่ง/โปรด/แยกแบบ/เรียงราคา) → ราคา · คอมคงลำดับเดิม
+  if(isSheet) return catGroup + flowerHtml + sizeHtml + moreHtml + priceHtml;
   return catGroup + sizeHtml + flowerHtml + priceHtml + sortHtml + moreHtml;
 }
 
