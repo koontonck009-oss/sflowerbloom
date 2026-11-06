@@ -58,7 +58,7 @@ function setPricesHidden(v){
 }
 function priceAskHtml(){
   if(PRICES_PENDING) return '<div class="price-ask-text"><svg class="ic" aria-hidden="true"><use href="#i-clock"/></svg> <b>กำลังโหลดราคา…</b> รอสักครู่นะคะ</div>';
-  return '<div class="price-ask-text"><svg class="ic" aria-hidden="true"><use href="#i-camera"/></svg> <b>แคปหน้าจอสินค้านี้</b> (ให้เห็นชื่อสินค้าและตัวเลือกที่เลือก) แล้วส่งให้เพจเพื่อสอบถามราคาได้เลยค่ะ</div>'
+  return '<div class="price-ask-text"><svg class="ic" aria-hidden="true"><use href="#i-camera"/></svg> <b>แคปหน้าจอนี้</b> แล้วส่งให้เพจถามราคาได้เลยค่ะ</div>'
     + '<a class="price-ask-btn" href="' + PAGE_LINK + '" target="_blank" rel="noopener"><svg class="ic" aria-hidden="true"><use href="#i-chat"/></svg> ทักเพจสอบถามราคา</a>';
 }
 // วาง URL ของ Google Apps Script Web App (หลัง Deploy แล้ว) แทนที่ค่าด้านล่างนี้
