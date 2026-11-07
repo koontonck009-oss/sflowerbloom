@@ -878,10 +878,11 @@ function variantPasses(p, v, opts){
 // ยอดขายต่อสินค้า (ฟิลด์ sold กรอกจากหลังบ้าน) — ไม่มี/ไม่ใช่ตัวเลข = 0
 function soldOf(p){ const n = Math.floor(Number(p && p.sold)); return n > 0 ? n : 0; }
 function sortByPrice(arr, priceFn, prodFn){
-  // 'sold' = ขายดี: เรียงยอดขายมาก→น้อย (เท่ากันคงลำดับเดิม) ใช้ prodFn ดึงสินค้าจากแต่ละรายการ
-  if(activeSortOrder === 'sold' && prodFn) return arr.slice().sort((a,b)=> soldOf(prodFn(b)) - soldOf(prodFn(a)));
+  // ค่าเริ่มต้น (ไม่ได้เลือกเรียงราคา) = เรียงตามยอด "ขายไปแล้ว" มาก→น้อยอัตโนมัติ (เท่ากันคงลำดับเดิม)
+  // เลือกเรียงราคา น้อย→มาก / มาก→น้อย เมื่อไหร่ ราคาจะมาก่อน · ใช้ prodFn ดึงสินค้าจากแต่ละรายการ
   if(activeSortOrder === 'asc') return arr.slice().sort((a,b)=> priceFn(a)-priceFn(b));
   if(activeSortOrder === 'desc') return arr.slice().sort((a,b)=> priceFn(b)-priceFn(a));
+  if(prodFn) return arr.slice().sort((a,b)=> soldOf(prodFn(b)) - soldOf(prodFn(a)));
   return arr;
 }
 // Readiness of a specific order line (used to decide whether the deposit
@@ -1130,7 +1131,7 @@ const PRICE_SLIDER_STEP = 50;
 let customPriceMin = PRICE_SLIDER_MIN;
 let customPriceMax = PRICE_SLIDER_MAX;
 // เรียงลำดับสินค้าตามราคา — แยกจากการกรองช่วงราคา (เรียงลำดับใหม่ ไม่ได้ซ่อนสินค้า)
-let activeSortOrder = 'none'; // 'none' | 'asc' | 'desc' | 'sold' (ขายดี — เฉพาะมือถือ)
+let activeSortOrder = 'none'; // 'none' (= เรียงตามขายไปแล้วมาก→น้อยอัตโนมัติ) | 'asc' | 'desc'
 function setSortOrder(order){
   activeSortOrder = (activeSortOrder === order) ? 'none' : order;
   renderCatalog();
@@ -1369,19 +1370,15 @@ function buildFilterPanelHtml(state, mode){
   if(isSheet){
     // มือถือ: กลุ่ม "เพิ่มเติม" เปิดไว้เสมอ (ไม่พับ) — พร้อมส่ง · รายการโปรด · แยกทุกสี/แบบ เป็นปุ่มแถวเดียว + แถบเรียงราคา
     const chip = (on, label, fn) => `<button type="button" class="filter-pill is-multi ${on?'active':''}" aria-pressed="${on}" onclick="${fn}(${!on})">${label}</button>`;
-    const sortOn = state.sortOrder === 'sold' || (!PRICES_HIDDEN && state.sortOrder !== 'none');
+    const sortOn = !PRICES_HIDDEN && (state.sortOrder === 'asc' || state.sortOrder === 'desc');
     const moreCount = (state.ready ? 1 : 0) + (state.favorites ? 1 : 0) + (state.allSplit ? 1 : 0) + (sortOn ? 1 : 0);
     const sortSeg = PRICES_HIDDEN ? '' : `
       <div class="fseg" role="group" aria-label="เรียงตามราคา">
         <button type="button" class="${state.sortOrder==='asc'?'active':''}" aria-pressed="${state.sortOrder==='asc'}" onclick="${setSortFn}('asc')"><svg class="ic" aria-hidden="true"><use href="#i-banknote"/></svg> ราคา ต่ำ → สูง</button>
         <button type="button" class="${state.sortOrder==='desc'?'active':''}" aria-pressed="${state.sortOrder==='desc'}" onclick="${setSortFn}('desc')"><svg class="ic" aria-hidden="true"><use href="#i-banknote"/></svg> ราคา สูง → ต่ำ</button>
       </div>`;
-    const soldSeg = `
-      <div class="fseg" role="group" aria-label="เรียงตามยอดขาย">
-        <button type="button" class="${state.sortOrder==='sold'?'active':''}" aria-pressed="${state.sortOrder==='sold'}" onclick="${setSortFn}('sold')"><svg class="ic" aria-hidden="true"><use href="#i-star"/></svg> ขายดี (ขายไปแล้วมากสุดก่อน)</button>
-      </div>`;
     moreHtml = group('เพิ่มเติม', moreCount,
-      `<div class="filter-pills">${chip(state.ready, '<svg class="ic" aria-hidden="true"><use href="#i-bolt"/></svg> พร้อมส่ง', setReadyFn)}${chip(state.favorites, '<svg class="ic" aria-hidden="true"><use href="#i-heart"/></svg> รายการโปรด', setFavFn)}${chip(state.allSplit, '<svg class="ic" aria-hidden="true"><use href="#i-palette"/></svg> แยกทุกสี/แบบ', setAllSplitFn)}</div>${sortSeg}${soldSeg}`);
+      `<div class="filter-pills">${chip(state.ready, '<svg class="ic" aria-hidden="true"><use href="#i-bolt"/></svg> พร้อมส่ง', setReadyFn)}${chip(state.favorites, '<svg class="ic" aria-hidden="true"><use href="#i-heart"/></svg> รายการโปรด', setFavFn)}${chip(state.allSplit, '<svg class="ic" aria-hidden="true"><use href="#i-palette"/></svg> แยกทุกสี/แบบ', setAllSplitFn)}</div>${sortSeg}`);
   } else {
     const moreCount = (state.ready ? 1 : 0) + (state.favorites ? 1 : 0) + (state.allSplit ? 1 : 0);
     moreHtml = group('ตัวเลือกอื่น', moreCount,
