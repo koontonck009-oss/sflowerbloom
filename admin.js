@@ -1197,6 +1197,16 @@ function renderMainPanel(){
       <div class="main-row">
         <div>
           <label class="field">
+            <span>ขายไปแล้ว (ชิ้น)</span>
+            <input type="number" min="0" step="1" inputmode="numeric" data-bind="sold" data-type="number" value="${num(draft.sold) || ''}" placeholder="เช่น 12">
+          </label>
+          <p class="field-hint">ใช้เรียงสินค้า “ขายดี” บนหน้าร้าน (ว่างไว้ = 0) นับรวมทุกแบบของสินค้านี้</p>
+        </div>
+      </div>
+
+      <div class="main-row">
+        <div>
+          <label class="field">
             <span>รหัสสินค้า</span>
             <input type="text" data-bind="id" value="${esc(draft.id)}" placeholder="เช่น s16">
           </label>
@@ -2414,6 +2424,7 @@ function cleanProduct(p){
   if(str(p.desc)) out.desc = str(p.desc);
   if(p.ready) out.ready = true;
   if(p.hidden) out.hidden = true;
+  if(num(p.sold) > 0) out.sold = Math.floor(num(p.sold));
   if(str(p.image)) out.image = str(p.image);
 
   const imgs = (p.images || []).map(str).filter(Boolean);

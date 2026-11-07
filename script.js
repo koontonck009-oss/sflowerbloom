@@ -875,7 +875,11 @@ function variantPasses(p, v, opts){
   if(opts.favOnly && !isVariantFavorite(p, v)) return false;
   return true;
 }
-function sortByPrice(arr, priceFn){
+// ยอดขายต่อสินค้า (ฟิลด์ sold กรอกจากหลังบ้าน) — ไม่มี/ไม่ใช่ตัวเลข = 0
+function soldOf(p){ const n = Math.floor(Number(p && p.sold)); return n > 0 ? n : 0; }
+function sortByPrice(arr, priceFn, prodFn){
+  // 'sold' = ขายดี: เรียงยอดขายมาก→น้อย (เท่ากันคงลำดับเดิม) ใช้ prodFn ดึงสินค้าจากแต่ละรายการ
+  if(activeSortOrder === 'sold' && prodFn) return arr.slice().sort((a,b)=> soldOf(prodFn(b)) - soldOf(prodFn(a)));
   if(activeSortOrder === 'asc') return arr.slice().sort((a,b)=> priceFn(a)-priceFn(b));
   if(activeSortOrder === 'desc') return arr.slice().sort((a,b)=> priceFn(b)-priceFn(a));
   return arr;
@@ -950,10 +954,56 @@ function scrollToCatalogTop(){
     window.scrollTo({ top, behavior: 'smooth' });
   }
 }
+/* ---------- มือถือ: ปุ่มย้อนกลับของเครื่อง/เบราว์เซอร์ ใช้ย้อนกลับจากหน้า "ดูหมวดเดียว" ได้ ----------
+   เปลี่ยนหมวดด้วย selectCategory = เพิ่มประวัติ 1 รายการ (ไม่เปลี่ยน URL) · กดย้อนกลับ = กลับหมวดก่อนหน้า
+   และเลื่อนกลับตำแหน่งเดิม · ไม่ไปชนกับหน้าสินค้า (ใช้ state ต่างกัน: productPage) */
+function sfbCatKey(){ return activeCats.size === 1 ? [...activeCats][0] : null; }
+function sfbCatHistoryPush(c){
+  try{
+    if(!(window.matchMedia && window.matchMedia('(max-width:859px)').matches)) return;
+    const target = c === 'ทั้งหมด' ? null : c;
+    if(target === sfbCatKey()) return; // หมวดเดิม ไม่ต้องเพิ่มประวัติ
+    const st = history.state;
+    if(st && st.productPage) return;
+    if(!st || st.sfbCat !== undefined){
+      history.replaceState({ sfbCat: sfbCatKey(), y: Math.round(window.pageYOffset) }, ''); // จำหมวด+ตำแหน่งที่เลื่อนอยู่ตอนนี้
+    }
+    history.pushState({ sfbCat: target, y: 0 }, '');
+  }catch(_){}
+}
+window.addEventListener('popstate', function(e){
+  const st = e.state;
+  if(!st || st.sfbCat === undefined) return;
+  const cat = st.sfbCat;
+  if(cat === sfbCatKey()) return; // หมวดตรงกับที่แสดงอยู่แล้ว (เช่น ปิดหน้าสินค้า) — ไม่ต้องวาดใหม่/เลื่อนซ้ำ
+  activeCats = cat === null ? new Set() : new Set([cat]);
+  activeSizes = new Set();
+  activeFlowerTypes = pruneFlowerTypes(activeFlowerTypes, activeCats);
+  scrollSpyCat = cat === null ? 'ทั้งหมด' : cat;
+  Object.keys(jumpTilePick).forEach(k => { delete jumpTilePick[k]; });
+  renderNav();
+  renderCatalog();
+  renderFilterSidebar();
+  updateFilterBadge();
+  if(typeof sfbHeaderLock === 'function') sfbHeaderLock(900);
+  const y = Number(st.y) || 0;
+  // กลับตำแหน่งเดิม: รูปที่โหลดทีหลังทำให้ความสูงหน้าขยับ จึงย้ำตำแหน่งอีกหลายรอบใน ~1 วินาที (หยุดทันทีถ้าลูกค้าเริ่มเลื่อนเอง)
+  if(y <= 0){ scrollToCatalogTop(); return; }
+  let stop = false;
+  const halt = function(){ stop = true; window.removeEventListener('touchstart', halt, true); window.removeEventListener('wheel', halt, true); };
+  window.addEventListener('touchstart', halt, { capture:true, passive:true });
+  window.addEventListener('wheel', halt, { capture:true, passive:true });
+  const restore = () => { if(!stop && Math.abs(window.pageYOffset - y) > 2) window.scrollTo({ top:y, behavior:'instant' }); };
+  restore();
+  [60, 200, 450, 800].forEach(ms => setTimeout(restore, ms));
+  setTimeout(halt, 900);
+});
 // กดแท็บหมวดหมู่บนแถบ quick-nav ด้านบน = "กระโดดไปหมวดนั้นหมวดเดียว" (แทนที่ตัวเลือกหมวดเดิมทั้งหมด)
 // (ชิปหมวดหมู่ในแผงตัวกรองก็เลือกได้ทีละหมวดเช่นกัน — ดู toggleCategory)
 function selectCategory(c){
   const prevCat = activeCats.size === 1 ? [...activeCats][0] : null;
+  sfbCatHistoryPush(c); // มือถือ: ให้ปุ่มย้อนกลับของเครื่องพากลับมาหน้าเดิม
+  Object.keys(jumpTilePick).forEach(k => { delete jumpTilePick[k]; }); // สุ่มรูปบนกล่องหมวดใหม่ทุกครั้ง
   activeCats = c === 'ทั้งหมด' ? new Set() : new Set([c]);
   activeSizes = new Set();
   // ชนิดดอกไม้เลือกแยกจากหมวด — คงไว้เฉพาะชนิดที่ยังมีในหมวดใหม่
@@ -1080,7 +1130,7 @@ const PRICE_SLIDER_STEP = 50;
 let customPriceMin = PRICE_SLIDER_MIN;
 let customPriceMax = PRICE_SLIDER_MAX;
 // เรียงลำดับสินค้าตามราคา — แยกจากการกรองช่วงราคา (เรียงลำดับใหม่ ไม่ได้ซ่อนสินค้า)
-let activeSortOrder = 'none'; // 'none' | 'asc' | 'desc'
+let activeSortOrder = 'none'; // 'none' | 'asc' | 'desc' | 'sold' (ขายดี — เฉพาะมือถือ)
 function setSortOrder(order){
   activeSortOrder = (activeSortOrder === order) ? 'none' : order;
   renderCatalog();
@@ -1319,15 +1369,19 @@ function buildFilterPanelHtml(state, mode){
   if(isSheet){
     // มือถือ: กลุ่ม "เพิ่มเติม" เปิดไว้เสมอ (ไม่พับ) — พร้อมส่ง · รายการโปรด · แยกทุกสี/แบบ เป็นปุ่มแถวเดียว + แถบเรียงราคา
     const chip = (on, label, fn) => `<button type="button" class="filter-pill is-multi ${on?'active':''}" aria-pressed="${on}" onclick="${fn}(${!on})">${label}</button>`;
-    const sortOn = !PRICES_HIDDEN && state.sortOrder !== 'none';
+    const sortOn = state.sortOrder === 'sold' || (!PRICES_HIDDEN && state.sortOrder !== 'none');
     const moreCount = (state.ready ? 1 : 0) + (state.favorites ? 1 : 0) + (state.allSplit ? 1 : 0) + (sortOn ? 1 : 0);
     const sortSeg = PRICES_HIDDEN ? '' : `
       <div class="fseg" role="group" aria-label="เรียงตามราคา">
         <button type="button" class="${state.sortOrder==='asc'?'active':''}" aria-pressed="${state.sortOrder==='asc'}" onclick="${setSortFn}('asc')"><svg class="ic" aria-hidden="true"><use href="#i-banknote"/></svg> ราคา ต่ำ → สูง</button>
         <button type="button" class="${state.sortOrder==='desc'?'active':''}" aria-pressed="${state.sortOrder==='desc'}" onclick="${setSortFn}('desc')"><svg class="ic" aria-hidden="true"><use href="#i-banknote"/></svg> ราคา สูง → ต่ำ</button>
       </div>`;
+    const soldSeg = `
+      <div class="fseg" role="group" aria-label="เรียงตามยอดขาย">
+        <button type="button" class="${state.sortOrder==='sold'?'active':''}" aria-pressed="${state.sortOrder==='sold'}" onclick="${setSortFn}('sold')"><svg class="ic" aria-hidden="true"><use href="#i-star"/></svg> ขายดี (ขายไปแล้วมากสุดก่อน)</button>
+      </div>`;
     moreHtml = group('เพิ่มเติม', moreCount,
-      `<div class="filter-pills">${chip(state.ready, '<svg class="ic" aria-hidden="true"><use href="#i-bolt"/></svg> พร้อมส่ง', setReadyFn)}${chip(state.favorites, '<svg class="ic" aria-hidden="true"><use href="#i-heart"/></svg> รายการโปรด', setFavFn)}${chip(state.allSplit, '<svg class="ic" aria-hidden="true"><use href="#i-palette"/></svg> แยกทุกสี/แบบ', setAllSplitFn)}</div>${sortSeg}`);
+      `<div class="filter-pills">${chip(state.ready, '<svg class="ic" aria-hidden="true"><use href="#i-bolt"/></svg> พร้อมส่ง', setReadyFn)}${chip(state.favorites, '<svg class="ic" aria-hidden="true"><use href="#i-heart"/></svg> รายการโปรด', setFavFn)}${chip(state.allSplit, '<svg class="ic" aria-hidden="true"><use href="#i-palette"/></svg> แยกทุกสี/แบบ', setAllSplitFn)}</div>${sortSeg}${soldSeg}`);
   } else {
     const moreCount = (state.ready ? 1 : 0) + (state.favorites ? 1 : 0) + (state.allSplit ? 1 : 0);
     moreHtml = group('ตัวเลือกอื่น', moreCount,
@@ -1709,12 +1763,44 @@ function jumpTilesHtml(){
   }).join('');
   return tiles ? `<div class="jump-tiles" role="group" aria-label="ไปยังหมวดสินค้า">${tiles}</div>` : '';
 }
+// กล่องรูปหมวด "ดูหมวดอื่นต่อ" (มือถือ) — ขึ้นบนหัวรายการตอนดูหมวดเดียว ให้ลูกค้ากดสลับหมวด/กลับไปดูทุกหมวดได้ทันที
+// รูปบนกล่องสุ่มจากสินค้าทุกชิ้นของหมวดนั้น (สุ่มใหม่ทุกครั้งที่เปลี่ยนหมวด — ดู selectCategory)
+function catSwitchTilesHtml(){
+  if(activeCats.size !== 1) return '';
+  const cur = [...activeCats][0];
+  const mk = (key, label, pool, fn) => {
+    if(!pool.length) return '';
+    const withImg = pool.filter(jumpTileImageOf);
+    let pick = withImg.find(p => p.id === jumpTilePick[key]);
+    if(!pick && withImg.length){ pick = withImg[Math.floor(Math.random() * withImg.length)]; jumpTilePick[key] = pick.id; }
+    const src = pick ? jumpTileImageOf(pick) : null;
+    return `<button type="button" class="jump-tile" onclick="${fn}" aria-label="ดู${label}">
+      ${src ? `<img src="${src}" alt="" loading="lazy" decoding="async" onerror="this.remove()">` : ''}
+      <span class="jump-tile-label">${label}</span>
+    </button>`;
+  };
+  const base = PRODUCTS.filter(p => matchesSearch(p) && flowerMatches(p));
+  const tiles = CATS.slice(1).filter(c => c !== cur)
+      .map(c => mk(c, c, base.filter(p => p.cat === c), `selectCategory('${c}')`)).join('')
+    + mk('ทั้งหมด', 'ทุกหมวด', base, `selectCategory('ทั้งหมด')`);
+  if(!tiles.trim()) return '';
+  return `<div class="cat-switch"><p class="cat-switch-title">ดูหมวดอื่นต่อ</p><div class="cat-switch-tiles" role="group" aria-label="เลือกดูหมวดอื่น">${tiles}</div></div>`;
+}
 function jumpToCat(cat){
   const el = document.getElementById(catSectionId(cat));
   if(!el) return;
   sfbHeaderLock(1500); // เลื่อนด้วยโค้ด: ห้ามแถบบนซ่อนระหว่างเลื่อน (ระยะคำนวณรวมแถบไว้แล้ว)
   const top = el.getBoundingClientRect().top + window.pageYOffset - (stickyOffset() + 8);
   window.scrollTo({ top, behavior: 'smooth' });
+}
+const CAT_PREVIEW_MAX = 10; // มือถือ: จำนวนการ์ดสูงสุดต่อหมวดก่อนมีปุ่ม "ดูทั้งหมด"
+function catalogPreviewOn(){
+  let mobile = false;
+  try{ mobile = window.matchMedia('(max-width:859px)').matches; }catch(_){}
+  if(!mobile) return false;
+  const priceActive = customPriceMin !== PRICE_SLIDER_MIN || customPriceMax !== PRICE_SLIDER_MAX;
+  return !searchQuery && activeCats.size === 0 && activeFlowerTypes.size === 0 && activeSizes.size === 0
+    && !priceActive && !showReadyOnly && !showFavoritesOnly && !showAllVariantsSplit;
 }
 function renderCatalog(){
   const main = document.getElementById('catalog');
@@ -1738,7 +1824,8 @@ function renderCatalog(){
         .filter(p => productHasAnyReady(p) && matchesSearch(p) && flowerMatches(p))
         .flatMap(readyVariantsOf)
         .filter(v => variantPasses(v.product, v, recOpts)),
-      v => variantPriceOf(v.product, v)
+      v => variantPriceOf(v.product, v),
+      v => v.product
     );
     totalMatches += recommended.length;
     const recommendedHtml = recommended.length ? `
@@ -1751,6 +1838,11 @@ function renderCatalog(){
     html += `<div class="cat-section" id="${catSectionId('ทั้งหมด')}" data-cat="ทั้งหมด">${recommendedHtml}</div>`;
   }
 
+  // มือถือ + เลื่อนดูปกติ (ไม่มีค้นหา/ตัวกรอง/เลือกหมวด): แต่ละหมวดโชว์แค่ CAT_PREVIEW_MAX ชิ้นแรก แล้วมีปุ่ม "ดูทั้งหมด"
+  // (เรียงตามราคา/ขายดีก่อนตัด จึงได้ชิ้นแรกตามที่เรียง) · ตัวกรอง/ค้นหา/เลือกหมวด = แสดงครบเหมือนเดิม
+  const previewOn = catalogPreviewOn();
+  const previewLimit = previewOn ? CAT_PREVIEW_MAX : Infinity;
+  let previewApplied = false;
   const catsToRender = activeCats.size ? CATS.slice(1).filter(c => activeCats.has(c)) : CATS.slice(1);
   catalogExportCollect = true;
   html += catsToRender.map(cat => {
@@ -1771,17 +1863,18 @@ function renderCatalog(){
       // โหมด "ดูสินค้าทั้งหมด": แตกเป็นการ์ดย่อยรายแบบ แล้วกรอง/เรียงตามราคาของแต่ละแบบจริง
       items = sortByPrice(
         baseProducts.flatMap(allVariantsOf).filter(v => variantPasses(v.product, v, catOpts)),
-        v => variantPriceOf(v.product, v)
+        v => variantPriceOf(v.product, v),
+        v => v.product
       );
-      cardsHtml = items.map(v => renderProductCard(v.product, v)).join('');
+      cardsHtml = items.slice(0, previewLimit).map(v => renderProductCard(v.product, v)).join('');
     } else {
       // โหมดการ์ดเดียวต่อสินค้า: ขึ้นเมื่อมีอย่างน้อย 1 แบบที่ผ่านเงื่อนไข ราคาบนการ์ดคือราคาของแบบที่ผ่านกรอง
       items = baseProducts.map(p => {
         const all = allVariantsOf(p);
         return { p, total: all.length, passing: all.filter(v => variantPasses(p, v, catOpts)) };
       }).filter(e => e.passing.length);
-      items = sortByPrice(items, e => Math.min(...e.passing.map(v => variantPriceOf(e.p, v))));
-      cardsHtml = items.map(e => {
+      items = sortByPrice(items, e => Math.min(...e.passing.map(v => variantPriceOf(e.p, v))), e => e.p);
+      cardsHtml = items.slice(0, previewLimit).map(e => {
         // เหลือแบบเดียวที่ผ่านกรอง (เช่น S08 ตอนกรอง ≤300) — โชว์เป็นการ์ดของแบบนั้นตรงๆ
         // รูป/ชื่อ/ราคา/หัวใจ และหน้าสินค้าที่เปิดจะตรงกับแบบนั้น ไม่ใช่แบบอื่นของสินค้าเดียวกัน
         const only = e.passing[0];
@@ -1800,6 +1893,11 @@ function renderCatalog(){
     totalMatches += items.length;
     // เลือกชนิดดอกไม้ตอนดูทุกหมวด: ซ่อนหมวดที่ไม่มีสินค้าชนิดนั้น ไม่ให้ขึ้น "0 รายการ" เต็มหน้า
     if(!items.length && activeFlowerTypes.size && activeCats.size === 0) return '';
+    const capped = previewOn && items.length > CAT_PREVIEW_MAX;
+    if(capped) previewApplied = true;
+    const moreBtnHtml = capped
+      ? `<button type="button" class="cat-more-btn" onclick="selectCategory('${cat}')">ดู${cat}ทั้งหมด (${items.length}) <span aria-hidden="true">›</span></button>`
+      : '';
     const body = !items.length ? `
       <div class="section-title"><h3>${cat}</h3><span>0 รายการ</span></div>
     ` : `
@@ -1807,6 +1905,7 @@ function renderCatalog(){
       <div class="grid">
         ${cardsHtml}
       </div>
+      ${moreBtnHtml}
     `;
     return `<div class="cat-section" id="${catSectionId(cat)}" data-cat="${cat}">${body}</div>`;
   }).join('');
@@ -1833,13 +1932,13 @@ function renderCatalog(){
   } else {
     // แถบ "พบสินค้า N รายการ" ไว้เหนือกริดสินค้า (จอคอมแสดงตลอด / มือถือแสดงเฉพาะตอนมีปุ่มโหลดแคตตาล็อก)
     // ปุ่ม "โหลดแคตตาล็อก" ขึ้นเฉพาะตอนมีตัวกรอง/คำค้นหาทำงานอยู่ และมีสินค้าให้ทำรูปอย่างน้อย 1 ชิ้น (ทั้งคอมและมือถือ)
-    const showDl = !PRICES_HIDDEN && (filtersAreActive(sidebarState()) || !!searchQuery) && catalogExportItems.length > 0;
+    const showDl = !PRICES_HIDDEN && !previewApplied && (filtersAreActive(sidebarState()) || !!searchQuery) && catalogExportItems.length > 0;
     const dlBtnHtml = showDl
       ? `<button type="button" class="catalog-dl-btn" id="catalogDlBtn" onclick="downloadCatalogImages()"${catalogExporting ? ' disabled' : ''}>${catalogBtnLabel()}</button>`
       : '';
     // มือถือ: แถบนี้ขึ้นเฉพาะตอนมีปุ่มโหลด (class has-dl) ส่วนจอคอมขึ้นตลอดเหมือนเดิม
     const resultsBarHtml = `<div class="catalog-results-bar${showDl ? ' has-dl' : ''}"><span>พบสินค้า ${totalMatches} รายการ</span>${dlBtnHtml}</div>`;
-    main.innerHTML = resultsBarHtml + html;
+    main.innerHTML = catSwitchTilesHtml() + resultsBarHtml + html;
   }
   setupScrollSpy();
   if(typeof updateBottomNav === 'function') updateBottomNav(); // ชิปตัวกรอง/สถานะแถบล่างให้ตรงกับผลที่เพิ่งวาด (คำค้นเปลี่ยนก็ผ่านตรงนี้)
@@ -3668,6 +3767,26 @@ function finishLoadingProducts(){
 }
 const PRODUCTS_LOADED = loadProducts().catch(() => {});
 
+/* มือถือ: ปุ่มกลับขึ้นบน (โผล่เมื่อเลื่อนลงมาลึก) + วาดรายการใหม่เมื่อหมุนจอ/ข้ามจุดตัดมือถือ-คอม (จำนวนการ์ดต่อหมวดต่างกัน) */
+(function sfbToTop(){
+  const btn = document.getElementById('toTopBtn');
+  if(btn){
+    let raf = 0;
+    const upd = function(){ raf = 0; btn.classList.toggle('show', window.pageYOffset > 900); };
+    window.addEventListener('scroll', function(){ if(!raf) raf = requestAnimationFrame(upd); }, { passive:true });
+    btn.addEventListener('click', function(){
+      if(typeof sfbHeaderLock === 'function') sfbHeaderLock(1200); // แถบบนโผล่ให้เห็นแถบหมวดทันที
+      const calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      window.scrollTo({ top:0, behavior: calm ? 'auto' : 'smooth' });
+    });
+  }
+  try{
+    const mq = window.matchMedia('(max-width:859px)');
+    const onChange = function(){ if(PRODUCTS.length) renderCatalog(); };
+    if(mq.addEventListener) mq.addEventListener('change', onChange); else if(mq.addListener) mq.addListener(onChange);
+  }catch(_){}
+})();
+
 /* ลูกค้ากลับมาที่แท็บ: เช็คว่าหลังบ้านเปิด/ปิดสวิตช์ราคา หรือแก้ข้อมูลสินค้าไปหรือยัง ถ้าเปลี่ยนให้โหลดหน้าใหม่
    (กันลูกค้าที่เปิดหน้าค้างไว้เห็นราคาเก่า) เช็คเฉพาะตอนที่หน้านี้ใช้ข้อมูลจาก Firestore และไม่เช็คถี่เกิน 30 วินาที */
 let lastCloudCheck = 0;
@@ -4159,7 +4278,7 @@ function bnavChipList(){
     const lo = customPriceMin, hi = customPriceMax;
     c.push(['price', hi >= PRICE_SLIDER_MAX ? '฿' + lo + ' ขึ้นไป' : (lo <= PRICE_SLIDER_MIN ? 'ไม่เกิน ฿' + hi : '฿' + lo + '–' + hi)]);
   }
-  if(activeSortOrder !== 'none') c.push(['sort', activeSortOrder === 'asc' ? 'ราคา ต่ำ→สูง' : 'ราคา สูง→ต่ำ']);
+  if(activeSortOrder !== 'none') c.push(['sort', activeSortOrder === 'sold' ? 'ขายดี' : (activeSortOrder === 'asc' ? 'ราคา ต่ำ→สูง' : 'ราคา สูง→ต่ำ')]);
   if(activeSizes.size > 0) c.push(['sizes', 'ขนาด ' + [...activeSizes].join(', ')]);
   if(activeFlowerTypes.size > 0){
     const f = [...activeFlowerTypes];
