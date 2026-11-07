@@ -2425,6 +2425,7 @@ function cleanProduct(p){
   if(p.ready) out.ready = true;
   if(p.hidden) out.hidden = true;
   if(num(p.sold) > 0) out.sold = Math.floor(num(p.sold));
+  if(str(p.soldAt)) out.soldAt = str(p.soldAt);
   if(str(p.image)) out.image = str(p.image);
 
   const imgs = (p.images || []).map(str).filter(Boolean);
@@ -3963,6 +3964,23 @@ $('posterOneBtn').addEventListener('click', () => {
 $('progressCancel').addEventListener('click', () => { posterCancel = true; });
 $('optionsBtn').addEventListener('click', openOptionsModal);
 $('reviewsBtn').addEventListener('click', () => openReviewsModal());
+$('soldBtn').addEventListener('click', openSoldModal);
+$('soldScrim').addEventListener('click', e => { if(e.target === $('soldScrim')) closeSoldModal(); });
+$('soldCancel').addEventListener('click', () => closeSoldModal());
+$('soldSave').addEventListener('click', saveSold);
+$('soldTabs').addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if(b && sm){ sm.tab = b.dataset.tab; renderSoldModal(); } });
+$('soldSearch').addEventListener('input', e => { if(sm){ sm.q = e.target.value; renderSoldModal(); } });
+$('soldCat').addEventListener('change', e => { if(sm){ sm.cat = e.target.value; renderSoldModal(); } });
+$('soldBody').addEventListener('input', onSoldInput);
+$('soldBody').addEventListener('keydown', onSoldKey);
+$('soldBody').addEventListener('focusin', e => { if(e.target.dataset && e.target.dataset.sd) e.target.select(); });
+(function(){
+  const card = $('soldScrim').querySelector('.vm-card');
+  const x = document.createElement('button');
+  x.type = 'button'; x.className = 'vm-x'; x.setAttribute('aria-label', 'ปิด'); x.textContent = '✕';
+  x.addEventListener('click', () => closeSoldModal());
+  card.appendChild(x);
+})();
 $('panelReviews').addEventListener('click', e => {
   if(e.target.closest('[data-act="manage-reviews"]') && draft && String(draft.id || '').trim()) openReviewsModal(String(draft.id).trim());
 });
@@ -4284,6 +4302,7 @@ document.addEventListener('keydown', e => {
   if(e.key !== 'Escape') return;
   if(!$('confirmScrim').hidden) closeConfirm(false);
   else if(!$('revScrim').hidden) closeReviewsModal();
+  else if(!$('soldScrim').hidden) closeSoldModal();
   else if(!$('settingsScrim').hidden) closeSettingsModal();
   else if(!$('siteScrim').hidden) closeSiteModal();
   else if(!$('optScrim').hidden) closeOptionsModal();
@@ -4619,6 +4638,183 @@ async function saveSite(){
       : 'บันทึกไม่สำเร็จ: ' + (err.code || err.message), true);
     console.error(err);
   } finally { btn.disabled = false; }
+}
+
+/* ───────────── กรอกยอดขายแบบตาราง + ประวัติการบันทึก ─────────────
+   ยอดขายยังเก็บที่ฟิลด์ sold ของสินค้าเหมือนเดิม (หน้าร้านใช้เรียง "ขายดี") + soldAt = เวลาที่แก้ล่าสุด
+   ประวัติเก็บแยกใน shopPrivate/soldLog (ลูกค้าไม่เห็น) — แต่ละรายการมี source ('manual' ตอนนี้) เผื่อต่อกับ OrderManagers ภายหลัง */
+const SOLD_LOG_MAX = 300;
+let soldLog = [];
+let soldLogReadOk = false;
+let sm = null; // { tab:'entry'|'log', q, cat, edits: Map(ดัชนีสินค้า → ยอดรวมใหม่) }
+
+function soldNow(p){ const n = Math.floor(Number(p && p.sold)); return n > 0 ? n : 0; }
+function soldLogRef(){
+  return fb.dbApi.doc(fb.db, window.PRIVATE_COLLECTION || 'shopPrivate', window.SOLD_LOG_DOC || 'soldLog');
+}
+function soldWhen(iso, short){
+  const d = new Date(iso);
+  if(isNaN(d)) return '';
+  return d.toLocaleString('th-TH', short
+    ? { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }
+    : { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+}
+
+async function loadSoldLog(){
+  try{
+    const snap = await fb.dbApi.getDoc(soldLogRef());
+    let list = [];
+    if(snap.exists()){
+      const d = snap.data() || {};
+      try{ list = typeof d.json === 'string' ? JSON.parse(d.json) : []; }catch(_){ list = []; }
+    }
+    soldLog = Array.isArray(list) ? list : [];
+    soldLogReadOk = true;
+  }catch(err){
+    soldLog = []; soldLogReadOk = false;
+    console.error(err);
+    toast('อ่านประวัติยอดขายไม่ได้' + (err.code === 'permission-denied'
+      ? ' — ต้องเพิ่มกฎ Firestore ให้เอกสาร shopPrivate/soldLog' : ': ' + (err.code || err.message)), true);
+  }
+  if(sm) renderSoldModal();
+}
+
+function openSoldModal(){
+  sm = { tab:'entry', q:'', cat:'ทั้งหมด', edits: new Map() };
+  $('soldSearch').value = '';
+  $('soldCat').innerHTML = allCats().map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  $('soldScrim').hidden = false;
+  renderSoldModal();
+  loadSoldLog();
+}
+async function closeSoldModal(force){
+  if(!sm){ $('soldScrim').hidden = true; return; }
+  if(!force && sm.edits.size && !(await askConfirm('ยังไม่ได้บันทึก', `มี ${sm.edits.size} รายการที่แก้ไว้แต่ยังไม่บันทึก ปิดหน้านี้เลยไหม?`, 'ปิดโดยไม่บันทึก'))) return;
+  $('soldScrim').hidden = true;
+  sm = null;
+}
+
+function soldRowsHtml(){
+  const q = sm.q.trim().toLowerCase();
+  const rows = [];
+  catalog.forEach((p, i) => {
+    if(p.hidden) return;
+    if(sm.cat !== 'ทั้งหมด' && p.cat !== sm.cat) return;
+    if(q && !(`${p.id} ${p.name}`).toLowerCase().includes(q)) return;
+    rows.push([p, i]);
+  });
+  if(!rows.length) return '<div class="empty"><p class="empty-title">ไม่พบสินค้า</p><p>ลองเปลี่ยนคำค้นหรือเลือกหมวดอื่น</p></div>';
+  return rows.map(([p, i]) => {
+    const cur = soldNow(p);
+    const changed = sm.edits.has(i);
+    const total = changed ? sm.edits.get(i) : cur;
+    const diff = changed ? total - cur : '';
+    const when = p.soldAt ? soldWhen(p.soldAt, true) : '';
+    return `
+      <div class="sd-row${changed ? ' is-changed' : ''}" data-i="${i}">
+        ${thumbHtml(mainImageOf(p), 'row-thumb')}
+        <div class="sd-name"><b>${esc(p.id)}</b> ${esc(p.name)}<small>${when ? 'แก้ล่าสุด ' + esc(when) : 'ยังไม่เคยบันทึกยอด'}</small></div>
+        <div class="sd-cur"><span>ตอนนี้</span><b>${cur}</b></div>
+        <label class="sd-in"><span>ขายเพิ่ม (+)</span><input type="number" step="1" inputmode="numeric" data-sd="add" value="${diff}" placeholder="0"></label>
+        <label class="sd-in"><span>ยอดรวมใหม่</span><input type="number" min="0" step="1" inputmode="numeric" data-sd="total" value="${total}"></label>
+      </div>`;
+  }).join('');
+}
+
+function soldLogHtml(){
+  if(!soldLogReadOk) return '<div class="empty"><p class="empty-title">ยังอ่านประวัติไม่ได้</p><p>เช็กกฎ Firestore ของ shopPrivate/soldLog แล้วเปิดหน้านี้ใหม่</p></div>';
+  if(!soldLog.length) return '<div class="empty"><p class="empty-title">ยังไม่มีประวัติ</p><p>ทุกครั้งที่กดบันทึกยอดขายในหน้ากรอกยอด จะมาอยู่ที่นี่</p></div>';
+  return soldLog.map(e => {
+    const items = Array.isArray(e.items) ? e.items : [];
+    const delta = items.reduce((s, it) => s + (num(it.to) - num(it.from)), 0);
+    const sign = n => (n > 0 ? '+' : '') + n;
+    return `
+      <details class="sd-log">
+        <summary><b>${esc(soldWhen(e.at))}</b><span>${items.length} รายการ · รวม ${sign(delta)} ชิ้น</span><small>${e.source === 'order' ? 'จากออเดอร์' : 'กรอกเอง'}</small></summary>
+        <ul>${items.map(it => `<li><b>${esc(it.id)}</b> ${esc(it.name || '')}<span>${num(it.from)} → ${num(it.to)} <em>(${sign(num(it.to) - num(it.from))})</em></span></li>`).join('')}</ul>
+        ${e.by ? `<p class="sd-by">โดย ${esc(e.by)}</p>` : ''}
+      </details>`;
+  }).join('');
+}
+
+function renderSoldFoot(){
+  const n = sm ? sm.edits.size : 0;
+  $('soldHint').textContent = sm && sm.tab === 'entry'
+    ? (n ? `แก้ไว้ ${n} รายการ — ยังไม่บันทึก` : 'กรอกยอดแล้วกดบันทึกครั้งเดียว · กด Enter เพื่อไปแถวถัดไป')
+    : `แสดงล่าสุด ${Math.min(soldLog.length, SOLD_LOG_MAX)} ครั้ง`;
+  $('soldSave').hidden = !sm || sm.tab !== 'entry';
+  $('soldSave').disabled = !n;
+}
+
+function renderSoldModal(){
+  if(!sm) return;
+  document.querySelectorAll('#soldTabs .om-tab').forEach(b => b.classList.toggle('is-active', b.dataset.tab === sm.tab));
+  $('soldTools').hidden = sm.tab !== 'entry';
+  $('soldBody').innerHTML = sm.tab === 'entry' ? soldRowsHtml() : soldLogHtml();
+  renderSoldFoot();
+}
+
+function onSoldInput(e){
+  const el = e.target;
+  if(!sm || !el.dataset.sd) return;
+  const row = el.closest('.sd-row'); if(!row) return;
+  const i = Number(row.dataset.i), p = catalog[i]; if(!p) return;
+  const cur = soldNow(p);
+  const addEl = row.querySelector('[data-sd="add"]'), totEl = row.querySelector('[data-sd="total"]');
+  const raw = el.value.trim();
+  if(raw === ''){
+    sm.edits.delete(i);
+    if(el === addEl) totEl.value = cur;
+  } else {
+    let total = el.dataset.sd === 'add' ? cur + Math.floor(Number(raw) || 0) : Math.floor(Number(raw) || 0);
+    if(total < 0) total = 0;
+    if(total === cur) sm.edits.delete(i); else sm.edits.set(i, total);
+    if(el.dataset.sd === 'add') totEl.value = total;
+    else addEl.value = total === cur ? '' : total - cur;
+  }
+  row.classList.toggle('is-changed', sm.edits.has(i));
+  renderSoldFoot();
+}
+
+function onSoldKey(e){
+  if(e.key !== 'Enter' || !e.target.dataset.sd) return;
+  e.preventDefault();
+  const list = [...$('soldBody').querySelectorAll(`[data-sd="${e.target.dataset.sd}"]`)];
+  const next = list[list.indexOf(e.target) + 1];
+  if(next){ next.focus(); next.select(); next.scrollIntoView({ block:'nearest' }); }
+}
+
+async function saveSold(){
+  if(!sm || !sm.edits.size) return;
+  const changes = [...sm.edits].map(([i, to]) => ({ i, to, p: catalog[i] })).filter(c => c.p && c.to !== soldNow(c.p));
+  if(!changes.length){ sm.edits.clear(); renderSoldModal(); return; }
+  const now = new Date().toISOString();
+  const by = fb.auth.currentUser ? fb.auth.currentUser.email : '';
+  const before = changes.map(c => ({ ...c, from: soldNow(c.p), oldSold: c.p.sold, oldAt: c.p.soldAt }));
+  before.forEach(c => { if(c.to > 0) c.p.sold = c.to; else delete c.p.sold; c.p.soldAt = now; });
+  $('soldSave').disabled = true;
+  const ok = await saveCatalog();
+  if(!ok){
+    before.forEach(c => {
+      if(c.oldSold === undefined) delete c.p.sold; else c.p.sold = c.oldSold;
+      if(c.oldAt === undefined) delete c.p.soldAt; else c.p.soldAt = c.oldAt;
+    });
+    renderSoldFoot();
+    return;
+  }
+  let logged = false;
+  if(soldLogReadOk){
+    const entry = { at: now, by, source:'manual', items: before.map(c => ({ id: c.p.id, name: c.p.name, from: c.from, to: c.to })) };
+    const next = [entry, ...soldLog].slice(0, SOLD_LOG_MAX);
+    try{
+      await fb.dbApi.setDoc(soldLogRef(), { json: JSON.stringify(next), count: next.length, updatedAt: now });
+      soldLog = next; logged = true;
+    }catch(err){ console.error(err); }
+  }
+  toast(logged ? `บันทึกยอดขาย ${changes.length} รายการแล้ว` : `บันทึกยอดขาย ${changes.length} รายการแล้ว แต่ยังเก็บประวัติไม่ได้ (เช็กกฎ Firestore ของ shopPrivate/soldLog)`, !logged);
+  sm.edits.clear();
+  renderSoldModal();
+  renderList();
 }
 
 /* ───── เหตุการณ์ ───── */

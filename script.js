@@ -1826,7 +1826,7 @@ function renderCatalog(){
     );
     totalMatches += recommended.length;
     const recommendedHtml = recommended.length ? `
-      <div class="section-title featured"><h3><svg class="ic" aria-hidden="true"><use href="#i-star"/></svg> Recommended</h3><span>${recommended.length} รายการ</span></div>
+      <div class="section-title featured"><h3><svg class="ic" aria-hidden="true"><use href="#i-star"/></svg> สินค้าแนะนำ</h3><span>${recommended.length} รายการ</span></div>
       <div class="grid featured-row">
         ${recommended.map(v => renderProductCard(v.product, v)).join('')}
       </div>
