@@ -4704,7 +4704,8 @@ function soldRowsHtml(){
     rows.push([p, i]);
   });
   if(!rows.length) return '<div class="empty"><p class="empty-title">ไม่พบสินค้า</p><p>ลองเปลี่ยนคำค้นหรือเลือกหมวดอื่น</p></div>';
-  return rows.map(([p, i]) => {
+  const head = '<div class="sd-head"><span></span><span>สินค้า</span><span>ตอนนี้</span><span>ขายเพิ่ม (+)</span><span>ยอดใหม่</span></div>';
+  return head + rows.map(([p, i]) => {
     const cur = soldNow(p);
     const changed = sm.edits.has(i);
     const total = changed ? sm.edits.get(i) : cur;
@@ -4716,7 +4717,7 @@ function soldRowsHtml(){
         <div class="sd-name"><b>${esc(p.id)}</b> ${esc(p.name)}<small>${when ? 'แก้ล่าสุด ' + esc(when) : 'ยังไม่เคยบันทึกยอด'}</small></div>
         <div class="sd-cur"><span>ตอนนี้</span><b>${cur}</b></div>
         <label class="sd-in"><span>ขายเพิ่ม (+)</span><input type="number" step="1" inputmode="numeric" data-sd="add" value="${diff}" placeholder="0"></label>
-        <label class="sd-in"><span>ยอดรวมใหม่</span><input type="number" min="0" step="1" inputmode="numeric" data-sd="total" value="${total}"></label>
+        <div class="sd-res"><span>ยอดใหม่</span><b data-sd="res">${total}</b></div>
       </div>`;
   }).join('');
 }
@@ -4756,22 +4757,15 @@ function renderSoldModal(){
 
 function onSoldInput(e){
   const el = e.target;
-  if(!sm || !el.dataset.sd) return;
+  if(!sm || el.dataset.sd !== 'add') return;
   const row = el.closest('.sd-row'); if(!row) return;
   const i = Number(row.dataset.i), p = catalog[i]; if(!p) return;
   const cur = soldNow(p);
-  const addEl = row.querySelector('[data-sd="add"]'), totEl = row.querySelector('[data-sd="total"]');
   const raw = el.value.trim();
-  if(raw === ''){
-    sm.edits.delete(i);
-    if(el === addEl) totEl.value = cur;
-  } else {
-    let total = el.dataset.sd === 'add' ? cur + Math.floor(Number(raw) || 0) : Math.floor(Number(raw) || 0);
-    if(total < 0) total = 0;
-    if(total === cur) sm.edits.delete(i); else sm.edits.set(i, total);
-    if(el.dataset.sd === 'add') totEl.value = total;
-    else addEl.value = total === cur ? '' : total - cur;
-  }
+  const add = raw === '' ? 0 : Math.floor(Number(raw) || 0);
+  const total = Math.max(0, cur + add);
+  if(total === cur) sm.edits.delete(i); else sm.edits.set(i, total);
+  row.querySelector('[data-sd="res"]').textContent = total;
   row.classList.toggle('is-changed', sm.edits.has(i));
   renderSoldFoot();
 }

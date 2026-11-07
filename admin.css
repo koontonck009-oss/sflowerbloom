@@ -1555,8 +1555,14 @@ body.vm-chip-dragging, body.vm-chip-dragging *{ cursor:grabbing !important; user
 .sd-tools input{ flex:1 1 auto; min-width:0; }
 .sd-tools input, .sd-tools select{ font:inherit; font-size:14px; padding:8px 10px; border:1px solid var(--line); border-radius:8px; background:var(--panel); color:var(--ink); }
 .sold-card .vm-body{ padding-top:10px; }
-.sd-row{ display:grid; grid-template-columns:44px minmax(0,1fr) 64px 112px 112px; align-items:center; gap:10px; padding:8px 8px; border-bottom:1px solid var(--line-soft); border-radius:8px; }
+.sd-row{ display:grid; grid-template-columns:44px minmax(0,1fr) 64px 120px 72px; align-items:center; gap:10px; padding:8px 8px; border-bottom:1px solid var(--line-soft); border-radius:8px; }
 .sd-row.is-changed{ background:var(--brand-soft); }
+.sd-head{ display:grid; grid-template-columns:44px minmax(0,1fr) 64px 120px 72px; gap:10px; padding:0 8px 6px; font-size:12px; color:var(--ink-3); text-align:center; position:sticky; top:-10px; background:var(--panel); z-index:1; }
+.sd-head span:nth-child(2){ text-align:left; }
+.sd-res{ text-align:center; font-size:12px; color:var(--ink-3); }
+.sd-res span{ display:none; }
+.sd-res b{ font-size:17px; color:var(--ink); }
+.sd-row.is-changed .sd-res b{ color:var(--brand-dark); }
 .sd-row .row-thumb{ width:44px; height:44px; object-fit:cover; border-radius:8px; }
 .sd-name{ min-width:0; font-size:14px; line-height:1.35; }
 .sd-name b{ color:var(--brand-dark); margin-right:4px; }
@@ -1581,8 +1587,9 @@ body.vm-chip-dragging, body.vm-chip-dragging *{ cursor:grabbing !important; user
   #soldScrim .vm-card.sold-card{ width:100%; height:100vh; height:100dvh; max-height:none; border-radius:0; }
   #soldScrim .vm-foot{ padding-bottom:calc(10px + env(safe-area-inset-bottom, 0px)); }
   .sd-tools{ padding:10px 12px 0; }
-  .sd-row{ grid-template-columns:44px minmax(0,1fr) 1fr 1fr; grid-template-areas:"t n n c" "i i a b"; row-gap:8px; }
+  .sd-head{ display:none; }
+  .sd-row{ grid-template-columns:44px minmax(0,1fr) 1fr 1fr; grid-template-areas:"t n n c" "i i a r"; row-gap:8px; }
   .sd-row .row-thumb{ grid-area:t; } .sd-name{ grid-area:n; } .sd-cur{ grid-area:c; }
-  .sd-row .sd-in:nth-of-type(1){ grid-area:a; } .sd-row .sd-in:nth-of-type(2){ grid-area:b; }
-  .sd-in span{ display:block; margin-bottom:2px; }
+  .sd-row .sd-in{ grid-area:a; } .sd-res{ grid-area:r; }
+  .sd-in span, .sd-res span{ display:block; margin-bottom:2px; }
 }
