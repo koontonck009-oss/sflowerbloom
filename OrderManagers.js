@@ -580,8 +580,8 @@
                     { k: 'all', t: 'รวมที่ยกเลิก', count: orders.value.length, dot: '' }
                 ]);
                 const typeTabs = [{ k: 'all', t: 'ทุกประเภท' }, { k: 'shipping', t: 'จัดส่งพัสดุ' }, { k: 'pickup', t: 'นัดรับหน้าร้าน' }];
-                const hasActiveFilters = computed(() => filterType.value !== 'all' || datePreset.value !== 'all' || statusFilter.value !== 'active' || searchQuery.value.trim() !== '' || unpaidOnly.value);
-                function clearAllFilters() { filterType.value = 'all'; datePreset.value = 'all'; statusFilter.value = 'active'; searchQuery.value = ''; unpaidOnly.value = false; }
+                const hasActiveFilters = computed(() => filterType.value !== 'all' || datePreset.value !== 'all' || statusFilter.value !== 'active' || searchQuery.value.trim() !== '' || unpaidOnly.value || !!effectiveRange.value);
+                function clearAllFilters() { filterType.value = 'all'; datePreset.value = 'all'; statusFilter.value = 'active'; searchQuery.value = ''; unpaidOnly.value = false; clearRange(); }
                 function paymentBadge(o) {
                     if (!o || o.status === 'cancelled') return null;
                     const total = Number(o.totalAmount) || 0, paid = Number(o.depositAmount) || 0;
@@ -724,6 +724,33 @@
                     }
                 }
                 function clearRange() { rangeFrom.value = ''; rangeTo.value = ''; }
+                // ปุ่มลัด "เลยกำหนด": กดเพื่อดูเฉพาะที่เลยกำหนด กดอีกครั้งเพื่อกลับมาดูทั้งหมด (ตัวเลือกใน dropdown ถูกเอาออกแล้ว)
+                function toggleOverdue() {
+                    if (datePreset.value === 'overdue') { datePreset.value = 'all'; return; }
+                    statusFilter.value = 'active'; datePreset.value = 'overdue';
+                }
+                // เลือกช่วงเดือนแล้วสถานะยังเป็น "กำลังดำเนินการ" -> สลับเป็น "ทั้งหมด" ให้เห็นออเดอร์ที่เสร็จ/ยกเลิกของเดือนนั้นด้วย
+                watch(effectiveRange, (r, old) => { if (r && !old && statusFilter.value === 'active') statusFilter.value = 'all'; });
+                // ตัวเลือกลัด "เดือนที่สั่ง" ในแถบตัวกรอง: all | m:this | m:last | m:custom (ช่วงที่เลือกเอง)
+                const monthUi = computed(() => {
+                    const r = effectiveRange.value;
+                    if (!r) return 'all';
+                    const now = new Date();
+                    const tm = monthKey(now), lm = monthKey(new Date(now.getFullYear(), now.getMonth() - 1, 1));
+                    if (r.from === tm && r.to === tm) return 'm:this';
+                    if (r.from === lm && r.to === lm) return 'm:last';
+                    return 'm:custom';
+                });
+                function setMonthUi(v) {
+                    if (v === 'all') clearRange();
+                    else if (v === 'm:this') setRangePreset('thisMonth');
+                    else if (v === 'm:last') setRangePreset('lastMonth');
+                    else if (v === 'm:pick') { isFilterSheetOpen.value = false; isRangeOpen.value = true; }
+                }
+                function onMonthChange(e) {
+                    setMonthUi(e.target.value);
+                    nextTick(() => { e.target.value = monthUi.value; }); // ตัวเลือก "เลือกเอง…" ไม่ใช่ค่าจริง ให้ช่องกลับไปแสดงค่าที่ใช้อยู่
+                }
                 const pendingCount = computed(() => orders.value.filter(o => o.status === 'pending' || o.status === 'in_progress').length);
                 const pickupCount = computed(() => orders.value.filter(o => o.deliveryType === 'pickup' && o.status !== 'cancelled').length);
                 const shippingCount = computed(() => orders.value.filter(o => o.deliveryType === 'shipping' && o.status !== 'cancelled').length);
@@ -1051,8 +1078,10 @@
                 const filteredOrders = computed(() => {
                     const todayStr = getTodayString(0);
                     const tomorrowStr = getTodayString(1);
+                    const monthRange = effectiveRange.value; // ช่วงเดือนที่สั่ง (ใช้ค่าเดียวกับการ์ดนับออเดอร์)
 
                     return orders.value.filter(order => {
+                        if (monthRange) { const mo = orderMonthOf(order); if (!mo || mo < monthRange.from || mo > monthRange.to) return false; }
                         const q = searchQuery.value.toLowerCase().trim();
                         const matchesSearch = !q || order.customerName.toLowerCase().includes(q) || order.products.toLowerCase().includes(q) || (order.customerPhone && order.customerPhone.includes(q)) || (order.trackingNumber && order.trackingNumber.toLowerCase().includes(q));
                         let matchesFilter = filterType.value === 'all' || order.deliveryType === filterType.value;
@@ -2488,7 +2517,7 @@
                     isModalOpen, showMoreFields, formStep, formStepTitles, formScroll, nextStep, prevStep, onFormSubmit, formErrors, onFormKeydown, isEditing, form, formRemainingAmount,
                     formItemizedMode, formItemsTotal, formItemsGrandTotal, toggleFormItemizedMode, addFormItem, removeFormItem,
                     suggestForId, suggestIndex, suggestionsFor, onItemInput, onItemFocus, onItemKeydown, pickProduct, variantPanel, pickVariant, closeVariantPanel, quick, quickCats, quickTypes, quickList, toggleQuickCat, pickFromQuick, addonsFor, addAddon,
-                    filteredOrders, activeOrdersCount, statusCounts, completedCount, cancelledCount, totalOrderCount, thisMonthCount, desktopStatusTabs, typeTabs, hasActiveFilters, clearAllFilters, isMoreMenuOpen, cardMoreId, isRangeOpen, rangeFrom, rangeTo, rangeLabel, rangeStats, setRangePreset, clearRange, pendingCount, pickupCount, shippingCount, totalDepositSum, totalRemainingSum,
+                    filteredOrders, activeOrdersCount, statusCounts, completedCount, cancelledCount, totalOrderCount, thisMonthCount, desktopStatusTabs, typeTabs, hasActiveFilters, clearAllFilters, isMoreMenuOpen, cardMoreId, isRangeOpen, rangeFrom, rangeTo, rangeLabel, rangeStats, setRangePreset, clearRange, toggleOverdue, monthUi, setMonthUi, onMonthChange, pendingCount, pickupCount, shippingCount, totalDepositSum, totalRemainingSum,
                     toastMessage, deleteTarget, receiptTarget, selectedForPrint, ordersToPrint,
                     openModal, closeModal, saveOrder, confirmDelete, executeDelete, queueManual,
                     getRemainingBalance, getDeliveryUrgency, mapUrlOf, formatNumber, formatDate, getStatusClass,
