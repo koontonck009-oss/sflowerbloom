@@ -1260,6 +1260,15 @@
                                 <div class="r"><span>ช่วงวันที่สั่งซื้อ</span><b>{{ monthlyCoverData.dateRange }}</b></div>
                             </div>
                         </div>
+<div v-if="monthlyCoverData.fin" class="mc-fin">
+<h4>สรุปการเงินประจำเดือน <em>จากแท็บบัญชีรายรับ-รายจ่าย · รายรับ = เงินที่รับจริงตามวันที่รับเงิน (ต่างจากยอดขายรวมที่นับตามวันที่สั่ง)</em></h4>
+<div class="mc-fin-row">
+<div><small>รายรับ</small><b>฿{{ formatNumber(monthlyCoverData.fin.income) }}</b></div>
+<div><small>รายจ่าย</small><b>฿{{ formatNumber(monthlyCoverData.fin.expense) }}</b></div>
+<div class="net"><small>เหลือสุทธิ</small><b>{{ monthlyCoverData.fin.net >= 0 ? '' : '-' }}฿{{ formatNumber(Math.abs(monthlyCoverData.fin.net)) }}</b></div>
+</div>
+<p class="mc-fin-cat"><template v-if="monthlyCoverData.fin.cats.length">รายจ่ายแยกหมวด: <span v-for="(c, ci) in monthlyCoverData.fin.cats" :key="c.name">{{ ci ? ' · ' : '' }}{{ c.name }} ฿{{ formatNumber(c.amount) }}</span></template><template v-else>ยังไม่มีรายจ่ายที่บันทึกไว้ในเดือนนี้</template></p>
+</div>
                     </template>
                     <table class="mc-tbl">
                         <colgroup><col style="width:6%"><col style="width:8%"><col style="width:11%"><col style="width:20%"><col style="width:8%"><col style="width:11%"><col style="width:9%"><col style="width:9%"><col style="width:9%"><col style="width:9%"></colgroup>
@@ -2036,6 +2045,10 @@
                     <input type="checkbox" v-model="monthlyCoverWithOrders" class="mt-1 accent-pink-600">
                     <span>พิมพ์ใบสั่งงานของเดือนนี้ต่อท้ายด้วย <span class="block text-xs text-slate-400">เฉพาะออเดอร์ที่ไม่ถูกยกเลิก เรียงตามคิวที่</span></span>
                 </label>
+<label class="mt-3 flex items-start gap-2 text-sm text-slate-700 cursor-pointer">
+<input type="checkbox" v-model="monthlyCoverWithFinance" class="mt-1 accent-pink-600">
+<span>แสดงสรุปการเงินในหน้าสารบัญ <span class="block text-xs text-slate-400">รายรับ รายจ่าย และเหลือสุทธิของเดือนนั้น (จากแท็บบัญชีรายรับ-รายจ่าย)</span></span>
+</label>
                 <div class="mt-5 flex gap-2 justify-end">
                     <button @click="isMonthlyCoverOpen = false" class="px-4 py-2.5 sm:py-2 border border-slate-200 text-slate-600 rounded-xl text-sm">ยกเลิก</button>
                     <button @click="printMonthlyCover" :disabled="!monthlyCoverKey" class="px-4 py-2.5 sm:py-2 bg-pink-600 hover:bg-pink-700 disabled:opacity-40 text-white rounded-xl text-sm font-medium flex items-center gap-2"><i class="fa-solid fa-print"></i> พิมพ์</button>

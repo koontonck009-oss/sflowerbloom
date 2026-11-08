@@ -286,3 +286,16 @@ body {
 .mc-b-cell.sg p{position:absolute;left:0;right:0;bottom:2.5mm;display:flex;justify-content:space-between;font-size:8pt;color:#94a3b8;}
 .mc-b-foot{display:flex;justify-content:space-between;margin-top:auto;padding-top:2.5mm;border-top:.2mm solid #cbd5e1;font-size:7.5pt;color:#94a3b8;letter-spacing:.12em;}
 .flash-highlight { outline: 3px solid #ec4899; outline-offset: 2px; border-radius: 1rem; }
+
+/* กล่องสรุปการเงินในหน้าสารบัญประจำเดือน */
+.mc-fin{margin-bottom:4mm;border:1px solid #94a3b8;padding:2.5mm 3.5mm;}
+.mc-fin h4{font-size:9pt;font-weight:700;margin:0 0 1.5mm;}
+.mc-fin h4 em{font-style:normal;font-weight:400;font-size:6.5pt;color:#64748b;margin-left:2mm;}
+.mc-fin-row{display:grid;grid-template-columns:repeat(3,1fr);}
+.mc-fin-row > div{padding:0 3mm;border-right:1px solid #cbd5e1;}
+.mc-fin-row > div:first-child{padding-left:0;}
+.mc-fin-row > div:last-child{border-right:none;}
+.mc-fin-row small{display:block;font-size:8pt;color:#475569;}
+.mc-fin-row b{display:block;font-size:13pt;line-height:1.3;}
+.mc-fin-row .net b{color:#be185d;}
+.mc-fin-cat{margin:1.5mm 0 0;font-size:7.5pt;color:#475569;line-height:1.35;}

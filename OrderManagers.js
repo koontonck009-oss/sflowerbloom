@@ -597,10 +597,12 @@
                 const isMonthlyCoverOpen = ref(false);
                 const monthlyCoverKey = ref('');
                 const monthlyCoverWithOrders = ref(false);
+                const monthlyCoverWithFinance = ref(true); // กล่องสรุปการเงิน (รายรับ/รายจ่าย/เหลือสุทธิ) ในหน้าสารบัญ
                 const MC_SHORT_MONTHS = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
                 const MC_EN_MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
                 const MC_ROWS_PER_PAGE = 26;
                 const MC_ROWS_FIRST_PAGE = 16;
+                const MC_ROWS_FIRST_PAGE_FIN = 12; // หน้าแรกเมื่อมีกล่องสรุปการเงิน (กล่องกินที่ประมาณ 4 แถว)
                 const mcBE = (y) => Number(y) + 543;
                 const mcShortDate = (s) => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(s || '')); if (!m || +m[2] < 1 || +m[2] > 12) return '-'; return (+m[3]) + ' ' + MC_SHORT_MONTHS[+m[2] - 1] + ' ' + String(mcBE(m[1])).slice(-2); };
                 const mcSort = (a, b) => (Number(a.queueNo) || 0) - (Number(b.queueNo) || 0) || String(a.orderDate || '').localeCompare(String(b.orderDate || '')) || String(a.id).localeCompare(String(b.id));
@@ -629,9 +631,20 @@
                         customer: o.customerName || '-', type: o.deliveryType === 'shipping' ? 'พัสดุ' : 'หน้าร้าน', due: mcShortDate(o.deliveryDate),
                         total: o.totalAmount, paid: o.depositAmount, remain: getRemainingBalance(o), status: statusLabelOf(o.status), cancelled: o.status === 'cancelled'
                     }));
+                    // สรุปการเงินของเดือนนี้ จากแท็บบัญชีรายรับ-รายจ่าย (รายรับ = เงินที่รับจริงตามวันที่รับเงิน ออเดอร์ที่ยกเลิกไม่นับ)
+                    let fin = null;
+                    if (monthlyCoverWithFinance.value) {
+                        const es = accAllEntries.value.filter(e => e.date.slice(0, 7) === key);
+                        const income = accSum(es, 'income'), expense = accSum(es, 'expense');
+                        const catMap = {};
+                        es.filter(e => e.type === 'expense').forEach(e => { const k = e.category || 'อื่นๆ'; catMap[k] = (catMap[k] || 0) + e.amount; });
+                        const cats = Object.entries(catMap).map(([name, amount]) => ({ name, amount })).sort((a, b) => b.amount - a.amount);
+                        fin = { income, expense, net: income - expense, cats };
+                    }
+                    const firstN = fin ? MC_ROWS_FIRST_PAGE_FIN : MC_ROWS_FIRST_PAGE;
                     const pages = [];
-                    pages.push(rows.slice(0, MC_ROWS_FIRST_PAGE));
-                    for (let i = MC_ROWS_FIRST_PAGE; i < rows.length; i += MC_ROWS_PER_PAGE) pages.push(rows.slice(i, i + MC_ROWS_PER_PAGE));
+                    pages.push(rows.slice(0, firstN));
+                    for (let i = firstN; i < rows.length; i += MC_ROWS_PER_PAGE) pages.push(rows.slice(i, i + MC_ROWS_PER_PAGE));
                     const mName = THAI_MONTHS_FULL[+m - 1];
                     const adv = mName.replace(/[\u0E31\u0E34-\u0E3A\u0E47-\u0E4E]/g, '').length;
                     const monthPt = adv <= 5 ? 92 : adv <= 6 ? 84 : adv <= 7 ? 74 : 66;
@@ -644,7 +657,7 @@
                         shipping: list.filter(o => o.deliveryType === 'shipping').length, pickup: list.filter(o => o.deliveryType !== 'shipping').length,
                         noRange: range(nums('orderNo')), queueRange: range(nums('queueNo')),
                         dateRange: dates.length ? (dates[0] === dates[dates.length - 1] ? mcShortDate(dates[0]) : mcShortDate(dates[0]) + ' – ' + mcShortDate(dates[dates.length - 1])) : '-',
-                        pages
+                        fin, pages
                     };
                 });
                 function openMonthlyCoverModal() {
@@ -2527,7 +2540,7 @@
                     handleFormImageUpload, rotateFormImage, removeFormImage, isCompressingImage,
                     imageUrlInput, MAX_ORDER_IMAGES, addFormImageFromUrl, getOrderImages,
                     galleryTarget, galleryIndex, openGallery, closeGallery, galleryImages, nextGalleryImage, prevGalleryImage,
-                    monthlyCover, monthlyCoverData, monthlyCoverOptions, isMonthlyCoverOpen, monthlyCoverKey, monthlyCoverWithOrders, openMonthlyCoverModal, printMonthlyCover,
+                    monthlyCover, monthlyCoverData, monthlyCoverOptions, isMonthlyCoverOpen, monthlyCoverKey, monthlyCoverWithOrders, monthlyCoverWithFinance, openMonthlyCoverModal, printMonthlyCover,
                     printImageGridClass, printImageMaxHeightClass, printScaleMap, isMeasuringPrint, getPrintScaleStyle,
                     isMessageModalOpen, messageItems, messageForm, generatedMessage, messageMobileTab,
                     messageSourceOrder, messageTotalMismatch, useComputedTotalAsFullPay, saveMessageTotalsToOrder,
