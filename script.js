@@ -336,6 +336,10 @@ let showFavoritesOnly = false;
 // โหมด "ดูสินค้าทั้งหมด" — แตกสินค้าทุกชิ้นที่มีสี/ตัวเลือก/ไซซ์ออกเป็นการ์ดย่อยรายตัว
 // เหมือนที่โซน "สินค้าแนะนำ (พร้อมส่ง)" ทำอยู่แล้ว แต่ไม่จำกัดเฉพาะที่พร้อมส่ง
 let showAllVariantsSplit = false;
+// เมนู "สินค้า" (จอคอม): โชว์ทุกแบบเป็นกริดเดียว ไม่แยกหัวข้อหมวด (ใช้คู่กับ showAllVariantsSplit)
+let dtFlatAll = false;
+// คอม: false = หน้าแรก (ซ่อนแถบตัวกรองซ้าย) · true = เข้าโหมดเลือกดูสินค้า (แสดงแถบตัวกรอง)
+let dtBrowse = false;
 
 /* ---------- รายการโปรด (บันทึกในเบราว์เซอร์ของลูกค้า เหมือนตะกร้า) ---------- */
 const FAVORITES_STORAGE_KEY = 'sfb_favorites_v1';
@@ -687,6 +691,7 @@ function toggleFavoritesOnly(checked){
 }
 function toggleAllVariantsSplit(checked){
   showAllVariantsSplit = checked;
+  if(!checked) dtFlatAll = false;
   renderCatalog();
   renderFilterSidebar();
   updateFilterBadge();
@@ -1403,6 +1408,7 @@ function renderFilterSidebar(){
       <h4 class="filter-sidebar-title">ตัวกรองสินค้า</h4>
       <button class="filter-sidebar-clear" onclick="clearSidebarFilters()"${filtersAreActive(state) ? '' : ' hidden'}>ล้างตัวกรอง</button>
     </div>` + buildFilterPanelHtml(state, 'sidebar');
+  if(typeof syncDtNav === 'function') syncDtNav();
 }
 // ล้างตัวกรองทั้งหมด (ปุ่มบนแถบข้าง — เดสก์ท็อป) แล้วอัปเดตหน้าเว็บทันที
 function clearSidebarFilters(){
@@ -1413,6 +1419,7 @@ function clearSidebarFilters(){
   showReadyOnly = false;
   showFavoritesOnly = false;
   showAllVariantsSplit = false;
+  dtFlatAll = false;
   activeSizes = new Set();
   activeFlowerTypes = new Set();
   renderNav();
@@ -1518,6 +1525,7 @@ function updateFilterBadge(){
   // ชิป "พร้อมส่ง" ด่วนบนแถบหมวด ให้สถานะตรงกับตัวกรองเสมอ ไม่ว่าจะเปลี่ยนจากแผงตัวกรองหรือจากชิป
   document.querySelectorAll('.cat-quick-ready').forEach(b => b.classList.toggle('active', showReadyOnly));
   updateBottomNav();
+  if(typeof syncDtNav === 'function') syncDtNav();
 }
 // กดชิป "พร้อมส่ง" บนแถบหมวด (มือถือ) = เปิด/ปิดตัวกรองพร้อมส่งทันที ไม่ต้องเปิดแผงตัวกรอง
 function quickToggleReady(){ toggleReadyOnly(!showReadyOnly); }
@@ -1842,7 +1850,22 @@ function renderCatalog(){
   let previewApplied = false;
   const catsToRender = activeCats.size ? CATS.slice(1).filter(c => activeCats.has(c)) : CATS.slice(1);
   catalogExportCollect = true;
-  html += catsToRender.map(cat => {
+  // เมนู "สินค้า" (จอคอม): ทุกแบบของทุกหมวดรวมเป็นกริดเดียว ไม่แยกหัวข้อหมวด
+  let flatHtml = null;
+  if(dtFlatAll && showAllVariantsSplit && activeCats.size === 0){
+    const flatOpts = { range, sizes: new Set(), readyOnly: showReadyOnly, favOnly: showFavoritesOnly };
+    const flatItems = sortByPrice(
+      PRODUCTS.filter(p => matchesSearch(p) && flowerMatches(p)).flatMap(allVariantsOf).filter(v => variantPasses(v.product, v, flatOpts)),
+      v => variantPriceOf(v.product, v),
+      v => v.product
+    );
+    totalMatches += flatItems.length;
+    flatHtml = `<div class="cat-section" id="${catSectionId('ทั้งหมด')}" data-cat="ทั้งหมด">
+      <div class="section-title"><h3>สินค้าทั้งหมด</h3><span>${flatItems.length} รายการ</span></div>
+      <div class="grid">${flatItems.map(v => renderProductCard(v.product, v)).join('')}</div>
+    </div>`;
+  }
+  html += flatHtml !== null ? flatHtml : catsToRender.map(cat => {
     const sizeList = CATEGORY_SIZES[cat];
     const catOpts = {
       range,
@@ -3892,6 +3915,7 @@ function renderReviews(imagesIn){
   if(statEl) statEl.textContent = `${REVIEWS.length}+ รีวิวจากลูกค้าจริง`;
   section.hidden = false;
   initReviewAutoScroll();
+  if(typeof dtRenderReviewGrid === 'function') dtRenderReviewGrid();
 }
 
 /* ---------- เลื่อนรีวิวอัตโนมัติทีละการ์ด ----------
@@ -3926,6 +3950,7 @@ function animateScrollLeft(el, to, duration){
    ใช้การ์ดโคลนต่อท้ายเหมือนกัน — เลื่อนถึงจุดที่โคลนเริ่ม ก็หักกลับต้นทางแบบไม่เห็นรอยต่อ
    หยุดเมื่อแตะ/ลาก แล้วไหลต่อเองหลังไม่มีการโต้ตอบ · เครื่องที่ตั้ง "ลดการเคลื่อนไหว" จะไม่ไหลเอง */
 const REVIEW_BELT_SPEED = 26; // px ต่อวินาที
+const REVIEW_BELT_SPEED_DESKTOP = 42; // จอคอม: การ์ดใหญ่กว่า ไหลเร็วขึ้นหน่อยให้ดูเป็นสายพาน
 const reviewMobileMQ = window.matchMedia('(max-width:859px)');
 let reviewBeltRAF = null;
 let reviewBeltX = null; // ตำแหน่งสายพานตอนกำลังไหล (px) — null = ไม่ได้ไหลอยู่
@@ -3963,7 +3988,7 @@ function startReviewBelt(){
     if(document.getElementById('reviewLightbox')?.classList.contains('open')) return;
     if(!loopW || frames++ % 120 === 0) measure(); // วัดซ้ำทุก ~2 วินาที เผื่อหมุนจอ/เปลี่ยนขนาด ไม่วัดทุกเฟรม
     if(loopW <= 0) return;
-    acc += REVIEW_BELT_SPEED * dt / 1000;
+    acc += (reviewMobileMQ.matches ? REVIEW_BELT_SPEED : REVIEW_BELT_SPEED_DESKTOP) * dt / 1000;
     while(acc >= loopW) acc -= loopW;
     reviewBeltX = acc;
     track.style.transform = 'translate3d(' + (-acc) + 'px,0,0)';
@@ -3974,7 +3999,9 @@ function startReviewAutoScroll(){
   stopReviewAutoScroll();
   const scrollEl = document.getElementById('reviewsScroll');
   if(!scrollEl || !scrollEl.children.length) return;
-  if(reviewMobileMQ.matches){ startReviewBelt(); return; }
+  // จอคอมก็ไหลเป็นสายพานต่อเนื่องเหมือนมือถือ (ไม่ขยับทีละใบแล้ว)
+  if(reviewMobileMQ.matches) startReviewBelt(); // จอคอมใช้ตารางรีวิว (dtRenderReviewGrid) ไม่เลื่อนอัตโนมัติ
+  return;
   reviewAutoTimer = setInterval(() => {
     if(document.hidden) return;
     if(document.getElementById('reviewsAllModal')?.classList.contains('open')) return;
@@ -4023,6 +4050,9 @@ function stopReviewAutoScroll(){
 }
 function pauseReviewAutoScroll(){
   stopReviewAutoScroll();
+  // จอคอม: เมาส์วางอยู่ = หยุดไว้ก่อน แล้วไหลต่อตอนเมาส์ออก (ดู mouseleave ใน initReviewAutoScroll)
+  const rs = document.getElementById('reviewsScroll');
+  if(!reviewMobileMQ.matches && rs && rs.matches(':hover')){ clearTimeout(reviewResumeTimer); return; }
   clearTimeout(reviewResumeTimer);
   reviewResumeTimer = setTimeout(startReviewAutoScroll, REVIEW_RESUME_DELAY);
 }
@@ -4032,6 +4062,11 @@ function initReviewAutoScroll(){
   if(!reviewAutoBound){
     ['pointerdown','touchstart','wheel','mouseenter'].forEach(evt => {
       scrollEl.addEventListener(evt, pauseReviewAutoScroll, { passive: true });
+    });
+    scrollEl.addEventListener('mouseleave', () => {
+      if(reviewMobileMQ.matches) return;
+      clearTimeout(reviewResumeTimer);
+      startReviewAutoScroll();
     });
     reviewMobileMQ.addEventListener('change', () => { stopReviewAutoScroll(); scrollEl.scrollLeft = 0; startReviewAutoScroll(); });
     document.addEventListener('visibilitychange', () => {
@@ -4337,11 +4372,221 @@ window.addEventListener('scroll', function(){
 }, { passive:true });
 
 /* ---------- มือถือ: ปุ่ม ☰ เปิดแผงตัวกรองสินค้า — เลขบนปุ่มบอกจำนวนตัวกรองที่ใช้อยู่ ---------- */
-function brandTap(){ if(window.matchMedia('(max-width:859px)').matches) bnavHome(); }
+function brandTap(){
+  if(window.matchMedia('(max-width:859px)').matches) bnavHome();
+  else if(typeof dtHome === 'function') dtHome(); // คอม: กดโลโก้ = หน้าแรก
+}
 function syncMenuBadge(){
   const b = document.getElementById('menuBadge');
   if(!b) return;
   const fc = document.getElementById('filterCount');
   const n = fc && !fc.hidden ? fc.textContent : '';
   b.textContent = n; b.hidden = !n;
+}
+
+
+/* =========================================================
+   เมนูหลักส่วนหัว (จอคอม ≥860px เท่านั้น — มือถือซ่อนด้วย CSS ไม่กระทบ)
+   หน้าแรก = ล้างตัวกรอง+กลับบนสุด · สินค้า = ทุกแบบรวมเป็นกริดเดียว · ราคา = 5 โซนราคา
+   ชนิดดอกไม้ = กรองเฉพาะชนิดนั้น · รีวิวจากลูกค้า = เปิดรูปรีวิวทั้งหมด
+   วิธีการสั่งซื้อ / ติดต่อเรา = หน้าต่าง "กำลังปรับปรุงข้อมูล" (รอใส่ข้อมูลจริง)
+   ลบบล็อกนี้ + #dtNav ใน index.html + บล็อก "เมนูหลักส่วนหัวคอม" ท้าย style.css เพื่อย้อนกลับ
+   ========================================================= */
+// ล้างตัวกรอง/คำค้นทั้งหมด แล้วตั้งค่าเฉพาะที่เมนูต้องการ จากนั้นวาดใหม่และเลื่อนไปรายการสินค้า
+function dtApply(setter, scrollToList, browse){
+  dtBrowse = browse !== false;
+  searchQuery = '';
+  const input = document.getElementById('searchInput'); if(input) input.value = '';
+  const clearBtn = document.getElementById('searchClearBtn'); if(clearBtn) clearBtn.style.display = 'none';
+  activeCats = new Set();
+  customPriceMin = PRICE_SLIDER_MIN;
+  customPriceMax = PRICE_SLIDER_MAX;
+  activeSortOrder = 'none';
+  showReadyOnly = false;
+  showFavoritesOnly = false;
+  showAllVariantsSplit = false;
+  dtFlatAll = false;
+  activeSizes = new Set();
+  activeFlowerTypes = new Set();
+  scrollSpyCat = 'ทั้งหมด';
+  if(setter) setter();
+  renderNav();
+  renderCatalog();
+  renderFilterSidebar();
+  updateFilterBadge();
+  if(scrollToList) scrollToCatalogTop();
+}
+function dtHome(){
+  dtApply(null, false, false);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function dtAllProducts(){
+  dtApply(() => { showAllVariantsSplit = true; dtFlatAll = true; }, true);
+}
+function dtPrice(min, max){
+  dtApply(() => { customPriceMin = min; customPriceMax = max; }, true);
+}
+function dtFlower(t){
+  dtApply(() => { activeFlowerTypes = new Set([t]); }, true);
+}
+function dtOpenInfo(title){
+  const m = document.getElementById('dtInfoModal');
+  const o = document.getElementById('dtInfoOverlay');
+  const h = document.getElementById('dtInfoTitle');
+  if(!m || !o || !h) return;
+  h.textContent = title;
+  o.classList.add('show');
+  m.classList.add('open');
+}
+function dtCloseInfo(){
+  const m = document.getElementById('dtInfoModal');
+  const o = document.getElementById('dtInfoOverlay');
+  if(m) m.classList.remove('open');
+  if(o) o.classList.remove('show');
+}
+// ไฮไลต์เมนูตามตัวกรองที่ใช้อยู่ + วาดรายชื่อชนิดดอกไม้ (เฉพาะชนิดที่มีสินค้าจริง) ใหม่เมื่อรายการเปลี่ยน
+function syncDtNav(){
+  const nav = document.getElementById('dtNav');
+  if(!nav) return;
+  const none = activeCats.size === 0 && activeFlowerTypes.size === 0 && activeSizes.size === 0
+    && customPriceMin === PRICE_SLIDER_MIN && customPriceMax === PRICE_SLIDER_MAX
+    && activeSortOrder === 'none' && !showReadyOnly && !showFavoritesOnly && !showAllVariantsSplit && !searchQuery;
+  if(!none) dtBrowse = true; // มีตัวกรองใช้งานอยู่ (เช่นกดไทล์หมวด) = แสดงแถบตัวกรอง
+  const layout = document.querySelector('.catalog-layout');
+  if(layout) layout.classList.toggle('dt-browse', dtBrowse);
+  const mark = (el, on) => { if(el) el.classList.toggle('active', !!on); };
+  mark(nav.querySelector('[data-key="home"]'), none);
+  mark(nav.querySelector('[data-key="all"]'), dtFlatAll && showAllVariantsSplit);
+  // ราคา: ปุ่มย่อยที่ตรงช่วงที่เลือกอยู่
+  const priceOn = customPriceMin !== PRICE_SLIDER_MIN || customPriceMax !== PRICE_SLIDER_MAX;
+  nav.querySelectorAll('[data-act="price"]').forEach(b => {
+    mark(b, priceOn && Number(b.dataset.min) === customPriceMin && Number(b.dataset.max) === customPriceMax);
+  });
+  mark(nav.querySelector('.dt-item[data-key="price"] > .dt-link'), priceOn);
+  // ชนิดดอกไม้
+  const item = document.getElementById('dtFlowerItem');
+  const sub = document.getElementById('dtFlowerSub');
+  if(item && sub){
+    const types = (typeof flowerTypesInScope === 'function') ? flowerTypesInScope(null) : [];
+    item.hidden = types.length === 0;
+    const sig = types.join('|');
+    if(sub.dataset.sig !== sig){
+      sub.innerHTML = types.map(t => `<button type="button" role="menuitem" data-act="flower" data-t="${escapeHtml(t)}">${escapeHtml(t)}</button>`).join('');
+      sub.dataset.sig = sig;
+    }
+    sub.querySelectorAll('[data-act="flower"]').forEach(b => mark(b, activeFlowerTypes.has(b.dataset.t)));
+    mark(item.querySelector(':scope > .dt-link'), activeFlowerTypes.size > 0);
+  }
+}
+(function initDtNav(){
+  const nav = document.getElementById('dtNav');
+  if(!nav) return;
+  nav.addEventListener('click', function(e){
+    const b = e.target.closest('[data-act]');
+    if(!b) return;
+    const act = b.dataset.act;
+    if(act === 'home') dtHome();
+    else if(act === 'all') dtAllProducts();
+    else if(act === 'price') dtPrice(Number(b.dataset.min), Number(b.dataset.max));
+    else if(act === 'flower') dtFlower(b.dataset.t);
+    else if(act === 'reviews') openReviewsAll();
+    else if(act === 'info') dtOpenInfo(b.dataset.title || '');
+    // เมนูย่อยค้างเปิดอยู่ใต้เมาส์หลังกด → ซ่อนไว้จนกว่าเมาส์จะออก
+    const it = b.closest('.dt-item');
+    if(it){
+      it.classList.add('dt-shut');
+      it.addEventListener('mouseleave', () => it.classList.remove('dt-shut'), { once: true });
+      if(document.activeElement && document.activeElement.blur) document.activeElement.blur();
+    }
+  });
+  const ov = document.getElementById('dtInfoOverlay');
+  const cl = document.getElementById('dtInfoClose');
+  if(ov) ov.addEventListener('click', dtCloseInfo);
+  if(cl) cl.addEventListener('click', dtCloseInfo);
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape') dtCloseInfo(); });
+  syncDtNav();
+})();
+
+
+/* =========================================================
+   ตารางรีวิวหน้าแรก (จอคอม): 2 แถว × 6 คอลัมน์ รูป 1:1 อยู่กลางหน้า
+   สลับรูปทีละช่อง ทุก ~4 วินาที ด้วยการเฟดช้าๆ (ไม่เลื่อน ไม่กระพริบทั้งแถว ไม่เอารูปที่โชว์อยู่มาซ้ำ)
+   หยุดเมื่อเมาส์วางบนตาราง / แท็บถูกซ่อน / เปิดรูปรีวิวหรือหน้าต่างรีวิวทั้งหมดอยู่ / ตั้งลดการเคลื่อนไหว
+   ========================================================= */
+const DT_RV_COUNT = 12;
+const DT_RV_MIN_MS = 3800, DT_RV_MAX_MS = 5200;
+let dtRvShown = [];   // ดัชนีใน REVIEWS ของรูปที่โชว์อยู่ในแต่ละช่อง
+let dtRvPtr = 0;      // ตัวชี้รูปถัดไปที่จะหมุนเข้ามา
+let dtRvTimer = null;
+let dtRvLastSlot = -1;
+let dtRvHover = false;
+function dtRvDesktop(){ return window.matchMedia('(min-width:860px)').matches; }
+function dtRvCanSwap(){
+  if(!dtRvDesktop() || document.hidden || dtRvHover) return false;
+  if(document.documentElement.classList.contains('no-anim') || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return false;
+  const open = id => { const e = document.getElementById(id); return !!(e && e.classList.contains('open')); };
+  return !(open('reviewLightbox') || open('reviewsAllModal'));
+}
+function dtRvPickNext(){
+  const len = REVIEWS.length;
+  for(let k = 0; k < len; k++){
+    const idx = dtRvPtr % len; dtRvPtr++;
+    if(!dtRvShown.includes(idx)) return idx;
+  }
+  return -1;
+}
+// เปลี่ยนรูปในช่อง: วางรูปใหม่ซ้อนด้านบนแล้วเฟดเข้า เสร็จแล้วค่อยเอารูปเก่าออก (ไม่มีจังหวะว่างหรือกะพริบ)
+function dtRvApply(slot, idx){
+  const grid = document.getElementById('reviewsGridDt');
+  const tile = grid && grid.children[slot];
+  if(!tile) return;
+  const old = tile.querySelector('.rv-img');
+  const img = document.createElement('img');
+  img.className = 'rv-img rv-in';
+  img.alt = 'รีวิวจากลูกค้า'; img.width = 400; img.height = 400; img.decoding = 'async';
+  img.src = REVIEWS[idx];
+  tile.appendChild(img);
+  void img.offsetWidth; // ให้ opacity:0 ถูกวาดก่อน แล้วค่อยเฟดเข้า
+  img.classList.add('show');
+  dtRvShown[slot] = idx;
+  setTimeout(() => { if(old && old.parentNode) old.remove(); img.classList.remove('rv-in', 'show'); }, 1400);
+}
+function dtRvSwapOnce(){
+  if(REVIEWS.length <= dtRvShown.length) return; // รูปไม่เกินจำนวนช่อง = ไม่มีรูปใหม่ให้หมุนเข้า
+  let slot;
+  do { slot = Math.floor(Math.random() * dtRvShown.length); } while(slot === dtRvLastSlot && dtRvShown.length > 1);
+  const idx = dtRvPickNext();
+  if(idx < 0) return;
+  const pre = new Image();
+  pre.onload = () => { dtRvLastSlot = slot; dtRvApply(slot, idx); };
+  pre.onerror = () => {}; // รูปเสีย: ข้ามไป รอบหน้าลองรูปถัดไป
+  pre.src = REVIEWS[idx];
+}
+function dtRvSchedule(){
+  clearTimeout(dtRvTimer);
+  dtRvTimer = setTimeout(() => {
+    if(dtRvCanSwap()) dtRvSwapOnce();
+    dtRvSchedule();
+  }, DT_RV_MIN_MS + Math.random() * (DT_RV_MAX_MS - DT_RV_MIN_MS));
+}
+function dtOpenReviewTile(slot){
+  if(dtRvShown[slot] === undefined) return;
+  openReviewLightbox(REVIEWS, dtRvShown[slot]);
+}
+function dtRenderReviewGrid(){
+  const el = document.getElementById('reviewsGridDt');
+  if(!el) return;
+  const n = Math.min(DT_RV_COUNT, REVIEWS.length);
+  dtRvShown = []; for(let i = 0; i < n; i++) dtRvShown.push(i);
+  dtRvPtr = n; dtRvLastSlot = -1;
+  el.innerHTML = dtRvShown.map((ri, slot) =>
+    `<button type="button" class="rv-tile" onclick="dtOpenReviewTile(${slot})" aria-label="ดูรูปรีวิวจากลูกค้า">` +
+    `<img class="rv-img" src="${REVIEWS[ri]}" alt="รีวิวจากลูกค้า" width="400" height="400" loading="lazy" decoding="async" onerror="this.closest('.rv-tile').style.visibility='hidden'">` +
+    `</button>`).join('');
+  if(!el.dataset.bound){
+    el.dataset.bound = '1';
+    el.addEventListener('mouseenter', () => { dtRvHover = true; });
+    el.addEventListener('mouseleave', () => { dtRvHover = false; });
+  }
+  dtRvSchedule();
 }

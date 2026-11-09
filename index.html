@@ -84,6 +84,28 @@
     <img id="brandLogo" src="images/logo.png?v=2" alt="โลโก้ร้าน" onerror="this.parentElement.innerHTML='<svg viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot;><path d=&quot;M12 2c1.5 2 1.5 4 0 6-1.5-2-1.5-4 0-6z&quot; fill=&quot;#F0568C&quot;/><path d=&quot;M12 22c-3-3-6-6-6-10a6 6 0 0112 0c0 4-3 7-6 10z&quot; fill=&quot;#F0568C&quot; opacity=&quot;0.9&quot;/></svg>'">
   </div>
   <span class="brand-name" id="brandName" onclick="brandTap()">S.Flower Bloom</span>
+  <!-- เมนูหลัก (จอคอมเท่านั้น ≥860px — มือถือซ่อนด้วย CSS) -->
+  <nav class="dt-nav" id="dtNav" aria-label="เมนูหลัก">
+    <button type="button" class="dt-link" data-key="home" data-act="home">หน้าแรก</button>
+    <button type="button" class="dt-link" data-key="all" data-act="all">สินค้า</button>
+    <div class="dt-item" data-key="price">
+      <button type="button" class="dt-link dt-has-sub" aria-haspopup="true">ราคา<span class="dt-caret" aria-hidden="true"></span></button>
+      <div class="dt-sub" role="menu">
+        <button type="button" role="menuitem" data-act="price" data-min="0" data-max="99">ต่ำกว่า 100</button>
+        <button type="button" role="menuitem" data-act="price" data-min="100" data-max="300">100 - 300</button>
+        <button type="button" role="menuitem" data-act="price" data-min="300" data-max="600">300 - 600</button>
+        <button type="button" role="menuitem" data-act="price" data-min="600" data-max="1200">600 - 1200</button>
+        <button type="button" role="menuitem" data-act="price" data-min="1201" data-max="3000">มากกว่า 1200</button>
+      </div>
+    </div>
+    <div class="dt-item" data-key="flower" id="dtFlowerItem" hidden>
+      <button type="button" class="dt-link dt-has-sub" aria-haspopup="true">ชนิดดอกไม้<span class="dt-caret" aria-hidden="true"></span></button>
+      <div class="dt-sub dt-sub-scroll" id="dtFlowerSub" role="menu"></div>
+    </div>
+    <button type="button" class="dt-link" data-key="reviews" data-act="reviews">รีวิวจากลูกค้า</button>
+    <button type="button" class="dt-link" data-key="how" data-act="info" data-title="วิธีการสั่งซื้อ">วิธีการสั่งซื้อ</button>
+    <button type="button" class="dt-link" data-key="contact" data-act="info" data-title="ติดต่อเรา">ติดต่อเรา</button>
+  </nav>
   <div class="search-wrap">
     <svg viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
     <input type="text" id="searchInput" class="search-input" placeholder="ค้นหาสินค้า เช่น กุหลาบ, กรอบรูป..." oninput="handleSearch(this.value)" onkeydown="if(event.key==='Enter'){ event.preventDefault(); handleSearchSubmit(); }" enterkeyhint="search" autocomplete="off">
@@ -116,6 +138,7 @@
     </div>
     <div class="reviews-body">
       <div class="reviews-scroll" id="reviewsScroll"></div>
+      <div class="reviews-grid-dt" id="reviewsGridDt" aria-label="รีวิวจากลูกค้า"></div><!-- จอคอม: ตาราง 2 แถว × 6 คอลัมน์ (มือถือซ่อน ใช้สายพานด้านบน) -->
       <button type="button" class="reviews-nav prev" onclick="reviewManualStep(-1)" aria-label="รีวิวก่อนหน้า">‹</button>
       <button type="button" class="reviews-nav next" onclick="reviewManualStep(1)" aria-label="รีวิวถัดไป">›</button>
     </div>
@@ -429,6 +452,14 @@
       <button class="close-secondary-btn" onclick="closeOrderSummary()">ปิดหน้าต่าง</button>
     </div>
   </div>
+</div>
+
+<!-- หน้าต่างเมนูที่ข้อมูลยังไม่พร้อม (จอคอม): วิธีการสั่งซื้อ / ติดต่อเรา -->
+<div class="dt-info-overlay" id="dtInfoOverlay"></div>
+<div class="dt-info-modal" id="dtInfoModal" role="dialog" aria-modal="true" aria-labelledby="dtInfoTitle">
+  <button type="button" class="dt-info-close" id="dtInfoClose" aria-label="ปิด">✕</button>
+  <h4 id="dtInfoTitle"></h4>
+  <p>กำลังปรับปรุงข้อมูล</p>
 </div>
 
 <script src="script.js" defer></script>

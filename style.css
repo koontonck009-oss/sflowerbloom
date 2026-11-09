@@ -2772,10 +2772,7 @@ a:focus-visible, button:focus-visible, summary:focus-visible,
   font-family:'Prompt',sans-serif; font-weight:400; font-size:18px; line-height:1.2; color:#fff;
   text-shadow:0 2px 6px rgba(0,0,0,0.45);
 }
-/* คอมมีตัวกรองด้านซ้ายอยู่แล้ว ไม่ต้องมีปุ่มลัด */
-@media (min-width:860px){
-  .jump-tiles{display:none;}
-}
+/* คอม: แสดงปุ่มรูปภาพหมวดใต้สินค้าแนะนำ (ดูบล็อก "เมนูหลักส่วนหัวคอม" ท้ายไฟล์) */
 
 /* =========================================================
    Premium Card (รอบ 5) — การ์ดไม่มีพื้นขาว · รูปขอบเหลี่ยม · ชื่อกับราคาติดกัน
@@ -2918,3 +2915,129 @@ html, body{background:#FFFFFF;}
 .card:hover .thumb{
   box-shadow:0 0 0 1px rgba(52,38,46,0.06), 0 16px 32px -12px rgba(52,38,46,0.22);
 }
+
+
+/* =========================================================
+   เมนูหลักส่วนหัวคอม (≥860px เท่านั้น — มือถือไม่เปลี่ยน)
+   - แถบบน: โลโก้ + เมนู + ปุ่มทักแชตเลย + ตะกร้า (ซ่อนช่องค้นหา/แบนเนอร์/ชื่อร้านซ้ำ)
+   - รีวิวลูกค้า: สายพานไหลเต็มความกว้าง ไม่มีพื้นขาว/กรอบ/เงา
+   - ปุ่มรูปภาพหมวด (jump-tiles) แสดงใต้สินค้าแนะนำ
+   ลบบล็อกนี้ + #dtNav / #dtInfoModal ใน index.html + บล็อก dt* ท้าย script.js เพื่อย้อนกลับ
+   ========================================================= */
+.dt-nav, .dt-info-overlay, .dt-info-modal, .reviews-grid-dt{display:none;}
+@media (min-width:860px){
+  header.top{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap;}
+  /* แถบเมนูติดบนสุดตอนเลื่อนลง (ขาวกึ่งโปร่ง + เงาบางๆ) */
+  .search-cart-bar{
+    position:sticky; top:0; padding:12px 3vw; gap:18px;
+    background:rgba(255,255,255,0.94); border-bottom:1px solid var(--line);
+    -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px);
+    box-shadow:0 2px 12px rgba(52,38,46,0.06);
+  }
+  .search-cart-bar .search-wrap{display:none;}
+  .brand-name{font-size:18px;}
+
+  .dt-nav{display:flex; flex:1 1 auto; min-width:0; align-items:center; justify-content:flex-end; gap:4px;}
+  .dt-link{
+    position:relative; border:0; background:transparent; cursor:pointer; white-space:nowrap;
+    font-family:'Prompt',sans-serif; font-weight:400; font-size:15px; line-height:1; color:var(--plum);
+    padding:12px 14px; border-radius:999px; transition:color .15s ease, background .15s ease;
+  }
+  .dt-link:hover{color:var(--sage-dark); background:rgba(var(--sage-rgb),0.08);}
+  .dt-link.active{color:var(--sage-dark); background:rgba(var(--sage-rgb),0.12);}
+  .dt-link:focus-visible{outline:2px solid var(--sage); outline-offset:2px;}
+  .dt-item{position:relative;}
+  .dt-item[hidden]{display:none;}
+  .dt-caret{display:inline-block; width:6px; height:6px; margin-left:7px; border-right:1.6px solid currentColor; border-bottom:1.6px solid currentColor; transform:translateY(-2px) rotate(45deg);}
+  .dt-sub{
+    display:none; position:absolute; top:100%; left:50%; transform:translateX(-50%); z-index:1100;
+    min-width:170px; margin-top:2px; padding:8px; background:#fff;
+    border:1px solid var(--line); border-radius:14px; box-shadow:0 12px 30px rgba(52,38,46,0.14);
+  }
+  /* ช่องว่างล่องหนเชื่อมปุ่มกับเมนูย่อย เมาส์เลื่อนลงไม่หลุด */
+  .dt-sub::before{content:""; position:absolute; left:0; right:0; top:-8px; height:8px;}
+  .dt-item:hover .dt-sub, .dt-item:focus-within .dt-sub{display:block;}
+  .dt-item.dt-shut .dt-sub{display:none !important;}
+  .dt-sub button{
+    display:block; width:100%; text-align:left; border:0; background:transparent; cursor:pointer; white-space:nowrap;
+    font-family:'Prompt',sans-serif; font-weight:400; font-size:14px; color:var(--plum);
+    padding:10px 14px; border-radius:10px;
+  }
+  .dt-sub button:hover{background:rgba(var(--sage-rgb),0.1); color:var(--sage-dark);}
+  .dt-sub button.active{background:rgba(var(--sage-rgb),0.16); color:var(--sage-dark);}
+  .dt-sub-scroll{max-height:min(60vh, 420px); overflow-y:auto;}
+
+  /* ปุ่มทักแชตเลย (บนคอม) */
+  .search-cart-bar .chat-top-btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:7px; flex-shrink:0; text-decoration:none;
+    height:42px; padding:0 20px; border-radius:999px; border:none; cursor:pointer;
+    background:var(--sage); color:#fff; box-shadow:0 3px 10px rgba(var(--sage-rgb),0.28);
+    font-family:'Prompt',sans-serif; font-weight:400; font-size:14.5px; line-height:1; white-space:nowrap;
+    transition:transform .15s ease, box-shadow .15s ease;
+  }
+  .search-cart-bar .chat-top-btn:hover{transform:translateY(-1px); box-shadow:0 6px 16px rgba(var(--sage-rgb),0.34);}
+  .search-cart-bar .chat-top-btn svg{width:18px; height:18px; display:block;}
+
+  /* ไม่มีแบนเนอร์บนคอม — รีวิวเป็นตาราง 2 แถว × 6 คอลัมน์ รูป 1:1 อยู่กลางหน้า ไม่มีพื้นขาว/กรอบ/เงา */
+  .hero-row{width:auto; margin:6px 0 18px; position:static;}
+  .hero-row .hero-banner{display:none;}
+  .hero-row .reviews-section{
+    position:static; inset:auto; margin:0; padding:0; min-width:0;
+    background:transparent; border:0; border-radius:0; box-shadow:none; overflow:visible;
+  }
+  .hero-row .reviews-section:not([hidden]){display:block; animation:none;}
+  .hero-row .reviews-head{padding:0 3vw; margin-bottom:12px; justify-content:center; align-items:center; gap:14px; flex-wrap:wrap;}
+  .hero-row .reviews-body{position:relative;}
+  .hero-row .reviews-scroll, .hero-row .reviews-nav{display:none;}
+  .reviews-grid-dt{
+    display:grid; grid-template-columns:repeat(6, minmax(0,1fr)); gap:10px;
+    width:min(1000px, calc(100% - 6vw)); margin:0 auto;
+  }
+  .rv-tile{
+    position:relative; display:block; aspect-ratio:1 / 1; padding:0; border:0; cursor:pointer;
+    border-radius:12px; overflow:hidden; background:var(--cream);
+  }
+  .rv-img{
+    position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block;
+    transition:opacity 1.2s ease, transform .4s ease;
+  }
+  .rv-img.rv-in{opacity:0;}
+  .rv-img.rv-in.show{opacity:1;}
+  .rv-tile:hover .rv-img{transform:scale(1.04);}
+  .rv-tile:focus-visible{outline:2px solid var(--sage); outline-offset:2px;}
+
+  /* ปุ่มรูปภาพหมวด (เหมือนมือถือ) ใต้สินค้าแนะนำ — สี่เหลี่ยมจัตุรัส 1:1 */
+  .jump-tiles{grid-template-columns:repeat(4, minmax(0,1fr)); gap:14px;}
+  .jump-tiles .jump-tile{aspect-ratio:1 / 1;}
+
+  /* หน้าต่างเมนูที่ข้อมูลยังไม่พร้อม */
+  .dt-info-overlay{
+    display:block; position:fixed; inset:0; z-index:2400; background:rgba(52,38,46,0.35);
+    opacity:0; pointer-events:none; transition:opacity .2s ease;
+  }
+  .dt-info-overlay.show{opacity:1; pointer-events:auto;}
+  .dt-info-modal{
+    display:block; position:fixed; z-index:2401; top:50%; left:50%; width:min(420px, 90vw);
+    transform:translate(-50%, -46%); opacity:0; pointer-events:none;
+    padding:34px 28px 30px; text-align:center; background:#fff; border-radius:20px;
+    box-shadow:0 20px 50px rgba(52,38,46,0.22); transition:opacity .2s ease, transform .2s ease;
+  }
+  .dt-info-modal.open{opacity:1; pointer-events:auto; transform:translate(-50%, -50%);}
+  .dt-info-modal h4{margin:0 0 10px; font-size:20px; font-weight:500; color:var(--sage-dark);}
+  .dt-info-modal p{margin:0; font-size:15px; font-weight:300; color:var(--plum);}
+  .dt-info-close{
+    position:absolute; top:12px; right:12px; width:32px; height:32px; border:0; border-radius:50%;
+    background:var(--cream); color:var(--rose-dark); font-size:14px; cursor:pointer;
+  }
+}
+
+/* ---------- คอม: ตัวกรองซ่อนตอนอยู่หน้าแรก + การ์ดสินค้า 6 คอลัมน์อยู่กลาง ---------- */
+@media (min-width:860px){
+  :root{--dt-cols:4;}
+  /* หน้าแรก: ซ่อนแถบตัวกรองซ้ายไว้ก่อน โผล่เมื่อกดสินค้า/ราคา/ชนิดดอกไม้/ไทล์หมวด (JS ใส่คลาส dt-browse) */
+  .catalog-layout:not(.dt-browse) .filter-sidebar{display:none;}
+  .catalog-layout{max-width:1500px; margin-left:auto; margin-right:auto;}
+  main#catalog .grid{grid-template-columns:repeat(var(--dt-cols), minmax(0,1fr)); column-gap:14px; row-gap:22px;}
+}
+@media (min-width:1100px){ :root{--dt-cols:5;} }
+@media (min-width:1300px){ :root{--dt-cols:6;} }
