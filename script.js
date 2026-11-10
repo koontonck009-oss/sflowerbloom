@@ -4426,6 +4426,12 @@ function dtAllProducts(){
 function dtPrice(min, max){
   dtApply(() => { customPriceMin = min; customPriceMax = max; }, true);
 }
+function dtCat(cat, size){
+  dtApply(() => {
+    activeCats = new Set([cat]);
+    if(size) activeSizes = new Set([size]);
+  }, true);
+}
 function dtFlower(t){
   dtApply(() => { activeFlowerTypes = new Set([t]); }, true);
 }
@@ -4435,6 +4441,14 @@ function dtOpenInfo(title){
   const h = document.getElementById('dtInfoTitle');
   if(!m || !o || !h) return;
   h.textContent = title;
+  const isContact = title === 'ติดต่อเรา';
+  const isHow = title === 'วิธีการสั่งซื้อ';
+  const txt = document.getElementById('dtInfoText'), ct = document.getElementById('dtContact'), hw = document.getElementById('dtHow');
+  if(txt) txt.hidden = isContact || isHow;
+  if(ct) ct.hidden = !isContact;
+  if(hw) hw.hidden = !isHow;
+  m.classList.toggle('wide', isHow);
+  if(hw) hw.scrollTop = 0;
   o.classList.add('show');
   m.classList.add('open');
 }
@@ -4456,7 +4470,25 @@ function syncDtNav(){
   if(layout) layout.classList.toggle('dt-browse', dtBrowse);
   const mark = (el, on) => { if(el) el.classList.toggle('active', !!on); };
   mark(nav.querySelector('[data-key="home"]'), none);
-  mark(nav.querySelector('[data-key="all"]'), dtFlatAll && showAllVariantsSplit);
+  mark(nav.querySelector('.dt-item[data-key="all"] > .dt-link'), (dtFlatAll && showAllVariantsSplit) || activeCats.size > 0);
+  // สินค้า: เมนูย่อย หมวด → ขนาด (วาดใหม่เมื่อรายการหมวด/ขนาดเปลี่ยน เช่น หลังโหลดจากหลังบ้าน)
+  const prodSub = document.getElementById('dtProdSub');
+  if(prodSub){
+    const cats = CATS.slice(1);
+    const sig = cats.map(c => c + ':' + (CATEGORY_SIZES[c] || []).join(',')).join('|');
+    if(prodSub.dataset.sig !== sig){
+      prodSub.innerHTML = `<button type="button" role="menuitem" data-act="all">ทั้งหมด</button>` + cats.map(c => {
+        const sizes = (CATEGORY_SIZES[c] || []).filter(x => x !== 'ทั้งหมด');
+        const fly = sizes.length
+          ? `<div class="dt-fly" role="menu">${sizes.map(x => `<button type="button" role="menuitem" data-act="size" data-cat="${escapeHtml(c)}" data-s="${escapeHtml(x)}">${escapeHtml(x)}</button>`).join('')}</div>`
+          : '';
+        return `<div class="dt-row${sizes.length ? ' has-fly' : ''}"><button type="button" role="menuitem" data-act="cat" data-cat="${escapeHtml(c)}">${escapeHtml(c)}${sizes.length ? '<span class="dt-arrow" aria-hidden="true"></span>' : ''}</button>${fly}</div>`;
+      }).join('');
+      prodSub.dataset.sig = sig;
+    }
+    prodSub.querySelectorAll('[data-act="cat"]').forEach(b => mark(b, activeCats.size === 1 && activeCats.has(b.dataset.cat) && activeSizes.size === 0));
+    prodSub.querySelectorAll('[data-act="size"]').forEach(b => mark(b, activeCats.size === 1 && activeCats.has(b.dataset.cat) && activeSizes.has(b.dataset.s)));
+  }
   // ราคา: ปุ่มย่อยที่ตรงช่วงที่เลือกอยู่
   const priceOn = customPriceMin !== PRICE_SLIDER_MIN || customPriceMax !== PRICE_SLIDER_MAX;
   nav.querySelectorAll('[data-act="price"]').forEach(b => {
@@ -4487,6 +4519,8 @@ function syncDtNav(){
     const act = b.dataset.act;
     if(act === 'home') dtHome();
     else if(act === 'all') dtAllProducts();
+    else if(act === 'cat') dtCat(b.dataset.cat);
+    else if(act === 'size') dtCat(b.dataset.cat, b.dataset.s);
     else if(act === 'price') dtPrice(Number(b.dataset.min), Number(b.dataset.max));
     else if(act === 'flower') dtFlower(b.dataset.t);
     else if(act === 'reviews') openReviewsAll();

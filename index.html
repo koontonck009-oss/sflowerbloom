@@ -87,7 +87,10 @@
   <!-- เมนูหลัก (จอคอมเท่านั้น ≥860px — มือถือซ่อนด้วย CSS) -->
   <nav class="dt-nav" id="dtNav" aria-label="เมนูหลัก">
     <button type="button" class="dt-link" data-key="home" data-act="home">หน้าแรก</button>
-    <button type="button" class="dt-link" data-key="all" data-act="all">สินค้า</button>
+    <div class="dt-item" data-key="all" id="dtProdItem">
+      <button type="button" class="dt-link dt-has-sub" data-act="all" aria-haspopup="true">สินค้า<span class="dt-caret" aria-hidden="true"></span></button>
+      <div class="dt-sub dt-prod-sub" id="dtProdSub" role="menu"></div><!-- หมวดหมู่ → ขนาด (สร้างจาก CATS / CATEGORY_SIZES ใน syncDtNav) -->
+    </div>
     <div class="dt-item" data-key="price">
       <button type="button" class="dt-link dt-has-sub" aria-haspopup="true">ราคา<span class="dt-caret" aria-hidden="true"></span></button>
       <div class="dt-sub" role="menu">
@@ -100,7 +103,7 @@
     </div>
     <div class="dt-item" data-key="flower" id="dtFlowerItem" hidden>
       <button type="button" class="dt-link dt-has-sub" aria-haspopup="true">ชนิดดอกไม้<span class="dt-caret" aria-hidden="true"></span></button>
-      <div class="dt-sub dt-sub-scroll" id="dtFlowerSub" role="menu"></div>
+      <div class="dt-sub dt-flower-sub" id="dtFlowerSub" role="menu"></div>
     </div>
     <button type="button" class="dt-link" data-key="reviews" data-act="reviews">รีวิวจากลูกค้า</button>
     <button type="button" class="dt-link" data-key="how" data-act="info" data-title="วิธีการสั่งซื้อ">วิธีการสั่งซื้อ</button>
@@ -459,7 +462,65 @@
 <div class="dt-info-modal" id="dtInfoModal" role="dialog" aria-modal="true" aria-labelledby="dtInfoTitle">
   <button type="button" class="dt-info-close" id="dtInfoClose" aria-label="ปิด">✕</button>
   <h4 id="dtInfoTitle"></h4>
-  <p>กำลังปรับปรุงข้อมูล</p>
+  <p id="dtInfoText">กำลังปรับปรุงข้อมูล</p>
+  <!-- วิธีการสั่งซื้อ + วิธีการจัดส่ง (แสดงเมื่อกดเมนู "วิธีการสั่งซื้อ") -->
+  <div class="dt-how" id="dtHow" hidden>
+    <section class="dt-how-sec">
+      <h5>วิธีการสั่งซื้อสินค้า</h5>
+      <ol>
+        <li>เลือกสินค้าที่ต้องการ ไม่ว่าจะเป็นช่อดอกไม้ กรอบรูปดอกไม้ หรือกระถางดอกไม้</li>
+        <li>แจ้งรายละเอียดที่ต้องการ เช่น รูปแบบสินค้า สีดอกไม้ สีห่อ ข้อความในการ์ด หรือรูปภาพที่ต้องการใช้ (ถ้ามี)</li>
+        <li>ทางร้านแจ้งราคาและรายละเอียดการสั่งซื้อให้ลูกค้าทราบ</li>
+        <li>ชำระเงินมัดจำเพื่อยืนยันออเดอร์และลงคิวจัดทำ</li>
+        <li>เมื่อผลงานเสร็จ ทางร้านจะแจ้งภาพให้ตรวจสอบ พร้อมแจ้งยอดชำระส่วนที่เหลือ</li>
+        <li>หลังชำระเงินครบถ้วน ทางร้านดำเนินการจัดส่งสินค้าให้ลูกค้า</li>
+      </ol>
+      <p class="dt-how-note"><b>หมายเหตุ:</b> สินค้าทุกชิ้นจัดทำตามออเดอร์ สามารถสอบถามหรือปรับแต่งรายละเอียดได้ตามความต้องการ</p>
+    </section>
+    <section class="dt-how-sec">
+      <h5>วิธีการจัดส่งสินค้า</h5>
+      <p class="dt-how-lead">ทางร้านมีบริการจัดส่งสินค้า 2 รูปแบบ</p>
+      <div class="dt-ship">
+        <h6>1. นัดรับสินค้า</h6>
+        <ul>
+          <li>สามารถนัดรับสินค้าได้ในพื้นที่พยุหะจนถึงตัวเมืองนครสวรรค์</li>
+          <li>กรุณานัดหมายวันและเวลารับสินค้าล่วงหน้ากับทางร้าน</li>
+        </ul>
+      </div>
+      <div class="dt-ship">
+        <h6>2. จัดส่งพัสดุ</h6>
+        <ul>
+          <li>จัดส่งสินค้าทั่วประเทศไทย</li>
+          <li>ทางร้านจะแพ็กสินค้าอย่างเหมาะสม เพื่อช่วยป้องกันความเสียหายระหว่างขนส่ง</li>
+          <li>แจ้งเลขพัสดุให้ลูกค้าทราบหลังจัดส่งเรียบร้อย</li>
+        </ul>
+      </div>
+      <p class="dt-how-note"><b>หมายเหตุ:</b> ระยะเวลาจัดส่งขึ้นอยู่กับบริษัทขนส่งและพื้นที่ปลายทาง กรุณาเผื่อเวลาในการจัดส่งก่อนถึงวันใช้งาน</p>
+    </section>
+  </div>
+  <!-- ข้อมูลติดต่อเรา (แสดงเมื่อกดเมนู "ติดต่อเรา") -->
+  <div class="dt-contact" id="dtContact" hidden>
+    <p class="dt-contact-name">S.Flower Bloom</p>
+    <p class="dt-contact-th">(เอสฟราวเวอร์ บลูม)</p>
+    <div class="dt-contact-list">
+      <a class="dt-contact-btn" href="https://www.facebook.com/S.Flower.Bloom44" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="12" fill="#1877F2"/><path fill="#fff" d="M13.5 21v-7h2.4l.4-3h-2.8V9.2c0-.8.3-1.4 1.4-1.4h1.5V5.1c-.3 0-1.2-.1-2.2-.1-2.2 0-3.7 1.3-3.7 3.8V11H8v3h2.5v7z"/></svg>
+        <span>Facebook</span>
+      </a>
+      <a class="dt-contact-btn" href="https://www.instagram.com/s.flower_bloom" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="dtIg" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#FEDA75"/><stop offset=".35" stop-color="#FA7E1E"/><stop offset=".65" stop-color="#D62976"/><stop offset="1" stop-color="#4F5BD5"/></linearGradient></defs><rect width="24" height="24" rx="7" fill="url(#dtIg)"/><rect x="5.5" y="5.5" width="13" height="13" rx="4" fill="none" stroke="#fff" stroke-width="1.6"/><circle cx="12" cy="12" r="3.2" fill="none" stroke="#fff" stroke-width="1.6"/><circle cx="16.2" cy="7.8" r="1" fill="#fff"/></svg>
+        <span>Instagram</span>
+      </a>
+      <a class="dt-contact-btn" href="https://www.tiktok.com/@s.flowerbloom" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="12" fill="#111"/><path fill="#fff" d="M16.6 5.8c-.7-.8-1.1-1.8-1.1-2.8h-2.9v12.2a2.5 2.5 0 1 1-2.5-2.5c.3 0 .5 0 .7.1V9.9a5.4 5.4 0 1 0 4.7 5.3V9.3c1.1.8 2.4 1.2 3.7 1.2V7.6c-1.2 0-2.1-.7-2.6-1.8z" transform="translate(-1.5 .5) scale(.94)"/></svg>
+        <span>TikTok</span>
+      </a>
+      <a class="dt-contact-btn" href="tel:0646103853">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="12" fill="#34A853"/><path fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" transform="translate(4.8 4.8) scale(.6)" d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        <span>โทร 064-610-3853</span>
+      </a>
+    </div>
+  </div>
 </div>
 
 <script src="script.js" defer></script>
