@@ -660,24 +660,13 @@
 
                 <div>
                     <div class="p-3 sm:p-5 border-b border-slate-100/80 relative">
-                        <div class="flex items-center justify-between gap-2 mb-2 sm:mb-3">
-                            <div class="flex items-center gap-2 md:gap-3 flex-wrap">
-                                <!-- Print Selection Checkbox -->
-                                <label title="เลือกพิมพ์ใบสั่งงาน" class="flex items-center gap-1.5 text-xs font-medium text-slate-500 cursor-pointer bg-slate-100 hover:bg-slate-200 md:bg-transparent md:hover:bg-transparent px-2.5 py-2 md:px-0 md:py-0 rounded-lg">
-                                    <input type="checkbox" :value="order.id" v-model="selectedForPrint" class="rounded text-pink-600 focus:ring-pink-500 w-5 h-5 md:w-4 md:h-4 cursor-pointer">
-                                    <span class="hidden md:inline">เลือกพิมพ์</span>
-                                </label>
-                                <!-- Type -->
-                                <span v-if="order.deliveryType === 'shipping'" class="inline-flex items-center gap-1.5 text-xs font-semibold text-sky-700 bg-sky-50 border border-sky-100 px-2.5 py-1.5 rounded-full md:bg-transparent md:border-0 md:p-0">
-                                    <i class="fa-solid fa-truck-fast"></i> จัดส่งพัสดุ
-                                </span>
-                                <span v-else class="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-700 bg-indigo-50 border border-indigo-100 px-2.5 py-1.5 rounded-full md:bg-transparent md:border-0 md:p-0">
-                                    <i class="fa-solid fa-store"></i> นัดรับ
-                                </span>
-                                <!-- Payment status badge -->
-                                <button v-if="paymentBadge(order)" type="button" @click="openQuickEdit('payment', order)" :title="'บันทึกการชำระเงิน'" class="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-1 rounded-full border" :class="paymentBadge(order).cls">{{ paymentBadge(order).text }}</button>
-                            </div>
-                            <select :value="order.status" @change="handleStatusChange(order, $event)" class="text-xs font-bold px-2 py-2 rounded-lg border focus:outline-none cursor-pointer transition-colors shadow-sm shrink-0" :class="getStatusClass(order.status)">
+                        <!-- LEVEL 1: customer + status -->
+                        <div class="flex items-start justify-between gap-2">
+                            <h2 class="min-w-0 flex-1 text-base sm:text-lg font-bold text-slate-900 leading-snug">
+                                <span class="block truncate">{{ order.customerName }}</span>
+                                <span v-if="order.queueNo || order.orderNo" class="block text-[11px] font-medium text-slate-400 mt-0.5">ออเดอร์ที่ {{ order.orderNo || '-' }} / คิวที่ {{ order.queueNo || '-' }}</span>
+                            </h2>
+                            <select :value="order.status" @change="handleStatusChange(order, $event)" class="text-sm font-bold px-2.5 py-2 rounded-lg border focus:outline-none cursor-pointer transition-colors shadow-sm shrink-0" :class="getStatusClass(order.status)">
                                 <option value="pending">🟡 รอดำเนินการ</option>
                                 <option value="in_progress">🔵 กำลังทำสินค้า</option>
                                 <option value="ready">🟣 พร้อมส่ง/รับ</option>
@@ -685,8 +674,45 @@
                                 <option value="cancelled">🔴 ยกเลิก</option>
                             </select>
                         </div>
+                        <!-- chips: type / payment / phone -->
+                        <div class="flex items-center gap-2 flex-wrap mt-2">
+                                <span v-if="order.deliveryType === 'shipping'" class="inline-flex items-center gap-1.5 text-xs font-semibold text-sky-700 bg-sky-50 border border-sky-100 px-2.5 py-1.5 rounded-full">
+                                    <i class="fa-solid fa-truck-fast"></i> จัดส่งพัสดุ
+                                </span>
+                                <span v-else class="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-700 bg-indigo-50 border border-indigo-100 px-2.5 py-1.5 rounded-full">
+                                    <i class="fa-solid fa-store"></i> นัดรับ
+                                </span>
+                                <button v-if="paymentBadge(order)" type="button" @click="openQuickEdit('payment', order)" :title="'บันทึกการชำระเงิน'" class="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-1 rounded-full border" :class="paymentBadge(order).cls">{{ paymentBadge(order).text }}</button>
+                            <span class="flex items-center gap-1">
+                                <a v-if="order.customerPhone" :href="'tel:' + order.customerPhone" title="กดเพื่อโทรออก" class="text-xs font-medium text-pink-600 hover:text-pink-700 flex items-center gap-1 py-1"><i class="fa-solid fa-phone text-[10px]"></i>{{ order.customerPhone }}</a>
+                                <button v-if="order.customerPhone" type="button" @click="openQuickEdit('phone', order)" title="แก้เบอร์โทร" class="w-8 h-8 md:w-7 md:h-7 shrink-0 rounded-lg text-slate-400 hover:bg-slate-100 active:bg-slate-200 flex items-center justify-center"><i class="fa-solid fa-pen text-[10px]"></i></button>
+                                <button v-else-if="!isFinishedStatus(order.status)" type="button" @click="openQuickEdit('phone', order)" class="text-xs font-semibold text-pink-600 hover:underline py-1">＋ เพิ่มเบอร์โทร</button>
+                            </span>
+                        </div>
+                        <div class="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                            <div class="min-w-0">
+                                <div class="text-[11px] text-slate-400 leading-tight">กำหนดส่ง/นัดรับ</div>
+                                <div class="flex items-center gap-1.5 flex-wrap mt-0.5">
+                                    <span v-if="order.deliveryDate || isFinishedStatus(order.status)" class="text-base font-bold text-slate-900">{{ deliveryLabel(order.deliveryDate) }}{{ timeSuffix(order) }}</span>
+                                    <button v-else type="button" @click="openQuickEdit('date', order)" class="text-xs font-medium text-pink-600 px-2.5 py-1.5 rounded-lg border border-dashed border-pink-300 bg-pink-50/40 active:bg-pink-100">＋ ระบุวันส่ง</button>
+                                    <button v-if="order.deliveryDate && !isFinishedStatus(order.status)" type="button" @click="openQuickEdit('date', order)" title="เลื่อน/แก้วันส่ง" class="w-7 h-7 rounded-lg bg-slate-100 active:bg-slate-200 text-slate-500 flex items-center justify-center"><i class="fa-solid fa-pen text-[10px]"></i></button>
+                                    <button v-if="order.deliveryType === 'pickup' && order.deliveryDate && !order.deliveryTime && !isFinishedStatus(order.status)" type="button" @click="openQuickEdit('date', order)" class="text-[11px] font-medium text-indigo-600 px-2 py-0.5 rounded-full border border-dashed border-indigo-300 bg-indigo-50/50 active:bg-indigo-100">＋ ระบุเวลา</button>
+                                    <span v-if="urgencyChip(order)" :class="urgencyChip(order).cls" class="px-2 py-0.5 rounded-full text-[11px] font-bold">{{ urgencyChip(order).text }}</span>
+                                    <span v-if="order.notes && !isExpanded(order)" class="md:hidden px-1.5 py-0.5 rounded-full text-[11px] text-amber-700 bg-amber-50 border border-amber-100">📌 มีหมายเหตุ</span>
+                                </div>
+                            </div>
+                            <button type="button" :disabled="order.status === 'cancelled'" @click="openQuickEdit('payment', order)" title="บันทึกการชำระเงิน" class="text-right shrink-0 -m-1 p-1 rounded-lg active:bg-slate-100">
+                                <div v-if="order.status === 'cancelled'" class="text-sm font-bold text-slate-400">ยกเลิกแล้ว</div>
+                                <template v-else-if="getRemainingBalance(order) > 0">
+                                    <div class="text-[11px] text-slate-400 leading-tight">ค้างชำระ</div>
+                                    <div class="text-base font-bold text-rose-600">฿{{ formatNumber(getRemainingBalance(order)) }}</div>
+                                    <div class="text-[10px] text-pink-500 leading-tight">แตะเพื่อบันทึกชำระ</div>
+                                </template>
+                                <div v-else class="text-sm font-bold text-emerald-600">✓ ชำระครบแล้ว</div>
+                            </button>
+                        </div>
                         <!-- Progress Bar -->
-                        <div v-if="order.status !== 'cancelled'" :class="isExpanded(order) ? '' : 'hidden md:block'" class="mt-3 mb-3 px-1 relative">
+                        <div v-if="order.status !== 'cancelled'" :class="isExpanded(order) ? '' : 'hidden md:block'" class="mt-4 mb-1 px-1 relative">
                             <div class="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-slate-200/70 rounded-full z-0"></div>
                             <div class="absolute left-0 top-1/2 -translate-y-1/2 h-1 rounded-full z-0 transition-all duration-500 ease-out"
                                  :class="getProgressColor(order.status)"
@@ -698,18 +724,6 @@
                                 </div>
                             </div>
                         </div>
-                        <!-- Customer Name, Queue & Phone -->
-                        <h2 class="text-base sm:text-lg font-bold text-slate-900 flex items-center justify-between gap-2">
-                            <span class="min-w-0 flex items-baseline gap-2">
-                                <span class="truncate">{{ order.customerName }}</span>
-                                <span v-if="order.queueNo || order.orderNo" class="text-[11px] font-medium text-slate-400 shrink-0">ออเดอร์ที่ {{ order.orderNo || '-' }} / คิวที่ {{ order.queueNo || '-' }}</span>
-                            </span>
-                            <span class="flex items-center gap-1 shrink-0">
-                                <a v-if="order.customerPhone" :href="'tel:' + order.customerPhone" title="กดเพื่อโทรออก" class="text-xs font-medium text-pink-600 hover:text-pink-700 flex items-center gap-1 py-1"><i class="fa-solid fa-phone text-[10px]"></i>{{ order.customerPhone }}</a>
-                                <button v-if="order.customerPhone" type="button" @click="openQuickEdit('phone', order)" title="แก้เบอร์โทร" class="w-8 h-8 md:w-7 md:h-7 shrink-0 rounded-lg text-slate-400 hover:bg-slate-100 active:bg-slate-200 flex items-center justify-center"><i class="fa-solid fa-pen text-[10px]"></i></button>
-                                <button v-else-if="!isFinishedStatus(order.status)" type="button" @click="openQuickEdit('phone', order)" class="text-xs font-semibold text-pink-600 hover:underline py-1">＋ เพิ่มเบอร์โทร</button>
-                            </span>
-                        </h2>
                     </div>
                     <!-- Card Body -->
                     <div class="p-3 sm:p-5 space-y-3 sm:space-y-4 text-sm">
@@ -733,31 +747,6 @@
                                 </p>
                             </div>
                         </div>
-
-                        <!-- MOBILE summary (collapsed card) -->
-                        <div v-if="!isExpanded(order)" class="md:hidden flex items-center justify-between gap-2">
-                            <div class="min-w-0">
-                                <div class="text-[11px] text-slate-400 leading-tight">กำหนดส่ง/นัดรับ</div>
-                                <div class="flex items-center gap-1.5 flex-wrap mt-0.5">
-                                    <span v-if="order.deliveryDate || isFinishedStatus(order.status)" class="text-sm font-bold text-slate-800">{{ deliveryLabel(order.deliveryDate) }}{{ timeSuffix(order) }}</span>
-                                    <button v-else type="button" @click="openQuickEdit('date', order)" class="text-xs font-medium text-pink-600 px-2.5 py-1.5 rounded-lg border border-dashed border-pink-300 bg-pink-50/40 active:bg-pink-100">＋ ระบุวันส่ง</button>
-                                    <button v-if="order.deliveryDate && !isFinishedStatus(order.status)" type="button" @click="openQuickEdit('date', order)" title="เลื่อน/แก้วันส่ง" class="w-7 h-7 rounded-lg bg-slate-100 active:bg-slate-200 text-slate-500 flex items-center justify-center"><i class="fa-solid fa-pen text-[10px]"></i></button>
-                                    <button v-if="order.deliveryType === 'pickup' && order.deliveryDate && !order.deliveryTime && !isFinishedStatus(order.status)" type="button" @click="openQuickEdit('date', order)" class="text-[11px] font-medium text-indigo-600 px-2 py-0.5 rounded-full border border-dashed border-indigo-300 bg-indigo-50/50 active:bg-indigo-100">＋ ระบุเวลา</button>
-                                    <span v-if="urgencyChip(order)" :class="urgencyChip(order).cls" class="px-2 py-0.5 rounded-full text-[11px] font-bold">{{ urgencyChip(order).text }}</span>
-                                    <span v-if="order.notes" class="px-1.5 py-0.5 rounded-full text-[11px] text-amber-700 bg-amber-50 border border-amber-100">📌 มีหมายเหตุ</span>
-                                </div>
-                            </div>
-                            <button type="button" :disabled="order.status === 'cancelled'" @click="openQuickEdit('payment', order)" title="บันทึกการชำระเงิน" class="text-right shrink-0 -m-1 p-1 rounded-lg active:bg-slate-100">
-                                <div v-if="order.status === 'cancelled'" class="text-sm font-bold text-slate-400">ยกเลิกแล้ว</div>
-                                <template v-else-if="getRemainingBalance(order) > 0">
-                                    <div class="text-[11px] text-slate-400 leading-tight">ค้างชำระ</div>
-                                    <div class="text-base font-bold text-rose-600">฿{{ formatNumber(getRemainingBalance(order)) }}</div>
-                                    <div class="text-[10px] text-pink-500 leading-tight">แตะเพื่อบันทึกชำระ</div>
-                                </template>
-                                <div v-else class="text-sm font-bold text-emerald-600">✓ ชำระครบแล้ว</div>
-                            </button>
-                        </div>
-
                         <button v-if="!isExpanded(order) && order.deliveryType === 'shipping' && !order.location && !isFinishedStatus(order.status)" type="button" @click="openQuickEdit('address', order)" class="md:hidden w-full py-2.5 text-xs font-medium text-pink-600 rounded-lg border border-dashed border-pink-300 bg-pink-50/40 active:bg-pink-100">＋ เพิ่มที่อยู่จัดส่ง</button>
 
                         <!-- MOBILE quick actions (collapsed card): tracking / map -->
@@ -773,23 +762,6 @@
                             <i class="fa-solid fa-diamond-turn-right"></i>
                             <span>เปิดแผนที่ Google Maps</span>
                         </a>
-
-                        <!-- Dates -->
-                        <div :class="isExpanded(order) ? '' : 'hidden md:grid'" class="grid grid-cols-2 gap-2 text-xs">
-                            <div class="py-1 min-w-0">
-                                <span class="text-slate-400 block mb-0.5">วันที่สั่ง</span>
-                                <span class="font-medium text-slate-700">{{ formatDate(order.orderDate) }}</span>
-                            </div>
-                            <div class="p-2.5 rounded-lg border transition-all"
-                                 :class="getDeliveryUrgency(order).type === 'overdue' && order.status !== 'completed' ? 'bg-rose-600 text-white border-rose-700 shadow-sm' : (getDeliveryUrgency(order).type === 'today' && order.status !== 'completed' ? 'bg-amber-400 text-slate-950 border-amber-500 font-bold shadow-sm' : 'bg-amber-50/70 border-amber-200 text-amber-900')">
-                                <span class="block mb-0.5 text-[11px] font-medium" :class="getDeliveryUrgency(order).type === 'overdue' && order.status !== 'completed' ? 'text-rose-100' : 'opacity-80'">กำหนดส่ง/นัดรับ</span>
-                                <span class="flex items-center justify-between gap-2">
-                                    <span class="font-bold text-sm">{{ deliveryLabel(order.deliveryDate) }}{{ timeSuffix(order) }}</span>
-                                    <button v-if="!isFinishedStatus(order.status)" type="button" @click="openQuickEdit('date', order)" title="ตั้ง/แก้วันส่ง" class="w-7 h-7 -my-1 rounded-lg bg-black/10 hover:bg-black/20 flex items-center justify-center"><i class="fa-solid fa-pen text-[10px]"></i></button>
-                                </span>
-                                <button v-if="order.deliveryType === 'pickup' && order.deliveryDate && !order.deliveryTime && !isFinishedStatus(order.status)" type="button" @click="openQuickEdit('date', order)" class="hidden md:inline-block mt-1 text-[11px] font-medium underline opacity-80 hover:opacity-100">＋ ระบุเวลานัดรับ</button>
-                            </div>
-                        </div>
                         <!-- PARCEL SHIPPING DISPLAY -->
                         <div v-if="order.deliveryType === 'shipping'" :class="isExpanded(order) ? '' : 'hidden md:block'" class="border-t border-slate-100 pt-3 text-xs space-y-1.5">
                             <div class="flex items-center justify-between gap-2">
@@ -851,6 +823,14 @@
                             <div v-if="order.status !== 'cancelled'" class="flex justify-end mt-1">
                                 <button type="button" @click="openQuickEdit('payment', order)" :class="getRemainingBalance(order) > 0 ? 'text-emerald-700' : 'text-slate-500'" class="text-xs font-semibold hover:underline py-1.5 md:py-1"><i class="fa-solid fa-money-bill-transfer mr-1"></i>บันทึกการชำระเงิน</button>
                             </div>
+                        </div>
+                        <!-- LEVEL 4: meta -->
+                        <div class="flex items-center justify-between gap-2 text-[11px] text-slate-400 border-t border-slate-100 pt-2">
+                            <span>วันที่สั่ง <span class="font-medium text-slate-600">{{ formatDate(order.orderDate) }}</span></span>
+                                <label title="เลือกพิมพ์ใบสั่งงาน" class="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-500 cursor-pointer py-1">
+                                    <input type="checkbox" :value="order.id" v-model="selectedForPrint" class="rounded text-pink-600 focus:ring-pink-500 w-5 h-5 md:w-4 md:h-4 cursor-pointer">
+                                    <span>เลือกพิมพ์</span>
+                                </label>
                         </div>
                         <button @click="toggleExpand(order)" class="md:hidden w-full py-2 text-xs font-semibold text-slate-500 flex items-center justify-center gap-1.5 border-t border-slate-200/60">
                             <span>{{ isExpanded(order) ? 'ซ่อนรายละเอียด' : 'ดูรายละเอียด' }}</span>
