@@ -1,13 +1,29 @@
 <!DOCTYPE html>
+<!-- สวิตช์หน้าร้าน (ตั้งค่าที่คลาสของ <html> ด้านล่าง):
+     prices-hidden = ซ่อนราคาทั้งเว็บ | orders-closed = ปิดรับออเดอร์/ตะกร้า
+     ลบคลาสออกเพื่อเปิดใช้งานปกติ (อาจถูก script.js ปรับตามค่าจาก Firebase) -->
 <html lang="th" class="prices-hidden orders-closed">
 <head>
+<!-- ============================================================
+     HEAD
+     1) พื้นฐาน  2) ไอคอน/manifest  3) แชร์โซเชียล (OG/Twitter)
+     4) ข้อมูลสำหรับ Google  5) ฟอนต์+CSS  6) สคริปต์ที่ต้องโหลดก่อน
+     ============================================================ -->
+
+<!-- 1) พื้นฐาน (charset ต้องอยู่บนสุดเสมอ) -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>S.Flower Bloom — แคตตาล็อกสินค้า</title>
 <meta name="description" content="S.Flower Bloom ร้านดอกไม้ออนไลน์ เลือกช่อดอกไม้ กรอบรูป กระถาง และของขวัญสำหรับโอกาสพิเศษ เลือกสินค้าแล้วสั่งซื้อง่ายๆ ผ่านแชท นัดรับหรือจัดส่งได้">
 <link rel="canonical" href="https://sflowerbloom.vercel.app/">
+<meta name="theme-color" content="#FFFDFC">
 
-<!-- Open Graph: ทำให้ลิงก์ที่แชร์ใน Facebook / LINE / Messenger มีรูปและคำอธิบายสวยๆ -->
+<!-- 2) ไอคอนเว็บ / manifest (เปลี่ยน ?v= เมื่ออัปเดตรูป เพื่อล้างแคช) -->
+<link rel="icon" type="image/png" sizes="192x192" href="images/favicon.png?v=2">
+<link rel="apple-touch-icon" sizes="180x180" href="images/apple-touch-icon.png?v=2">
+<link rel="manifest" href="site.webmanifest?v=2">
+
+<!-- 3) Open Graph: ทำให้ลิงก์ที่แชร์ใน Facebook / LINE / Messenger มีรูปและคำอธิบายสวยๆ -->
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="S.Flower Bloom">
 <meta property="og:title" content="S.Flower Bloom — แคตตาล็อกสินค้า">
@@ -22,19 +38,7 @@
 <meta name="twitter:description" content="เลือกช่อดอกไม้ กรอบรูป กระถาง และของขวัญสำหรับโอกาสพิเศษ สั่งซื้อง่ายผ่านแชท">
 <meta name="twitter:image" content="https://sflowerbloom.vercel.app/images/banner.jpg">
 
-<link rel="icon" type="image/png" sizes="192x192" href="images/favicon.png?v=2">
-<link rel="apple-touch-icon" sizes="180x180" href="images/apple-touch-icon.png?v=2">
-<link rel="manifest" href="site.webmanifest?v=2">
-<meta name="theme-color" content="#FFFDFC">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
-<script src="firebase-config.js"></script>
-
-<!-- Vercel Web Analytics (ใช้ได้เมื่อเปิด Analytics ใน Vercel Dashboard และ deploy บน Vercel) -->
-<script>window.va = window.va || function () { (window.va.q = window.va.q || []).push(arguments); };</script>
-<script defer src="/_vercel/insights/script.js"></script>
-<!-- JSON-LD: ช่วยให้ Google เข้าใจว่านี่คือหน้าร้านค้า -->
+<!-- 4) JSON-LD: ช่วยให้ Google เข้าใจว่านี่คือหน้าร้านค้า -->
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -46,8 +50,43 @@
   "priceRange": "฿฿"
 }
 </script>
+
+<!-- 5) ฟอนต์ + สไตล์ (ฟอนต์ต้องมาก่อน style.css) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@200;300;400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+
+<!-- 6) สคริปต์ที่ต้องโหลดก่อน script.js (ท้าย body)
+     - firebase-config.js ต้องเป็นสคริปต์ปกติ (ไม่ใส่ defer) เพื่อให้ config พร้อมก่อน script.js ทำงาน
+     - Vercel Analytics: ใช้ได้เมื่อเปิด Analytics ใน Vercel Dashboard และ deploy บน Vercel -->
+<script src="firebase-config.js"></script>
+<script>window.va = window.va || function () { (window.va.q = window.va.q || []).push(arguments); };</script>
+<script defer src="/_vercel/insights/script.js"></script>
 </head>
 <body>
+<!-- ============================================================
+     สารบัญ <body>  (ลำดับ element ในหน้าไม่ได้ถูกสลับ เพื่อไม่ให้ CSS/JS เดิมเพี้ยน)
+       0. ไอคอน SVG (sprite)
+       1. แถบบน: โลโก้ · เมนูคอม · ค้นหา · ตะกร้า · ปุ่มเมนูมือถือ
+       2. หัวเว็บ + ส่วนแบนเนอร์/รีวิว (hero)
+       3. หน้าต่างรีวิว · popup โปรโมชัน · lightbox รูปรีวิว
+       4. ข้อความแจ้งเตือนปิดราคา / ปิดรับออเดอร์
+       5. แคตตาล็อกสินค้า + ตัวกรอง
+       6. ตะกร้า (drawer) · toast · ปุ่มลอย
+       7. หน้ารายละเอียดสินค้า
+       8. FAQ + ฟุตเตอร์
+       9. สรุปคำสั่งซื้อ (modal)
+      10. หน้าต่างข้อมูล (วิธีสั่งซื้อ / ติดต่อเรา)
+     กฎสำคัญ: script.js อ้างอิง id, class และชื่อฟังก์ชันใน onclick ทั้งหมดในไฟล์นี้
+     ห้ามเปลี่ยนชื่อ/ลบ โดยไม่แก้ script.js และ style.css ให้ตรงกัน
+     ============================================================ -->
+
+<!-- ============================================================
+     0. ไอคอน SVG (sprite)
+     ใช้ผ่าน <use href="#i-ชื่อ"> — ไอคอนที่ไม่เห็นใช้ในไฟล์นี้ (i-alert, i-banknote, i-bolt, i-clock, i-download,
+     i-heart, i-palette, i-receipt, i-ruler, i-search, i-star, i-upload, i-user) อาจถูก script.js เรียกใช้ จึงเก็บไว้ทั้งหมด
+     ============================================================ -->
 <!-- ไอคอน SVG ชุดเดียว (เส้นบาง สีตามธีม) แทนอีโมจิ -->
 <svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
 <symbol id="i-bag" viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></symbol>
@@ -79,6 +118,9 @@
 </svg>
 
 
+<!-- ============================================================
+     1. แถบบน (sticky): โลโก้ · เมนูหลักจอคอม · ค้นหา · ทักแชท · ตะกร้า · ปุ่มเมนูมือถือ
+     ============================================================ -->
 <div class="search-cart-bar" id="searchCartBar">
   <div class="brand-mark" onclick="brandTap()">
     <img id="brandLogo" src="images/logo.png?v=2" alt="โลโก้ร้าน" onerror="this.parentElement.innerHTML='<svg viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot;><path d=&quot;M12 2c1.5 2 1.5 4 0 6-1.5-2-1.5-4 0-6z&quot; fill=&quot;#F0568C&quot;/><path d=&quot;M12 22c-3-3-6-6-6-10a6 6 0 0112 0c0 4-3 7-6 10z&quot; fill=&quot;#F0568C&quot; opacity=&quot;0.9&quot;/></svg>'">
@@ -121,6 +163,9 @@
   </button>
   <button type="button" class="menu-btn" id="menuBtn" onclick="toggleFilterSheet()" aria-label="เมนู หมวดหมู่และตัวกรองสินค้า" aria-expanded="false" aria-controls="filterSheet"><svg class="ic-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg><svg class="ic-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg><span class="menu-badge" id="menuBadge" hidden></span></button>
 </div>
+<!-- ============================================================
+     2. หัวเว็บ + แบนเนอร์/รีวิว (hero)
+     ============================================================ -->
 <header class="top">
   <div class="brand-row">
     <h1 id="brandH1">S.Flower Bloom</h1>
@@ -130,8 +175,25 @@
 
 <!-- แถวบนสุด: แบนเนอร์ (ซ้าย) + รีวิวจากลูกค้า (ขวา, เฉพาะจอคอมกว้าง) — มือถือ/จอแคบเรียงต่อกันตามปกติ -->
 <div class="hero-row" id="heroRow">
-  <section class="hero-banner" id="heroBanner" aria-label="แบนเนอร์ร้าน">
-    <img src="images/banner.jpg" width="1891" height="831" alt="S.Flower Bloom" fetchpriority="high" decoding="async" onerror="this.parentNode.hidden=true; this.parentNode.parentNode.classList.add('no-banner')">
+  <!-- แบนเนอร์จอคอม (ซ้าย: ข้อความ / ขวา: รูปสินค้า+รีวิวของสินค้านั้น เฟดสลับ ซูมช้าๆ) — มือถือซ่อน · สร้างสไลด์จาก dtHeroInit() ใน script.js -->
+  <section class="dt-hero" id="dtHero" aria-label="S.Flower Bloom" hidden>
+    <div class="dt-hero-in">
+      <div class="dt-hero-copy">
+        <h2 class="dt-hero-title">งานแฮนด์เมดจากลวดกำมะหยี่</h2>
+        <p class="dt-hero-sub dt-hero-sub-1">ช่อดอกไม้ · กรอบรูป · กระถางดอกไม้</p>
+        <p class="dt-hero-sub dt-hero-sub-2">ของขวัญสำหรับวันเกิด วันครบรอบ<br>รับปริญญา และคนพิเศษ</p>
+        <p class="dt-hero-sub dt-hero-sub-m">เก็บไว้ได้นาน มอบได้ทุกโอกาสของความสุข</p>
+        <div class="dt-hero-chips">
+          <span class="dt-hero-chip dt-hero-chip-main"><svg class="ic" aria-hidden="true"><use href="#i-truck"/></svg><span>ลูกค้านครสวรรค์ส่งฟรี<small class="dt-hero-chip-note">เมื่อสั่งซื้อ <b class="js-free-min">399</b> บาทขึ้นไป</small></span></span>
+          <span class="dt-hero-chip"><svg class="ic" aria-hidden="true"><use href="#i-package"/></svg><span>มีบริการส่งทั่วประเทศ</span></span>
+        </div>
+        <button type="button" class="dt-hero-cta" onclick="dtAllProducts()">เลือกดูสินค้า</button>
+      </div>
+      <div class="dt-hero-stage" id="dtHeroStage">
+        <div class="dt-hero-card"><div class="dt-hero-slides" id="dtHeroSlides"></div></div>
+        <div class="dt-hero-rvs" id="dtHeroRvs"></div>
+      </div>
+    </div>
   </section>
 
   <section class="reviews-section" id="reviewsSection" hidden>
@@ -147,6 +209,9 @@
     </div>
   </section>
 </div>
+<!-- ============================================================
+     3. หน้าต่างลอย: รีวิวทั้งหมด · popup โปรโมชัน · lightbox รูปรีวิว
+     ============================================================ -->
 <div class="overlay" id="reviewsAllOverlay" onclick="closeReviewsAll()"></div>
 <div class="reviews-all-modal" id="reviewsAllModal">
   <span class="sheet-handle" aria-hidden="true"></span>
@@ -182,6 +247,9 @@
   <div class="review-lightbox-counter" id="reviewLightboxCounter"></div>
 </div>
 
+<!-- ============================================================
+     4. ข้อความแจ้งเตือนตามสถานะร้าน (ควบคุมด้วยคลาสบน <html>)
+     ============================================================ -->
 <!-- ข้อความตอนปิดราคา (แสดงเฉพาะเมื่อ <html> มีคลาส prices-hidden) -->
 <div class="price-notice" id="priceNotice" role="note">
   <span class="pn-ico" aria-hidden="true"><svg class="ic" aria-hidden="true"><use href="#i-camera"/></svg></span>
@@ -196,6 +264,9 @@
   <a class="pn-btn" href="https://m.me/S.Flower.Bloom44" target="_blank" rel="noopener"><svg class="ic" aria-hidden="true"><use href="#i-chat"/></svg> ทักเพจ</a>
 </div>
 
+<!-- ============================================================
+     5. แคตตาล็อกสินค้า: แถบหมวด · ชิปตัวกรอง · รายการสินค้า · แผงตัวกรองมือถือ
+     ============================================================ -->
 <nav class="cat-nav" id="catNav"></nav>
 
 <!-- ชิปตัวกรองที่เลือกอยู่ (มือถือ) — ตัวเลือกหมวด/พร้อมส่ง/เรียง/ตัวกรองอื่น อยู่ในแผง "หมวดหมู่" ของแถบล่าง -->
@@ -208,7 +279,14 @@
   <main id="catalog">
     <div class="catalog-loading-msg" style="text-align:center; padding:60px 20px; color:var(--rose-dark);">กำลังโหลดสินค้า...</div>
     <!-- โครงการ์ดระหว่างรอโหลด: แสดงเฉพาะมือถือ (CSS) — พอโหลดเสร็จ renderCatalog() จะแทนที่ทั้งหมดเอง -->
-    <div class="grid catalog-skeleton" aria-hidden="true"><div class="skel-card"><div class="skel-thumb"></div><div class="skel-line w80"></div><div class="skel-line w50"></div></div><div class="skel-card"><div class="skel-thumb"></div><div class="skel-line w80"></div><div class="skel-line w50"></div></div><div class="skel-card"><div class="skel-thumb"></div><div class="skel-line w80"></div><div class="skel-line w50"></div></div><div class="skel-card"><div class="skel-thumb"></div><div class="skel-line w80"></div><div class="skel-line w50"></div></div><div class="skel-card"><div class="skel-thumb"></div><div class="skel-line w80"></div><div class="skel-line w50"></div></div><div class="skel-card"><div class="skel-thumb"></div><div class="skel-line w80"></div><div class="skel-line w50"></div></div></div>
+    <div class="grid catalog-skeleton" aria-hidden="true">
+      <div class="skel-card"><div class="skel-thumb"></div><div class="skel-line w80"></div><div class="skel-line w50"></div></div>
+      <div class="skel-card"><div class="skel-thumb"></div><div class="skel-line w80"></div><div class="skel-line w50"></div></div>
+      <div class="skel-card"><div class="skel-thumb"></div><div class="skel-line w80"></div><div class="skel-line w50"></div></div>
+      <div class="skel-card"><div class="skel-thumb"></div><div class="skel-line w80"></div><div class="skel-line w50"></div></div>
+      <div class="skel-card"><div class="skel-thumb"></div><div class="skel-line w80"></div><div class="skel-line w50"></div></div>
+      <div class="skel-card"><div class="skel-thumb"></div><div class="skel-line w80"></div><div class="skel-line w50"></div></div>
+    </div>
   </main>
 </div>
 
@@ -225,13 +303,16 @@
   </div>
 </div>
 
+<!-- ============================================================
+     6. ตะกร้า (drawer) · toast · ปุ่มลอย (ตะกร้า/กลับขึ้นบน)
+     ============================================================ -->
 <div class="overlay" id="overlay" onclick="closeCart()"></div>
 <aside class="drawer" id="drawer">
   <div class="drawer-head">
     <h3>ตะกร้าสินค้า</h3>
     <div style="display:flex; align-items:center; gap:14px;">
       <button class="clear-cart-btn" onclick="clearCart()">ล้างตะกร้า</button>
-      <button onclick="closeCart()">✕</button>
+      <button onclick="closeCart()" aria-label="ปิดตะกร้า">✕</button>
     </div>
   </div>
   <div class="drawer-items" id="drawerItems"></div>
@@ -256,6 +337,9 @@
 
 <button type="button" class="to-top" id="toTopBtn" aria-label="กลับขึ้นบน"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m18 15-6-6-6 6"/></svg></button>
 
+<!-- ============================================================
+     7. หน้ารายละเอียดสินค้า (เปิดทับหน้าแคตตาล็อก)
+     ============================================================ -->
 <div class="product-page" id="productModal">
   <div class="product-page-scroll" id="productPageScroll">
     <!-- แถบบน (จอคอมเท่านั้น): กลับ · เส้นทางหน้า · ตะกร้า -->
@@ -265,79 +349,79 @@
       <button type="button" class="pd-cart" id="pdCartBtn" onclick="openCart()" aria-label="เปิดตะกร้าสินค้า"><svg class="ic" aria-hidden="true"><use href="#i-bag"/></svg> <span>ตะกร้า</span><b class="pd-cart-count is-zero" id="pdCartCount">0</b></button>
     </div>
     <div class="pd-layout" id="pdLayout">
-    <button type="button" class="pd-close" onclick="closeProductModal()" aria-label="ปิด">✕</button>
-    <div class="page-gallery" id="pageGallery">
-      <div class="gallery-thumbs" id="galleryThumbs"></div>
-      <div class="page-media">
-        <button class="page-back-btn" onclick="closeProductModal()" aria-label="กลับ">←</button>
-        <div class="page-img" id="modalImg"></div>
-        <button type="button" class="pd-heart-img" id="modalFavHeartImg" onclick="toggleModalFavorite()" aria-label="บันทึกไว้ในรายการโปรด">♡</button>
-        <div class="pd-img-badges" id="modalImgBadges"></div>
-        <span class="pd-review-tag" id="modalReviewTag" hidden><svg class="ic" aria-hidden="true"><use href="#i-camera"/></svg> รีวิวจากลูกค้า</span>
-      </div>
-    </div>
-    <div class="page-body">
-      <div class="pd-toprow">
-        <span class="pd-cat" id="modalCat"></span>
-        <div id="modalBadges" style="margin-bottom:8px;"></div>
-      </div>
-      <div class="pd-title-row" style="display:flex; align-items:flex-start; justify-content:space-between; gap:10px;">
-        <h3 id="modalName" style="margin:0 0 8px;"></h3>
-        <button type="button" class="fav-heart-inline" id="modalFavHeart" onclick="toggleModalFavorite()" aria-label="บันทึกไว้ในรายการโปรด">♡</button>
-      </div>
-      <p class="modal-desc" id="modalDesc"></p>
-      <div class="pd-opts">
-        <div class="color-row" id="modalColors"></div>
-        <div class="color-row" id="modalSizes"></div>
-        <div class="color-row" id="modalAddons" style="display:none;"></div>
-        <div id="modalOptionGroups"></div>
-      </div>
-      <div class="modal-qty" id="modalBillsRow" style="display:none;">
-        <span>จำนวนธนบัตร (ใบ)</span>
-        <div class="qty-ctrl">
-          <button onclick="changeModalBills(-1)">−</button>
-          <span id="modalBills">1</span>
-          <button onclick="changeModalBills(1)">+</button>
+      <button type="button" class="pd-close" onclick="closeProductModal()" aria-label="ปิด">✕</button>
+      <div class="page-gallery" id="pageGallery">
+        <div class="gallery-thumbs" id="galleryThumbs"></div>
+        <div class="page-media">
+          <button class="page-back-btn" onclick="closeProductModal()" aria-label="กลับ">←</button>
+          <div class="page-img" id="modalImg"></div>
+          <button type="button" class="pd-heart-img" id="modalFavHeartImg" onclick="toggleModalFavorite()" aria-label="บันทึกไว้ในรายการโปรด">♡</button>
+          <div class="pd-img-badges" id="modalImgBadges"></div>
+          <span class="pd-review-tag" id="modalReviewTag" hidden><svg class="ic" aria-hidden="true"><use href="#i-camera"/></svg> รีวิวจากลูกค้า</span>
         </div>
       </div>
-      <div class="modal-price" id="modalPrice"></div>
-      <!-- ตอนปิดระบบสั่งทำ/ตะกร้า (ยังแสดงราคา): อยู่ใต้ราคา แทนปุ่มใส่ตะกร้า/สั่งทำสินค้า -->
-      <div class="order-closed-box" id="orderClosedBox">
-        <div class="price-ask-text"><svg class="ic" aria-hidden="true"><use href="#i-camera"/></svg> <b>แคปหน้าจอนี้</b> แล้วส่งให้เพจได้เลยค่ะ</div>
-        <a class="price-ask-btn" href="https://m.me/S.Flower.Bloom44" target="_blank" rel="noopener"><svg class="ic" aria-hidden="true"><use href="#i-chat"/></svg> ทักเพจสั่งทำ/สอบถาม</a>
-      </div>
-      <hr class="pd-hr pd-hr-1">
-      <div class="modal-qty">
-        <span>จำนวนช่อ</span>
-        <div class="qty-ctrl">
-          <button onclick="changeModalQty(-1)">−</button>
-          <span id="modalQty">1</span>
-          <button onclick="changeModalQty(1)">+</button>
+      <div class="page-body">
+        <div class="pd-toprow">
+          <span class="pd-cat" id="modalCat"></span>
+          <div id="modalBadges" style="margin-bottom:8px;"></div>
         </div>
-      </div>
-      <hr class="pd-hr pd-hr-2">
-      <div class="modal-actions modal-actions-mobile">
-        <div class="mab-info" id="mabInfo"></div>
-        <div class="mab-btns">
-          <button class="add-btn secondary icon-only" onclick="addModalToCart()" aria-label="ใส่ตะกร้า"><svg class="ic" aria-hidden="true"><use href="#i-bag"/></svg></button>
+        <div class="pd-title-row" style="display:flex; align-items:flex-start; justify-content:space-between; gap:10px;">
+          <h3 id="modalName" style="margin:0 0 8px;"></h3>
+          <button type="button" class="fav-heart-inline" id="modalFavHeart" onclick="toggleModalFavorite()" aria-label="บันทึกไว้ในรายการโปรด">♡</button>
+        </div>
+        <p class="modal-desc" id="modalDesc"></p>
+        <div class="pd-opts">
+          <div class="color-row" id="modalColors"></div>
+          <div class="color-row" id="modalSizes"></div>
+          <div class="color-row" id="modalAddons" style="display:none;"></div>
+          <div id="modalOptionGroups"></div>
+        </div>
+        <div class="modal-qty" id="modalBillsRow" style="display:none;">
+          <span>จำนวนธนบัตร (ใบ)</span>
+          <div class="qty-ctrl">
+            <button onclick="changeModalBills(-1)" aria-label="ลดจำนวนธนบัตร">−</button>
+            <span id="modalBills">1</span>
+            <button onclick="changeModalBills(1)" aria-label="เพิ่มจำนวนธนบัตร">+</button>
+          </div>
+        </div>
+        <div class="modal-price" id="modalPrice"></div>
+        <!-- ตอนปิดระบบสั่งทำ/ตะกร้า (ยังแสดงราคา): อยู่ใต้ราคา แทนปุ่มใส่ตะกร้า/สั่งทำสินค้า -->
+        <div class="order-closed-box" id="orderClosedBox">
+          <div class="price-ask-text"><svg class="ic" aria-hidden="true"><use href="#i-camera"/></svg> <b>แคปหน้าจอนี้</b> แล้วส่งให้เพจได้เลยค่ะ</div>
+          <a class="price-ask-btn" href="https://m.me/S.Flower.Bloom44" target="_blank" rel="noopener"><svg class="ic" aria-hidden="true"><use href="#i-chat"/></svg> ทักเพจสั่งทำ/สอบถาม</a>
+        </div>
+        <hr class="pd-hr pd-hr-1">
+        <div class="modal-qty">
+          <span>จำนวนช่อ</span>
+          <div class="qty-ctrl">
+            <button onclick="changeModalQty(-1)" aria-label="ลดจำนวน">−</button>
+            <span id="modalQty">1</span>
+            <button onclick="changeModalQty(1)" aria-label="เพิ่มจำนวน">+</button>
+          </div>
+        </div>
+        <hr class="pd-hr pd-hr-2">
+        <div class="modal-actions modal-actions-mobile">
+          <div class="mab-info" id="mabInfo"></div>
+          <div class="mab-btns">
+            <button class="add-btn secondary icon-only" onclick="addModalToCart()" aria-label="ใส่ตะกร้า"><svg class="ic" aria-hidden="true"><use href="#i-bag"/></svg></button>
+            <button class="checkout-btn" onclick="startCheckout(buildModalOrderLines)">สั่งทำสินค้า</button>
+          </div>
+        </div>
+        <!-- มือถือ ตอนปิดระบบสั่งทำ/ตะกร้า (ยังแสดงราคา): แถบติดล่างแทนแถบสั่งซื้อ -->
+        <div class="order-closed-bar" id="orderClosedBar">
+          <div class="ocb-text"><svg class="ic" aria-hidden="true"><use href="#i-camera"/></svg> <b>ปิดรับออเดอร์ผ่านเว็บชั่วคราว</b><br>แคปหน้าจอนี้ส่งให้เพจได้เลยค่ะ</div>
+          <a class="ocb-btn" href="https://m.me/S.Flower.Bloom44" target="_blank" rel="noopener"><svg class="ic" aria-hidden="true"><use href="#i-chat"/></svg> ทักเพจ</a>
+        </div>
+        <div class="modal-actions modal-actions-desktop">
+          <button class="add-btn secondary" onclick="addModalToCart()"><svg class="ic" aria-hidden="true"><use href="#i-bag"/></svg> ใส่ตะกร้า</button>
           <button class="checkout-btn" onclick="startCheckout(buildModalOrderLines)">สั่งทำสินค้า</button>
         </div>
-      </div>
-      <!-- มือถือ ตอนปิดระบบสั่งทำ/ตะกร้า (ยังแสดงราคา): แถบติดล่างแทนแถบสั่งซื้อ -->
-      <div class="order-closed-bar" id="orderClosedBar">
-        <div class="ocb-text"><svg class="ic" aria-hidden="true"><use href="#i-camera"/></svg> <b>ปิดรับออเดอร์ผ่านเว็บชั่วคราว</b><br>แคปหน้าจอนี้ส่งให้เพจได้เลยค่ะ</div>
-        <a class="ocb-btn" href="https://m.me/S.Flower.Bloom44" target="_blank" rel="noopener"><svg class="ic" aria-hidden="true"><use href="#i-chat"/></svg> ทักเพจ</a>
-      </div>
-      <div class="modal-actions modal-actions-desktop">
-        <button class="add-btn secondary" onclick="addModalToCart()"><svg class="ic" aria-hidden="true"><use href="#i-bag"/></svg> ใส่ตะกร้า</button>
-        <button class="checkout-btn" onclick="startCheckout(buildModalOrderLines)">สั่งทำสินค้า</button>
-      </div>
-      <!-- ข้อมูลการสั่งซื้อ (จอคอมเท่านั้น) ตรงกับ FAQ ด้านล่างของหน้าเว็บ -->
-      <ul class="pd-info" aria-label="ข้อมูลการสั่งซื้อ">
-        <li><span class="pd-info-ic" aria-hidden="true"><svg class="ic" aria-hidden="true"><use href="#i-flower"/></svg></span><div><b>ทำตามออเดอร์</b><small>ใช้เวลาทำประมาณ 3–5 วัน</small></div></li>
-        <li><span class="pd-info-ic" aria-hidden="true"><svg class="ic" aria-hidden="true"><use href="#i-pin"/></svg></span><div><b>นัดรับได้</b><small>ในตัวเมืองนครสวรรค์ และอำเภอพยุหะคีรี</small></div></li>
-        <li><span class="pd-info-ic" aria-hidden="true"><svg class="ic" aria-hidden="true"><use href="#i-package"/></svg></span><div><b>ส่งพัสดุ EMS</b><small>ผ่านไปรษณีย์ไทย แพ็กอย่างรัดกุม</small></div></li>
-      </ul>
+        <!-- ข้อมูลการสั่งซื้อ (จอคอมเท่านั้น) ตรงกับ FAQ ด้านล่างของหน้าเว็บ -->
+        <ul class="pd-info" aria-label="ข้อมูลการสั่งซื้อ">
+          <li><span class="pd-info-ic" aria-hidden="true"><svg class="ic" aria-hidden="true"><use href="#i-flower"/></svg></span><div><b>ทำตามออเดอร์</b><small>ใช้เวลาทำประมาณ 3–5 วัน</small></div></li>
+          <li><span class="pd-info-ic" aria-hidden="true"><svg class="ic" aria-hidden="true"><use href="#i-pin"/></svg></span><div><b>นัดรับได้</b><small>ในตัวเมืองนครสวรรค์ และอำเภอพยุหะคีรี</small></div></li>
+          <li><span class="pd-info-ic" aria-hidden="true"><svg class="ic" aria-hidden="true"><use href="#i-package"/></svg></span><div><b>ส่งพัสดุ EMS</b><small>ผ่านไปรษณีย์ไทย แพ็กอย่างรัดกุม</small></div></li>
+        </ul>
     </div>
     </div>
     <!-- สินค้าแนะนำด้านล่างหน้าสินค้า (มือถือ 6 ชิ้น · จอคอม 8 ชิ้น) -->
@@ -350,6 +434,9 @@
   </div>
 </div>
 
+<!-- ============================================================
+     8. FAQ + ฟุตเตอร์
+     ============================================================ -->
 <section class="faq-section" id="faqSection">
   <h3 id="faqTitle">คำถามที่พบบ่อย (FAQ)</h3>
 
@@ -376,6 +463,9 @@
 
 <footer id="siteFooter">© S.Flower Bloom</footer>
 
+<!-- ============================================================
+     9. สรุปคำสั่งซื้อ (modal): ฟอร์ม → หน้าสำเร็จ
+     ============================================================ -->
 <div class="overlay" id="summaryOverlay" onclick="closeOrderSummary()"></div>
 <div class="order-modal" id="orderSummaryModal">
   <span class="sheet-handle" aria-hidden="true"></span>
@@ -457,6 +547,9 @@
   </div>
 </div>
 
+<!-- ============================================================
+     10. หน้าต่างข้อมูล (จอคอม): วิธีสั่งซื้อ / ติดต่อเรา
+     ============================================================ -->
 <!-- หน้าต่างเมนูที่ข้อมูลยังไม่พร้อม (จอคอม): วิธีการสั่งซื้อ / ติดต่อเรา -->
 <div class="dt-info-overlay" id="dtInfoOverlay"></div>
 <div class="dt-info-modal" id="dtInfoModal" role="dialog" aria-modal="true" aria-labelledby="dtInfoTitle">
@@ -523,6 +616,9 @@
   </div>
 </div>
 
+<!-- ============================================================
+     11. สคริปต์หลัก (defer = รันหลัง DOM พร้อม)
+     ============================================================ -->
 <script src="script.js" defer></script>
 
 </body>

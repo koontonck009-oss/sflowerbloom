@@ -1739,7 +1739,6 @@ function renderProductCard(p, variant, narrow){
       <div class="card-body">
         ${(!isSplit && hasProductOptions(p)) ? cardSwatchHtml(p, narrow) : ''}
         <h4>${displayName}</h4>
-        <p class="desc">${p.desc || ''}</p>
         <div class="price-row">
           <span class="price${PRICES_HIDDEN ? ' price-ask' : ''}">${priceHtml}</span>
         </div>
@@ -2083,9 +2082,9 @@ function drawCatalogPage(items, pageNo, pageCount, imgs, logo, summary){
     textX = lx + d + 20;
   }
   ctx.fillStyle = '#fff';
-  ctx.font = '400 42px Prompt, sans-serif';
+  ctx.font = '400 42px Kanit, sans-serif';
   ctx.fillText(SITE_SHOP_NAME, textX, 52);
-  ctx.font = '400 23px Prompt, sans-serif';
+  ctx.font = '400 23px Kanit, sans-serif';
   ctx.fillText(catalogFitOneLine(ctx, summary, W - textX - 44), textX, 88);
 
   // กริดสินค้า
@@ -2130,7 +2129,7 @@ function drawCatalogPage(items, pageNo, pageCount, imgs, logo, summary){
 
     // ป้าย พร้อมส่ง / ใหม่
     const drawBadge = (label, bx, by, bg, align, fg = '#fff') => {
-      ctx.font = '400 17px Prompt, sans-serif';
+      ctx.font = '400 17px Kanit, sans-serif';
       const tw = ctx.measureText(label).width, bw = tw + 20, bh = 29;
       const px = align === 'right' ? bx - bw : bx;
       ctx.fillStyle = bg; catalogRoundRect(ctx, px, by, bw, bh, 13); ctx.fill();
@@ -2142,13 +2141,13 @@ function drawCatalogPage(items, pageNo, pageCount, imgs, logo, summary){
     // ชื่อ + ราคา
     const tx = x + 10, tw2 = cellW - 20;
     ctx.fillStyle = PLUM;
-    ctx.font = '400 19px Prompt, sans-serif';
+    ctx.font = '400 19px Kanit, sans-serif';
     const lines = catalogWrapText(ctx, it.name, tw2, 2);
     lines.forEach((ln, li) => ctx.fillText(ln, tx, y + photoH + 21 + li * 20));
     ctx.fillStyle = PINK_DARK;
     let ps = 24;
-    ctx.font = `500 ${ps}px Prompt, sans-serif`;
-    while(ctx.measureText(it.price).width > tw2 && ps > 15){ ps -= 1; ctx.font = `500 ${ps}px Prompt, sans-serif`; }
+    ctx.font = `400 ${ps}px Kanit, sans-serif`;
+    while(ctx.measureText(it.price).width > tw2 && ps > 15){ ps -= 1; ctx.font = `400 ${ps}px Kanit, sans-serif`; }
     ctx.fillText(it.price, tx, y + cellH - 9);
   });
 
@@ -2166,7 +2165,7 @@ function drawCatalogPage(items, pageNo, pageCount, imgs, logo, summary){
   ];
   const noteTextX = PAD + 50, noteMaxW = W - PAD * 2 - 50 - 24;
   ctx.fillStyle = PLUM;
-  ctx.font = '400 23px Prompt, sans-serif';
+  ctx.font = '300 23px Kanit, sans-serif';
   noteLines.forEach((t, i) => {
     const by = noteY + 34 + i * 31;
     ctx.fillStyle = PINK;
@@ -2179,11 +2178,11 @@ function drawCatalogPage(items, pageNo, pageCount, imgs, logo, summary){
   const fy = H - FOOT_H;
   ctx.fillStyle = PINK_DARK; ctx.fillRect(0, fy, W, FOOT_H);
   ctx.fillStyle = '#fff';
-  ctx.font = '400 21px Prompt, sans-serif';
+  ctx.font = '400 21px Kanit, sans-serif';
   const chat = (typeof PAGE_LINK === 'string' ? PAGE_LINK.replace(/^https?:\/\//, '') : '');
   ctx.fillText('สั่งซื้อทักแชท Facebook: ' + chat, PAD, fy + 37);
   ctx.textAlign = 'right';
-  ctx.font = '400 21px Prompt, sans-serif';
+  ctx.font = '400 21px Kanit, sans-serif';
   ctx.fillText(`หน้า ${pageNo}/${pageCount}`, W - PAD, fy + 37);
   ctx.textAlign = 'left';
   return cv;
@@ -2296,9 +2295,9 @@ async function downloadCatalogImages(){
   const setLabel = t => { const b = document.getElementById('catalogDlBtn'); if(b){ b.disabled = true; b.textContent = t; } };
   try{
     setLabel('กำลังเตรียมรูป...');
-    // รอให้ฟอนต์ Prompt พร้อมก่อนวาด ไม่งั้น canvas จะใช้ฟอนต์สำรอง
+    // รอให้ฟอนต์ Kanit พร้อมก่อนวาด ไม่งั้น canvas จะใช้ฟอนต์สำรอง
     try{
-      await Promise.all(['400','500'].map(w => document.fonts.load(`${w} 24px Prompt`, 'กขค')));
+      await Promise.all(['300','400'].map(w => document.fonts.load(`${w} 24px Kanit`, 'กขค')));
     }catch(e){}
     const logo = await catalogLoadImage('images/logo.png?v=2');
     const summary = catalogFilterSummary();
@@ -3476,14 +3475,14 @@ function updateModalPriceDisplay(){
     const { min, max } = optionPriceRange(p, currentOptionSelection(p));
     renderModalBar(p);
     priceEl.innerHTML = min === max
-      ? `${fmt(min)} <span style="font-size:13px; font-weight:500; color:var(--plum);">/ ช่อ</span>`
-      : `${fmt(min)} - ${fmt(max)} <span style="font-size:13px; font-weight:500; color:var(--plum);">/ ช่อ</span>`;
+      ? `${fmt(min)} <span style="font-size:13px; font-weight:400; color:var(--plum);">/ ช่อ</span>`
+      : `${fmt(min)} - ${fmt(max)} <span style="font-size:13px; font-weight:400; color:var(--plum);">/ ช่อ</span>`;
     return;
   }
   const unitPrice = currentModalVariant(p).unitPrice;
   const lineTotal = unitPrice * modalQty;
   // มือถือ: "฿249 / ช่อ × 2 = ฿498" (.pd-mx)   คอม: ราคาต่อช่อซ้าย + "ยอดรวม" ขวา (.pd-total) — CSS สลับให้
-  priceEl.innerHTML = `${fmt(unitPrice)} <span style="font-size:13px; font-weight:500; color:var(--plum);">/ ช่อ</span>` +
+  priceEl.innerHTML = `${fmt(unitPrice)} <span style="font-size:13px; font-weight:400; color:var(--plum);">/ ช่อ</span>` +
     (modalQty > 1 ? `<span class="pd-mx"> × ${modalQty} = <strong>${fmt(lineTotal)}</strong></span>` : '') +
     (modalQty > 1 ? `<span class="pd-total"><span class="pd-total-label">ยอดรวม</span><b>${fmt(lineTotal)}</b></span>` : '');
   renderModalBar(p);
@@ -3877,7 +3876,7 @@ async function loadReviews(){
     if(!found.includes(src)) found.push(src); // ต่อท้าย = นับเป็นรูปใหม่สุด
   });
   const shown = found.filter(src => !isReviewHidden(src)); // ตัดรูปที่ร้านลบออกจากเว็บแล้ว
-  if(!shown.length){ heroRowFlag('no-reviews', true); return; } // ไม่มีรีวิว → แบนเนอร์กลับมาอยู่กลางหน้า
+  if(!shown.length){ heroRowFlag('no-reviews', true); dtHeroInit(); return; } // ไม่มีรีวิว → แบนเนอร์กลับมาอยู่กลางหน้า
   renderReviews(shown);
 }
 let REVIEWS = []; // ลำดับสุ่ม — ใช้กับแถบพรีวิวหน้าแรก
@@ -3915,7 +3914,7 @@ function renderReviews(imagesIn){
   if(statEl) statEl.textContent = `${REVIEWS.length}+ รีวิวจากลูกค้าจริง`;
   section.hidden = false;
   initReviewAutoScroll();
-  if(typeof dtRenderReviewGrid === 'function') dtRenderReviewGrid();
+  dtHeroInit(); // แบนเนอร์จอคอม (สินค้า+รีวิวของสินค้านั้น)
 }
 
 /* ---------- เลื่อนรีวิวอัตโนมัติทีละการ์ด ----------
@@ -4000,7 +3999,7 @@ function startReviewAutoScroll(){
   const scrollEl = document.getElementById('reviewsScroll');
   if(!scrollEl || !scrollEl.children.length) return;
   // จอคอมก็ไหลเป็นสายพานต่อเนื่องเหมือนมือถือ (ไม่ขยับทีละใบแล้ว)
-  if(reviewMobileMQ.matches) startReviewBelt(); // จอคอมใช้ตารางรีวิว (dtRenderReviewGrid) ไม่เลื่อนอัตโนมัติ
+  startReviewBelt(); // มือถือและจอคอม ไหลเป็นสายพานต่อเนื่องเหมือนกัน (คอมเลิกใช้ตารางสลับรูปแล้ว)
   return;
   reviewAutoTimer = setInterval(() => {
     if(document.hidden) return;
@@ -4624,3 +4623,100 @@ function dtRenderReviewGrid(){
   }
   dtRvSchedule();
 }
+
+/* =========================================================
+   แบนเนอร์จอคอม (ใต้เมนู เหนือรีวิว): ซ้าย = ข้อความ · ขวา = รูปสินค้า + รูปรีวิวของสินค้านั้น
+   เฟดสลับทุก ~5.5 วินาที พร้อมซูมเข้าช้าๆ (ไม่แพน ไม่เด้ง) · มือถือซ่อน (CSS) ไม่ทำงาน
+   ข้อมูลมาจากสินค้า + ป้ายสินค้าของรูปรีวิวในหลังบ้านที่มีอยู่แล้ว ไม่ต้องอัปโหลดรูปเพิ่ม
+   ลบบล็อกนี้ + #dtHero ใน index.html + บล็อก .dt-hero ท้าย style.css + เรียก dtHeroInit() 2 จุดเพื่อย้อนกลับ
+   ========================================================= */
+const DT_HERO_MAX = 6, DT_HERO_MIN = 5, DT_HERO_MS = 5500, DT_HERO_FADE = 1500;
+let dtHeroSlides = [], dtHeroIdx = 0, dtHeroTimer = null, dtHeroSig = '';
+function dtHeroProductSrc(p){
+  if(hasNewOptions(p)){
+    const v = coverVariantOf(p), l = v ? photosOf(v) : [];
+    if(l.length) return l[0];
+  }
+  const pools = [p].concat(p.colors || [], p.sizes || [], p.variants || []);
+  for(const o of pools){ const l = photosOf(o); if(l.length) return l[0]; }
+  return null;
+}
+function dtHeroPick(){
+  const withImg = PRODUCTS.map(p => ({ p, src: dtHeroProductSrc(p) })).filter(x => x.src);
+  const withRv = shuffle(withImg.map(x => Object.assign({}, x, { rv: reviewPhotosOf(x.p) })).filter(x => x.rv.length)).slice(0, DT_HERO_MAX);
+  if(withRv.length < DT_HERO_MIN){
+    const ids = new Set(withRv.map(x => x.p.id));
+    const more = shuffle(withImg.filter(x => !ids.has(x.p.id))).slice(0, DT_HERO_MIN - withRv.length).map(x => Object.assign({}, x, { rv: [] }));
+    return withRv.concat(more);
+  }
+  return withRv;
+}
+function dtHeroShow(i){
+  const slides = document.querySelectorAll('#dtHeroSlides .dt-hero-slide');
+  if(!slides.length) return;
+  const next = (i + slides.length) % slides.length;
+  const cur = slides[dtHeroIdx];
+  if(cur && next !== dtHeroIdx){
+    cur.classList.remove('on'); cur.classList.add('out'); // .out = ค้างขนาดซูมไว้ระหว่างเฟดออก ไม่กระตุกกลับ
+    setTimeout(() => cur.classList.remove('out'), DT_HERO_FADE + 150);
+  }
+  dtHeroIdx = next;
+  slides[next].classList.remove('out'); slides[next].classList.add('on');
+  document.querySelectorAll('#dtHeroRvs > .dt-hero-rvg').forEach((r, k) => r.classList.toggle('on', k === next));
+}
+function dtHeroSchedule(){
+  clearTimeout(dtHeroTimer);
+  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches || document.documentElement.classList.contains('no-anim')) return;
+  dtHeroTimer = setTimeout(() => {
+    if(!document.hidden) dtHeroShow(dtHeroIdx + 1);
+    dtHeroSchedule();
+  }, DT_HERO_MS);
+}
+function dtHeroInit(){
+  const root = document.getElementById('dtHero');
+  const box = document.getElementById('dtHeroSlides');
+  if(!root || !box || !PRODUCTS.length) return;
+  dtHeroSlides = dtHeroPick();
+  if(!dtHeroSlides.length) return;
+  const sig = dtHeroSlides.map(x => x.p.id).join(',');
+  if(sig === dtHeroSig && box.children.length) return; // รายการเดิม ไม่ต้องสร้างใหม่ (กันสไลด์รีเซ็ต)
+  dtHeroSig = sig; dtHeroIdx = 0;
+  box.innerHTML = dtHeroSlides.map((x, i) =>
+    `<div class="dt-hero-slide" data-pid="${escapeHtmlText(x.p.id)}" onclick="openProductModal('${escapeHtmlText(x.p.id)}')">` +
+      `<img class="dt-hero-img" src="${x.src}" alt="${escapeHtmlText(x.p.name)}" width="800" height="800" ${i ? 'loading="lazy" ' : 'fetchpriority="high" '}decoding="async">` +
+      `<span class="dt-hero-name">${escapeHtmlText(x.p.name)}</span>` +
+    `</div>`).join('');
+  const rvBox = document.getElementById('dtHeroRvs');
+  if(rvBox) rvBox.innerHTML = dtHeroSlides.map(x => x.rv.length
+    ? `<div class="dt-hero-rvg">` + x.rv.slice(0, 3).map((src, k) =>
+        `<div class="dt-hero-rv rv-${'abc'[k]}"><img src="${src}" alt="รีวิวจากลูกค้า" width="300" height="300" loading="lazy" decoding="async" onerror="this.parentNode.remove()"></div>`).join('') + `</div>`
+    : `<div class="dt-hero-rvg dt-hero-rv-none"></div>`).join('');
+  root.hidden = false;
+  dtHeroShow(0);
+  dtHeroSchedule();
+}
+/* ---------- เมนูบนโปร่งใสตอนอยู่บนแบนเนอร์ (จอคอม) ----------
+   โปร่งใส (.bar-clear) เมื่ออยู่บนสุด (เลื่อนไม่เกิน 10px) และแบนเนอร์ยังอยู่ใต้แถบ
+   เลื่อนลง หรือแบนเนอร์ซ่อน/เลื่อนพ้นแถบ → พื้นขาวตามปกติ · มือถือไม่ทำงาน
+   ย้อนกลับ: ลบบล็อกนี้ (ไม่ใส่คลาสก็เป็นพื้นขาวเหมือนเดิม) */
+(function sfbBarOverHero(){
+  const bar = document.getElementById('searchCartBar');
+  const hero = document.getElementById('dtHero');
+  if(!bar || !hero) return;
+  const mq = window.matchMedia('(min-width:860px)');
+  let ticking = false;
+  function update(){
+    ticking = false;
+    let clear = false;
+    if(mq.matches && !hero.hidden && hero.offsetHeight > 0){
+      clear = (window.pageYOffset || 0) <= 10 && hero.getBoundingClientRect().bottom > bar.offsetHeight;
+    }
+    bar.classList.toggle('bar-clear', clear);
+  }
+  function req(){ if(!ticking){ ticking = true; requestAnimationFrame(update); } }
+  window.addEventListener('scroll', req, { passive:true });
+  window.addEventListener('resize', req);
+  if('ResizeObserver' in window) new ResizeObserver(req).observe(hero);
+  new MutationObserver(req).observe(hero, { attributes:true, attributeFilter:['hidden'] });
+  update();
+})();
