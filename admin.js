@@ -3095,27 +3095,34 @@ async function reviewAddMany(){
    เปิดใช้เมื่อกรอก SUPABASE_URL / SUPABASE_KEY ใน firebase-config.js (ถ้าเว้นว่าง ระบบเขียนลงโฟลเดอร์เว็บแบบเดิม)
    ล็อกอิน Supabase ด้วยอีเมล/รหัสผ่านแอดมินชุดเดียวกัน (สร้างผู้ใช้ไว้ใน Supabase Auth) → สิทธิ์เขียนรูปเฉพาะแอดมิน
    รูปที่ได้เป็นลิงก์เต็ม https://…supabase.co/storage/v1/object/public/… เก็บลงข้อมูลสินค้า/รีวิวแทนพาธ images/… */
-const SB = { client: null, loading: null, pass: null };
+const SB = { pass: null };
 function sbOn(){ return !!(window.SUPABASE_URL && window.SUPABASE_KEY); }
 function sbBucket(){ return window.SUPABASE_BUCKET || 'images'; }
 function sbPublicBase(){ return String(window.SUPABASE_URL || '').replace(/\/+$/, '') + '/storage/v1/object/public/' + sbBucket() + '/'; }
 function sbPublicUrl(path){ return sbPublicBase() + String(path).split('/').map(encodeURIComponent).join('/'); }
 function sbPathOf(url){ const b = sbPublicBase(); const u = String(url || ''); return u.startsWith(b) ? decodeURIComponent(u.slice(b.length)) : null; }
-function sbClient(){
-  if(SB.client) return Promise.resolve(SB.client);
-  if(!SB.loading){
-    SB.loading = import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm')
-      .then(m => { SB.client = m.createClient(window.SUPABASE_URL, window.SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, storageKey: 'sfb-supabase-auth' } }); return SB.client; })
-      .catch(e => { SB.loading = null; throw new Error('โหลดตัวเชื่อม Supabase ไม่ได้ (เช็กอินเทอร์เน็ต)'); });
-  }
-  return SB.loading;
-}
 function sbAdminEmail(){ return window.SUPABASE_ADMIN_EMAIL || window.ADMIN_EMAIL || 'admin@sflowerbloom.local'; }
+// เรียก Supabase ผ่าน REST (fetch) ตรงๆ ไม่โหลดไลบรารีจาก CDN อื่น
+const SB_SESSION_KEY = 'sfb-supabase-session';
+function sbApi(path){ return String(window.SUPABASE_URL || '').replace(/\/+$/, '') + path; }
+function sbHeaders(extra){ return Object.assign({ apikey: window.SUPABASE_KEY }, extra || {}); }
+function sbSessionGet(){ try{ return JSON.parse(localStorage.getItem(SB_SESSION_KEY) || 'null'); }catch(e){ return null; } }
+function sbSessionSet(v){ try{ if(v) localStorage.setItem(SB_SESSION_KEY, JSON.stringify(v)); else localStorage.removeItem(SB_SESSION_KEY); }catch(e){} }
+async function sbTokenReq(grant, body){
+  let res;
+  try{ res = await fetch(sbApi('/auth/v1/token?grant_type=' + grant), { method: 'POST', headers: sbHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify(body) }); }
+  catch(e){ throw new Error('เชื่อมต่อ Supabase ไม่ได้ (เช็ก SUPABASE_URL ใน firebase-config.js และอินเทอร์เน็ต)'); }
+  const j = await res.json().catch(() => ({}));
+  if(!res.ok || !j.access_token) return null;
+  const ses = { access_token: j.access_token, refresh_token: j.refresh_token, expires_at: j.expires_at || (Math.floor(Date.now() / 1000) + (j.expires_in || 3600)) };
+  sbSessionSet(ses);
+  return ses;
+}
 // หลังล็อกอิน Firebase สำเร็จ ลองล็อกอิน Supabase เงียบๆ ด้วยรหัสผ่านเดียวกัน (พลาดไม่เป็นไร ตอนอัปโหลดจะถามรหัสอีกครั้ง)
 async function sbSignInQuiet(pass){
   if(!sbOn()) return;
   SB.pass = pass;
-  try{ const c = await sbClient(); await c.auth.signInWithPassword({ email: sbAdminEmail(), password: pass }); }catch(e){}
+  try{ await sbTokenReq('password', { email: sbAdminEmail(), password: pass }); }catch(e){}
 }
 function sbAskPassword(){
   return new Promise(res => {
@@ -3129,21 +3136,25 @@ function sbAskPassword(){
     ov.querySelector('form').addEventListener('submit', e => { e.preventDefault(); done(inp.value || null); });
   });
 }
-async function sbEnsureSession(){
-  const c = await sbClient();
-  const cur = await c.auth.getSession();
-  if(cur && cur.data && cur.data.session) return c;
+async function sbToken(){
+  const cur = sbSessionGet(), now = Math.floor(Date.now() / 1000);
+  if(cur && cur.access_token && cur.expires_at - 60 > now) return cur.access_token;
+  if(cur && cur.refresh_token){
+    const n = await sbTokenReq('refresh_token', { refresh_token: cur.refresh_token });
+    if(n) return n.access_token;
+    sbSessionSet(null);
+  }
   let pass = SB.pass;
   for(let i = 0; i < 2; i++){
     if(!pass) pass = await sbAskPassword();
     if(!pass) throw new Error('ยังไม่ได้เชื่อมต่อที่เก็บรูป');
-    const r = await c.auth.signInWithPassword({ email: sbAdminEmail(), password: pass });
-    if(!r.error && r.data && r.data.session){ SB.pass = pass; return c; }
+    const n = await sbTokenReq('password', { email: sbAdminEmail(), password: pass });
+    if(n){ SB.pass = pass; return n.access_token; }
     pass = null;
-    if(i === 1) throw new Error('ล็อกอิน Supabase ไม่ได้ — เช็กว่าสร้างผู้ใช้แอดมินใน Supabase Auth แล้ว และรหัสผ่านตรงกัน');
   }
-  return c;
+  throw new Error('ล็อกอิน Supabase ไม่ได้ — เช็กว่าสร้างผู้ใช้แอดมินใน Supabase Auth แล้ว (อีเมลและรหัสผ่านตรงกัน)');
 }
+async function sbEnsureSession(){ await sbToken(); }
 function sbErrText(e){
   const m = String((e && e.message) || e || '');
   if(/row-level security|violates|not authorized|Unauthorized|403/i.test(m)) return 'ไม่มีสิทธิ์เขียนรูป (เช็กว่ารัน supabase-setup.sql แล้ว และล็อกอินแอดมินอยู่)';
@@ -3152,15 +3163,29 @@ function sbErrText(e){
   return m || 'อัปโหลดไม่สำเร็จ';
 }
 async function sbUpload(blob, path){
-  const c = await sbEnsureSession();
-  const r = await c.storage.from(sbBucket()).upload(path, blob, { contentType: blob.type, cacheControl: '31536000', upsert: false });
-  if(r.error) throw new Error(sbErrText(r.error));
+  const token = await sbToken();
+  let res;
+  try{
+    res = await fetch(sbApi('/storage/v1/object/' + sbBucket() + '/' + String(path).split('/').map(encodeURIComponent).join('/')), {
+      method: 'POST',
+      headers: sbHeaders({ Authorization: 'Bearer ' + token, 'Content-Type': blob.type, 'Cache-Control': 'max-age=31536000', 'x-upsert': 'false' }),
+      body: blob
+    });
+  }catch(e){ throw new Error('เชื่อมต่อ Supabase ไม่ได้ (เช็กอินเทอร์เน็ต)'); }
+  if(!res.ok){ const j = await res.json().catch(() => ({})); throw new Error(sbErrText(j.message || j.error || ('HTTP ' + res.status))); }
   return sbPublicUrl(path);
 }
 async function sbRemove(paths){
-  const c = await sbEnsureSession();
-  const r = await c.storage.from(sbBucket()).remove(paths);
-  if(r.error) throw new Error(sbErrText(r.error));
+  const token = await sbToken();
+  let res;
+  try{
+    res = await fetch(sbApi('/storage/v1/object/' + sbBucket()), {
+      method: 'DELETE',
+      headers: sbHeaders({ Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ prefixes: paths })
+    });
+  }catch(e){ throw new Error('เชื่อมต่อ Supabase ไม่ได้ (เช็กอินเทอร์เน็ต)'); }
+  if(!res.ok){ const j = await res.json().catch(() => ({})); throw new Error(sbErrText(j.message || j.error || ('HTTP ' + res.status))); }
 }
 // ย่อรูป → WebP (เบราว์เซอร์ที่เข้ารหัส WebP ไม่ได้จะใช้ JPEG) · ถ้ายังเกิน targetBytes จะลดคุณภาพ/ขนาดทีละขั้น
 async function imgCompress(file, maxSide, quality, targetBytes){
