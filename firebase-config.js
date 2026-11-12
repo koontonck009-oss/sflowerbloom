@@ -40,6 +40,6 @@ window.FLOWER_TYPES = ['ดอกไม้คละชนิด', 'กุหล�
    กรอกแล้ว = หลังบ้านย่อรูปเป็น WebP แล้วอัปขึ้น Supabase ให้เลย ได้ลิงก์รูปกลับมาใช้ทันที
    ค่าสองตัวนี้เปิดเผยในเว็บได้ (Project URL และ publishable/anon key) — ห้ามใส่ service_role key เด็ดขาด */
 window.SUPABASE_URL = 'https://rfpnejnrosksrpndaytw.supabase.co/rest/v1/';          // เช่น https://abcdefgh.supabase.co
-window.SUPABASE_KEY = 'sb_publishable_x8ivxoMOLoGQmdlfTUoWPg_dQ3P5Sg8';          // publishable (anon) key
+window.SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJmcG5lam5yb3Nrc3JwbmRheXR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMxMjg0MDEsImV4cCI6MjEwODcwNDQwMX0.OtRaAZ9PKgowhJOz4LUpOUW1Oile_eYIEkm1yU2_sQE';          // publishable (anon) key
 window.SUPABASE_BUCKET = 'images'; // ชื่อ bucket (ตรงกับที่สร้างใน supabase-setup.sql)
 window.SUPABASE_ADMIN_EMAIL = '';  // เว้นว่าง = ใช้อีเมลเดียวกับ ADMIN_EMAIL ด้านบน (ต้องสร้างผู้ใช้นี้ใน Supabase Auth ด้วยรหัสผ่านเดียวกัน)
