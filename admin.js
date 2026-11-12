@@ -3095,7 +3095,7 @@ async function reviewAddMany(){
    เปิดใช้เมื่อกรอก SUPABASE_URL / SUPABASE_KEY ใน firebase-config.js (ถ้าเว้นว่าง ระบบเขียนลงโฟลเดอร์เว็บแบบเดิม)
    ล็อกอิน Supabase ด้วยอีเมล/รหัสผ่านแอดมินชุดเดียวกัน (สร้างผู้ใช้ไว้ใน Supabase Auth) → สิทธิ์เขียนรูปเฉพาะแอดมิน
    รูปที่ได้เป็นลิงก์เต็ม https://…supabase.co/storage/v1/object/public/… เก็บลงข้อมูลสินค้า/รีวิวแทนพาธ images/… */
-const SB = { pass: null };
+const SB = { pass: null, lastErr: '' };
 function sbOn(){ return !!(window.SUPABASE_URL && window.SUPABASE_KEY); }
 function sbBucket(){ return window.SUPABASE_BUCKET || 'images'; }
 function sbPublicBase(){ return String(window.SUPABASE_URL || '').replace(/\/+$/, '') + '/storage/v1/object/public/' + sbBucket() + '/'; }
@@ -3113,7 +3113,7 @@ async function sbTokenReq(grant, body){
   try{ res = await fetch(sbApi('/auth/v1/token?grant_type=' + grant), { method: 'POST', headers: sbHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify(body) }); }
   catch(e){ throw new Error('เชื่อมต่อ Supabase ไม่ได้ (เช็ก SUPABASE_URL ใน firebase-config.js และอินเทอร์เน็ต)'); }
   const j = await res.json().catch(() => ({}));
-  if(!res.ok || !j.access_token) return null;
+  if(!res.ok || !j.access_token){ SB.lastErr = String(j.error_description || j.msg || j.message || j.error || ('HTTP ' + res.status)); return null; }
   const ses = { access_token: j.access_token, refresh_token: j.refresh_token, expires_at: j.expires_at || (Math.floor(Date.now() / 1000) + (j.expires_in || 3600)) };
   sbSessionSet(ses);
   return ses;
@@ -3128,9 +3128,13 @@ function sbAskPassword(){
   return new Promise(res => {
     const ov = document.createElement('div');
     ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px';
-    ov.innerHTML = '<form style="background:#fff;border-radius:14px;padding:20px;max-width:340px;width:100%;box-shadow:0 10px 40px rgba(0,0,0,.25);font-family:inherit"><b style="display:block;margin-bottom:6px">เชื่อมต่อที่เก็บรูป (Supabase)</b><p style="margin:0 0 10px;font-size:.9em;color:#555">ใส่รหัสผ่านแอดมินอีกครั้งเพื่อเปิดสิทธิ์อัปโหลดรูป</p><input type="password" autocomplete="current-password" style="width:100%;box-sizing:border-box;padding:10px;border:1px solid #ccc;border-radius:8px;font:inherit"><div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px"><button type="button" data-x style="padding:8px 14px;border:0;background:#eee;border-radius:8px;font:inherit;cursor:pointer">ยกเลิก</button><button type="submit" style="padding:8px 14px;border:0;background:#F62188;color:#fff;border-radius:8px;font:inherit;cursor:pointer">ตกลง</button></div></form>';
+    ov.innerHTML = '<form style="background:#fff;border-radius:14px;padding:20px;max-width:340px;width:100%;box-shadow:0 10px 40px rgba(0,0,0,.25);font-family:inherit"><b style="display:block;margin-bottom:6px">เชื่อมต่อที่เก็บรูป (Supabase)</b><p style="margin:0 0 10px;font-size:.9em;color:#555">ใส่รหัสผ่านแอดมินอีกครั้งเพื่อเปิดสิทธิ์อัปโหลดรูป</p><input type="password" autocomplete="current-password" style="width:100%;box-sizing:border-box;padding:10px;border:1px solid #ccc;border-radius:8px;font:inherit"><label style="display:flex;align-items:center;gap:6px;margin-top:8px;font-size:.85em;color:#555;cursor:pointer"><input type="checkbox" data-show> แสดงรหัสผ่านที่พิมพ์</label><div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px"><button type="button" data-x style="padding:8px 14px;border:0;background:#eee;border-radius:8px;font:inherit;cursor:pointer">ยกเลิก</button><button type="submit" style="padding:8px 14px;border:0;background:#F62188;color:#fff;border-radius:8px;font:inherit;cursor:pointer">ตกลง</button></div></form>';
     document.body.appendChild(ov);
-    const inp = ov.querySelector('input'); inp.focus();
+    const inp = ov.querySelector('input[type=password]');
+    ['keydown', 'keyup', 'keypress'].forEach(ev => ov.addEventListener(ev, e => e.stopPropagation()));
+    ov.querySelector('[data-show]').addEventListener('change', e => { inp.type = e.target.checked ? 'text' : 'password'; inp.focus(); });
+    ov.addEventListener('mousedown', e => { if(e.target === ov) e.preventDefault(); });
+    setTimeout(() => inp.focus(), 50);
     const done = v => { ov.remove(); res(v); };
     ov.querySelector('[data-x]').addEventListener('click', () => done(null));
     ov.querySelector('form').addEventListener('submit', e => { e.preventDefault(); done(inp.value || null); });
@@ -3152,7 +3156,7 @@ async function sbToken(){
     if(n){ SB.pass = pass; return n.access_token; }
     pass = null;
   }
-  throw new Error('ล็อกอิน Supabase ไม่ได้ — เช็กว่าสร้างผู้ใช้แอดมินใน Supabase Auth แล้ว (อีเมลและรหัสผ่านตรงกัน)');
+  throw new Error('ล็อกอิน Supabase ไม่ได้ (อีเมลที่ใช้: ' + sbAdminEmail() + ') — Supabase ตอบว่า: ' + (SB.lastErr || 'ไม่ทราบสาเหตุ'));
 }
 async function sbEnsureSession(){ await sbToken(); }
 function sbErrText(e){
