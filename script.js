@@ -3608,9 +3608,10 @@ async function fetchProductsFromFirestore(){
 
 /* ---------- แต่งหน้าร้านจากหลังบ้าน (ช่อง siteJson ในเอกสารเดียวกับสินค้า) ----------
    ไม่มีค่า / ค่าเสีย → ไม่แตะอะไร หน้าร้านใช้ข้อความและรูปที่เขียนไว้ใน HTML/โค้ดตามเดิม
-   รูปรับเฉพาะ path ที่ขึ้นต้นด้วย images/ เท่านั้น */
+   รูปรับเฉพาะ path ที่ขึ้นต้นด้วย images/ หรือลิงก์ Supabase Storage เท่านั้น */
 function siteSafeSrc(s){
   s = String(s || '').trim();
+  if(/^https:\/\/[a-z0-9-]+\.supabase\.co\/storage\/v1\/object\/public\/[^\s"'<>\\]+$/i.test(s)) return s; // รูปจาก Supabase Storage
   return (/^images\/[^\s"'<>\\]+$/.test(s) && !s.includes('..')) ? s : '';
 }
 function siteLines(s){ return escapeHtml(String(s)).replace(/\r?\n/g, '<br>'); }

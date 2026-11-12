@@ -270,6 +270,7 @@ async function doLogin(){
     // หน้าร้านนี้มีบัญชีผู้ดูแลเพียงบัญชีเดียว จึงไม่เปิดให้ป้อนอีเมลอื่น
     const email = window.ADMIN_EMAIL || 'admin@sflowerbloom.local';
     await fb.authApi.signInWithEmailAndPassword(fb.auth, email, pass);
+    sbSignInQuiet(pass);
     $('loginPass').value = '';
   } catch(err){
     errEl.textContent = err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password'
@@ -1272,7 +1273,7 @@ function renderMediaPanel(){
     <div class="group">
       <div class="rv-drop pd-drop" tabindex="0" role="button"><b>ลากรูปสินค้ามาวางที่นี่</b><span>หรือคลิกเพื่อเลือกรูป (เลือกได้หลายรูป) · รูปแรกเป็นรูปหลักถ้ายังว่าง · ระบบย่อรูปและตั้งชื่อให้เอง</span></div>
       <input type="file" class="pd-file" accept="image/*" multiple hidden>
-      <div class="rv-adv-row"><button type="button" class="btn btn-ghost btn-sm" data-act="pd-pickdir">เลือกโฟลเดอร์เว็บ</button><span class="rv-adv-note" id="pdDirName">${window.showDirectoryPicker ? '' : 'ต้องเปิดด้วย Chrome หรือ Edge บนคอมพิวเตอร์'}</span></div>
+      ${sbOn() ? '' : `<div class="rv-adv-row"><button type="button" class="btn btn-ghost btn-sm" data-act="pd-pickdir">เลือกโฟลเดอร์เว็บ</button><span class="rv-adv-note" id="pdDirName">${window.showDirectoryPicker ? '' : 'ต้องเปิดด้วย Chrome หรือ Edge บนคอมพิวเตอร์'}</span></div>`}
       <div id="pdOut"></div>
       ${pdPendingHtml()}
       ${all.length ? `<div class="pd-grid">${tiles}</div>` : '<p class="group-note" style="margin:10px 0 0">ยังไม่มีรูป ลากรูปมาวางด้านบนได้เลย</p>'}
@@ -2655,6 +2656,7 @@ function posterLoadImage(src){
     const im = new Image();
     im.onload = () => res(im);
     im.onerror = () => res(null);
+    if(/^https?:/i.test(src)) im.crossOrigin = 'anonymous'; // รูปจาก Supabase ต้องขอแบบ CORS ไม่งั้นบันทึกโปสเตอร์เป็นไฟล์ไม่ได้
     im.src = posterEncodePath(src);
   });
   posterImgCache.set(src, pr);
@@ -3089,6 +3091,97 @@ async function reviewAddMany(){
   $('revAddText').value = [...missing, ...bad].map(o => reviewShortName(o.key)).join('\n'); // เหลือเฉพาะที่ยังไม่สำเร็จ ไว้แก้แล้วกดใหม่
   renderReviewsModal();
 }
+/* ───────────── ที่เก็บรูปบน Supabase Storage + ย่อรูปก่อนอัปโหลด ─────────────
+   เปิดใช้เมื่อกรอก SUPABASE_URL / SUPABASE_KEY ใน firebase-config.js (ถ้าเว้นว่าง ระบบเขียนลงโฟลเดอร์เว็บแบบเดิม)
+   ล็อกอิน Supabase ด้วยอีเมล/รหัสผ่านแอดมินชุดเดียวกัน (สร้างผู้ใช้ไว้ใน Supabase Auth) → สิทธิ์เขียนรูปเฉพาะแอดมิน
+   รูปที่ได้เป็นลิงก์เต็ม https://…supabase.co/storage/v1/object/public/… เก็บลงข้อมูลสินค้า/รีวิวแทนพาธ images/… */
+const SB = { client: null, loading: null, pass: null };
+function sbOn(){ return !!(window.SUPABASE_URL && window.SUPABASE_KEY); }
+function sbBucket(){ return window.SUPABASE_BUCKET || 'images'; }
+function sbPublicBase(){ return String(window.SUPABASE_URL || '').replace(/\/+$/, '') + '/storage/v1/object/public/' + sbBucket() + '/'; }
+function sbPublicUrl(path){ return sbPublicBase() + String(path).split('/').map(encodeURIComponent).join('/'); }
+function sbPathOf(url){ const b = sbPublicBase(); const u = String(url || ''); return u.startsWith(b) ? decodeURIComponent(u.slice(b.length)) : null; }
+function sbClient(){
+  if(SB.client) return Promise.resolve(SB.client);
+  if(!SB.loading){
+    SB.loading = import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm')
+      .then(m => { SB.client = m.createClient(window.SUPABASE_URL, window.SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, storageKey: 'sfb-supabase-auth' } }); return SB.client; })
+      .catch(e => { SB.loading = null; throw new Error('โหลดตัวเชื่อม Supabase ไม่ได้ (เช็กอินเทอร์เน็ต)'); });
+  }
+  return SB.loading;
+}
+function sbAdminEmail(){ return window.SUPABASE_ADMIN_EMAIL || window.ADMIN_EMAIL || 'admin@sflowerbloom.local'; }
+// หลังล็อกอิน Firebase สำเร็จ ลองล็อกอิน Supabase เงียบๆ ด้วยรหัสผ่านเดียวกัน (พลาดไม่เป็นไร ตอนอัปโหลดจะถามรหัสอีกครั้ง)
+async function sbSignInQuiet(pass){
+  if(!sbOn()) return;
+  SB.pass = pass;
+  try{ const c = await sbClient(); await c.auth.signInWithPassword({ email: sbAdminEmail(), password: pass }); }catch(e){}
+}
+function sbAskPassword(){
+  return new Promise(res => {
+    const ov = document.createElement('div');
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px';
+    ov.innerHTML = '<form style="background:#fff;border-radius:14px;padding:20px;max-width:340px;width:100%;box-shadow:0 10px 40px rgba(0,0,0,.25);font-family:inherit"><b style="display:block;margin-bottom:6px">เชื่อมต่อที่เก็บรูป (Supabase)</b><p style="margin:0 0 10px;font-size:.9em;color:#555">ใส่รหัสผ่านแอดมินอีกครั้งเพื่อเปิดสิทธิ์อัปโหลดรูป</p><input type="password" autocomplete="current-password" style="width:100%;box-sizing:border-box;padding:10px;border:1px solid #ccc;border-radius:8px;font:inherit"><div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px"><button type="button" data-x style="padding:8px 14px;border:0;background:#eee;border-radius:8px;font:inherit;cursor:pointer">ยกเลิก</button><button type="submit" style="padding:8px 14px;border:0;background:#F62188;color:#fff;border-radius:8px;font:inherit;cursor:pointer">ตกลง</button></div></form>';
+    document.body.appendChild(ov);
+    const inp = ov.querySelector('input'); inp.focus();
+    const done = v => { ov.remove(); res(v); };
+    ov.querySelector('[data-x]').addEventListener('click', () => done(null));
+    ov.querySelector('form').addEventListener('submit', e => { e.preventDefault(); done(inp.value || null); });
+  });
+}
+async function sbEnsureSession(){
+  const c = await sbClient();
+  const cur = await c.auth.getSession();
+  if(cur && cur.data && cur.data.session) return c;
+  let pass = SB.pass;
+  for(let i = 0; i < 2; i++){
+    if(!pass) pass = await sbAskPassword();
+    if(!pass) throw new Error('ยังไม่ได้เชื่อมต่อที่เก็บรูป');
+    const r = await c.auth.signInWithPassword({ email: sbAdminEmail(), password: pass });
+    if(!r.error && r.data && r.data.session){ SB.pass = pass; return c; }
+    pass = null;
+    if(i === 1) throw new Error('ล็อกอิน Supabase ไม่ได้ — เช็กว่าสร้างผู้ใช้แอดมินใน Supabase Auth แล้ว และรหัสผ่านตรงกัน');
+  }
+  return c;
+}
+function sbErrText(e){
+  const m = String((e && e.message) || e || '');
+  if(/row-level security|violates|not authorized|Unauthorized|403/i.test(m)) return 'ไม่มีสิทธิ์เขียนรูป (เช็กว่ารัน supabase-setup.sql แล้ว และล็อกอินแอดมินอยู่)';
+  if(/Bucket not found|not found/i.test(m)) return 'ไม่พบ bucket รูปใน Supabase (รัน supabase-setup.sql)';
+  if(/mime|size|too large|exceeded/i.test(m)) return 'ไฟล์ไม่ผ่านเงื่อนไข bucket (ชนิด/ขนาดไฟล์)';
+  return m || 'อัปโหลดไม่สำเร็จ';
+}
+async function sbUpload(blob, path){
+  const c = await sbEnsureSession();
+  const r = await c.storage.from(sbBucket()).upload(path, blob, { contentType: blob.type, cacheControl: '31536000', upsert: false });
+  if(r.error) throw new Error(sbErrText(r.error));
+  return sbPublicUrl(path);
+}
+async function sbRemove(paths){
+  const c = await sbEnsureSession();
+  const r = await c.storage.from(sbBucket()).remove(paths);
+  if(r.error) throw new Error(sbErrText(r.error));
+}
+// ย่อรูป → WebP (เบราว์เซอร์ที่เข้ารหัส WebP ไม่ได้จะใช้ JPEG) · ถ้ายังเกิน targetBytes จะลดคุณภาพ/ขนาดทีละขั้น
+async function imgCompress(file, maxSide, quality, targetBytes){
+  const bmp = await createImageBitmap(file);
+  let scale = Math.min(1, maxSide / Math.max(bmp.width, bmp.height)), q = quality, blob = null;
+  try{
+    for(let i = 0; i < 7; i++){
+      const cv = document.createElement('canvas');
+      cv.width = Math.max(1, Math.round(bmp.width * scale)); cv.height = Math.max(1, Math.round(bmp.height * scale));
+      const cx = cv.getContext('2d'); cx.fillStyle = '#fff'; cx.fillRect(0, 0, cv.width, cv.height); cx.drawImage(bmp, 0, 0, cv.width, cv.height);
+      blob = await new Promise(res => cv.toBlob(res, 'image/webp', q));
+      if(!blob || blob.type !== 'image/webp') blob = await new Promise(res => cv.toBlob(res, 'image/jpeg', q));
+      if(!blob) throw new Error('ย่อรูปไม่ได้');
+      if(!targetBytes || blob.size <= targetBytes) break;
+      if(q > 0.62) q = Math.max(0.6, q - 0.08); else scale *= 0.85;
+    }
+  } finally { if(bmp.close) bmp.close(); }
+  return blob;
+}
+function sbExt(blob){ return blob.type === 'image/webp' ? 'webp' : (blob.type === 'image/png' ? 'png' : 'jpg'); }
+
 /* ───────────── อัปโหลดรูปรีวิวลงโฟลเดอร์เว็บในเครื่อง (Chrome / Edge บนคอมพิวเตอร์) ─────────────
    ลากรูปมาวาง → ย่อเป็น JPG → ตั้งชื่อ reviewN.jpg ต่อจากเลขล่าสุด → เขียนลง images/reviews/ ในโฟลเดอร์เว็บ
    → ผูกเข้ารายการแบบ path เต็ม (หน้าร้านเห็นโดยไม่ต้องแก้ list.json) · แล้วให้ลากโฟลเดอร์ขึ้น GitHub ต่อเอง */
@@ -3167,6 +3260,7 @@ async function pdFileExists(root, path){
 }
 // แกนอัปโหลด: ย่อรูป → เขียนลง images/products/<รหัส>/ → คืนรายการพาธ (ไม่แตะข้อมูลสินค้า) · have = พาธที่ปลายทางมีอยู่แล้ว
 async function pdProcess(all, have, onProgress){
+  if(sbOn()) return pdProcessSb(all, have, onProgress);
   const slug = pdSlug(draft && draft.id);
   if(!slug){ toast('กรอกรหัสสินค้า (ตัวอักษรอังกฤษหรือตัวเลข) ในการ์ดข้อมูลสินค้าก่อน แล้วค่อยลากรูป', true); return null; }
   const files = all.filter(f => /^image\//.test(f.type) || REVIEW_IMG_RE.test(f.name));
@@ -3208,6 +3302,35 @@ async function pdProcess(all, have, onProgress){
   await rvKvSet('pdHashMap', hmap);
   return { added, reused, already, fails, nonImage: all.length - files.length };
 }
+// แบบ Supabase: ย่อรูป (ด้านยาวไม่เกิน 1200px, WebP, เป้าหมายไม่เกิน ~220KB) → อัปขึ้น products/<รหัส>/ → คืนลิงก์เต็ม
+async function pdProcessSb(all, have, onProgress){
+  const slug = pdSlug(draft && draft.id);
+  if(!slug){ toast('กรอกรหัสสินค้า (ตัวอักษรอังกฤษหรือตัวเลข) ในการ์ดข้อมูลสินค้าก่อน แล้วค่อยลากรูป', true); return null; }
+  const files = all.filter(f => /^image\//.test(f.type) || REVIEW_IMG_RE.test(f.name));
+  if(!files.length){ toast('ไม่พบไฟล์รูป ลากไฟล์ .jpg .png .webp มาวาง', true); return null; }
+  try{ await sbEnsureSession(); }catch(e){ toast(sbErrText(e), true); return null; }
+  const hmap = (await rvKvGet('pdHashMapSb')) || {}; // { sha: ลิงก์ } รูปเดียวกัน → ใช้ลิงก์เดิม ไม่อัปซ้ำ
+  const added = [], reused = [], already = [], fails = [];
+  have = new Set(have);
+  const tag = Date.now().toString(36);
+  for(let i = 0; i < files.length; i++){
+    const f = files[i];
+    if(onProgress) onProgress(i + 1, files.length);
+    try{
+      const sha = await rvSha(f);
+      const known = hmap[sha];
+      if(known){
+        if(have.has(known)){ already.push(f.name); continue; }
+        have.add(known); added.push(known); reused.push(f.name); continue;
+      }
+      const blob = await imgCompress(f, 1200, 0.8, 220 * 1024);
+      const url = await sbUpload(blob, `products/${slug}/${slug}-${tag}${i}.${sbExt(blob)}`);
+      hmap[sha] = url; have.add(url); added.push(url);
+    }catch(e){ fails.push(f.name + ' (' + sbErrText(e) + ')'); }
+  }
+  await rvKvSet('pdHashMapSb', hmap);
+  return { added, reused, already, fails, nonImage: all.length - files.length };
+}
 // ทุกพาธรูปในสินค้านี้ (หลัก/แกลเลอรี/สี/ไซซ์/ตัวแปร/ของเสริม) ไว้นับเลขไฟล์ถัดไป ไม่ให้ชื่อชนกัน
 function pdEveryImagePath(){
   const out = [];
@@ -3218,7 +3341,7 @@ function pdEveryImagePath(){
 }
 function pdReportHtml(r, total){
   const rows = [];
-  if(r.added.length) rows.push(`<p class="rv-add-ok">✓ เพิ่มแล้ว ${r.added.length} รูป — กดบันทึกสินค้าด้านบนเพื่อให้หน้าร้านเห็น แล้วอย่าลืมลากโฟลเดอร์ <b>images/products</b> ขึ้น GitHub</p>`);
+  if(r.added.length) rows.push(`<p class="rv-add-ok">✓ เพิ่มแล้ว ${r.added.length} รูป — กดบันทึกสินค้าด้านบนเพื่อให้หน้าร้านเห็น${sbOn() ? '' : ' แล้วอย่าลืมลากโฟลเดอร์ <b>images/products</b> ขึ้น GitHub'}</p>`);
   if(r.reused.length) rows.push(`<p class="rv-add-note">${r.reused.length} รูปเคยอัปโหลดแล้ว ใช้ไฟล์เดิมให้: ${r.reused.map(esc).join(', ')}</p>`);
   if(r.already.length) rows.push(`<p class="rv-add-note">ข้าม ${r.already.length} รูปที่มีอยู่แล้ว: ${r.already.map(esc).join(', ')}</p>`);
   if(r.fails.length) rows.push(`<p class="rv-add-err">อ่านรูปไม่ได้ ${r.fails.length} รูป: ${r.fails.map(esc).join(', ')}</p>`);
@@ -3227,7 +3350,7 @@ function pdReportHtml(r, total){
 }
 // สรุปสั้นๆ ด้วย toast สำหรับจุดที่วาดใหม่ทั้งแผง (สี/ไซซ์/ของเสริม/หน้าต่างรูปเพิ่มเติม)
 function pdToastResult(r, extra){
-  if(r.added.length) toast(`เพิ่มแล้ว ${r.added.length} รูป${extra || ''} — กดบันทึกสินค้า และลากโฟลเดอร์ images/products ขึ้น GitHub`);
+  if(r.added.length) toast(`เพิ่มแล้ว ${r.added.length} รูป${extra || ''} — กดบันทึกสินค้า${sbOn() ? '' : ' และลากโฟลเดอร์ images/products ขึ้น GitHub'}`);
   else if(r.already.length) toast('รูปนี้มีอยู่แล้ว ไม่ได้เพิ่มซ้ำ');
   if(r.fails.length) toast('อ่านรูปไม่ได้: ' + r.fails.join(', '), true);
 }
@@ -3333,6 +3456,7 @@ async function rvUploadFiles(list){
   if(!rvm || !all.length) return;
   const files = all.filter(f => /^image\//.test(f.type) || REVIEW_IMG_RE.test(f.name));
   if(!files.length){ toast('ไม่พบไฟล์รูป ลากไฟล์ .jpg .png .webp มาวาง', true); return; }
+  if(sbOn()) return rvUploadFilesSb(all, files);
   const drop = $('revDrop'), out = $('revAddOut');
   drop.classList.add('is-busy');
   try{
@@ -3382,13 +3506,67 @@ async function rvUploadFiles(list){
     drop.classList.remove('is-busy');
   }
 }
+// แบบ Supabase: ย่อรูป → อัปขึ้น reviews/ → ใช้ลิงก์เต็มเป็นคีย์รูปรีวิว (หน้าร้านรองรับคีย์แบบมี / อยู่แล้ว)
+async function rvUploadFilesSb(all, files){
+  const drop = $('revDrop'), out = $('revAddOut');
+  drop.classList.add('is-busy');
+  try{
+    try{ await sbEnsureSession(); }catch(e){ toast(sbErrText(e), true); return; }
+    const hmap = (await rvKvGet('rvShaUrlSb')) || {}; // { sha: ลิงก์ }
+    const added = [], dups = [], fails = [];
+    const tag = Date.now().toString(36);
+    for(let i = 0; i < files.length; i++){
+      const f = files[i];
+      out.innerHTML = `<p class="rv-add-note">กำลังย่อและอัปโหลดรูป ${i + 1}/${files.length} …</p>`;
+      try{
+        const sha = await rvSha(f);
+        if(hmap[sha]){ dups.push(f.name); continue; }
+        const blob = await imgCompress(f, 1200, 0.78, 200 * 1024);
+        const url = await sbUpload(blob, `reviews/review-${tag}${i}.${sbExt(blob)}`);
+        hmap[sha] = url; added.push(url);
+      }catch(e){ fails.push(f.name + ' (' + sbErrText(e) + ')'); }
+    }
+    await rvKvSet('rvShaUrlSb', hmap);
+    added.forEach(key => { rvm.tags[key] = rvm.tags[key] || []; rvm.hidden.delete(key); rvm.files = rvm.files.filter(x => x !== key); });
+    added.slice().reverse().forEach(key => rvm.files.unshift(key)); // ใหม่สุดอยู่หน้า
+    if(added.length){
+      rvm.history = [];
+      rvm.dirty = true; rvm.filter = 'all'; rvm.q = ''; $('revSearch').value = '';
+    }
+    const rows = [];
+    if(added.length) rows.push(`<p class="rv-add-ok">✓ เพิ่มแล้ว ${added.length} รูป — กดบันทึกด้านล่างเพื่อให้หน้าร้านเห็น</p>`);
+    if(dups.length) rows.push(`<p class="rv-add-note">ข้าม ${dups.length} รูปที่เคยอัปโหลดแล้ว: ${dups.map(esc).join(', ')}</p>`);
+    if(fails.length) rows.push(`<p class="rv-add-err">อัปโหลดไม่ได้ ${fails.length} รูป: ${fails.map(esc).join(', ')}</p>`);
+    if(all.length > files.length) rows.push(`<p class="rv-add-note">ข้ามไฟล์ที่ไม่ใช่รูป ${all.length - files.length} ไฟล์</p>`);
+    out.innerHTML = rows.join('');
+    renderReviewsModal();
+  }catch(e){
+    toast('เพิ่มรูปไม่สำเร็จ: ' + sbErrText(e), true);
+  }finally{
+    drop.classList.remove('is-busy');
+  }
+}
 // ลบไฟล์จริง: ใช้ได้เฉพาะรูปที่ซ่อนอยู่แล้ว · ลบไฟล์ในโฟลเดอร์เว็บในเครื่อง + เอาออกจากรายการ · ส่วนบน GitHub ต้องลบเอง (ขึ้นในรายการเตือน)
 async function rvPurge(k){
   if(!rvm || !rvm.hidden.has(k)) return;
   const full = k.includes('/') ? k : REVIEW_DIR + k;
   const name = reviewShortName(k);
-  const ok = await askConfirm('ลบไฟล์รูปนี้จริง', `ลบ “${name}” ถาวร กู้คืนไม่ได้ · ไฟล์ในโฟลเดอร์เว็บจะถูกลบทันที และต้องลบบน GitHub ตามด้วย`, 'ลบไฟล์จริง');
+  const sbPath = sbOn() ? sbPathOf(k) : null;
+  const ok = await askConfirm('ลบไฟล์รูปนี้จริง', sbPath ? `ลบ “${name}” ถาวร กู้คืนไม่ได้ · ไฟล์บน Supabase จะถูกลบทันที` : `ลบ “${name}” ถาวร กู้คืนไม่ได้ · ไฟล์ในโฟลเดอร์เว็บจะถูกลบทันที และต้องลบบน GitHub ตามด้วย`, 'ลบไฟล์จริง');
   if(!ok || !rvm || !rvm.hidden.has(k)) return;
+  if(sbPath){
+    try{ await sbRemove([sbPath]); }catch(e){ toast('ลบไฟล์บน Supabase ไม่ได้: ' + sbErrText(e) + ' (ยังไม่มีอะไรถูกลบ)', true); return; }
+    if(!rvm) return;
+    delete rvm.tags[k]; rvm.hidden.delete(k); rvm.files = rvm.files.filter(x => x !== k);
+    rvm.history = [];
+    rvm.dirty = true;
+    const sm = (await rvKvGet('rvShaUrlSb')) || {};
+    Object.keys(sm).forEach(h => { if(sm[h] === k) delete sm[h]; }); // ให้อัปโหลดรูปเดิมซ้ำได้อีก
+    await rvKvSet('rvShaUrlSb', sm);
+    renderReviewsModal();
+    toast('ลบไฟล์บน Supabase แล้ว — กดบันทึกเพื่อให้หน้าร้านอัปเดต');
+    return;
+  }
   const plain = full.startsWith(REVIEW_DIR) && !full.slice(REVIEW_DIR.length).includes('/') ? full.slice(REVIEW_DIR.length) : null;
   if(plain){
     let done = false;
@@ -4043,6 +4221,7 @@ $('revDrop').addEventListener('dragleave', () => $('revDrop').classList.remove('
 $('revDrop').addEventListener('drop', e => { e.preventDefault(); $('revDrop').classList.remove('is-over'); rvUploadFiles(e.dataTransfer.files); });
 $('revFile').addEventListener('change', e => { const f = Array.from(e.target.files); e.target.value = ''; rvUploadFiles(f); });
 $('revPickDir').addEventListener('click', () => rvGetDir(true));
+if(sbOn()){ const pr = $('revPickDir').parentElement; if(pr) pr.style.display = 'none'; }
 $('revScrim').addEventListener('click', e => { if(e.target === $('revScrim')) closeReviewsModal(); });
 $('optTabs').addEventListener('click', e => {
   const b = e.target.closest('[data-tab]');
@@ -4420,7 +4599,7 @@ async function siteDir(sub){
   const imgs = await h.getDirectoryHandle('images', { create: true });
   return imgs.getDirectoryHandle(sub, { create: true });
 }
-async function siteDrawBlob(file, maxSide, mode){
+async function siteDrawBlob(file, maxSide, mode, quality){
   const bmp = await createImageBitmap(file);
   const w = bmp.width, h = bmp.height, big = Math.max(w, h);
   let cw, ch, padded = false;
@@ -4438,7 +4617,7 @@ async function siteDrawBlob(file, maxSide, mode){
     cx.drawImage(bmp, 0, 0, cw, ch);
   }
   if(bmp.close) bmp.close();
-  const blob = await new Promise(res => cv.toBlob(res, mode === 'png' ? 'image/png' : 'image/jpeg', 0.86));
+  const blob = await new Promise(res => cv.toBlob(res, mode === 'png' ? 'image/png' : 'image/jpeg', quality || 0.86));
   if(!blob) throw new Error('resize');
   return { blob, padded };
 }
@@ -4551,25 +4730,26 @@ async function siteUploadFiles(list, key){
   if(!site || !files.length){ if(list && list.length) toast('ไม่พบไฟล์รูป ลากไฟล์ .jpg .png .webp มาวาง', true); return; }
   const drop = $('siteDrop'); if(drop) drop.classList.add('is-busy');
   try{
-    const sub = 'popup';
-    const dir = await siteDir(sub);
-    if(!dir) return;
+    const sub = 'popup', useSb = sbOn();
+    let dir = null;
+    if(useSb){ try{ await sbEnsureSession(); }catch(e){ toast(sbErrText(e), true); return; } }
+    else{ dir = await siteDir(sub); if(!dir) return; }
     const tag = Date.now().toString(36);
     let added = 0, padded = 0; const fails = [];
     for(const f of files){
       try{
-        const r = await siteDrawBlob(f, 1600, 'jpg');
+        const r = await siteDrawBlob(f, useSb ? 1200 : 1600, 'jpg', useSb ? 0.8 : 0.86);
         const name = `popup-${tag}${added}.jpg`;
-        await siteWrite(dir, name, r.blob);
-        const path = `images/${sub}/${name}`;
-        siteBlobUrls[path] = URL.createObjectURL(r.blob);
+        let path;
+        if(useSb){ path = await sbUpload(r.blob, `site/${name}`); }
+        else{ await siteWrite(dir, name, r.blob); path = `images/${sub}/${name}`; siteBlobUrls[path] = URL.createObjectURL(r.blob); }
         siteListRef(key).push({ src: path, on: true });
         added++; if(r.padded) padded++;
-      }catch(e){ fails.push(f.name); }
+      }catch(e){ fails.push(f.name + (useSb ? ' (' + sbErrText(e) + ')' : '')); }
     }
-    if(added){ site.uploaded = true; siteTouch(key); }
+    if(added){ site.uploaded = !useSb; siteTouch(key); }
     renderSiteModal();
-    if(added) toast(`เพิ่มแล้ว ${added} รูป${padded ? ` (เติมขอบขาวให้ ${padded} รูปที่ไม่จัตุรัส)` : ''} — กดบันทึก แล้วลากโฟลเดอร์ images ขึ้น GitHub`);
+    if(added) toast(`เพิ่มแล้ว ${added} รูป${padded ? ` (เติมขอบขาวให้ ${padded} รูปที่ไม่จัตุรัส)` : ''} — กดบันทึก${useSb ? '' : ' แล้วลากโฟลเดอร์ images ขึ้น GitHub'}`);
     if(fails.length) toast('อ่านรูปไม่ได้: ' + fails.join(', '), true);
   } finally { const d = $('siteDrop'); if(d) d.classList.remove('is-busy'); }
 }
@@ -4586,18 +4766,20 @@ async function siteAddByPath(key){
 }
 async function siteUploadLogo(file){
   if(!file || !site) return;
-  const dir = await siteDir('site');
-  if(!dir) return;
+  const useSb = sbOn();
+  let dir = null;
+  if(useSb){ try{ await sbEnsureSession(); }catch(e){ toast(sbErrText(e), true); return; } }
+  else{ dir = await siteDir('site'); if(!dir) return; }
   try{
     const r = await siteDrawBlob(file, 512, 'png');
     const name = 'logo-' + Date.now().toString(36) + '.png';
-    await siteWrite(dir, name, r.blob);
-    const path = 'images/site/' + name;
-    siteBlobUrls[path] = URL.createObjectURL(r.blob);
-    site.cfg.logo = path; site.uploaded = true;
+    let path;
+    if(useSb){ path = await sbUpload(r.blob, 'site/' + name); }
+    else{ await siteWrite(dir, name, r.blob); path = 'images/site/' + name; siteBlobUrls[path] = URL.createObjectURL(r.blob); }
+    site.cfg.logo = path; site.uploaded = !useSb;
     siteTouch(); renderSiteModal();
-    toast('เปลี่ยนโลโก้แล้ว — กดบันทึก แล้วลากโฟลเดอร์ images ขึ้น GitHub');
-  }catch(e){ toast('อ่านรูปโลโก้ไม่ได้', true); }
+    toast('เปลี่ยนโลโก้แล้ว — กดบันทึก' + (useSb ? '' : ' แล้วลากโฟลเดอร์ images ขึ้น GitHub'));
+  }catch(e){ toast(useSb ? 'อัปโหลดโลโก้ไม่ได้: ' + sbErrText(e) : 'อ่านรูปโลโก้ไม่ได้', true); }
 }
 
 /* ───── บันทึก ───── */

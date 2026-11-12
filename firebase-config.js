@@ -34,3 +34,12 @@ window.SHIPPING_DOC = "shipping";
    ปกติไม่ต้องแก้ที่นี่แล้ว — เพิ่ม/ลบ/เรียงชนิดดอกไม้ หมวดหมู่ และขนาดได้ที่หลังบ้าน
    เมนู ⋯ เพิ่มเติม › จัดการหมวดหมู่ / ชนิดดอกไม้ / ขนาด (ค่าที่บันทึกไว้จะใช้แทนรายการนี้) */
 window.FLOWER_TYPES = ['ดอกไม้คละชนิด', 'กุหลาบ', 'ทานตะวัน', 'ทิวลิป', 'ไฮเดรนเยีย', 'เดซี่', 'ลิลลี่', 'เยอบีร่า', 'สตรอว์เบอร์รี่'];
+
+/* ที่เก็บรูปบน Supabase Storage (รอบ 1: ย้ายเฉพาะรูป ข้อมูลยังอยู่ที่ Firebase)
+   เว้นว่าง = ระบบอัปโหลดรูปแบบเดิม (เขียนลงโฟลเดอร์เว็บแล้วลากขึ้น GitHub)
+   กรอกแล้ว = หลังบ้านย่อรูปเป็น WebP แล้วอัปขึ้น Supabase ให้เลย ได้ลิงก์รูปกลับมาใช้ทันที
+   ค่าสองตัวนี้เปิดเผยในเว็บได้ (Project URL และ publishable/anon key) — ห้ามใส่ service_role key เด็ดขาด */
+window.SUPABASE_URL = '';          // เช่น https://abcdefgh.supabase.co
+window.SUPABASE_KEY = '';          // publishable (anon) key
+window.SUPABASE_BUCKET = 'images'; // ชื่อ bucket (ตรงกับที่สร้างใน supabase-setup.sql)
+window.SUPABASE_ADMIN_EMAIL = '';  // เว้นว่าง = ใช้อีเมลเดียวกับ ADMIN_EMAIL ด้านบน (ต้องสร้างผู้ใช้นี้ใน Supabase Auth ด้วยรหัสผ่านเดียวกัน)
