@@ -1272,6 +1272,7 @@ function renderMediaPanel(){
   $('panelMedia').innerHTML = `
     <div class="group">
       <div class="rv-drop pd-drop" tabindex="0" role="button"><b>ลากรูปสินค้ามาวางที่นี่</b><span>หรือคลิกเพื่อเลือกรูป (เลือกได้หลายรูป) · รูปแรกเป็นรูปหลักถ้ายังว่าง · ระบบย่อรูปและตั้งชื่อให้เอง</span></div>
+      ${sbOn() ? '<div class="rv-adv-row"><button type="button" class="btn btn-ghost btn-sm" data-lib="main">🖼 เลือกจากคลังรูป</button></div>' : ''}
       <input type="file" class="pd-file" accept="image/*" multiple hidden>
       ${sbOn() ? '' : `<div class="rv-adv-row"><button type="button" class="btn btn-ghost btn-sm" data-act="pd-pickdir">เลือกโฟลเดอร์เว็บ</button><span class="rv-adv-note" id="pdDirName">${window.showDirectoryPicker ? '' : 'ต้องเปิดด้วย Chrome หรือ Edge บนคอมพิวเตอร์'}</span></div>`}
       <div id="pdOut"></div>
@@ -3211,6 +3212,437 @@ async function imgCompress(file, maxSide, quality, targetBytes){
 }
 function sbExt(blob){ return blob.type === 'image/webp' ? 'webp' : (blob.type === 'image/png' ? 'png' : 'jpg'); }
 
+/* ───────────── คลังรูปบน Supabase ─────────────
+   อัปรูปสินค้าทีละหลายร้อยรูปเข้า library/ (ย่อ WebP ให้) → ในหน้าแก้ไขสินค้ากด "เลือกจากคลังรูป"
+   → ระบบ "ย้าย" ไฟล์ไป products/<รหัสสินค้า>/ ให้เอง (หรือคัดลอกถ้าติ๊ก "เก็บไว้ในคลังด้วย") แล้วใส่ลิงก์ใหม่ลงสินค้า
+   ห้ามย้าย/เปลี่ยนชื่อไฟล์เองใน Supabase หลังผูกกับสินค้าแล้ว เพราะลิงก์เก่าจะใช้ไม่ได้ */
+const LIB_DIR = 'library';
+let lib = null; // { items:[{path,size}], sel:[path], ctx, tab, busy, loading, last, check }
+async function sbListRaw(prefix){
+  const token = await sbToken(), out = [];
+  for(let offset = 0; offset <= 5000; offset += 100){
+    let res;
+    try{
+      res = await fetch(sbApi('/storage/v1/object/list/' + sbBucket()), {
+        method: 'POST',
+        headers: sbHeaders({ Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ prefix, limit: 100, offset, sortBy: { column: 'created_at', order: 'desc' } })
+      });
+    }catch(e){ throw new Error('เชื่อมต่อ Supabase ไม่ได้ (เช็กอินเทอร์เน็ต)'); }
+    if(!res.ok){ const j = await res.json().catch(() => ({})); throw new Error(sbErrText(j.message || j.error || ('HTTP ' + res.status))); }
+    const arr = await res.json();
+    arr.forEach(o => { if(o && o.name && !String(o.name).startsWith('.')) out.push(o); });
+    if(arr.length < 100) break;
+  }
+  return out;
+}
+async function sbList(prefix){
+  return (await sbListRaw(prefix)).filter(o => o.id).map(o => ({ path: prefix + '/' + o.name, size: (o.metadata && o.metadata.size) || 0 }));
+}
+async function sbMoveCopy(src, dst, copy){
+  const token = await sbToken();
+  let res;
+  try{
+    res = await fetch(sbApi('/storage/v1/object/' + (copy ? 'copy' : 'move')), {
+      method: 'POST',
+      headers: sbHeaders({ Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ bucketId: sbBucket(), sourceKey: src, destinationKey: dst })
+    });
+  }catch(e){ throw new Error('เชื่อมต่อ Supabase ไม่ได้ (เช็กอินเทอร์เน็ต)'); }
+  if(!res.ok){ const j = await res.json().catch(() => ({})); throw new Error(sbErrText(j.message || j.error || ('HTTP ' + res.status))); }
+}
+function libStyle(){
+  if(document.getElementById('libStyle')) return;
+  const st = document.createElement('style'); st.id = 'libStyle';
+  st.textContent = `
+.lib-scrim{position:fixed;inset:0;background:rgba(40,20,30,.5);z-index:70;display:flex;align-items:center;justify-content:center;padding:10px}
+.lib-box{background:#fff;border-radius:16px;width:min(1100px,100%);height:min(92vh,900px);display:flex;flex-direction:column;overflow:hidden;box-shadow:0 12px 50px rgba(0,0,0,.3)}
+.lib-head{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid #f0dfe6;flex-wrap:wrap}
+.lib-head b{flex:1;min-width:140px}
+.lib-tabs{display:flex;gap:6px}
+.lib-tabs button{border:0;background:#f6eef1;border-radius:999px;padding:6px 12px;font:inherit;font-size:.9em;cursor:pointer}
+.lib-tabs button.is-on{background:#F62188;color:#fff}
+.lib-body{padding:14px 16px;overflow:auto;flex:1}
+.lib-drop{border:2px dashed #e7a9c2;border-radius:14px;padding:16px;text-align:center;cursor:pointer;color:#8a5a6c;background:#fff7fa}
+.lib-drop small{display:block;margin-top:4px;opacity:.85}
+.lib-drop.is-over{background:#ffe9f1}
+.lib-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:8px;margin-top:12px;user-select:none}
+.lib-it{position:relative;aspect-ratio:1;border-radius:10px;overflow:hidden;border:3px solid transparent;cursor:pointer;background:#f6eef1}
+.lib-it img{width:100%;height:100%;object-fit:cover;display:block}
+.lib-it .ck{position:absolute;top:5px;left:5px;min-width:22px;height:22px;padding:0 4px;box-sizing:border-box;border-radius:11px;background:rgba(255,255,255,.85);border:2px solid #c9a3b3;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff}
+.lib-it .sz{position:absolute;right:4px;bottom:4px;background:rgba(0,0,0,.55);color:#fff;font-size:10px;padding:1px 5px;border-radius:6px}
+.lib-it.is-sel{border-color:#F62188}
+.lib-it.is-sel .ck{background:#F62188;border-color:#F62188}
+.lib-foot{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 16px;border-top:1px solid #f0dfe6;background:#fffafc}
+.lib-foot .grow{flex:1;min-width:120px}
+.lib-note{font-size:.9em;color:#7a6470;margin:8px 0 0}
+.lib-err{color:#c0262d}
+.lib-ok{color:#1b7a3c}
+.lib-chk ul{margin:4px 0 12px;padding-left:20px;font-size:.92em}
+.lib-th{position:relative;aspect-ratio:1;border-radius:10px;overflow:hidden;background:#f6eef1}
+.lib-th img{width:100%;height:100%;object-fit:cover;display:block}
+.lib-th .sz{position:absolute;right:4px;bottom:4px;background:rgba(0,0,0,.55);color:#fff;font-size:10px;padding:1px 5px;border-radius:6px}
+`;
+  document.head.appendChild(st);
+}
+function libStatus(msg, isErr){
+  const el = document.getElementById('libStatus');
+  if(el){ el.textContent = msg || ''; el.classList.toggle('lib-err', !!isErr); }
+}
+function libOpen(ctx){
+  if(!sbOn()) return;
+  libStyle();
+  const old = document.getElementById('libScrim'); if(old) old.remove();
+  lib = { items: [], sel: [], ctx: ctx || null, tab: 'grid', busy: false, loading: true, last: -1, check: null, orphan: null };
+  const sc = document.createElement('div');
+  sc.className = 'lib-scrim'; sc.id = 'libScrim';
+  sc.innerHTML = `<div class="lib-box">
+    <div class="lib-head"><b id="libTitle"></b>
+      <div class="lib-tabs"><button type="button" data-lib-tab="grid">คลังรูป</button><button type="button" data-lib-tab="orphan">ไฟล์ที่ไม่ได้ใช้</button><button type="button" data-lib-tab="check">ตรวจก่อนลบรูปใน GitHub</button></div>
+      <button type="button" class="btn btn-ghost btn-sm" data-lib-act="close">ปิด</button></div>
+    <div class="lib-body" id="libBody"></div>
+    <div class="lib-foot" id="libFoot"></div>
+  </div>
+  <input type="file" id="libFile" accept="image/*" multiple hidden>`;
+  document.body.appendChild(sc);
+  sc.addEventListener('click', libOnClick);
+  sc.addEventListener('dragover', e => { if(lib && lib.tab === 'grid'){ e.preventDefault(); const d = sc.querySelector('#libDrop'); if(d) d.classList.add('is-over'); } });
+  sc.addEventListener('dragleave', e => { if(e.target === sc || e.target.id === 'libDrop'){ const d = sc.querySelector('#libDrop'); if(d) d.classList.remove('is-over'); } });
+  sc.addEventListener('drop', e => { e.preventDefault(); const d = sc.querySelector('#libDrop'); if(d) d.classList.remove('is-over'); if(lib && lib.tab === 'grid') libUploadFiles(e.dataTransfer.files); });
+  sc.querySelector('#libFile').addEventListener('change', e => { const f = Array.from(e.target.files); e.target.value = ''; libUploadFiles(f); });
+  libRender();
+  libReload();
+}
+async function libReload(){
+  if(!lib) return;
+  lib.loading = true; libRender();
+  try{ await sbEnsureSession(); const items = await sbList(LIB_DIR); if(!lib) return; lib.items = items; lib.sel = lib.sel.filter(p => items.some(x => x.path === p)); }
+  catch(e){ toast(sbErrText(e), true); }
+  if(!lib) return;
+  lib.loading = false; libRender();
+}
+function libClose(){
+  if(lib && lib.busy){ toast('กำลังทำงานอยู่ รอให้เสร็จก่อนค่อยปิด', true); return; }
+  const sc = document.getElementById('libScrim'); if(sc) sc.remove();
+  lib = null;
+}
+function libRender(){
+  if(!lib) return;
+  const sc = document.getElementById('libScrim'); if(!sc) return;
+  sc.querySelector('#libTitle').textContent = lib.ctx ? ('เลือกรูปเข้า: ' + lib.ctx.label) : 'คลังรูป (Supabase)';
+  sc.querySelectorAll('[data-lib-tab]').forEach(b => b.classList.toggle('is-on', b.dataset.libTab === lib.tab));
+  const body = sc.querySelector('#libBody');
+  if(lib.tab === 'check'){ body.innerHTML = libCheckHtml(); libFoot(); return; }
+  if(lib.tab === 'orphan'){ body.innerHTML = libOrphanHtml(); libFoot(); return; }
+  const grid = lib.items.map(it => `<div class="lib-it" data-p="${esc(it.path)}"><img loading="lazy" decoding="async" alt="" src="${esc(sbPublicUrl(it.path))}"><span class="ck"></span><span class="sz">${Math.max(1, Math.round(it.size / 1024))} KB</span></div>`).join('');
+  body.innerHTML = `<div class="lib-drop" id="libDrop" tabindex="0" role="button"><b>ลากรูปสินค้ามาวางที่นี่ได้ทีละหลายร้อยรูป</b> หรือคลิกเพื่อเลือก<small>ระบบย่อเป็น WebP ให้เอง · ไฟล์ HEIC จากไอโฟนใช้ไม่ได้ ให้แปลงเป็น JPG ก่อน · เปิดแท็บค้างไว้จนกว่าจะเสร็จ</small></div>
+    <p class="lib-note" id="libStatus">${lib.loading ? 'กำลังโหลดรายการรูป …' : ''}</p>
+    ${lib.ctx ? '<p class="lib-note">คลิกรูปเพื่อเลือก (เลขบนรูปคือลำดับ — รูปแรกเป็นรูปหลักถ้ายังว่าง) · กด Shift ค้างแล้วคลิกเพื่อเลือกเป็นช่วง</p>' : '<p class="lib-note">คลิกรูปเพื่อเลือก · กด Shift ค้างแล้วคลิกเพื่อเลือกเป็นช่วง · ไปเลือกรูปเข้าสินค้าได้จากหน้าแก้ไขสินค้า (ปุ่ม “เลือกจากคลังรูป”)</p>'}
+    <div class="lib-grid" id="libGrid">${grid || (lib.loading ? '' : '<p class="lib-note">คลังยังว่างอยู่ — ลากรูปมาวางด้านบนได้เลย</p>')}</div>`;
+  const drop = body.querySelector('#libDrop');
+  drop.addEventListener('click', () => sc.querySelector('#libFile').click());
+  drop.addEventListener('keydown', e => { if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); sc.querySelector('#libFile').click(); } });
+  libRefreshSel();
+}
+function libFoot(){
+  const f = document.getElementById('libFoot'); if(!f || !lib) return;
+  if(lib.tab === 'check' || lib.tab === 'orphan'){ f.innerHTML = '<span class="lib-note grow">ตรวจจากข้อมูลที่โหลดในหลังบ้านตอนนี้ — กดบันทึกสินค้าให้เรียบร้อยก่อนตรวจ</span>'; return; }
+  const n = lib.sel.length, dis = (lib.busy || !n) ? ' disabled' : '';
+  f.innerHTML = `<span class="lib-note grow">ในคลัง ${lib.items.length} รูป · เลือกอยู่ ${n} รูป</span>
+    <button type="button" class="btn btn-ghost btn-sm" data-lib-act="all"${lib.busy ? ' disabled' : ''}>เลือกทั้งหมด</button>
+    <button type="button" class="btn btn-ghost btn-sm" data-lib-act="none"${dis}>ล้างที่เลือก</button>
+    <button type="button" class="btn btn-danger btn-sm" data-lib-act="del"${dis}>ลบที่เลือก</button>
+    ${lib.ctx ? `<label class="lib-note" style="display:flex;gap:4px;align-items:center;margin:0"><input type="checkbox" id="libKeep"> เก็บไว้ในคลังด้วย (คัดลอกแทนย้าย)</label>
+    <button type="button" class="btn btn-primary" data-lib-act="pick"${dis}>ใส่ ${n} รูปในสินค้านี้</button>` : ''}`;
+}
+function libRefreshSel(){
+  if(!lib) return;
+  document.querySelectorAll('#libGrid .lib-it').forEach(el => {
+    const at = lib.sel.indexOf(el.dataset.p);
+    el.classList.toggle('is-sel', at >= 0);
+    el.querySelector('.ck').textContent = at >= 0 ? String(at + 1) : '';
+  });
+  libFoot();
+}
+function libToggle(path, shift){
+  const paths = lib.items.map(x => x.path), i = paths.indexOf(path);
+  if(i < 0) return;
+  if(shift && lib.last >= 0){
+    for(let k = Math.min(lib.last, i); k <= Math.max(lib.last, i); k++) if(!lib.sel.includes(paths[k])) lib.sel.push(paths[k]);
+  }else{
+    const at = lib.sel.indexOf(path);
+    if(at >= 0) lib.sel.splice(at, 1); else lib.sel.push(path);
+  }
+  lib.last = i;
+  libRefreshSel();
+}
+function libOnClick(e){
+  if(!lib) return;
+  const tab = e.target.closest('[data-lib-tab]');
+  if(tab){ if(!lib.busy){ lib.tab = tab.dataset.libTab; libRender(); } return; }
+  const a = e.target.closest('[data-lib-act]');
+  if(a){
+    const act = a.dataset.libAct;
+    if(act === 'close') libClose();
+    else if(act === 'all'){ lib.sel = lib.items.map(x => x.path); libRefreshSel(); }
+    else if(act === 'none'){ lib.sel = []; libRefreshSel(); }
+    else if(act === 'del') libDeleteSel();
+    else if(act === 'pick') libPickSelected();
+    else if(act === 'check') libRunCheck();
+    else if(act === 'orphan') libRunOrphan();
+    else if(act === 'orphan-del') libDeleteOrphans();
+    else if(act === 'export') libExportProducts();
+    return;
+  }
+  const it = e.target.closest('.lib-it');
+  if(it && !lib.busy) libToggle(it.dataset.p, e.shiftKey);
+}
+async function libUploadFiles(list){
+  if(!lib || lib.busy) return;
+  const all = Array.from(list || []);
+  const files = all.filter(f => /^image\//.test(f.type) || REVIEW_IMG_RE.test(f.name));
+  if(!files.length){ toast('ไม่พบไฟล์รูป ลากไฟล์ .jpg .png .webp มาวาง', true); return; }
+  try{ await sbEnsureSession(); }catch(e){ toast(sbErrText(e), true); return; }
+  lib.busy = true; libFoot();
+  const lmap = (await rvKvGet('libShaUrl')) || {}, pmap = (await rvKvGet('pdHashMapSb')) || {}; // { sha: ลิงก์ } รูปเดิมไม่อัปซ้ำ
+  const tag = Date.now().toString(36);
+  let done = 0, ok = 0, idx = 0;
+  const dups = [], fails = [];
+  const worker = async () => {
+    while(idx < files.length){
+      const i = idx++, f = files[i];
+      let sha = '';
+      try{
+        sha = await rvSha(f);
+        if(lmap[sha] || pmap[sha]){ dups.push(f.name); }
+        else{
+          lmap[sha] = 'pending';
+          const blob = await imgCompress(f, 1200, 0.8, 220 * 1024);
+          lmap[sha] = await sbUpload(blob, `${LIB_DIR}/lib-${tag}-${String(i).padStart(4, '0')}.${sbExt(blob)}`);
+          ok++;
+        }
+      }catch(e){ if(sha && lmap[sha] === 'pending') delete lmap[sha]; fails.push(f.name + ' (' + sbErrText(e) + ')'); }
+      done++;
+      libStatus(`กำลังย่อและอัปโหลด ${done}/${files.length} รูป …`);
+    }
+  };
+  try{ await Promise.all([worker(), worker(), worker()]); }
+  finally{
+    Object.keys(lmap).forEach(h => { if(lmap[h] === 'pending') delete lmap[h]; });
+    await rvKvSet('libShaUrl', lmap);
+    if(lib) lib.busy = false;
+  }
+  if(!lib) return;
+  await libReload();
+  let msg = `อัปโหลดสำเร็จ ${ok} รูป`;
+  if(dups.length) msg += ` · ข้าม ${dups.length} รูปที่เคยอัปแล้ว`;
+  if(fails.length) msg += ` · ไม่สำเร็จ ${fails.length} รูป: ` + fails.slice(0, 8).join(', ') + (fails.length > 8 ? ' …' : '');
+  libStatus(msg, fails.length > 0);
+  if(all.length > files.length) toast('ข้ามไฟล์ที่ไม่ใช่รูป ' + (all.length - files.length) + ' ไฟล์');
+}
+async function libDeleteSel(){
+  if(!lib || lib.busy || !lib.sel.length) return;
+  const keys = lib.sel.slice();
+  if(!confirm(`ลบ ${keys.length} รูปออกจากคลังถาวร (กู้คืนไม่ได้) ใช่ไหม?`)) return;
+  lib.busy = true; libFoot(); libStatus('กำลังลบ …');
+  try{
+    for(let i = 0; i < keys.length; i += 50) await sbRemove(keys.slice(i, i + 50));
+    const lmap = (await rvKvGet('libShaUrl')) || {}, urls = new Set(keys.map(sbPublicUrl));
+    Object.keys(lmap).forEach(h => { if(urls.has(lmap[h])) delete lmap[h]; }); // ให้อัปรูปเดิมซ้ำได้อีก
+    await rvKvSet('libShaUrl', lmap);
+    if(lib){ lib.items = lib.items.filter(x => !keys.includes(x.path)); lib.sel = []; }
+  }catch(e){ toast('ลบไม่สำเร็จ: ' + sbErrText(e), true); }
+  if(lib){ lib.busy = false; libRender(); }
+}
+// ย้าย (หรือคัดลอก) รูปที่เลือกไป products/<รหัสสินค้า>/ แล้วส่งลิงก์ใหม่กลับให้หน้าแก้ไขสินค้า
+async function libPickSelected(){
+  if(!lib || lib.busy || !lib.ctx || !lib.sel.length) return;
+  const ctx = lib.ctx, slug = ctx.slug();
+  if(!slug){ toast('กรอกรหัสสินค้า (ตัวอักษรอังกฤษหรือตัวเลข) ในการ์ดข้อมูลสินค้าก่อน แล้วค่อยเลือกรูป', true); return; }
+  const keep = !!(document.getElementById('libKeep') && document.getElementById('libKeep').checked);
+  const keys = lib.sel.slice(), tag = Date.now().toString(36);
+  lib.busy = true; libFoot();
+  const lmap = (await rvKvGet('libShaUrl')) || {};
+  const urls = [], fails = [];
+  for(let i = 0; i < keys.length; i++){
+    const src = keys[i], ext = String(src).split('.').pop();
+    const dst = `products/${slug}/${slug}-${tag}${i}.${ext}`;
+    libStatus(`กำลัง${keep ? 'คัดลอก' : 'ย้าย'}รูป ${i + 1}/${keys.length} …`);
+    try{
+      await sbMoveCopy(src, dst, keep);
+      const oldUrl = sbPublicUrl(src), newUrl = sbPublicUrl(dst);
+      if(!keep) Object.keys(lmap).forEach(h => { if(lmap[h] === oldUrl) lmap[h] = newUrl; });
+      urls.push(newUrl);
+    }catch(e){ fails.push(sbErrText(e)); }
+  }
+  await rvKvSet('libShaUrl', lmap);
+  if(lib) lib.busy = false;
+  if(urls.length){
+    try{ ctx.onPick(urls); }catch(e){ console.error(e); }
+    libClose();
+    toast(`ใส่รูป ${urls.length} รูปแล้ว — กดบันทึกสินค้าด้วย` + (fails.length ? ` (ไม่สำเร็จ ${fails.length} รูป: ${fails[0]})` : ''), fails.length > 0);
+  }else{
+    toast('ใส่รูปไม่สำเร็จ: ' + (fails[0] || 'ไม่ทราบสาเหตุ'), true);
+    if(lib) libReload();
+  }
+}
+/* ── แท็บไฟล์ที่ไม่ได้ใช้: หาไฟล์ใน products/ ที่ไม่มีสินค้าใดอ้างถึงแล้ว (เช่น รูปที่กด ✕ เอาออกจากสินค้า) แล้วลบออกจาก Supabase ── */
+function libOrphanHtml(){
+  const o = lib.orphan;
+  let res = '';
+  if(o === 'busy') res = '<p class="lib-note">กำลังตรวจ … (ไล่ดูทุกโฟลเดอร์สินค้า ใช้เวลาสักครู่)</p>';
+  else if(o){
+    if(!o.items.length) res = `<p class="lib-ok"><b>✓ ไม่มีไฟล์ค้าง</b> — ไฟล์ทั้ง ${o.total} ไฟล์ในโฟลเดอร์สินค้ามีสินค้าใช้อยู่ทั้งหมด</p>`;
+    else{
+      const kb = Math.round(o.items.reduce((t, x) => t + x.size, 0) / 1024);
+      res = `<p><b>พบไฟล์ที่ไม่มีสินค้าใดใช้ ${o.items.length} ไฟล์</b> (จากทั้งหมด ${o.total} ไฟล์ · รวมประมาณ ${kb.toLocaleString('en-US')} KB) ดูรูปด้านล่างให้แน่ใจก่อนลบ</p>
+      <div class="lib-grid">${o.items.map(it => `<div class="lib-th" title="${esc(it.path)}"><img loading="lazy" decoding="async" alt="" src="${esc(sbPublicUrl(it.path))}"><span class="sz">${Math.max(1, Math.round(it.size / 1024))} KB</span></div>`).join('')}</div>
+      <p style="margin-top:12px"><button type="button" class="btn btn-danger" data-lib-act="orphan-del">ลบ ${o.items.length} ไฟล์นี้ออกจาก Supabase</button></p>`;
+    }
+  }
+  return `<div class="lib-chk"><p class="lib-note">ปุ่ม ✕ ในหน้าแก้ไขสินค้าแค่เอารูปออกจากสินค้า ไฟล์ยังค้างอยู่ใน Supabase — แท็บนี้หาไฟล์เหล่านั้นให้แล้วลบได้เลย ระบบนับว่า “ใช้อยู่” จากสินค้า (รวมสีและไซซ์ของเสริม) ที่โหลดในหลังบ้าน หน้าแก้ไขที่เปิดค้างอยู่ และการตั้งค่าหน้าร้าน<br><b>วิธีใช้: กด ✕ เอารูปออก → กดบันทึกสินค้า → มาที่แท็บนี้กดตรวจ → ลบ</b></p>
+  <div style="margin:10px 0"><button type="button" class="btn btn-primary" data-lib-act="orphan"${o === 'busy' ? ' disabled' : ''}>ตรวจไฟล์ที่ไม่ได้ใช้</button></div>${res}</div>`;
+}
+async function libRunOrphan(){
+  if(!lib || lib.busy || lib.orphan === 'busy') return;
+  if(!catalog.length){ toast('ยังไม่ได้โหลดข้อมูลสินค้า รอสักครู่แล้วลองใหม่', true); return; }
+  lib.orphan = 'busy'; libRender();
+  try{
+    await sbEnsureSession();
+    const used = new Set();
+    const mark = t => { const pth = sbPathOf(t); if(pth) used.add(pth); };
+    const walk = (o, cb) => { if(typeof o === 'string') cb(o.trim()); else if(Array.isArray(o)) o.forEach(x => walk(x, cb)); else if(o && typeof o === 'object') Object.keys(o).forEach(k => walk(o[k], cb)); };
+    catalog.forEach(pr => walk(pr, mark));
+    if(draft) walk(draft, mark);
+    if(typeof im !== 'undefined' && im) walk(im, mark);
+    try{ if(siteCfgSaved) walk(siteCfgSaved, mark); if(site && site.cfg) walk(site.cfg, mark); }catch(e){}
+    const slugs = (await sbListRaw('products')).filter(o => !o.id).map(o => o.name);
+    const files = [];
+    let i = 0;
+    const worker = async () => {
+      while(i < slugs.length){
+        const sl = slugs[i++];
+        (await sbListRaw('products/' + sl)).forEach(o => { if(o.id) files.push({ path: 'products/' + sl + '/' + o.name, size: (o.metadata && o.metadata.size) || 0 }); });
+      }
+    };
+    await Promise.all([worker(), worker(), worker(), worker()]);
+    if(files.length && !used.size){
+      toast('ไม่พบสินค้าที่ใช้รูปจาก Supabase เลย — ยกเลิกการตรวจเพื่อความปลอดภัย (เช็กว่าบันทึกสินค้าแล้ว)', true);
+      if(lib){ lib.orphan = null; libRender(); }
+      return;
+    }
+    if(!lib) return;
+    lib.orphan = { items: files.filter(f => !used.has(f.path)), total: files.length };
+  }catch(e){ toast(sbErrText(e), true); if(lib) lib.orphan = null; }
+  if(lib) libRender();
+}
+async function libDeleteOrphans(){
+  const o = lib && lib.orphan;
+  if(!lib || lib.busy || !o || o === 'busy' || !o.items.length) return;
+  if(!confirm(`ลบ ${o.items.length} ไฟล์ออกจาก Supabase ถาวร (กู้คืนไม่ได้) ใช่ไหม?\nไฟล์เหล่านี้ไม่มีสินค้าใดใช้แล้ว`)) return;
+  const keys = o.items.map(x => x.path);
+  lib.busy = true; libFoot();
+  try{
+    for(let i = 0; i < keys.length; i += 50) await sbRemove(keys.slice(i, i + 50));
+    // ล้างความจำรูปซ้ำ ไม่งั้นการอัปรูปเดิมอีกครั้งจะไปใช้ลิงก์ที่ถูกลบไปแล้ว
+    const urls = new Set(keys.map(sbPublicUrl));
+    for(const name of ['pdHashMapSb', 'libShaUrl']){
+      const m = (await rvKvGet(name)) || {};
+      Object.keys(m).forEach(h => { if(urls.has(m[h])) delete m[h]; });
+      await rvKvSet(name, m);
+    }
+    toast(`ลบไฟล์ที่ไม่ได้ใช้ ${keys.length} ไฟล์แล้ว`);
+    if(lib) lib.orphan = { items: [], total: Math.max(0, o.total - keys.length) };
+  }catch(e){ toast('ลบไม่สำเร็จ: ' + sbErrText(e), true); }
+  if(lib){ lib.busy = false; libRender(); }
+}
+/* ── แท็บตรวจก่อนลบรูปใน GitHub + ดาวน์โหลด products.json ใหม่ ── */
+function libCheckHtml(){
+  const c = lib.check;
+  let res = '<p class="lib-note">กดตรวจเพื่อดูว่ายังมีสินค้า รีวิว หรือการตั้งค่าหน้าร้านที่ชี้ไปที่รูปเก่าใน GitHub (<code>images/…</code>) อยู่ตรงไหนบ้าง</p>';
+  if(c === 'busy') res = '<p class="lib-note">กำลังตรวจ … (ตรวจรูปรีวิวใช้เวลาสักครู่)</p>';
+  else if(c){
+    const lines = [];
+    lines.push(c.prods.length ? `<p class="lib-err"><b>✗ สินค้า ${c.prods.length} รายการ ยังมีรูปที่ชี้ images/…</b></p><ul>${c.prods.slice(0, 40).map(p => `<li>${esc(p.id)} — ${p.n} รูป (เช่น ${esc(p.first)})</li>`).join('')}${c.prods.length > 40 ? '<li>…</li>' : ''}</ul>` : '<p class="lib-ok"><b>✓ สินค้าทุกชิ้นใช้รูปจาก Supabase แล้ว</b></p>');
+    lines.push(c.rv.length ? `<p class="lib-err"><b>✗ รูปรีวิว ${c.rv.length} รูป ยังเป็นไฟล์ใน GitHub</b> (เช่น ${esc(c.rv.slice(0, 3).join(', '))})</p>` : '<p class="lib-ok"><b>✓ รูปรีวิวที่แสดงอยู่ใช้รูปจาก Supabase ทั้งหมด</b> (รูปที่ซ่อนไว้ไม่นับ)</p>');
+    lines.push(c.site ? `<p class="lib-err"><b>✗ การตั้งค่าหน้าร้าน (โลโก้/แบนเนอร์/ป๊อปอัป) มี ${c.site} จุดที่ยังชี้ images/…</b></p>` : '<p class="lib-ok"><b>✓ การตั้งค่าหน้าร้านที่บันทึกไว้ไม่ชี้ images/… แล้ว</b></p>');
+    const clean = !c.prods.length && !c.rv.length && !c.site;
+    lines.push(clean ? '<p class="lib-ok"><b>ผ่านทั้งหมด</b> — ทำข้อถัดไป (ดาวน์โหลด products.json ใหม่ไปทับใน repo) แล้วลบ images/products, bouquet, frame, pot, other และ images/reviews ใน repo ได้ ส่วนโลโก้ แบนเนอร์ ไอคอน และไฟล์ที่ index.html / style.css เรียกใช้ตรงๆ ให้เก็บไว้</p>' : '<p class="lib-err"><b>ยังไม่ควรลบรูปใน repo</b> — แก้รายการด้านบนให้เป็นลิงก์ Supabase ก่อน แล้วกดตรวจใหม่</p>');
+    res = lines.join('');
+  }
+  return `<div class="lib-chk"><div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px"><button type="button" class="btn btn-primary" data-lib-act="check"${c === 'busy' ? ' disabled' : ''}>ตรวจตอนนี้</button></div>${res}
+  <hr style="border:0;border-top:1px solid #f0dfe6;margin:14px 0">
+  <p><b>products.json ตัวสำรองของหน้าร้าน</b></p>
+  <p class="lib-note">หน้าร้านใช้ไฟล์นี้เป็นตัวสำรองเมื่อ Firebase โหลดช้า/ล่ม และแอปจัดการออเดอร์ก็ใช้เหมือนกัน ตอนนี้ในไฟล์ยังเป็นพาธรูปเก่า ให้ดาวน์โหลดตัวใหม่จากข้อมูลสินค้าล่าสุดไปทับไฟล์ <code>products.json</code> ใน repo ก่อนลบรูปเก่า</p>
+  <button type="button" class="btn btn-ghost" data-lib-act="export">ดาวน์โหลด products.json ใหม่</button></div>`;
+}
+async function libRunCheck(){
+  if(!lib || lib.check === 'busy') return;
+  lib.check = 'busy'; libRender();
+  const GH = /^(\.\/)?images\//i;
+  const walk = (o, cb) => { if(typeof o === 'string') cb(o.trim()); else if(Array.isArray(o)) o.forEach(x => walk(x, cb)); else if(o && typeof o === 'object') Object.keys(o).forEach(k => walk(o[k], cb)); };
+  const prods = [];
+  catalog.forEach(p => { let n = 0, first = ''; walk(p, s => { if(GH.test(s)){ n++; if(!first) first = s; } }); if(n) prods.push({ id: p.id, n, first }); });
+  let site = 0;
+  try{ if(siteCfgSaved) walk(siteCfgSaved, s => { if(GH.test(s)) site++; }); }catch(e){}
+  let rv = [];
+  try{ rv = (await scanReviewFiles()).filter(k => !reviewHidden.has(k) && !/^https?:/i.test(k)); }catch(e){}
+  if(!lib) return;
+  lib.check = { prods, rv, site };
+  libRender();
+}
+function libExportProducts(){
+  const blob = new Blob([JSON.stringify(catalog, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = 'products.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  toast('ดาวน์โหลด products.json แล้ว — เอาไปทับไฟล์เดิมใน repo');
+}
+// ผลลัพธ์ของการเลือกรูปจากคลัง → ใส่เข้าสินค้า (เหมือนตอนลากรูปอัปโหลด)
+function pdApplyToMain(urls){
+  if(!draft) return;
+  const cur = pdAll();
+  urls.forEach(u => { if(!cur.includes(u)) cur.push(u); });
+  pdSetAll(cur);
+  pdRefresh();
+}
+function pdApplyToRow(path, urls, single){
+  if(!draft) return;
+  const row = getPath(draft, path);
+  if(!row || !urls.length) return;
+  if(single){ row.image = urls[0]; }
+  else{
+    const cur = imgsOf(row);
+    urls.forEach(u => { if(!cur.includes(u)) cur.push(u); });
+    row.image = cur[0] || '';
+    if(cur.length > 1) row.images = cur.slice(1); else delete row.images;
+  }
+  if(path.startsWith('addons')) renderAddonsPanel(); else renderPricePanel();
+  renderMediaPanel();
+  updateSummaries();
+}
+function pdApplyToModal(urls){
+  if(!draft || !im) return;
+  im.list = im.list.filter(x => String(x || '').trim());
+  urls.forEach(pth => {
+    if(!String(im.main || '').trim()){ im.main = pth; im.mainChanged = true; }
+    else if(!im.list.includes(pth) && pth !== im.main) im.list.push(pth);
+  });
+  renderImgModal();
+  renderMediaPanel();
+}
+function libOpenForMain(){
+  if(!draft) return;
+  libOpen({ label: 'รูปสินค้า ' + (String(draft.id || '').trim() || '(ยังไม่มีรหัส)'), slug: () => pdSlug(draft && draft.id), onPick: pdApplyToMain });
+}
+function libOpenForZone(z){
+  if(!draft) return;
+  const p = z.dataset.pdRow, single = !!z.dataset.pdSingle;
+  const label = p === 'im' ? 'รูปเพิ่มเติมของตัวแปร' : (p.startsWith('colors') ? 'รูปของสี' : (p.startsWith('sizes') ? 'รูปของไซซ์' : 'รูปของเสริม'));
+  libOpen({ label: label + ' · ' + (String(draft.id || '').trim() || '(ยังไม่มีรหัส)'), slug: () => pdSlug(draft && draft.id), onPick: urls => { if(p === 'im') pdApplyToModal(urls); else pdApplyToRow(p, urls, single); } });
+}
+
 /* ───────────── อัปโหลดรูปรีวิวลงโฟลเดอร์เว็บในเครื่อง (Chrome / Edge บนคอมพิวเตอร์) ─────────────
    ลากรูปมาวาง → ย่อเป็น JPG → ตั้งชื่อ reviewN.jpg ต่อจากเลขล่าสุด → เขียนลง images/reviews/ ในโฟลเดอร์เว็บ
    → ผูกเข้ารายการแบบ path เต็ม (หน้าร้านเห็นโดยไม่ต้องแก้ list.json) · แล้วให้ลากโฟลเดอร์ขึ้น GitHub ต่อเอง */
@@ -3406,7 +3838,7 @@ async function pdUploadFiles(list){
 }
 /* ── รอบ 2: ช่องลากรูปของแต่ละสี / ไซซ์ / ของเสริม (data-pd-row = เส้นทางในสินค้า เช่น colors.0, sizes.1, addons.0) ── */
 function pdRowDropHtml(path, single){
-  return `<div class="pd-rowdrop" tabindex="0" role="button" data-pd-row="${esc(path)}"${single ? ' data-pd-single="1"' : ''}>📷 ลากรูปมาวาง หรือคลิกเลือกรูป<small>${single ? 'ใช้เป็นรูปของเสริมนี้ (ถ้าเลือกหลายรูปจะใช้รูปแรก)' : 'รูปแรกเป็นรูปหลักถ้ายังว่าง ที่เหลือเข้ารูปเพิ่มเติม'}</small></div>`;
+  return `<div class="pd-rowdrop" tabindex="0" role="button" data-pd-row="${esc(path)}"${single ? ' data-pd-single="1"' : ''}>📷 ลากรูปมาวาง หรือคลิกเลือกรูป<small>${single ? 'ใช้เป็นรูปของเสริมนี้ (ถ้าเลือกหลายรูปจะใช้รูปแรก)' : 'รูปแรกเป็นรูปหลักถ้ายังว่าง ที่เหลือเข้ารูปเพิ่มเติม'}</small>${sbOn() ? '<button type="button" class="btn btn-ghost btn-sm" data-lib="row" style="margin-top:6px">🖼 เลือกจากคลังรูป</button>' : ''}</div>`;
 }
 async function pdUploadToRow(path, list, single){
   if(!draft) return;
@@ -4171,6 +4603,13 @@ $('posterOneBtn').addEventListener('click', () => {
 $('progressCancel').addEventListener('click', () => { posterCancel = true; });
 $('optionsBtn').addEventListener('click', openOptionsModal);
 $('reviewsBtn').addEventListener('click', () => openReviewsModal());
+if(sbOn()){
+  const rb = $('reviewsBtn'), lb = rb.cloneNode(false);
+  lb.id = 'libraryBtn'; lb.title = 'อัปรูปสินค้าทีละหลายร้อยรูปเก็บไว้ในคลัง แล้วไปเลือกเข้าสินค้าจากหน้าแก้ไขสินค้า · ตรวจก่อนลบรูปใน GitHub';
+  lb.innerHTML = '<svg class="sb-ico" viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="14" height="12" rx="2"/><circle cx="7.5" cy="8.5" r="1.3"/><path d="M3.5 14l4-3.5 3 2.5 2.5-2 3.5 3"/></svg><span>คลังรูป</span>';
+  rb.insertAdjacentElement('afterend', lb);
+  lb.addEventListener('click', () => libOpen(null));
+}
 $('soldBtn').addEventListener('click', openSoldModal);
 $('soldScrim').addEventListener('click', e => { if(e.target === $('soldScrim')) closeSoldModal(); });
 $('soldCancel').addEventListener('click', () => closeSoldModal());
@@ -4454,6 +4893,7 @@ drawerBody.addEventListener('change', e => {
 (function(){
   const pm = $('panelMedia');
   pm.addEventListener('click', e => { if(e.target.closest('.pd-drop')){ const f = pm.querySelector('.pd-file'); if(f) f.click(); } });
+  pm.addEventListener('click', e => { if(e.target.closest('[data-lib="main"]')) libOpenForMain(); });
   pm.addEventListener('keydown', e => { if((e.key === 'Enter' || e.key === ' ') && e.target.closest('.pd-drop')){ e.preventDefault(); const f = pm.querySelector('.pd-file'); if(f) f.click(); } });
   pm.addEventListener('dragover', e => { const d = e.target.closest('.pd-drop'); if(d){ e.preventDefault(); d.classList.add('is-over'); } });
   pm.addEventListener('dragleave', e => { const d = e.target.closest('.pd-drop'); if(d) d.classList.remove('is-over'); });
@@ -4470,8 +4910,8 @@ drawerBody.addEventListener('change', e => {
   const run = (t, files) => { if(!t || !files.length) return; if(t.kind === 'im') pdUploadToModal(files); else pdUploadToRow(t.path, files, t.single); };
   inp.addEventListener('change', () => { const f = Array.from(inp.files); inp.value = ''; run(target, f); });
   [$('editorBody'), $('imgBody')].forEach(host => {
-    host.addEventListener('click', e => { const z = e.target.closest('.pd-rowdrop'); if(z){ target = targetOf(z); inp.click(); } });
-    host.addEventListener('keydown', e => { const z = e.target.closest('.pd-rowdrop'); if(z && (e.key === 'Enter' || e.key === ' ')){ e.preventDefault(); target = targetOf(z); inp.click(); } });
+    host.addEventListener('click', e => { const z = e.target.closest('.pd-rowdrop'); if(z){ if(e.target.closest('[data-lib]')){ libOpenForZone(z); return; } target = targetOf(z); inp.click(); } });
+    host.addEventListener('keydown', e => { const z = e.target.closest('.pd-rowdrop'); if(z && !e.target.closest('[data-lib]') && (e.key === 'Enter' || e.key === ' ')){ e.preventDefault(); target = targetOf(z); inp.click(); } });
     host.addEventListener('dragover', e => { const z = e.target.closest('.pd-rowdrop'); if(z){ e.preventDefault(); z.classList.add('is-over'); } });
     host.addEventListener('dragleave', e => { const z = e.target.closest('.pd-rowdrop'); if(z) z.classList.remove('is-over'); });
     host.addEventListener('drop', e => { const z = e.target.closest('.pd-rowdrop'); if(z){ e.preventDefault(); z.classList.remove('is-over'); run(targetOf(z), Array.from(e.dataTransfer.files)); } });
