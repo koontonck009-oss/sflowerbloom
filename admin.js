@@ -199,6 +199,13 @@ function setPath(obj, path, value){
 /* ───────────────── เริ่มระบบ ───────────────── */
 
 async function boot(){
+  if(window.DATA_SOURCE === 'supabase'){
+    if(!sbOn()){
+      $('bootScreen').innerHTML = '<div class="empty"><p class="empty-title">ยังไม่ได้ตั้งค่า Supabase</p><p>เปิดไฟล์ firebase-config.js แล้วกรอก SUPABASE_URL และ SUPABASE_KEY (หรือเปลี่ยน DATA_SOURCE กลับเป็น firebase)</p></div>';
+      return;
+    }
+    return bootSupabase();
+  }
   const cfg = window.FIREBASE_CONFIG;
   if(!cfg || !cfg.projectId || String(cfg.apiKey || '').includes('ใส่ค่าจริง')){
     $('bootScreen').innerHTML =
@@ -268,10 +275,23 @@ async function doLogin(){
   btn.textContent = 'กำลังเข้าสู่ระบบ…';
   try{
     // หน้าร้านนี้มีบัญชีผู้ดูแลเพียงบัญชีเดียว จึงไม่เปิดให้ป้อนอีเมลอื่น
-    const email = window.ADMIN_EMAIL || 'admin@sflowerbloom.local';
-    await fb.authApi.signInWithEmailAndPassword(fb.auth, email, pass);
-    sbSignInQuiet(pass);
-    $('loginPass').value = '';
+    if(dsSupabase()){
+      const ses = await sbTokenReq('password', { email: sbAdminEmail(), password: pass });
+      if(!ses){
+        if(/invalid/i.test(SB.lastErr)) throw { code: 'auth/invalid-credential' };
+        throw new Error(SB.lastErr || 'ไม่ทราบสาเหตุ');
+      }
+      if(sbJwtEmail(ses.access_token) !== sbAdminEmail()){ sbSessionSet(null); throw new Error('บัญชีนี้ไม่มีสิทธิ์เข้าระบบจัดการสินค้า'); }
+      SB.pass = pass;
+      $('loginPass').value = '';
+      $('loginScreen').hidden = true; $('app').hidden = false;
+      loadCatalog(); loadShipFees();
+    }else{
+      const email = window.ADMIN_EMAIL || 'admin@sflowerbloom.local';
+      await fb.authApi.signInWithEmailAndPassword(fb.auth, email, pass);
+      sbSignInQuiet(pass);
+      $('loginPass').value = '';
+    }
   } catch(err){
     errEl.textContent = err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password'
       ? 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง'
@@ -304,7 +324,7 @@ function shipTagHtml(p){
 
 async function loadShipFees(){
   try{
-    const snap = await fb.dbApi.getDoc(shipRef());
+    const snap = await dataGetDoc('shipping');
     let map = {};
     if(snap.exists()){
       const data = snap.data() || {};
@@ -327,7 +347,7 @@ async function persistShipFees(){
     return false;
   }
   try{
-    await fb.dbApi.setDoc(shipRef(), {
+    await dataSetDoc('shipping', {
       json: JSON.stringify(shipFees),
       count: Object.keys(shipFees).length,
       updatedAt: new Date().toISOString()
@@ -347,7 +367,7 @@ function catalogRef(){
 async function loadCatalog(){
   setSaveState('กำลังโหลดสินค้า…', 'is-saving');
   try{
-    const snap = await fb.dbApi.getDoc(catalogRef());
+    const snap = await dataGetDoc('catalog');
     if(snap.exists()){
       const data = snap.data() || {};
       const list = typeof data.json === 'string' ? JSON.parse(data.json) : data.list;
@@ -393,11 +413,11 @@ async function saveCatalog(successMsg){
   setSaveState('กำลังบันทึก…', 'is-saving');
   try{
     // merge:true สำคัญ — ไม่งั้นการบันทึกสินค้าจะเขียนทับและลบช่อง hidePrices ทิ้ง
-    await fb.dbApi.setDoc(catalogRef(), {
+    await dataSetDoc('catalog', {
       json,
       count: catalog.length,
       updatedAt: new Date().toISOString(),
-      updatedBy: fb.auth.currentUser ? fb.auth.currentUser.email : ''
+      updatedBy: currentAdminEmail()
     }, { merge: true });
     setSaveState('บันทึกแล้ว · หน้าร้านอัปเดตทันที');
     if(successMsg) toast(successMsg);
@@ -474,7 +494,7 @@ async function toggleOrdersClosed(){
   btn.disabled = true;
   setSaveState('กำลังบันทึก…', 'is-saving');
   try{
-    await fb.dbApi.setDoc(catalogRef(), {
+    await dataSetDoc('catalog', {
       orderClosed: next,
       orderClosedUpdatedAt: new Date().toISOString()
     }, { merge: true });
@@ -526,7 +546,7 @@ async function saveFreeMin(){
   btn.disabled = true;
   setSaveState('กำลังบันทึก…', 'is-saving');
   try{
-    await fb.dbApi.setDoc(catalogRef(), {
+    await dataSetDoc('catalog', {
       freePickupMin: n,
       freePickupMinUpdatedAt: new Date().toISOString()
     }, { merge: true });
@@ -559,7 +579,7 @@ async function togglePricesHidden(){
   btn.disabled = true;
   setSaveState('กำลังบันทึก…', 'is-saving');
   try{
-    await fb.dbApi.setDoc(catalogRef(), {
+    await dataSetDoc('catalog', {
       hidePrices: next,
       hidePricesUpdatedAt: new Date().toISOString()
     }, { merge: true });
@@ -4007,6 +4027,80 @@ async function migDoVerify(clear){
   }catch(e){ lines.push(`<p class="lib-err">✗ ตรวจผลไม่สำเร็จ: ${esc(e.message || e)}</p>`); }
   if(mig){ mig.log = (mig.log || '') + lines.join(''); mig.busy = false; migRender(); }
 }
+/* ───────────── ชั้นข้อมูลหลังบ้าน: Firebase หรือ Supabase ─────────────
+   ตัวสลับ: window.DATA_SOURCE = 'supabase' (ตั้งใน firebase-config.js) · ไม่ตั้ง = Firebase แบบเดิม
+   ทุกการอ่าน/เขียนเอกสารร้านผ่าน dataGetDoc / dataSetDoc (kind = 'catalog' | 'shipping' | 'soldLog') */
+function dsSupabase(){ return window.DATA_SOURCE === 'supabase' && sbOn(); }
+function currentAdminEmail(){
+  if(dsSupabase()) return sbAdminEmail();
+  return (fb && fb.auth && fb.auth.currentUser) ? (fb.auth.currentUser.email || '') : '';
+}
+function sbJwtEmail(tok){
+  try{ return JSON.parse(atob(String(tok).split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).email || ''; }catch(e){ return ''; }
+}
+// เช็กว่ามีเซสชัน Supabase ที่ใช้ได้ไหม โดยไม่ถามรหัส: true = ใช้ได้ · 'forbidden' = ไม่ใช่บัญชีแอดมิน · false = ต้องล็อกอิน
+async function sbSessionSilent(){
+  const cur = sbSessionGet();
+  if(!cur) return false;
+  let tok = null;
+  if(cur.access_token && cur.expires_at - 60 > Math.floor(Date.now() / 1000)) tok = cur.access_token;
+  else if(cur.refresh_token){ const n = await sbTokenReq('refresh_token', { refresh_token: cur.refresh_token }); if(n) tok = n.access_token; }
+  if(!tok){ sbSessionSet(null); return false; }
+  if(sbJwtEmail(tok) !== sbAdminEmail()){ sbSessionSet(null); return 'forbidden'; }
+  return true;
+}
+async function bootSupabase(){
+  let st = false;
+  try{ st = await sbSessionSilent(); }catch(e){ st = false; }
+  $('bootScreen').hidden = true;
+  if(st === true){
+    $('loginScreen').hidden = true; $('app').hidden = false;
+    loadCatalog(); loadShipFees();
+  }else{
+    if(st === 'forbidden'){ $('loginError').textContent = 'บัญชีนี้ไม่มีสิทธิ์เข้าระบบจัดการสินค้า'; $('loginError').hidden = false; }
+    $('app').hidden = true; $('loginScreen').hidden = false; $('loginUser').focus();
+  }
+}
+function sbCatVal(c, v){
+  v = migNorm(v);
+  if(v === null) return null;
+  if(c === 'free_pickup_min'){ const n = Number(v); return isFinite(n) ? n : null; }
+  if(c === 'item_count'){ const n = Math.round(Number(v)); return isFinite(n) ? n : null; }
+  return v;
+}
+function dataRef(kind){ return kind === 'catalog' ? catalogRef() : (kind === 'shipping' ? shipRef() : soldLogRef()); }
+async function dataGetDoc(kind){
+  if(!dsSupabase()) return fb.dbApi.getDoc(dataRef(kind));
+  const rows = kind === 'catalog'
+    ? await sbRest('GET', 'shop_catalog?id=eq.1&select=*')
+    : await sbRest('GET', 'shop_private?key=eq.' + encodeURIComponent(kind) + '&select=*');
+  const r = Array.isArray(rows) ? rows[0] : null, d = {};
+  if(r){
+    if(kind === 'catalog') SB_CAT_MAP.forEach(([f, c]) => { if(r[c] !== null && r[c] !== undefined) d[f] = r[c]; });
+    else{
+      if(r.json_data !== null && r.json_data !== undefined) d.json = r.json_data;
+      if(r.item_count !== null && r.item_count !== undefined) d.count = r.item_count;
+      if(r.updated_at !== null && r.updated_at !== undefined) d.updatedAt = r.updated_at;
+    }
+  }
+  return { exists: () => !!r, data: () => d };
+}
+// opts = { merge: true } → อัปเดตเฉพาะช่องที่ส่งมา (เหมือน Firestore) · ไม่ส่ง = เขียนทับทั้งเอกสาร
+async function dataSetDoc(kind, data, opts){
+  if(!dsSupabase()) return opts ? fb.dbApi.setDoc(dataRef(kind), data, opts) : fb.dbApi.setDoc(dataRef(kind), data);
+  try{
+    if(kind === 'catalog'){
+      const row = { id: 1 };
+      SB_CAT_MAP.forEach(([f, c]) => { if(Object.prototype.hasOwnProperty.call(data, f)) row[c] = sbCatVal(c, data[f]); }); // ช่องอื่น (เช่น updatedBy) ไม่เก็บ
+      await sbRest('POST', 'shop_catalog?on_conflict=id', row, { Prefer: 'resolution=merge-duplicates,return=minimal' });
+    }else{
+      await sbRest('POST', 'shop_private?on_conflict=key', { key: kind, json_data: migNorm(data.json), item_count: sbCatVal('item_count', data.count), updated_at: migNorm(data.updatedAt) }, { Prefer: 'resolution=merge-duplicates,return=minimal' });
+    }
+  }catch(e){
+    if(/ไม่มีสิทธิ์/.test(String(e && e.message))) e.code = 'permission-denied';
+    throw e;
+  }
+}
 /* ───────────── อัปโหลดรูปรีวิวลงโฟลเดอร์เว็บในเครื่อง (Chrome / Edge บนคอมพิวเตอร์) ─────────────
    ลากรูปมาวาง → ย่อเป็น JPG → ตั้งชื่อ reviewN.jpg ต่อจากเลขล่าสุด → เขียนลง images/reviews/ ในโฟลเดอร์เว็บ
    → ผูกเข้ารายการแบบ path เต็ม (หน้าร้านเห็นโดยไม่ต้องแก้ list.json) · แล้วให้ลากโฟลเดอร์ขึ้น GitHub ต่อเอง */
@@ -4498,7 +4592,7 @@ async function persistReviewTags(next, hidden){
   if(hide.size) doc[REVIEW_HIDDEN_KEY] = [...hide].sort();
   setSaveState('กำลังบันทึก…', 'is-saving');
   try{
-    await fb.dbApi.setDoc(catalogRef(), {
+    await dataSetDoc('catalog', {
       reviewsJson: JSON.stringify(doc),
       reviewsUpdatedAt: new Date().toISOString()
     }, { merge: true });
@@ -4865,12 +4959,12 @@ async function saveOptionsToCloud(opts, nextCatalog){
     }
     Object.assign(payload, {
       json, count: nextCatalog.length, updatedAt: now,
-      updatedBy: fb.auth.currentUser ? fb.auth.currentUser.email : ''
+      updatedBy: currentAdminEmail()
     });
   }
   setSaveState('กำลังบันทึก…', 'is-saving');
   try{
-    await fb.dbApi.setDoc(catalogRef(), payload, { merge: true });
+    await dataSetDoc('catalog', payload, { merge: true });
     setSaveState('บันทึกแล้ว · หน้าร้านอัปเดตทันที');
     return true;
   } catch(err){
@@ -4935,7 +5029,10 @@ $('loginUser').addEventListener('keydown', e => { if(e.key === 'Enter') $('login
 
 $('logoutBtn').addEventListener('click', async () => {
   const ok = await askConfirm('ออกจากระบบ', 'ต้องล็อกอินใหม่เพื่อกลับเข้ามาจัดการสินค้า', 'ออกจากระบบ');
-  if(ok) fb.authApi.signOut(fb.auth);
+  if(ok){
+    if(dsSupabase()){ sbSessionSet(null); SB.pass = null; location.reload(); }
+    else fb.authApi.signOut(fb.auth);
+  }
 });
 
 $('searchBox').addEventListener('input', e => { searchTerm = e.target.value; renderList(); });
@@ -4978,6 +5075,7 @@ if(sbOn()){
   mb.innerHTML = '<svg class="sb-ico" viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6c0-1.4 2.7-2.5 6-2.5S16 4.6 16 6s-2.7 2.5-6 2.5S4 7.4 4 6z"/><path d="M4 6v4c0 1.4 2.7 2.5 6 2.5s6-1.1 6-2.5V6"/><path d="M4 10v4c0 1.4 2.7 2.5 6 2.5s6-1.1 6-2.5v-4"/></svg><span>ย้ายข้อมูลไป Supabase</span>';
   lb.insertAdjacentElement('afterend', mb);
   mb.addEventListener('click', () => migOpen());
+  if(dsSupabase()) mb.style.display = 'none'; // ตัวย้ายข้อมูลใช้ตอนยังอ่านจาก Firebase เท่านั้น
 }
 $('soldBtn').addEventListener('click', openSoldModal);
 $('soldScrim').addEventListener('click', e => { if(e.target === $('soldScrim')) closeSoldModal(); });
@@ -5644,7 +5742,7 @@ async function saveSite(){
   const btn = $('siteSave'); btn.disabled = true;
   setSaveState('กำลังบันทึก…', 'is-saving');
   try{
-    await fb.dbApi.setDoc(catalogRef(), { siteJson: json, siteUpdatedAt: new Date().toISOString() }, { merge: true });
+    await dataSetDoc('catalog', { siteJson: json, siteUpdatedAt: new Date().toISOString() }, { merge: true });
     siteCfgSaved = cfg;
     setSaveState('บันทึกแล้ว · หน้าร้านอัปเดตทันที');
     const up = site.uploaded;
@@ -5682,7 +5780,7 @@ function soldWhen(iso, short){
 
 async function loadSoldLog(){
   try{
-    const snap = await fb.dbApi.getDoc(soldLogRef());
+    const snap = await dataGetDoc('soldLog');
     let list = [];
     if(snap.exists()){
       const d = snap.data() || {};
@@ -5803,7 +5901,7 @@ async function saveSold(){
   const changes = [...sm.edits].map(([i, to]) => ({ i, to, p: catalog[i] })).filter(c => c.p && c.to !== soldNow(c.p));
   if(!changes.length){ sm.edits.clear(); renderSoldModal(); return; }
   const now = new Date().toISOString();
-  const by = fb.auth.currentUser ? fb.auth.currentUser.email : '';
+  const by = currentAdminEmail();
   const before = changes.map(c => ({ ...c, from: soldNow(c.p), oldSold: c.p.sold, oldAt: c.p.soldAt }));
   before.forEach(c => { if(c.to > 0) c.p.sold = c.to; else delete c.p.sold; c.p.soldAt = now; });
   $('soldSave').disabled = true;
@@ -5821,7 +5919,7 @@ async function saveSold(){
     const entry = { at: now, by, source:'manual', items: before.map(c => ({ id: c.p.id, name: c.p.name, from: c.from, to: c.to })) };
     const next = [entry, ...soldLog].slice(0, SOLD_LOG_MAX);
     try{
-      await fb.dbApi.setDoc(soldLogRef(), { json: JSON.stringify(next), count: next.length, updatedAt: now });
+      await dataSetDoc('soldLog', { json: JSON.stringify(next), count: next.length, updatedAt: now });
       soldLog = next; logged = true;
     }catch(err){ console.error(err); }
   }

@@ -3569,18 +3569,42 @@ function addModalToCart(){
 /* ดึงสินค้าจาก Firestore (ที่หลังบ้าน admin.html บันทึกไว้)
    คืนค่า null ถ้ายังไม่ได้ตั้งค่า Firebase หรือเชื่อมต่อไม่ได้ เพื่อให้หน้าร้าน
    ตกไปใช้ products.json ต่อได้ตามปกติ ลูกค้าจะไม่เห็นหน้าเว็บพัง */
+/* ตัวสลับแหล่งข้อมูล: window.DATA_SOURCE = 'supabase' (ตั้งใน firebase-config.js) → อ่านจากตาราง shop_catalog ใน Supabase
+   ไม่ตั้ง/เป็นอย่างอื่น = อ่านจาก Firestore แบบเดิม · คืนข้อมูลหน้าตาเดียวกับเอกสาร Firestore (ช่องที่ว่างไม่ใส่ เหมือนไม่มีช่องนั้น) */
+async function fetchCatalogDocFromSupabase(){
+  const base = String(window.SUPABASE_URL || '').replace(/\/+$/, '');
+  if(!base || !window.SUPABASE_KEY) return null;
+  const res = await fetch(base + '/rest/v1/shop_catalog?id=eq.1&select=*', { headers: { apikey: window.SUPABASE_KEY, Accept: 'application/json' }, cache: 'no-store' });
+  if(!res.ok) throw new Error('supabase ' + res.status);
+  const rows = await res.json();
+  const r = Array.isArray(rows) ? rows[0] : null;
+  if(!r) return null;
+  const MAP = { json_data: 'json', item_count: 'count', updated_at: 'updatedAt', hide_prices: 'hidePrices', hide_prices_updated_at: 'hidePricesUpdatedAt',
+    order_closed: 'orderClosed', order_closed_updated_at: 'orderClosedUpdatedAt', free_pickup_min: 'freePickupMin', free_pickup_min_updated_at: 'freePickupMinUpdatedAt',
+    options_json: 'optionsJson', options_updated_at: 'optionsUpdatedAt', reviews_json: 'reviewsJson', reviews_updated_at: 'reviewsUpdatedAt',
+    site_json: 'siteJson', site_updated_at: 'siteUpdatedAt' };
+  const d = {};
+  Object.keys(MAP).forEach(c => { if(r[c] !== null && r[c] !== undefined) d[MAP[c]] = r[c]; });
+  return d;
+}
 async function fetchProductsFromFirestore(){
-  const cfg = window.FIREBASE_CONFIG;
-  if(!cfg || !cfg.projectId || String(cfg.apiKey || '').includes('ใส่ค่าจริง')) return null;
-  const [appMod, dbMod] = await Promise.all([
-    import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js'),
-    import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js')
-  ]);
-  const app = appMod.getApps().length ? appMod.getApps()[0] : appMod.initializeApp(cfg);
-  const ref = dbMod.doc(dbMod.getFirestore(app), window.CATALOG_COLLECTION || 'catalog', window.CATALOG_DOC || 'products');
-  const snap = await dbMod.getDoc(ref);
-  if(!snap.exists()) return null;
-  const data = snap.data() || {};
+  let data;
+  if(window.DATA_SOURCE === 'supabase'){
+    data = await fetchCatalogDocFromSupabase();
+    if(!data) return null;
+  }else{
+    const cfg = window.FIREBASE_CONFIG;
+    if(!cfg || !cfg.projectId || String(cfg.apiKey || '').includes('ใส่ค่าจริง')) return null;
+    const [appMod, dbMod] = await Promise.all([
+      import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js'),
+      import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js')
+    ]);
+    const app = appMod.getApps().length ? appMod.getApps()[0] : appMod.initializeApp(cfg);
+    const ref = dbMod.doc(dbMod.getFirestore(app), window.CATALOG_COLLECTION || 'catalog', window.CATALOG_DOC || 'products');
+    const snap = await dbMod.getDoc(ref);
+    if(!snap.exists()) return null;
+    data = snap.data() || {};
+  }
   cloudHidePrices = data.hidePrices === true;
   cloudOrderClosed = data.orderClosed !== false; // ไม่มีช่องนี้ = ปิดไว้ก่อน เปิดเฉพาะเมื่อหลังบ้านสั่ง false
   cloudFreePickupMin = parseFreePickupMin(data.freePickupMin);

@@ -856,12 +856,22 @@
                 async function loadProductCatalog() {
                     let list = null;
                     try {
-                        const snap = await db.collection('catalog').doc('products').get();
-                        if (snap.exists) {
-                            const d = snap.data() || {};
-                            list = typeof d.json === 'string' ? JSON.parse(d.json) : d.list;
+                        if (window.DATA_SOURCE === 'supabase' && window.SUPABASE_URL && window.SUPABASE_KEY) {
+                            // อ่านจาก Supabase (ตาราง shop_catalog ใครก็อ่านได้) — ตั้งค่าที่ firebase-config.js
+                            const base = String(window.SUPABASE_URL).replace(/\/+$/, '');
+                            const res = await fetch(base + '/rest/v1/shop_catalog?id=eq.1&select=json_data', { headers: { apikey: window.SUPABASE_KEY }, cache: 'no-store' });
+                            if (!res.ok) throw new Error('supabase ' + res.status);
+                            const rows = await res.json();
+                            const raw = rows && rows[0] && rows[0].json_data;
+                            if (typeof raw === 'string') list = JSON.parse(raw);
+                        } else {
+                            const snap = await db.collection('catalog').doc('products').get();
+                            if (snap.exists) {
+                                const d = snap.data() || {};
+                                list = typeof d.json === 'string' ? JSON.parse(d.json) : d.list;
+                            }
                         }
-                    } catch (err) { console.warn('โหลดสินค้าจาก Firestore ไม่ได้ จะลองใช้ products.json', err); }
+                    } catch (err) { console.warn('โหลดสินค้าจากระบบข้อมูลไม่ได้ จะลองใช้ products.json', err); }
                     if (!Array.isArray(list) || !list.length) {
                         try {
                             const r = await fetch('products.json', { cache: 'no-cache' });
