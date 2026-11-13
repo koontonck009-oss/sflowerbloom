@@ -3811,6 +3811,202 @@ function libOpenForZone(z){
   libOpen({ label: label + ' · ' + (String(draft.id || '').trim() || '(ยังไม่มีรหัส)'), slug: () => pdSlug(draft && draft.id), onPick: urls => { if(p === 'im') pdApplyToModal(urls); else pdApplyToRow(p, urls, single); } });
 }
 
+/* ───────────── รอบ 2: ย้ายข้อมูลร้านจาก Firebase ไป Supabase (ตัวย้ายครั้งเดียว) ─────────────
+   อ่านเอกสาร Firestore catalog/products + shopPrivate/shipping + shopPrivate/soldLog → เขียนลงตาราง
+   shop_catalog / shop_private ใน Supabase แล้วอ่านกลับมาเทียบ — ไม่แก้และไม่ลบข้อมูลใน Firebase · ย้ายซ้ำได้ (เขียนทับ) */
+const SB_CAT_MAP = [
+  ['json', 'json_data'], ['count', 'item_count'], ['updatedAt', 'updated_at'],
+  ['hidePrices', 'hide_prices'], ['hidePricesUpdatedAt', 'hide_prices_updated_at'],
+  ['orderClosed', 'order_closed'], ['orderClosedUpdatedAt', 'order_closed_updated_at'],
+  ['freePickupMin', 'free_pickup_min'], ['freePickupMinUpdatedAt', 'free_pickup_min_updated_at'],
+  ['optionsJson', 'options_json'], ['optionsUpdatedAt', 'options_updated_at'],
+  ['reviewsJson', 'reviews_json'], ['reviewsUpdatedAt', 'reviews_updated_at'],
+  ['siteJson', 'site_json'], ['siteUpdatedAt', 'site_updated_at']
+];
+const SB_PRIV_KEYS = ['shipping', 'soldLog'];
+const SB_CAT_NUMERIC = new Set(['item_count', 'free_pickup_min']);
+let mig = null; // { src, step, busy }
+async function sbRest(method, path, body, extra){
+  const token = await sbToken();
+  let res;
+  try{
+    res = await fetch(sbApi('/rest/v1/' + path), {
+      method,
+      headers: sbHeaders(Object.assign({ Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' }, extra || {})),
+      body: body === undefined ? undefined : JSON.stringify(body)
+    });
+  }catch(e){ throw new Error('เชื่อมต่อ Supabase ไม่ได้ (เช็กอินเทอร์เน็ต)'); }
+  if(!res.ok){ const j = await res.json().catch(() => ({})); throw new Error(sbRestErr(j.message || j.hint || j.error || ('HTTP ' + res.status))); }
+  return res.status === 204 ? null : await res.json().catch(() => null);
+}
+function sbRestErr(e){
+  const m = String((e && e.message) || e || '');
+  if(/Could not find the table|schema cache|does not exist|PGRST205|42P01/i.test(m)) return 'ยังไม่มีตารางใน Supabase — รันไฟล์ supabase-round2.sql ใน SQL Editor ก่อน';
+  if(/row-level security|42501|permission denied/i.test(m)) return 'ไม่มีสิทธิ์เขียน — เช็กว่ารัน supabase-round2.sql แล้ว และอีเมลแอดมินในไฟล์ตรงกับผู้ใช้ใน Supabase Auth';
+  return m;
+}
+function migNorm(v){
+  if(v === undefined || v === null) return null;
+  if(typeof v === 'object' && typeof v.toDate === 'function') return v.toDate().toISOString();
+  return v;
+}
+function migCatalogRow(d){
+  const row = { id: 1 };
+  const src = Object.assign({}, d);
+  if(typeof src.json !== 'string' && Array.isArray(src.list)){ src.json = JSON.stringify(src.list); src.count = src.list.length; } // ข้อมูลรุ่นเก่าที่เก็บเป็น array
+  SB_CAT_MAP.forEach(([f, c]) => {
+    let v = migNorm(src[f]);
+    if(c === 'free_pickup_min' && v !== null){ const n = Number(v); v = isFinite(n) ? n : null; }
+    if(c === 'item_count' && v !== null){ const n = Math.round(Number(v)); v = isFinite(n) ? n : null; }
+    row[c] = v;
+  });
+  return row;
+}
+function migPrivRow(key, d){
+  return { key, json_data: migNorm(d.json), item_count: (migNorm(d.count) === null ? null : Math.round(Number(d.count)) || 0), updated_at: migNorm(d.updatedAt) };
+}
+function migExtraFields(d, known){ return Object.keys(d || {}).filter(k => !known.includes(k) && !(k === 'list' && Array.isArray(d.list))); }
+function migCount(jsonStr, kind){
+  try{
+    const v = JSON.parse(jsonStr);
+    if(kind === 'list') return Array.isArray(v) ? v.length : 0;
+    return v && typeof v === 'object' ? Object.keys(v).filter(k => k !== '__hidden').length : 0;
+  }catch(e){ return -1; }
+}
+async function migReadFirebase(){
+  if(!fb || !fb.dbApi) throw new Error('ยังไม่ได้ล็อกอิน Firebase');
+  const out = { catalog: null, priv: {}, privErr: {} };
+  const cs = await fb.dbApi.getDoc(catalogRef());
+  out.catalog = cs.exists() ? (cs.data() || {}) : null;
+  for(const k of SB_PRIV_KEYS){
+    try{
+      const ref = k === 'shipping' ? shipRef() : soldLogRef();
+      const sn = await fb.dbApi.getDoc(ref);
+      out.priv[k] = sn.exists() ? (sn.data() || {}) : null;
+    }catch(e){ out.priv[k] = null; out.privErr[k] = e.code || e.message; }
+  }
+  return out;
+}
+function migSummaryHtml(src){
+  const c = src.catalog, rows = [];
+  if(!c) rows.push('<li class="lib-err"><b>ไม่พบข้อมูลสินค้าใน Firebase</b></li>');
+  else{
+    const raw = typeof c.json === 'string' ? c.json : (Array.isArray(c.list) ? JSON.stringify(c.list) : '');
+    rows.push(`<li>สินค้า <b>${migCount(raw, 'list')}</b> ชิ้น</li>`);
+    rows.push(`<li>ซ่อนราคา: <b>${c.hidePrices === true ? 'เปิด' : 'ปิด'}</b> · ปิดสั่งทำ: <b>${c.orderClosed !== false ? 'ปิดอยู่' : 'เปิดรับ'}</b> · ยอดนัดรับฟรี: <b>${c.freePickupMin ?? '(ไม่ได้ตั้ง)'}</b></li>`);
+    rows.push(`<li>ตัวเลือกร้าน: <b>${typeof c.optionsJson === 'string' ? 'มี' : 'ไม่มี'}</b> · ป้ายผูกรีวิว: <b>${typeof c.reviewsJson === 'string' ? migCount(c.reviewsJson, 'obj') + ' รายการ' : 'ไม่มี'}</b> · การตั้งค่าหน้าร้าน: <b>${typeof c.siteJson === 'string' ? 'มี' : 'ไม่มี'}</b></li>`);
+    const extra = migExtraFields(c, SB_CAT_MAP.map(x => x[0]));
+    if(extra.length) rows.push(`<li class="lib-note">ช่องที่ไม่ได้ย้าย (ไม่จำเป็นต่อหน้าร้าน): ${extra.map(esc).join(', ')}</li>`);
+  }
+  SB_PRIV_KEYS.forEach(k => {
+    const d = src.priv[k], label = k === 'shipping' ? 'ค่าส่งต่อสินค้า' : 'ประวัติยอดขาย';
+    if(src.privErr[k]) rows.push(`<li class="lib-err">${label}: อ่านไม่ได้ (${esc(src.privErr[k])})</li>`);
+    else if(!d) rows.push(`<li>${label}: <b>ยังไม่มีข้อมูล</b></li>`);
+    else rows.push(`<li>${label}: <b>${migCount(d.json, k === 'shipping' ? 'obj' : 'list')}</b> รายการ</li>`);
+  });
+  return `<ul>${rows.join('')}</ul>`;
+}
+function migRender(){
+  const sc = document.getElementById('migScrim'); if(!sc || !mig) return;
+  const body = sc.querySelector('#migBody');
+  const busy = mig.busy ? ' disabled' : '';
+  body.innerHTML = `<p class="lib-note" style="margin-top:0">คัดลอกข้อมูลร้านจาก Firebase ไป Supabase <b>ไม่แก้และไม่ลบอะไรใน Firebase</b> · กดย้ายซ้ำได้ (เขียนทับ) · ก่อนใช้ต้องรัน <code>supabase-round2.sql</code> ใน Supabase ก่อน</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0">
+      <button type="button" class="btn btn-primary" data-mig="read"${busy}>1. อ่านจาก Firebase</button>
+      <button type="button" class="btn btn-primary" data-mig="write"${busy}${mig.src && mig.src.catalog ? '' : ' disabled'}>2. ย้ายไป Supabase และตรวจผล</button>
+      <button type="button" class="btn btn-ghost" data-mig="verify"${busy}${mig.src && mig.src.catalog ? '' : ' disabled'}>ตรวจผลอีกครั้ง</button></div>
+    ${mig.src ? '<p><b>ข้อมูลใน Firebase ตอนนี้</b></p>' + migSummaryHtml(mig.src) : ''}
+    <div id="migLog">${mig.log || ''}</div>`;
+}
+function migOpen(){
+  if(!sbOn()) return;
+  libStyle();
+  const old = document.getElementById('migScrim'); if(old) old.remove();
+  mig = { src: null, busy: false, log: '' };
+  const sc = document.createElement('div');
+  sc.className = 'lib-scrim'; sc.id = 'migScrim';
+  sc.innerHTML = `<div class="lib-box" style="height:auto;max-height:92vh;width:min(760px,100%)"><div class="lib-head"><b>ย้ายข้อมูลร้านไป Supabase (รอบ 2)</b><button type="button" class="btn btn-ghost btn-sm" data-mig="close">ปิด</button></div><div class="lib-body" id="migBody"></div></div>`;
+  document.body.appendChild(sc);
+  sc.addEventListener('click', e => {
+    const b = e.target.closest('[data-mig]'); if(!b || !mig) return;
+    const a = b.dataset.mig;
+    if(a === 'close'){ if(mig.busy){ toast('กำลังทำงานอยู่ รอให้เสร็จก่อน', true); return; } sc.remove(); mig = null; }
+    else if(a === 'read') migDoRead();
+    else if(a === 'write') migDoWrite();
+    else if(a === 'verify') migDoVerify(true);
+  });
+  migRender();
+}
+function migLog(html){ if(!mig) return; mig.log = (mig.log || '') + html; migRender(); }
+async function migDoRead(){
+  if(!mig || mig.busy) return;
+  mig.busy = true; mig.log = ''; migRender();
+  try{ mig.src = await migReadFirebase(); }
+  catch(e){ mig.log = `<p class="lib-err">อ่านจาก Firebase ไม่ได้: ${esc(e.message || e)}</p>`; }
+  if(mig){ mig.busy = false; migRender(); }
+}
+async function migDoWrite(){
+  if(!mig || mig.busy || !mig.src || !mig.src.catalog) return;
+  if(!confirm('คัดลอกข้อมูลร้านไป Supabase ตอนนี้ใช่ไหม? (ข้อมูลใน Firebase ไม่ถูกแตะต้อง · ถ้าเคยย้ายแล้วจะเขียนทับข้อมูลที่ Supabase)')) return;
+  mig.busy = true; mig.log = ''; migRender();
+  try{
+    await sbEnsureSession();
+    await sbRest('POST', 'shop_catalog?on_conflict=id', migCatalogRow(mig.src.catalog), { Prefer: 'resolution=merge-duplicates,return=minimal' });
+    migLog('<p class="lib-ok">✓ เขียนข้อมูลหน้าร้านลง shop_catalog แล้ว</p>');
+    const rows = SB_PRIV_KEYS.filter(k => mig.src.priv[k]).map(k => migPrivRow(k, mig.src.priv[k]));
+    if(rows.length){
+      await sbRest('POST', 'shop_private?on_conflict=key', rows, { Prefer: 'resolution=merge-duplicates,return=minimal' });
+      migLog(`<p class="lib-ok">✓ เขียนข้อมูลภายในร้าน ${rows.length} รายการลง shop_private แล้ว</p>`);
+    }
+  }catch(e){
+    migLog(`<p class="lib-err">✗ ย้ายไม่สำเร็จ: ${esc(e.message || e)}</p>`);
+    if(mig){ mig.busy = false; migRender(); }
+    return;
+  }
+  if(mig) mig.busy = false;
+  await migDoVerify(false);
+}
+function migSame(col, a, b){
+  if(a === null || a === undefined) return b === null || b === undefined;
+  if(SB_CAT_NUMERIC.has(col)) return Number(a) === Number(b);
+  return a === b;
+}
+async function migDoVerify(clear){
+  if(!mig || (mig.busy && clear) || !mig.src || !mig.src.catalog) return;
+  mig.busy = true; if(clear) mig.log = ''; migRender();
+  const lines = [];
+  try{
+    // 1) อ่านแบบคนทั่วไป (เหมือนที่หน้าร้านจะอ่าน) แล้วเทียบทุกช่อง
+    let res;
+    try{ res = await fetch(sbApi('/rest/v1/shop_catalog?id=eq.1&select=*'), { headers: { apikey: window.SUPABASE_KEY } }); }
+    catch(e){ throw new Error('เชื่อมต่อ Supabase ไม่ได้ (เช็กอินเทอร์เน็ต)'); }
+    if(!res.ok){ const j = await res.json().catch(() => ({})); throw new Error(sbRestErr(j.message || j.hint || ('HTTP ' + res.status))); }
+    const got = (await res.json())[0];
+    if(!got) lines.push('<p class="lib-err">✗ คนทั่วไปอ่าน shop_catalog ไม่เจอแถวข้อมูล (เช็กนโยบายอ่านสาธารณะใน SQL)</p>');
+    else{
+      const want = migCatalogRow(mig.src.catalog), bad = [];
+      Object.keys(want).forEach(c => { if(c !== 'id' && !migSame(c, want[c], got[c])) bad.push(c); });
+      lines.push(bad.length
+        ? `<p class="lib-err"><b>✗ ข้อมูลหน้าร้านไม่ตรงกับ Firebase ในช่อง:</b> ${bad.map(esc).join(', ')}</p>`
+        : `<p class="lib-ok"><b>✓ ข้อมูลหน้าร้านตรงกับ Firebase ทุกช่อง</b> (${SB_CAT_MAP.length} ช่อง) · คนทั่วไปอ่านได้ถูกต้อง สินค้า ${migCount(got.json_data || '', 'list')} ชิ้น</p>`);
+    }
+    // 2) ข้อมูลภายในร้าน: แอดมินอ่านได้ครบ / คนทั่วไปต้องอ่านไม่ได้
+    const priv = await sbRest('GET', 'shop_private?select=*');
+    for(const k of SB_PRIV_KEYS){
+      const d = mig.src.priv[k]; if(!d) continue;
+      const r = (priv || []).find(x => x.key === k), want = migPrivRow(k, d);
+      lines.push(r && r.json_data === want.json_data && Number(r.item_count) === Number(want.item_count)
+        ? `<p class="lib-ok">✓ ${k === 'shipping' ? 'ค่าส่งต่อสินค้า' : 'ประวัติยอดขาย'} ตรงกับ Firebase</p>`
+        : `<p class="lib-err">✗ ${k === 'shipping' ? 'ค่าส่งต่อสินค้า' : 'ประวัติยอดขาย'} ไม่ตรงกับ Firebase หรือยังไม่ได้ย้าย</p>`);
+    }
+    let anon = null;
+    try{ const r2 = await fetch(sbApi('/rest/v1/shop_private?select=key'), { headers: { apikey: window.SUPABASE_KEY } }); anon = r2.ok ? await r2.json() : []; }catch(e){ anon = []; }
+    lines.push(Array.isArray(anon) && anon.length
+      ? '<p class="lib-err"><b>✗ อันตราย: คนทั่วไปอ่านข้อมูลภายในร้าน (shop_private) ได้</b> — ตรวจนโยบายใน SQL ก่อนใช้งานต่อ</p>'
+      : '<p class="lib-ok">✓ คนทั่วไปอ่านข้อมูลภายในร้านไม่ได้ (ปลอดภัย)</p>');
+  }catch(e){ lines.push(`<p class="lib-err">✗ ตรวจผลไม่สำเร็จ: ${esc(e.message || e)}</p>`); }
+  if(mig){ mig.log = (mig.log || '') + lines.join(''); mig.busy = false; migRender(); }
+}
 /* ───────────── อัปโหลดรูปรีวิวลงโฟลเดอร์เว็บในเครื่อง (Chrome / Edge บนคอมพิวเตอร์) ─────────────
    ลากรูปมาวาง → ย่อเป็น JPG → ตั้งชื่อ reviewN.jpg ต่อจากเลขล่าสุด → เขียนลง images/reviews/ ในโฟลเดอร์เว็บ
    → ผูกเข้ารายการแบบ path เต็ม (หน้าร้านเห็นโดยไม่ต้องแก้ list.json) · แล้วให้ลากโฟลเดอร์ขึ้น GitHub ต่อเอง */
@@ -4777,6 +4973,11 @@ if(sbOn()){
   lb.innerHTML = '<svg class="sb-ico" viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="14" height="12" rx="2"/><circle cx="7.5" cy="8.5" r="1.3"/><path d="M3.5 14l4-3.5 3 2.5 2.5-2 3.5 3"/></svg><span>คลังรูป</span>';
   rb.insertAdjacentElement('afterend', lb);
   lb.addEventListener('click', () => libOpen(null));
+  const mb = rb.cloneNode(false);
+  mb.id = 'migrateBtn'; mb.title = 'ย้ายข้อมูลร้านจาก Firebase ไป Supabase (รอบ 2) — ไม่แก้ข้อมูลใน Firebase';
+  mb.innerHTML = '<svg class="sb-ico" viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6c0-1.4 2.7-2.5 6-2.5S16 4.6 16 6s-2.7 2.5-6 2.5S4 7.4 4 6z"/><path d="M4 6v4c0 1.4 2.7 2.5 6 2.5s6-1.1 6-2.5V6"/><path d="M4 10v4c0 1.4 2.7 2.5 6 2.5s6-1.1 6-2.5v-4"/></svg><span>ย้ายข้อมูลไป Supabase</span>';
+  lb.insertAdjacentElement('afterend', mb);
+  mb.addEventListener('click', () => migOpen());
 }
 $('soldBtn').addEventListener('click', openSoldModal);
 $('soldScrim').addEventListener('click', e => { if(e.target === $('soldScrim')) closeSoldModal(); });
