@@ -45,3 +45,12 @@ window.SUPABASE_BUCKET = 'images'; // ชื่อ bucket (ตรงกับท
 window.SUPABASE_ADMIN_EMAIL = '';  // เว้นว่าง = ใช้อีเมลเดียวกับ ADMIN_EMAIL ด้านบน (ต้องสร้างผู้ใช้นี้ใน Supabase Auth ด้วยรหัสผ่านเดียวกัน)
 
 window.DATA_SOURCE = 'supabase';
+
+/* ตัวย้ายข้อมูลออเดอร์ Firebase → Supabase (รอบ 3, ชั่วคราว)
+   โหลดเฉพาะเมื่อเปิดหน้าออเดอร์ด้วยลิงก์ที่ลงท้ายว่า ?migrate=1 — ใช้งานปกติไม่มีผลอะไร
+   ลบทั้งบล็อกนี้พร้อมไฟล์ OrderMigrate.js ได้ตอนล้างโค้ด Firebase */
+if (/[?&]migrate=1/.test(location.search) && /OrderManagers/i.test(location.pathname)) {
+  var sfbMig = document.createElement('script');
+  sfbMig.src = 'OrderMigrate.js';
+  document.head.appendChild(sfbMig);
+}
