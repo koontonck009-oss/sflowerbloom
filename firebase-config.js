@@ -43,3 +43,5 @@ window.SUPABASE_URL = 'https://rfpnejnrosksrpndaytw.supabase.co';          // �
 window.SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJmcG5lam5yb3Nrc3JwbmRheXR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMxMjg0MDEsImV4cCI6MjEwODcwNDQwMX0.OtRaAZ9PKgowhJOz4LUpOUW1Oile_eYIEkm1yU2_sQE';          // publishable (anon) key
 window.SUPABASE_BUCKET = 'images'; // ชื่อ bucket (ตรงกับที่สร้างใน supabase-setup.sql)
 window.SUPABASE_ADMIN_EMAIL = '';  // เว้นว่าง = ใช้อีเมลเดียวกับ ADMIN_EMAIL ด้านบน (ต้องสร้างผู้ใช้นี้ใน Supabase Auth ด้วยรหัสผ่านเดียวกัน)
+
+window.DATA_SOURCE = 'supabase';
