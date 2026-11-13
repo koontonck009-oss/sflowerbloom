@@ -6,6 +6,8 @@
     "size": "เล็ก",
     "name": "ช่อดอกกุหลาบ - R01",
     "desc": "ช่อกุหลาบแดง 1 ดอก ขนาดเล็ก เลือกกระดาษห่อได้ 3 สี: ขาว / ดำ / น้ำตาล ❤️\nมินิมอล เรียบง่าย เหมาะสำหรับมอบเป็นของขวัญในทุกโอกาส",
+    "sold": 9,
+    "soldAt": "2026-11-08T01:27:25.256Z",
     "options": [
       {
         "name": "สี",
@@ -22,7 +24,7 @@
           "ขาว"
         ],
         "price": 99,
-        "image": "images/bouquet/ช่อดอกกุหลาบ-R01/ขาว-99฿.jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/r01/r01-mwddru2v0.webp",
         "tag": "เล็ก"
       },
       {
@@ -30,10 +32,10 @@
           "ดำ"
         ],
         "price": 99,
-        "image": "images/bouquet/ช่อดอกกุหลาบ-R01/ดำ-99฿ (1).jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/r01/r01-mwdds53l0.webp",
         "images": [
-          "images/bouquet/ช่อดอกกุหลาบ-R01/ดำ-99฿ (1).jpg",
-          "images/bouquet/ช่อดอกกุหลาบ-R01/ดำ-99฿ (2).jpg"
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/r01/r01-mwdds53l0.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/r01/r01-mwdds53l1.webp"
         ],
         "tag": "เล็ก"
       },
@@ -42,7 +44,7 @@
           "น้ำตาล"
         ],
         "price": 99,
-        "image": "images/bouquet/ช่อดอกกุหลาบ-R01/น้ำตาล-99฿.jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/r01/r01-mwddsf100.webp",
         "tag": "เล็ก"
       }
     ]
@@ -53,9 +55,41 @@
     "flowerType": "กุหลาบ",
     "size": "กลาง",
     "name": "ช่อดอกกุหลาบ - R02",
-    "price": 299,
-    "desc": "ช่อกุหลาบแดง 1 ดอก ขนาดกลาง ห่อกระดาษสีขาวเรียบหรู พร้อมริบบิ้นสีแดง ❤️\nเรียบง่ายแต่โดดเด่น เหมาะสำหรับมอบให้คนพิเศษในทุกโอกาส",
-    "image": "images/bouquet/ช่อดอกกุหลาบ-R02 299฿.jpg"
+    "desc": "ช่อดอกไม้จากลวดกำมะหยี่ ดีไซน์สวยประณีต ประกอบด้วยดอกกุหลาบ 1 ดอก และดอกเดซี่ 15 ดอก\nช่อขนาดกลางกำลังดี เหมาะสำหรับมอบเป็นของขวัญในโอกาสพิเศษ แสดงความยินดี หรือรับปริญญา",
+    "sold": 2,
+    "soldAt": "2026-11-08T01:17:01.080Z",
+    "options": [
+      {
+        "name": "สี",
+        "values": [
+          "ชมพู",
+          "แดง"
+        ]
+      }
+    ],
+    "variants": [
+      {
+        "match": [
+          "ชมพู"
+        ],
+        "price": 299,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/r02/r02-mwddux9j0.webp",
+        "images": [
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/r02/r02-mwddux9j0.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/r02/r02-mwddux9j1.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/r02/r02-mwddux9j2.webp"
+        ],
+        "tag": "กลาง"
+      },
+      {
+        "match": [
+          "แดง"
+        ],
+        "price": 299,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/r02/r02-mwddvnei0.webp",
+        "tag": "กลาง"
+      }
+    ]
   },
   {
     "id": "r03",
@@ -65,7 +99,7 @@
     "name": "ช่อดอกกุหลาบ - R03",
     "price": 349,
     "desc": "ช่อกุหลาบแดง 4 ดอก ขนาดกลาง ห่อกระดาษสีขาว พร้อมริบบิ้นสีแดง ❤️\nเรียบหรู โดดเด่น เหมาะสำหรับมอบให้คนพิเศษในทุกโอกาส",
-    "image": "images/bouquet/ช่อดอกกุหลาบ-R03 349฿.jpg"
+    "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/r03/r03-mwddzcpp0.webp"
   },
   {
     "id": "r04",
@@ -75,7 +109,9 @@
     "name": "ช่อดอกกุหลาบ - R04",
     "price": 399,
     "desc": "ช่อกุหลาบแดง 5 ดอก ขนาดกลาง ห่อกระดาษสีขาว พร้อมริบบิ้นสีแดง ❤️\nเรียบหรู โดดเด่น เหมาะสำหรับมอบให้คนพิเศษในทุกโอกาส",
-    "image": "images/bouquet/ช่อดอกกุหลาบ-R04 399฿.jpg"
+    "sold": 8,
+    "soldAt": "2026-11-08T01:27:25.256Z",
+    "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/r04/r04-mwdfdcej0.webp"
   },
   {
     "id": "r05",
@@ -85,7 +121,9 @@
     "name": "ช่อดอกกุหลาบ - R05",
     "price": 599,
     "desc": "ช่อกุหลาบแดง 8 ดอก ขนาดใหญ่ ห่อกระดาษสีขาว พร้อมริบบิ้นสีแดง ❤️\nช่อใหญ่โดดเด่น สื่อความรู้สึกได้เต็มที่ เหมาะสำหรับมอบให้คนพิเศษ",
-    "image": "images/bouquet/ช่อดอกกุหลาบ-R05 599฿.jpg"
+    "sold": 1,
+    "soldAt": "2026-11-08T01:27:25.256Z",
+    "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/r05/r05-mwdfez3g0.webp"
   },
   {
     "id": "r06",
@@ -93,16 +131,32 @@
     "flowerType": "กุหลาบ",
     "size": "ใหญ่",
     "name": "ช่อดอกกุหลาบ - R06",
-    "price": 649,
     "desc": "ช่อกุหลาบ 9 ดอก ขนาดใหญ่ มี 2 แบบ: ดอกชมพูห่อช่อสีขาว / ดอกแดงห่อช่อสีดำ 🌹\nดีไซน์เรียบหรู โดดเด่น เหมาะสำหรับมอบให้คนพิเศษในทุกโอกาส",
-    "colors": [
+    "options": [
       {
-        "name": "ดอกชมพูช่อขาว",
-        "image": "images/bouquet/ช่อดอกกุหลาบ-R06/ชมพู-ขาว-649฿.jpg"
+        "name": "สี",
+        "values": [
+          "ดอกชมพูช่อขาว",
+          "ดอกแดงช่อดำ"
+        ]
+      }
+    ],
+    "variants": [
+      {
+        "match": [
+          "ดอกชมพูช่อขาว"
+        ],
+        "price": 649,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/r06/r06-mwdffxps0.webp",
+        "tag": "ใหญ่"
       },
       {
-        "name": "ดอกแดงช่อดำ",
-        "image": "images/bouquet/ช่อดอกกุหลาบ-R06/แดง-ดำ-649฿.jpg"
+        "match": [
+          "ดอกแดงช่อดำ"
+        ],
+        "price": 649,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/r06/r06-mwdfgl9h0.webp",
+        "tag": "ใหญ่"
       }
     ]
   },
@@ -114,7 +168,9 @@
     "name": "ช่อดอกกุหลาบ - R07",
     "price": 749,
     "desc": "ช่อกุหลาบแดง 9 ดอก ขนาดใหญ่ ห่อกระดาษสีดำ พร้อมริบบิ้นสีแดง ❤️\nโทนเข้มโดดเด่น เรียบหรู เหมาะสำหรับมอบให้คนพิเศษ",
-    "image": "images/bouquet/ช่อดอกกุหลาบ-R07 749฿.jpg"
+    "sold": 2,
+    "soldAt": "2026-11-08T01:27:25.256Z",
+    "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/r07/r07-mwdfimlb0.webp"
   },
   {
     "id": "r08",
@@ -124,7 +180,7 @@
     "name": "ช่อดอกกุหลาบ - R08",
     "price": 1200,
     "desc": "ช่อกุหลาบแดง 15 ดอก ขนาดใหญ่ ห่อกระดาษสีดำ พร้อมริบบิ้นสีแดง ❤️\nเต็มช่อ โดดเด่นและหรูหรา เหมาะสำหรับมอบให้คนพิเศษในโอกาสสำคัญ",
-    "image": "images/bouquet/ช่อดอกกุหลาบ-R08 1200฿.jpg"
+    "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/r08/r08-mwdflqmd0.webp"
   },
   {
     "id": "r09",
@@ -135,11 +191,11 @@
     "price": 1200,
     "desc": "ช่อดอกกุหลาบแดงสุดหรู กุหลาบแดงรีดกลีบดอกใหญ่ 1 ดอก และกุหลาบแดงหิน 5 ดอก แซมด้วยดอกเดซี่ขาวและกุหลาบตูม ห่อกระดาษโฟมสีดำ พร้อมผูกโบว์ริบบิ้นแดง-ขาว",
     "ready": true,
+    "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/r09/r09-mwdfn29b0.webp",
     "images": [
-      "images/bouquet/ช่อดอกกุหลาบ-R09/ช่อดอกกุหลาบ-R09 1200฿ (2).jpg",
-      "images/bouquet/ช่อดอกกุหลาบ-R09/ช่อดอกกุหลาบ-R09 1200฿ (1).jpg",
-      "images/bouquet/ช่อดอกกุหลาบ-R09/ช่อดอกกุหลาบ-R09 1200฿ (3).jpg",
-      "images/bouquet/ช่อดอกกุหลาบ-R09/ช่อดอกกุหลาบ-R09 1200฿ (4).jpg"
+      "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/r09/r09-mwdfn29b1.webp",
+      "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/r09/r09-mwdfn29b2.webp",
+      "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/r09/r09-mwdfn29b3.webp"
     ]
   },
   {
@@ -147,8 +203,10 @@
     "cat": "ช่อดอกไม้",
     "flowerType": "กุหลาบ",
     "size": "ใส่เงิน",
-    "name": "ช่อดอกกุหลาบใส่เงิน 5-10ใบ - RM01",
+    "name": "ช่อดอกกุหลาบใส่เงิน - RM01",
     "desc": "ช่อกุหลาบแดง 3 ดอก + ซองใส่เงิน มี 2 แบบ: 5 ใบ ช่อสีน้ำเงิน / 10 ใบ ช่อสีเขียว,สีกะปิ 💐\nดีไซน์สวยเก๋ พร้อมซองใส่เงิน เหมาะสำหรับมอบเป็นของขวัญในโอกาสพิเศษ",
+    "sold": 2,
+    "soldAt": "2026-11-08T01:27:25.256Z",
     "options": [
       {
         "name": "สีช่อ",
@@ -173,7 +231,7 @@
           "ใส่เงิน 5 ใบ"
         ],
         "price": 324,
-        "image": "images/bouquet/ช่อดอกกุหลาบใส่เงิน-RM01/น้ำเงิน-5ใบ-324฿.jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/rm01/rm01-mwdfns480.webp",
         "tag": "ใส่เงิน"
       },
       {
@@ -182,7 +240,7 @@
           "ใส่เงิน 10 ใบ"
         ],
         "price": 349,
-        "image": "images/bouquet/ช่อดอกกุหลาบใส่เงิน-RM01/เขียว-10ใบ-349฿.jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/rm01/rm01-mwdfnf9e0.webp",
         "tag": "ใส่เงิน"
       },
       {
@@ -191,7 +249,7 @@
           "ใส่เงิน 10 ใบ"
         ],
         "price": 349,
-        "image": "images/bouquet/ช่อดอกกุหลาบใส่เงิน-RM01/กะปิ-10ใบ-349฿.jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/rm01/rm01-mwdfo0ah0.webp",
         "tag": "ใส่เงิน"
       }
     ]
@@ -202,20 +260,43 @@
     "flowerType": "เดซี่",
     "size": "เล็ก",
     "name": "ช่อดอกเดซี่ - D01",
-    "price": 129,
-    "desc": "ช่อขนาดเล็ก ดอกเดซี่ชมพู 9 ดอก",
-    "colors": [
+    "desc": "ช่อดอกเดซี่แฮนด์เมด 9 ดอก ขนาดเล็กสุดน่ารัก 💐 เหมาะสำหรับมอบเป็นของขวัญในวันพิเศษ",
+    "sold": 3,
+    "soldAt": "2026-11-08T01:27:25.256Z",
+    "options": [
       {
-        "name": "ดอกขาวช่อชมพู",
-        "image": "images/bouquet/ช่อดอกเดซี่-D01/ช่อดอกเดซี่-D01 129฿ ดอกขาวช่อชมพู.jpg"
+        "name": "สี",
+        "values": [
+          "ดอกขาวช่อชมพู",
+          "ดอกชมพูช่อขาว1",
+          "ดอกชมพูช่อขาว2"
+        ]
+      }
+    ],
+    "variants": [
+      {
+        "match": [
+          "ดอกขาวช่อชมพู"
+        ],
+        "price": 129,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/d01/d01-mwdftwg70.webp",
+        "tag": "เล็ก"
       },
       {
-        "name": "ดอกชมพูช่อขาว1",
-        "image": "images/bouquet/ช่อดอกเดซี่-D01/ช่อดอกเดซี่-D01 129฿ ดอกชมพูช่อขาว1.jpg"
+        "match": [
+          "ดอกชมพูช่อขาว1"
+        ],
+        "price": 129,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/d01/d01-mwdfu5pt0.webp",
+        "tag": "เล็ก"
       },
       {
-        "name": "ดอกชมพูช่อขาว2",
-        "image": "images/bouquet/ช่อดอกเดซี่-D01/ช่อดอกเดซี่-D01 129฿ ดอกชมพูช่อขาว2.jpg"
+        "match": [
+          "ดอกชมพูช่อขาว2"
+        ],
+        "price": 129,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/d01/d01-mwdfx0v60.webp",
+        "tag": "เล็ก"
       }
     ]
   },
@@ -226,7 +307,8 @@
     "size": "เล็ก",
     "name": "ช่อดอกเดซี่ - D02",
     "desc": "ช่อดอกเดซี่แฮนด์เมด 12 ดอก ขนาดเล็ก น่ารักมินิมอล 🌼\nเหมาะสำหรับมอบเป็นของขวัญให้คนพิเศษในทุกโอกาส",
-    "image": "images\\bouquet\\ช่อดอกไม้_ช่อดอกเดซี่-D02_199฿_ชมพู (1).jpg",
+    "sold": 3,
+    "soldAt": "2026-11-08T01:39:39.681Z",
     "options": [
       {
         "name": "สีดอก",
@@ -242,12 +324,12 @@
           "ชมพู"
         ],
         "price": 199,
-        "image": "images\\bouquet\\ช่อดอกไม้_ช่อดอกเดซี่-D02_199฿_ชมพู (1).jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/d02/d02-mwdfxlxy0.webp",
         "images": [
-          "images\\bouquet\\ช่อดอกไม้_ช่อดอกเดซี่-D02_199฿_ชมพู (1).jpg",
-          "images\\bouquet\\ช่อดอกไม้_ช่อดอกเดซี่-D02_199฿_ชมพู (2).jpg",
-          "images\\bouquet\\ช่อดอกไม้_ช่อดอกเดซี่-D02_199฿_ชมพู (3).jpg",
-          "images\\bouquet\\ช่อดอกไม้_ช่อดอกเดซี่-D02_199฿_ชมพู (4).jpg"
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/d02/d02-mwdfxlxy0.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/d02/d02-mwdfxlxy1.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/d02/d02-mwdfxlxy2.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/d02/d02-mwdfxlxy3.webp"
         ],
         "tag": "เล็ก"
       },
@@ -256,11 +338,11 @@
           "ชมพูขาว"
         ],
         "price": 199,
-        "image": "images\\bouquet\\ช่อดอกไม้_ช่อดอกเดซี่-D02_199฿_ชมพูขาว (1).png",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/d02/d02-mwdfy82y0.webp",
         "images": [
-          "images\\bouquet\\ช่อดอกไม้_ช่อดอกเดซี่-D02_199฿_ชมพูขาว (1).png",
-          "images\\bouquet\\ช่อดอกไม้_ช่อดอกเดซี่-D02_199฿_ชมพูขาว (2).png",
-          "images\\bouquet\\ช่อดอกไม้_ช่อดอกเดซี่-D02_199฿_ชมพูขาว (3).png"
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/d02/d02-mwdfy82y0.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/d02/d02-mwdfy82y1.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/d02/d02-mwdfy82y2.webp"
         ],
         "tag": "เล็ก"
       }
@@ -272,24 +354,48 @@
     "flowerType": "เดซี่",
     "size": "กลาง",
     "name": "ช่อดอกเดซี่ - D03",
-    "price": 349,
-    "desc": "ช่อขนาดกลาง ดอกเดซี่คละสี เลือกสีช่อได้",
-    "colors": [
+    "desc": "ช่อดอกเดซี่แฮนด์เมด 20 ดอก ขนาดกลาง 🌼 เลือกสีดอกคละสีหรือขาวล้วน พร้อมกระดาษห่อสีขาว น้ำตาล หรือม่วง",
+    "sold": 7,
+    "soldAt": "2026-11-08T01:17:01.080Z",
+    "options": [
       {
-        "name": "ขาว",
-        "image": "images/bouquet/ช่อดอกเดซี่-D03/ขาว-ขาว-349฿.jpg"
+        "name": "สี",
+        "values": [
+          "ขาว",
+          "ดอกคละสีช่อขาว",
+          "ดอกคละสีช่อน้ำตาล",
+          "ดอกคละสีช่อม่วง"
+        ]
+      }
+    ],
+    "variants": [
+      {
+        "match": [
+          "ขาว"
+        ],
+        "price": 349,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/d03/d03-mwdfze8n0.webp"
       },
       {
-        "name": "ดอกคละสีช่อขาว",
-        "image": "images/bouquet/ช่อดอกเดซี่-D03/คละสี-ขาว-349฿.jpg"
+        "match": [
+          "ดอกคละสีช่อขาว"
+        ],
+        "price": 349,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/d03/d03-mwdfzlg00.webp"
       },
       {
-        "name": "ดอกคละสีช่อน้ำตาล",
-        "image": "images/bouquet/ช่อดอกเดซี่-D03/คละสี-น้ำตาล-349฿.jpg"
+        "match": [
+          "ดอกคละสีช่อน้ำตาล"
+        ],
+        "price": 349,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/d03/d03-mwdfzrwd0.webp"
       },
       {
-        "name": "ดอกคละสีช่อม่วง",
-        "image": "images/bouquet/ช่อดอกเดซี่-D03/คละสี-ม่วง-349฿.jpg"
+        "match": [
+          "ดอกคละสีช่อม่วง"
+        ],
+        "price": 349,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/d03/d03-mwdg01as0.webp"
       }
     ]
   },
@@ -300,8 +406,10 @@
     "size": "กลาง",
     "name": "ช่อดอกเดซี่ - D04",
     "price": 449,
-    "desc": "ช่อขนาดกลาง ช่อดอกเดซี่ชมพูขาว",
-    "image": "images/bouquet/ช่อดอกเดซี่-D04 449฿.jpg"
+    "desc": "ช่อดอกเดซี่แฮนด์เมดโทนสีชมพู-ขาว สไตล์น่ารักละมุน เหมาะสำหรับมอบเป็นของขวัญในวันพิเศษ 🌸",
+    "sold": 1,
+    "soldAt": "2026-11-08T01:27:25.256Z",
+    "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/d04/d04-mwdgnruw0.webp"
   },
   {
     "id": "DM01",
@@ -311,11 +419,12 @@
     "name": "ช่อดอกเดซี่ใส่เงิน 20ใบ - DM01",
     "price": 399,
     "desc": "ช่อดอกเดซี่โทนเขียว พร้อมใส่เงิน 20 ใบ 💚\nน่ารัก สดใส เหมาะเป็นของขวัญในวันพิเศษ 🎁",
-    "image": "images\\bouquet\\ช่อดอกเดซี่-DM01 399฿ ใส่เงิน20ใบ (1).jpg",
+    "sold": 1,
+    "soldAt": "2026-11-08T01:30:35.197Z",
+    "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/dm01/dm01-mwdh0ktr1.webp",
     "images": [
-      "images\\bouquet\\ช่อดอกเดซี่-DM01 399฿ ใส่เงิน20ใบ (1).jpg",
-      "images\\bouquet\\ช่อดอกเดซี่-DM01 399฿ ใส่เงิน20ใบ (2).jpg",
-      "images\\bouquet\\ช่อดอกเดซี่-DM01 399฿ ใส่เงิน20ใบ (3).jpg"
+      "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/dm01/dm01-mwdh0ktr0.webp",
+      "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/dm01/dm01-mwdh0ktr2.webp"
     ]
   },
   {
@@ -324,19 +433,33 @@
     "flowerType": "ทานตะวัน",
     "size": "เล็ก",
     "name": "ช่อดอกทานตะวัน - S01",
-    "price": 69,
     "desc": "ดอกทานตะวัน 1 ดอก เลือกสีดอกได้",
-    "colors": [
+    "hidden": true,
+    "options": [
       {
-        "name": "ส้ม",
-        "image": "images/bouquet/ช่อดอกทานตะวัน-S01/ส้ม-69฿.jpg"
-      },
-      {
-        "name": "เหลือง",
-        "image": "images/bouquet/ช่อดอกทานตะวัน-S01/เหลือง-69฿.jpg"
+        "name": "สี",
+        "values": [
+          "ส้ม",
+          "เหลือง"
+        ]
       }
     ],
-    "hidden": true
+    "variants": [
+      {
+        "match": [
+          "ส้ม"
+        ],
+        "price": 69,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s01/s01-mwdgjs7t0.webp"
+      },
+      {
+        "match": [
+          "เหลือง"
+        ],
+        "price": 69,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s01/s01-mwdgk5nx0.webp"
+      }
+    ]
   },
   {
     "id": "s02",
@@ -344,16 +467,32 @@
     "flowerType": "ทานตะวัน",
     "size": "เล็ก",
     "name": "ช่อดอกทานตะวัน - S02",
-    "price": 99,
     "desc": "ช่อขนาดเล็ก ดอกทานตะวัน 1 ดอก เลือกสีได้",
-    "colors": [
+    "sold": 5,
+    "soldAt": "2026-11-08T01:39:39.681Z",
+    "options": [
       {
-        "name": "ดอกส้มช่อขาว",
-        "image": "images/bouquet/ช่อดอกทานตะวัน-S02/ส้ม-ขาว-99฿.jpg"
+        "name": "สี",
+        "values": [
+          "ดอกส้มช่อขาว",
+          "ดอกเหลืองช่อครีม"
+        ]
+      }
+    ],
+    "variants": [
+      {
+        "match": [
+          "ดอกส้มช่อขาว"
+        ],
+        "price": 99,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s02/s02-mwdlsoct0.webp"
       },
       {
-        "name": "ดอกเหลืองช่อครีม",
-        "image": "images/bouquet/ช่อดอกทานตะวัน-S02/เหลือง-ครีม-99฿.jpg"
+        "match": [
+          "ดอกเหลืองช่อครีม"
+        ],
+        "price": 99,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s02/s02-mwdlsu1u0.webp"
       }
     ]
   },
@@ -367,14 +506,14 @@
     ],
     "name": "ช่อดอกทานตะวัน - S03",
     "desc": "ช่อขนาดเล็ก ดอกทานตะวัน 1 ดอก เลือกสีได้",
-    "image": "images\\bouquet\\s03\\ส้ม-ครีม-Happy day5.jpg",
+    "sold": 24,
+    "soldAt": "2026-11-08T01:17:01.080Z",
     "options": [
       {
         "name": "สีดอก",
         "values": [
           "ส้ม",
-          "เหลือง",
-          "เหลืองทานตะวัน"
+          "เหลือง"
         ]
       },
       {
@@ -402,12 +541,12 @@
           "ใส่เงิน 10 ใบ"
         ],
         "price": 199,
-        "image": "images/bouquet/s03/ส้ม-ครีม-ใส่เงิน10ใบ (1).jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s03/s03-mwe6d7c70.webp",
         "images": [
-          "images/bouquet/s03/ส้ม-ครีม-ใส่เงิน10ใบ (1).jpg",
-          "images/bouquet/s03/ส้ม-ครีม-ใส่เงิน10ใบ (2).jpg",
-          "images/bouquet/s03/ส้ม-ครีม-ใส่เงิน10ใบ (3).jpg",
-          "images/bouquet/s03/ส้ม-ครีม-ใส่เงิน10ใบ (4).jpg"
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s03/s03-mwe6d7c70.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s03/s03-mwe6d7c71.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s03/s03-mwe6d7c72.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s03/s03-mwe6d7c73.webp"
         ],
         "tag": "ใส่เงิน"
       },
@@ -418,7 +557,7 @@
           "Happy day"
         ],
         "price": 149,
-        "image": "images/bouquet/s03/ส้ม-ขาว-Happy day.jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s03/s03-mwe68v5z0.webp",
         "tag": "เล็ก"
       },
       {
@@ -428,11 +567,11 @@
           "Congratulations"
         ],
         "price": 149,
-        "image": "images/bouquet/s03/ส้ม-ครีม-Congratulations1.jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s03/s03-mwe6am5e2.webp",
         "images": [
-          "images/bouquet/s03/ส้ม-ครีม-Congratulations1.jpg",
-          "images/bouquet/s03/ส้ม-ครีม-Congratulations2.jpg",
-          "images/bouquet/s03/ส้ม-ครีม-Congratulations3.jpg"
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s03/s03-mwe6am5e2.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s03/s03-mwe6am5e0.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s03/s03-mwe6am5e1.webp"
         ],
         "tag": "เล็ก"
       },
@@ -443,12 +582,12 @@
           "Happy day"
         ],
         "price": 149,
-        "image": "images/bouquet/s03/ส้ม-ครีม-Happy day5.jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s03/s03-mwe6brli3.webp",
         "images": [
-          "images/bouquet/s03/ส้ม-ครีม-Happy day5.jpg",
-          "images/bouquet/s03/ส้ม-ครีม-Happy day2.jpg",
-          "images/bouquet/s03/ส้ม-ครีม-Happy day3.jpg",
-          "images/bouquet/s03/ส้ม-ครีม-Happy day4.jpg"
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s03/s03-mwe6brli3.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s03/s03-mwe6brli0.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s03/s03-mwe6brli1.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s03/s03-mwe6brli2.webp"
         ],
         "tag": "เล็ก"
       },
@@ -459,10 +598,10 @@
           "You are my LOVE"
         ],
         "price": 149,
-        "image": "images/bouquet/s03/ส้ม-ครีม-You are my LOVE (1).jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s03/s03-mwe6ckl40.webp",
         "images": [
-          "images/bouquet/s03/ส้ม-ครีม-You are my LOVE (1).jpg",
-          "images/bouquet/s03/ส้ม-ครีม-You are my LOVE (2).jpg"
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s03/s03-mwe6ckl40.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s03/s03-mwe6ckl41.webp"
         ],
         "tag": "เล็ก"
       },
@@ -473,26 +612,14 @@
           "Happy day"
         ],
         "price": 149,
-        "image": "images/bouquet/s03/เหลือง-ครีม-Happy day2.jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s03/s03-mwe6lwml0.webp",
         "images": [
-          "images/bouquet/s03/เหลือง-ครีม-Happy day2.jpg",
-          "images/bouquet/s03/เหลือง-ครีม-Happy day1.jpg",
-          "images/bouquet/s03/เหลือง-ครีม-Happy day3.jpg",
-          "images/bouquet/s03/เหลือง-ครีม-Happy day4.jpg"
-        ],
-        "tag": "เล็ก"
-      },
-      {
-        "match": [
-          "เหลืองทานตะวัน",
-          "ครีม",
-          "Happy day"
-        ],
-        "price": 149,
-        "image": "images/bouquet/s03/เหลืองทานตะวัน-ครีม-Happy day1.jpg",
-        "images": [
-          "images/bouquet/s03/เหลืองทานตะวัน-ครีม-Happy day1.jpg",
-          "images/bouquet/s03/เหลืองทานตะวัน-ครีม-Happy day2.jpg"
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s03/s03-mwe6lwml0.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s03/s03-mwe6lwml1.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s03/s03-mwe6lwml2.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s03/s03-mwe6lwml3.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s03/s03-mwe6lwml4.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s03/s03-mwe6lwml5.webp"
         ],
         "tag": "เล็ก"
       }
@@ -504,24 +631,48 @@
     "flowerType": "ทานตะวัน",
     "size": "เล็ก",
     "name": "ช่อดอกทานตะวัน - S04",
-    "price": 199,
     "desc": "ช่อขนาดเล็ก ดอกทานตะวัน 3 ดอก เลือกสีได้",
-    "colors": [
+    "sold": 6,
+    "soldAt": "2026-11-08T01:27:25.256Z",
+    "options": [
       {
-        "name": "ดอกส้มช่อขาว",
-        "image": "images/bouquet/ช่อดอกทานตะวัน-S04/ส้ม-ขาว-199฿.jpg"
+        "name": "สี",
+        "values": [
+          "ดอกส้มช่อขาว",
+          "ดอกส้มช่อน้ำตาล",
+          "ดอกเหลืองช่อครีม",
+          "ดอกเหลืองทานตะวันช่อขาว"
+        ]
+      }
+    ],
+    "variants": [
+      {
+        "match": [
+          "ดอกส้มช่อขาว"
+        ],
+        "price": 199,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s04/s04-mwe6ndbh0.webp"
       },
       {
-        "name": "ดอกส้มช่อน้ำตาล",
-        "image": "images/bouquet/ช่อดอกทานตะวัน-S04/ส้ม-น้ำตาล-199฿.jpg"
+        "match": [
+          "ดอกส้มช่อน้ำตาล"
+        ],
+        "price": 199,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s04/s04-mwe6nm6y0.webp"
       },
       {
-        "name": "ดอกเหลืองช่อครีม",
-        "image": "images/bouquet/ช่อดอกทานตะวัน-S04/เหลือง-ครีม-199฿.jpg"
+        "match": [
+          "ดอกเหลืองช่อครีม"
+        ],
+        "price": 199,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s04/s04-mwe6ognj0.webp"
       },
       {
-        "name": "ดอกเหลืองทานตะวันช่อขาว",
-        "image": "images/bouquet/ช่อดอกทานตะวัน-S04/เหลืองทานตะวัน-ขาว-199฿.jpg"
+        "match": [
+          "ดอกเหลืองทานตะวันช่อขาว"
+        ],
+        "price": 199,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s04/s04-mwe6ooe80.webp"
       }
     ]
   },
@@ -535,14 +686,14 @@
     ],
     "name": "ช่อดอกทานตะวัน - S05",
     "desc": "ช่อขนาดกลาง ดอกทานตะวัน 2 ดอก เลือกสีได้",
-    "image": "images/bouquet/s05/ส้ม-ขาว-Birthday (1).jpg",
+    "sold": 32,
+    "soldAt": "2026-11-08T01:30:35.197Z",
     "options": [
       {
         "name": "สีดอก",
         "values": [
           "ส้ม",
-          "เหลือง",
-          "เหลืองทานตะวัน"
+          "เหลือง"
         ]
       },
       {
@@ -577,10 +728,10 @@
           "ใส่เงิน 1 ใบ"
         ],
         "price": 254,
-        "image": "images/bouquet/s05/ส้ม-ขาว-ใส่เงิน1ใบ (1).jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s05/s05-mwe6s5js0.webp",
         "images": [
-          "images/bouquet/s05/ส้ม-ขาว-ใส่เงิน1ใบ (1).jpg",
-          "images/bouquet/s05/ส้ม-ขาว-ใส่เงิน1ใบ (2).jpg"
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s05/s05-mwe6s5js0.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s05/s05-mwe6s5js1.webp"
         ],
         "tag": "ใส่เงิน"
       },
@@ -591,7 +742,7 @@
           "ใส่เงิน 4 ใบ"
         ],
         "price": 269,
-        "image": "images/bouquet/s05/ส้ม-ขาว-ใส่เงิน4ใบ.jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s05/s05-mwe6t2ku0.webp",
         "tag": "ใส่เงิน"
       },
       {
@@ -601,11 +752,11 @@
           "ใส่เงิน 5 ใบ"
         ],
         "price": 274,
-        "image": "images/bouquet/s05/ส้ม-ขาว-ใส่เงิน5ใบ1.jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s05/s05-mwe6u8fq0.webp",
         "images": [
-          "images/bouquet/s05/ส้ม-ขาว-ใส่เงิน5ใบ1.jpg",
-          "images/bouquet/s05/ส้ม-ขาว-ใส่เงิน5ใบ3.jpg",
-          "images/bouquet/s05/ส้ม-ขาว-ใส่เงิน5ใบ4.jpg"
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s05/s05-mwe6u8fq0.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s05/s05-mwe6u8fq1.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s05/s05-mwe6u8fq2.webp"
         ],
         "tag": "ใส่เงิน"
       },
@@ -616,12 +767,12 @@
           "ใส่เงิน 10 ใบ"
         ],
         "price": 299,
-        "image": "images/bouquet/s05/ส้ม-ขาว-ใส่เงิน10ใบ (1).jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s05/s05-mwe6unr40.webp",
         "images": [
-          "images/bouquet/s05/ส้ม-ขาว-ใส่เงิน10ใบ (1).jpg",
-          "images/bouquet/s05/ส้ม-ขาว-ใส่เงิน10ใบ (2).jpg",
-          "images/bouquet/s05/ส้ม-ขาว-ใส่เงิน10ใบ (3).jpg",
-          "images/bouquet/s05/ส้ม-ขาว-ใส่เงิน10ใบ (4).jpg"
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s05/s05-mwe6unr40.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s05/s05-mwe6unr41.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s05/s05-mwe6unr42.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s05/s05-mwe6unr43.webp"
         ],
         "tag": "ใส่เงิน"
       },
@@ -632,12 +783,12 @@
           "ใส่เงิน 5 ใบ"
         ],
         "price": 274,
-        "image": "images/bouquet/s05/เหลือง-ขาว-ใส่เงิน5ใบ (1).jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s05/s05-mwe6wbt90.webp",
         "images": [
-          "images/bouquet/s05/เหลือง-ขาว-ใส่เงิน5ใบ (1).jpg",
-          "images/bouquet/s05/เหลือง-ขาว-ใส่เงิน5ใบ (2).jpg",
-          "images/bouquet/s05/เหลือง-ขาว-ใส่เงิน5ใบ (3).jpg",
-          "images/bouquet/s05/เหลือง-ขาว-ใส่เงิน5ใบ (4).jpg"
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s05/s05-mwe6wbt90.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s05/s05-mwe6wbt91.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s05/s05-mwe6wbt92.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s05/s05-mwe6wbt93.webp"
         ],
         "tag": "ใส่เงิน"
       },
@@ -648,21 +799,11 @@
           "ใส่เงิน 15 ใบ"
         ],
         "price": 324,
-        "image": "images/bouquet/s05/เหลือง-ขาว-ใส่เงิน15ใบ.jpg",
-        "tag": "ใส่เงิน"
-      },
-      {
-        "match": [
-          "เหลืองทานตะวัน",
-          "น้ำเงิน",
-          "ใส่เงิน 10 ใบ"
-        ],
-        "price": 299,
-        "image": "images/bouquet/s05/เหลืองทานตะวัน-น้ำเงิน10ใบ (1).jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s05/s05-mwe6xb0m0.webp",
         "images": [
-          "images/bouquet/s05/เหลืองทานตะวัน-น้ำเงิน10ใบ (1).jpg",
-          "images/bouquet/s05/เหลืองทานตะวัน-น้ำเงิน10ใบ (2).jpg",
-          "images/bouquet/s05/เหลืองทานตะวัน-น้ำเงิน10ใบ (3).jpg"
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s05/s05-mwe6xb0m0.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s05/s05-mwe765l10.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s05/s05-mwe765l11.webp"
         ],
         "tag": "ใส่เงิน"
       },
@@ -673,10 +814,10 @@
           "Birthday"
         ],
         "price": 249,
-        "image": "images/bouquet/s05/ส้ม-ขาว-Birthday (1).jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s05/s05-mwe6pgs90.webp",
         "images": [
-          "images/bouquet/s05/ส้ม-ขาว-Birthday (1).jpg",
-          "images/bouquet/s05/ส้ม-ขาว-Birthday (2).jpg"
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s05/s05-mwe6pgs90.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s05/s05-mwe6pgs91.webp"
         ],
         "tag": "กลาง"
       },
@@ -687,7 +828,7 @@
           "Congratulations"
         ],
         "price": 249,
-        "image": "images/bouquet/s05/ส้ม-ขาว-Congratulations.jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s05/s05-mwe6ptxh0.webp",
         "tag": "กลาง"
       },
       {
@@ -697,10 +838,10 @@
           "FLOWERS STUDIO"
         ],
         "price": 249,
-        "image": "images/bouquet/s05/ส้ม-ขาว-FLOWERS STUDIO2 (1).jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s05/s05-mwe6q34m0.webp",
         "images": [
-          "images/bouquet/s05/ส้ม-ขาว-FLOWERS STUDIO2 (1).jpg",
-          "images/bouquet/s05/ส้ม-ขาว-FLOWERS STUDIO2 (2).jpg"
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s05/s05-mwe6q34m0.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s05/s05-mwe6q34m1.webp"
         ],
         "tag": "กลาง"
       },
@@ -711,12 +852,12 @@
           "Happy day"
         ],
         "price": 249,
-        "image": "images/bouquet/s05/ส้ม-ขาว-Happy day1.jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s05/s05-mwe6qx7o0.webp",
         "images": [
-          "images/bouquet/s05/ส้ม-ขาว-Happy day1.jpg",
-          "images/bouquet/s05/ส้ม-ขาว-Happy day2.jpg",
-          "images/bouquet/s05/ส้ม-ขาว-Happy day3.jpg",
-          "images/bouquet/s05/ส้ม-ขาว-Happy day5.jpg"
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s05/s05-mwe6qx7o0.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s05/s05-mwe6qx7o1.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s05/s05-mwe6qx7o2.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s05/s05-mwe6qx7o3.webp"
         ],
         "tag": "กลาง"
       },
@@ -727,11 +868,11 @@
           "You are my LOVE"
         ],
         "price": 249,
-        "image": "images/bouquet/s05/ส้ม-ขาว-You are my LOVE1.jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s05/s05-mwe6ropo0.webp",
         "images": [
-          "images/bouquet/s05/ส้ม-ขาว-You are my LOVE1.jpg",
-          "images/bouquet/s05/ส้ม-ขาว-You are my LOVE2.jpg",
-          "images/bouquet/s05/ส้ม-ขาว-You are my LOVE3.jpg"
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s05/s05-mwe6ropo0.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s05/s05-mwe6ropo1.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s05/s05-mwe6ropo2.webp"
         ],
         "tag": "กลาง"
       },
@@ -742,12 +883,12 @@
           "Happy day"
         ],
         "price": 249,
-        "image": "images/bouquet/s05/เหลือง-ขาว-Happy day1 (1).jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s05/s05-mwe6vn730.webp",
         "images": [
-          "images/bouquet/s05/เหลือง-ขาว-Happy day1 (1).jpg",
-          "images/bouquet/s05/เหลือง-ขาว-Happy day2 (1).jpg",
-          "images/bouquet/s05/เหลือง-ขาว-Happy day3 (1).jpg",
-          "images/bouquet/s05/เหลือง-ขาว-Happy day4.jpg"
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s05/s05-mwe6vn730.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s05/s05-mwe6vn731.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s05/s05-mwe6vn732.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s05/s05-mwe6vn733.webp"
         ],
         "tag": "กลาง"
       },
@@ -758,57 +899,46 @@
           "Happy day"
         ],
         "price": 249,
-        "image": "images/bouquet/s05/เหลือง-แดง-Happy day (1).jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s05/s05-mwe6xlda0.webp",
         "images": [
-          "images/bouquet/s05/เหลือง-แดง-Happy day (1).jpg",
-          "images/bouquet/s05/เหลือง-แดง-Happy day (2).jpg",
-          "images/bouquet/s05/เหลือง-แดง-Happy day (3).jpg",
-          "images/bouquet/s05/เหลือง-แดง-Happy day (4).jpg"
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s05/s05-mwe6xlda0.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s05/s05-mwe6xlda1.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s05/s05-mwe6xlda2.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s05/s05-mwe6xlda3.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s05/s05-mwe7581j0.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s05/s05-mwe7581j1.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s05/s05-mwe7581j2.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s05/s05-mwe7581j3.webp"
         ],
         "tag": "กลาง"
       },
       {
         "match": [
-          "เหลืองทานตะวัน",
-          "ขาว",
-          "Congratulations"
+          "เหลือง",
+          "น้ำเงิน",
+          "ใส่เงิน 10 ใบ"
         ],
-        "price": 249,
-        "image": "images/bouquet/s05/เหลืองทานตะวัน-ขาว-Congratulations (1).jpg",
+        "price": 299,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s05/s05-mwe74prm0.webp",
         "images": [
-          "images/bouquet/s05/เหลืองทานตะวัน-ขาว-Congratulations (1).jpg",
-          "images/bouquet/s05/เหลืองทานตะวัน-ขาว-Congratulations (2).jpg",
-          "images/bouquet/s05/เหลืองทานตะวัน-ขาว-Congratulations (3).jpg"
-        ],
-        "tag": "กลาง"
-      },
-      {
-        "match": [
-          "เหลืองทานตะวัน",
-          "ขาว",
-          "ใส่เงิน 15 ใบ"
-        ],
-        "price": 324,
-        "image": "images/bouquet/s05/เหลืองทานตะวัน-ขาว-ใส่เงิน15ใบ (1).jpg",
-        "images": [
-          "images/bouquet/s05/เหลืองทานตะวัน-ขาว-ใส่เงิน15ใบ (1).jpg",
-          "images/bouquet/s05/เหลืองทานตะวัน-ขาว-ใส่เงิน15ใบ (2).jpg"
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s05/s05-mwe74prm0.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s05/s05-mwe74prm1.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s05/s05-mwe74prm2.webp"
         ],
         "tag": "ใส่เงิน"
       },
       {
         "match": [
-          "เหลืองทานตะวัน",
-          "แดง",
-          "Happy day"
+          "เหลือง",
+          "ขาว",
+          "Congratulations"
         ],
         "price": 249,
-        "image": "images/bouquet/s05/เหลืองทานตะวัน-แดง-Happy day (1).jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s05/s05-mwe76vn50.webp",
         "images": [
-          "images/bouquet/s05/เหลืองทานตะวัน-แดง-Happy day (1).jpg",
-          "images/bouquet/s05/เหลืองทานตะวัน-แดง-Happy day (2).jpg",
-          "images/bouquet/s05/เหลืองทานตะวัน-แดง-Happy day (3).jpg",
-          "images/bouquet/s05/เหลืองทานตะวัน-แดง-Happy day (4).jpg"
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s05/s05-mwe76vn50.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s05/s05-mwe76vn51.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s05/s05-mwe76vn52.webp"
         ],
         "tag": "กลาง"
       }
@@ -822,7 +952,9 @@
     "name": "ช่อดอกทานตะวัน - S06",
     "price": 249,
     "desc": "ช่อขนาดกลาง ดอกทานตะวันเหลือง 1 ดอก",
-    "image": "images/bouquet/ช่อดอกทานตะวัน-S06 249฿.jpg"
+    "sold": 4,
+    "soldAt": "2026-11-08T01:39:39.681Z",
+    "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s06/s06-mwdltuln0.webp"
   },
   {
     "id": "s07",
@@ -833,14 +965,15 @@
       "ใส่เงิน"
     ],
     "name": "ช่อดอกทานตะวัน - S07",
-    "desc": "ช่อดอกทานตะวันแฮนด์เมด 5 ดอก เลือกสีดอกส้ม เหลือง หรือเหลืองทานตะวัน ห่อกระดาษสีขาวหรือสีน้ำเงิน\nเลือกแบบช่อได้ 8 แบบ: Congratulations, Happy Birthday, Happy Day, You Are My Love, ใส่เงิน 10 ใบ, ผึ้งน้อย, Happy Anniversary และ Happy Valentine’s Day",
+    "desc": "ช่อดอกทานตะวัน 5 ดอก ขนาดกลาง เหมาะสำหรับมอบเป็นของขวัญในวันเกิด วันรับปริญญา และวันพิเศษต่าง ๆ",
+    "sold": 46,
+    "soldAt": "2026-11-08T01:39:39.681Z",
     "options": [
       {
         "name": "สีดอก",
         "values": [
           "ส้ม",
-          "เหลือง",
-          "เหลืองทานตะวัน"
+          "เหลือง"
         ]
       },
       {
@@ -872,13 +1005,14 @@
           "Congratulations"
         ],
         "price": 299,
-        "image": "images\\bouquet\\s07\\ส้ม-ขาว-Congratulations6.jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s07/s07-mwe6zv812.webp",
         "images": [
-          "images\\bouquet\\s07\\ส้ม-ขาว-Congratulations6.jpg",
-          "images\\bouquet\\s07\\ส้ม-ขาว-Congratulations2.jpg",
-          "images\\bouquet\\s07\\ส้ม-ขาว-Congratulations5.jpg"
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s07/s07-mwe6zv812.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s07/s07-mwe6zv810.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s07/s07-mwe6zv811.webp"
         ],
-        "tag": "กลาง"
+        "tag": "กลาง",
+        "ready": true
       },
       {
         "match": [
@@ -887,10 +1021,10 @@
           "Happy Birthday"
         ],
         "price": 299,
-        "image": "images\\bouquet\\s07\\ส้ม-ขาว-Happy Birthday (1).jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s07/s07-mwe70nav0.webp",
         "images": [
-          "images\\bouquet\\s07\\ส้ม-ขาว-Happy Birthday (1).jpg",
-          "images\\bouquet\\s07\\ส้ม-ขาว-Happy Birthday (2).jpg"
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s07/s07-mwe70nav0.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s07/s07-mwe70nav1.webp"
         ],
         "tag": "กลาง"
       },
@@ -901,12 +1035,12 @@
           "Happy day"
         ],
         "price": 299,
-        "image": "images\\bouquet\\s07\\ส้ม-ขาว-Happy day7.jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s07/s07-mwe6zc6q3.webp",
         "images": [
-          "images\\bouquet\\s07\\ส้ม-ขาว-Happy day7.jpg",
-          "images\\bouquet\\s07\\ส้ม-ขาว-Happy day1.jpg",
-          "images\\bouquet\\s07\\ส้ม-ขาว-Happy day2.jpg",
-          "images\\bouquet\\s07\\ส้ม-ขาว-Happy day6.jpg"
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s07/s07-mwe6zc6q3.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s07/s07-mwe6zc6q1.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s07/s07-mwe6zc6q2.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s07/s07-mwe6zc6q0.webp"
         ],
         "tag": "กลาง"
       },
@@ -917,10 +1051,10 @@
           "You are my LOVE"
         ],
         "price": 299,
-        "image": "images\\bouquet\\s07\\ส้ม-ขาว-You are my LOVE (1).jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s07/s07-mwe70b6a0.webp",
         "images": [
-          "images\\bouquet\\s07\\ส้ม-ขาว-You are my LOVE (1).jpg",
-          "images\\bouquet\\s07\\ส้ม-ขาว-You are my LOVE (3).jpg"
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s07/s07-mwe70b6a0.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s07/s07-mwe70b6a1.webp"
         ],
         "tag": "กลาง"
       },
@@ -931,12 +1065,12 @@
           "ใส่เงิน 10 ใบ"
         ],
         "price": 349,
-        "image": "images\\bouquet\\s07\\ส้ม-ขาว-ใส่เงิน10ใบ1 (1).jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s07/s07-mwe711rk0.webp",
         "images": [
-          "images\\bouquet\\s07\\ส้ม-ขาว-ใส่เงิน10ใบ1 (1).jpg",
-          "images\\bouquet\\s07\\ส้ม-ขาว-ใส่เงิน10ใบ1 (2).jpg",
-          "images\\bouquet\\s07\\ส้ม-ขาว-ใส่เงิน10ใบ1 (3).jpg",
-          "images\\bouquet\\s07\\ส้ม-ขาว-ใส่เงิน10ใบ1 (4).jpg"
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s07/s07-mwe711rk0.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s07/s07-mwe711rk1.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s07/s07-mwe711rk2.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s07/s07-mwe711rk3.webp"
         ],
         "tag": "ใส่เงิน"
       },
@@ -947,10 +1081,10 @@
           "Congratulations"
         ],
         "price": 299,
-        "image": "images\\bouquet\\s07\\ส้ม-น้ำเงิน-Congratulations2 (1).jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s07/s07-mwe71g000.webp",
         "images": [
-          "images\\bouquet\\s07\\ส้ม-น้ำเงิน-Congratulations2 (1).jpg",
-          "images\\bouquet\\s07\\ส้ม-น้ำเงิน-Congratulations2 (2).jpg"
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s07/s07-mwe71g000.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s07/s07-mwe71g001.webp"
         ],
         "tag": "กลาง"
       },
@@ -961,11 +1095,12 @@
           "ผึ้งน้อย"
         ],
         "price": 319,
-        "image": "images\\bouquet\\s07\\ส้ม-น้ำเงิน-ผึ้งน้อย (1).jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s07/s07-mwe71t280.webp",
         "images": [
-          "images\\bouquet\\s07\\ส้ม-น้ำเงิน-ผึ้งน้อย (1).jpg",
-          "images\\bouquet\\s07\\ส้ม-น้ำเงิน-ผึ้งน้อย (2).jpg",
-          "images\\bouquet\\s07\\ส้ม-น้ำเงิน-ผึ้งน้อย (4).jpg"
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s07/s07-mwe71t280.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s07/s07-mwe71t281.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s07/s07-mwe71t282.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s07/s07-mwe71t283.webp"
         ],
         "tag": "กลาง"
       },
@@ -976,7 +1111,13 @@
           "Congratulations"
         ],
         "price": 299,
-        "image": "images\\bouquet\\s07\\เหลือง-ขาว-Congratulations.jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s07/s07-mwe72q2b0.webp",
+        "images": [
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s07/s07-mwe72q2b0.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s07/s07-mwe7a9p20.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s07/s07-mwe7a9p21.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s07/s07-mwe7a9p22.webp"
+        ],
         "tag": "กลาง"
       },
       {
@@ -986,85 +1127,58 @@
           "Happy day"
         ],
         "price": 299,
-        "image": "images\\bouquet\\s07\\เหลือง-ขาว-Happy day1.jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s07/s07-mwe72etb0.webp",
         "images": [
-          "images\\bouquet\\s07\\เหลือง-ขาว-Happy day1.jpg",
-          "images\\bouquet\\s07\\เหลือง-ขาว-Happy day2.jpg",
-          "images\\bouquet\\s07\\เหลือง-ขาว-Happy day3.jpg"
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s07/s07-mwe72etb0.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s07/s07-mwe72etb1.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s07/s07-mwe72etb2.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s07/s07-mwe795pc0.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s07/s07-mwe795pc1.webp"
         ],
         "tag": "กลาง"
       },
       {
         "match": [
-          "เหลืองทานตะวัน",
-          "ขาว",
-          "Congratulations"
-        ],
-        "price": 299,
-        "image": "images\\bouquet\\s07\\เหลืองทานตะวัน-ขาว-Congratulations1.jpg",
-        "images": [
-          "images\\bouquet\\s07\\เหลืองทานตะวัน-ขาว-Congratulations1.jpg",
-          "images\\bouquet\\s07\\เหลืองทานตะวัน-ขาว-Congratulations2.jpg",
-          "images\\bouquet\\s07\\เหลืองทานตะวัน-ขาว-Congratulations3.jpg"
-        ],
-        "tag": "กลาง"
-      },
-      {
-        "match": [
-          "เหลืองทานตะวัน",
-          "ขาว",
-          "Happy Anniversary"
-        ],
-        "price": 299,
-        "image": "images\\bouquet\\s07\\เหลืองทานตะวัน-ขาว-Happy Anniversary1 (1).jpg",
-        "images": [
-          "images\\bouquet\\s07\\เหลืองทานตะวัน-ขาว-Happy Anniversary1 (1).jpg",
-          "images\\bouquet\\s07\\เหลืองทานตะวัน-ขาว-Happy Anniversary1 (2).jpg",
-          "images\\bouquet\\s07\\เหลืองทานตะวัน-ขาว-Happy Anniversary1 (3).jpg",
-          "images\\bouquet\\s07\\เหลืองทานตะวัน-ขาว-Happy Anniversary1 (4).jpg"
-        ],
-        "tag": "กลาง"
-      },
-      {
-        "match": [
-          "เหลืองทานตะวัน",
-          "ขาว",
-          "Happy day"
-        ],
-        "price": 299,
-        "image": "images\\bouquet\\s07\\เหลืองทานตะวัน-ขาว-Happy day1.jpg",
-        "images": [
-          "images\\bouquet\\s07\\เหลืองทานตะวัน-ขาว-Happy day1.jpg",
-          "images\\bouquet\\s07\\เหลืองทานตะวัน-ขาว-Happy day2.jpg"
-        ],
-        "tag": "กลาง"
-      },
-      {
-        "match": [
-          "เหลืองทานตะวัน",
-          "ขาว",
-          "Happy Valentine's Day"
-        ],
-        "price": 299,
-        "image": "images\\bouquet\\s07\\เหลืองทานตะวัน-ขาว-Happy Valentine's Day1.jpg",
-        "images": [
-          "images\\bouquet\\s07\\เหลืองทานตะวัน-ขาว-Happy Valentine's Day1.jpg",
-          "images\\bouquet\\s07\\เหลืองทานตะวัน-ขาว-Happy Valentine's Day2.jpg",
-          "images\\bouquet\\s07\\เหลืองทานตะวัน-ขาว-Happy Valentine's Day3.jpg"
-        ],
-        "tag": "กลาง"
-      },
-      {
-        "match": [
-          "เหลืองทานตะวัน",
+          "เหลือง",
           "ขาว",
           "You are my LOVE"
         ],
         "price": 299,
-        "image": "images\\bouquet\\s07\\เหลืองทานตะวัน-ขาว-You are my LOVE1.jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s07/s07-mwe78bhh0.webp",
         "images": [
-          "images\\bouquet\\s07\\เหลืองทานตะวัน-ขาว-You are my LOVE1.jpg",
-          "images\\bouquet\\s07\\เหลืองทานตะวัน-ขาว-You are my LOVE2.jpg"
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s07/s07-mwe78bhh0.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s07/s07-mwe78bhh1.webp"
+        ],
+        "tag": "กลาง"
+      },
+      {
+        "match": [
+          "เหลือง",
+          "ขาว",
+          "Happy Valentine's Day"
+        ],
+        "price": 299,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s07/s07-mwe78tr90.webp",
+        "images": [
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s07/s07-mwe78tr90.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s07/s07-mwe78tr91.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s07/s07-mwe78tr92.webp"
+        ],
+        "tag": "กลาง"
+      },
+      {
+        "match": [
+          "เหลือง",
+          "ขาว",
+          "Happy Anniversary"
+        ],
+        "price": 299,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s07/s07-mwe79m080.webp",
+        "images": [
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s07/s07-mwe79m080.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s07/s07-mwe79m081.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s07/s07-mwe79m082.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s07/s07-mwe79m083.webp"
         ],
         "tag": "กลาง"
       }
@@ -1076,18 +1190,32 @@
     "flowerType": "ทานตะวัน",
     "size": "กลาง",
     "name": "ช่อดอกทานตะวัน - S08",
-    "price": 299,
     "desc": "ช่อขนาดกลาง ดอกทานตะวันเหลือง 1 ดอก ตกแต่งด้วยดอกทิวลิป",
-    "sizes": [
+    "sold": 1,
+    "soldAt": "2026-11-07T07:18:42.684Z",
+    "options": [
       {
-        "name": "ดอกทานตะวันเล็ก",
-        "price": 299,
-        "image": "images/bouquet/ช่อดอกทานตะวัน-S08/เล็ก-299฿.jpg"
+        "name": "ไซซ์",
+        "values": [
+          "ดอกทานตะวันเล็ก",
+          "ดอกทานตะวันใหญ่"
+        ]
+      }
+    ],
+    "variants": [
+      {
+        "match": [
+          "ดอกทานตะวันเล็ก"
+        ],
+        "price": 349,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s08/s08-mwdg4l510.webp"
       },
       {
-        "name": "ดอกทานตะวันใหญ่",
-        "price": 349,
-        "image": "images/bouquet/ช่อดอกทานตะวัน-S08/ใหญ่-349฿.jpg"
+        "match": [
+          "ดอกทานตะวันใหญ่"
+        ],
+        "price": 299,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s08/s08-mwdg5p280.webp"
       }
     ]
   },
@@ -1099,11 +1227,11 @@
     "name": "ช่อดอกทานตะวัน - S09",
     "price": 399,
     "desc": "ช่อขนาดกลาง ดอกทานตะวันเหลือง 1 ดอก",
+    "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s09/s09-mwdlucen0.webp",
     "images": [
-      "images/bouquet/ช่อดอกทานตะวัน-S09/ช่อดอกทานตะวัน-S09 399฿ (1).jpg",
-      "images/bouquet/ช่อดอกทานตะวัน-S09/ช่อดอกทานตะวัน-S09 399฿ (2).jpg",
-      "images/bouquet/ช่อดอกทานตะวัน-S09/ช่อดอกทานตะวัน-S09 399฿ (3).jpg",
-      "images/bouquet/ช่อดอกทานตะวัน-S09/ช่อดอกทานตะวัน-S09 399฿ (4).jpg"
+      "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s09/s09-mwdlucen1.webp",
+      "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s09/s09-mwdlucen2.webp",
+      "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s09/s09-mwdlucen3.webp"
     ]
   },
   {
@@ -1112,20 +1240,40 @@
     "flowerType": "ทานตะวัน",
     "size": "กลาง",
     "name": "ช่อดอกทานตะวัน - S10",
-    "price": 449,
     "desc": "ช่อขนาดกลาง ดอกทานตะวัน 7 ดอก เลือกสีดอกได้",
-    "colors": [
+    "sold": 15,
+    "soldAt": "2026-11-08T01:27:25.256Z",
+    "options": [
       {
-        "name": "ดอกส้มช่อขาว",
-        "image": "images/bouquet/ช่อดอกทานตะวัน-S10/ส้ม-ขาว-449฿.jpg"
+        "name": "สี",
+        "values": [
+          "ดอกส้มช่อขาว",
+          "ดอกเหลืองช่อขาว",
+          "ดอกเหลืองทานตะวันช่อครีม"
+        ]
+      }
+    ],
+    "variants": [
+      {
+        "match": [
+          "ดอกส้มช่อขาว"
+        ],
+        "price": 449,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s10/s10-mwdmfp2h0.webp"
       },
       {
-        "name": "ดอกเหลืองช่อขาว",
-        "image": "images/bouquet/ช่อดอกทานตะวัน-S10/เหลือง-ขาว-449฿.jpg"
+        "match": [
+          "ดอกเหลืองช่อขาว"
+        ],
+        "price": 449,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s10/s10-mwdmfhow0.webp"
       },
       {
-        "name": "ดอกเหลืองทานตะวันช่อครีม",
-        "image": "images/bouquet/ช่อดอกทานตะวัน-S10/เหลืองทานตะวัน-ครีม-449฿.jpg"
+        "match": [
+          "ดอกเหลืองทานตะวันช่อครีม"
+        ],
+        "price": 449,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s10/s10-mwdmf6840.webp"
       }
     ]
   },
@@ -1135,30 +1283,54 @@
     "flowerType": "ทานตะวัน",
     "size": "ใหญ่",
     "name": "ช่อดอกทานตะวัน - S11",
-    "price": 499,
     "desc": "ช่อดอกทานตะวัน 9 ดอก งานแฮนด์เมด จัดช่อพร้อมห่อกระดาษอย่างสวยงาม\nเลือกโทนสีดอกไม้และกระดาษได้ตามต้องการ เหมาะสำหรับมอบในทุกโอกาสพิเศษ",
+    "sold": 3,
+    "soldAt": "2026-11-08T01:39:39.681Z",
     "image": "images\\bouquet\\ช่อดอกทานตะวัน-S11\\ช่อดอกทานตะวัน-S11 499฿ ดอกส้มช่อครีม.jpg",
-    "colors": [
+    "options": [
       {
-        "name": "ดอกส้มช่อขาว",
-        "image": "images\\bouquet\\ช่อดอกทานตะวัน-S11\\ช่อดอกทานตะวัน-S11 499฿ ดอกส้มช่อขาว.jpg"
+        "name": "สี",
+        "values": [
+          "ดอกส้มช่อขาว",
+          "ดอกส้มช่อครีม",
+          "ดอกส้มช่อน้ำเงิน",
+          "ดอกเหลืองช่อขาว"
+        ]
+      }
+    ],
+    "variants": [
+      {
+        "match": [
+          "ดอกส้มช่อขาว"
+        ],
+        "price": 499,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s11/s11-mwdmgcpv0.webp"
       },
       {
-        "name": "ดอกส้มช่อครีม",
-        "image": "images\\bouquet\\ช่อดอกทานตะวัน-S11\\ช่อดอกทานตะวัน-S11 499฿ ดอกส้มช่อครีม.jpg"
+        "match": [
+          "ดอกส้มช่อครีม"
+        ],
+        "price": 499,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s11/s11-mwdmgjfz0.webp"
       },
       {
-        "name": "ดอกส้มช่อน้ำเงิน",
-        "image": "images\\bouquet\\ช่อดอกทานตะวัน-S11\\ช่อดอกทานตะวัน-S11 499฿ ดอกส้มช่อน้ำเงิน (1).jpg",
+        "match": [
+          "ดอกส้มช่อน้ำเงิน"
+        ],
+        "price": 499,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s11/s11-mwdmgsj70.webp",
         "images": [
-          "images\\bouquet\\ช่อดอกทานตะวัน-S11\\ช่อดอกทานตะวัน-S11 499฿ ดอกส้มช่อน้ำเงิน (1).jpg",
-          "images\\bouquet\\ช่อดอกทานตะวัน-S11\\ช่อดอกทานตะวัน-S11 499฿ ดอกส้มช่อน้ำเงิน (2).jpg",
-          "images\\bouquet\\ช่อดอกทานตะวัน-S11\\ช่อดอกทานตะวัน-S11 499฿ ดอกส้มช่อน้ำเงิน (3).jpg"
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s11/s11-mwdmgsj70.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s11/s11-mwdmgsj71.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s11/s11-mwdmgsj72.webp"
         ]
       },
       {
-        "name": "ดอกเหลืองช่อขาว",
-        "image": "images\\bouquet\\ช่อดอกทานตะวัน-S11\\ช่อดอกทานตะวัน-S11 499฿ ดอกเหลืองช่อขาว.jpg"
+        "match": [
+          "ดอกเหลืองช่อขาว"
+        ],
+        "price": 499,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s11/s11-mwdmh0hy0.webp"
       }
     ]
   },
@@ -1168,9 +1340,44 @@
     "flowerType": "ทานตะวัน",
     "size": "ใหญ่",
     "name": "ช่อดอกทานตะวัน - S12",
-    "price": 599,
     "desc": "ช่อขนาดใหญ่ ดอกทานตะวันส้ม 2 ดอก",
-    "image": "images/bouquet/ช่อดอกทานตะวัน-S12 599฿.jpg"
+    "sold": 1,
+    "soldAt": "2026-11-07T07:18:42.684Z",
+    "options": [
+      {
+        "name": "แบบ",
+        "values": [
+          "ปกติ",
+          "ผึ้งน้อย"
+        ]
+      }
+    ],
+    "variants": [
+      {
+        "match": [
+          "ปกติ"
+        ],
+        "price": 599,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s12/s12-mwdmhich0.webp",
+        "images": [
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s12/s12-mwdmhich0.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s12/s12-mwdmhich1.webp"
+        ],
+        "tag": "ใหญ่"
+      },
+      {
+        "match": [
+          "ผึ้งน้อย"
+        ],
+        "price": 618,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s12/s12-mwdmhqxu0.webp",
+        "images": [
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s12/s12-mwdmhqxu0.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s12/s12-mwdmhqxu1.webp"
+        ],
+        "tag": "ใหญ่"
+      }
+    ]
   },
   {
     "id": "s20",
@@ -1180,12 +1387,10 @@
     "name": "ช่อดอกทานตะวัน - S20",
     "price": 599,
     "desc": "ช่อดอกทานตะวันโทนสีเหลืองสดใส ตกแต่งด้วยตุ๊กตาผึ้งน้อยน่ารักและห่อด้วยกระดาษสีขาวสะอาดตา\nเหมาะสำหรับมอบเป็นของขวัญในโอกาสพิเศษเพื่อสร้างความประทับใจ",
-    "ready": true,
-    "image": "images/bouquet/ช่อดอกทานตะวัน 599฿ (1).jpg",
+    "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s20/s20-mwdluq6k0.webp",
     "images": [
-      "images/bouquet/ช่อดอกทานตะวัน 599฿ (1).jpg",
-      "images/bouquet/ช่อดอกทานตะวัน 599฿ (2).jpg",
-      "images/bouquet/ช่อดอกทานตะวัน 599฿ (3).jpg"
+      "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s20/s20-mwdluq6k1.webp",
+      "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s20/s20-mwdluq6k2.webp"
     ]
   },
   {
@@ -1197,19 +1402,33 @@
       "ใส่เงิน"
     ],
     "name": "ช่อดอกทานตะวัน - S13",
-    "price": 599,
     "desc": "ช่อขนาดใหญ่ ดอกทานตะวันจิ๋วเหลือง 50 ดอก",
-    "sizes": [
+    "sold": 6,
+    "soldAt": "2026-11-08T01:30:35.197Z",
+    "options": [
       {
-        "name": "ปกติ",
+        "name": "ไซซ์",
+        "values": [
+          "ปกติ",
+          "ใส่เงิน 20 ใบ"
+        ]
+      }
+    ],
+    "variants": [
+      {
+        "match": [
+          "ปกติ"
+        ],
         "price": 599,
-        "image": "images/bouquet/ช่อดอกทานตะวัน-S13/ปกติ-599฿.jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s13/s13-mwdmi44g0.webp",
         "tag": "ใหญ่"
       },
       {
-        "name": "ใส่เงิน 20 ใบ",
+        "match": [
+          "ใส่เงิน 20 ใบ"
+        ],
         "price": 699,
-        "image": "images/bouquet/ช่อดอกทานตะวัน-S13/ใส่เงิน20ใบ-699฿.jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s13/s13-mwdmia6t0.webp",
         "tag": "ใส่เงิน"
       }
     ]
@@ -1222,7 +1441,9 @@
     "name": "ช่อดอกทานตะวัน - S14",
     "price": 699,
     "desc": "ช่อขนาดใหญ่ ดอกทานตะวันเหลือง 5 ดอก ตกแต่งด้วยดอกลิลลี่ฟ้า",
-    "image": "images/bouquet/ช่อดอกทานตะวัน-S14 699฿.jpg"
+    "sold": 1,
+    "soldAt": "2026-11-07T07:18:42.684Z",
+    "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s14/s14-mwdlv0ui0.webp"
   },
   {
     "id": "s15",
@@ -1233,10 +1454,10 @@
     "price": 899,
     "desc": "ช่อดอกทานตะวัน 7 ดอก สีเหลืองสดใส แซมด้วยดอกเดซี่สีขาวและใบไม้สีเขียว ห่อด้วยกระดาษสีขาวทรงวอลลุ่มอย่างพิถีพิถัน พร้อมผูกริบบิ้นสีน้ำตาลและลูกไม้สุดประณีต",
     "ready": true,
+    "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s15/s15-mwdlv9z70.webp",
     "images": [
-      "images/bouquet/ช่อดอกทานตะวัน-S15/ช่อดอกทานตะวัน-S15 899฿ (1).jpg",
-      "images/bouquet/ช่อดอกทานตะวัน-S15/ช่อดอกทานตะวัน-S15 899฿ (2).jpg",
-      "images/bouquet/ช่อดอกทานตะวัน-S15/ช่อดอกทานตะวัน-S15 899฿ (3).jpg"
+      "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s15/s15-mwdlv9z71.webp",
+      "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s15/s15-mwdlv9z72.webp"
     ]
   },
   {
@@ -1245,16 +1466,32 @@
     "flowerType": "ทานตะวัน",
     "size": "ใหญ่",
     "name": "ช่อดอกทานตะวัน - S16",
-    "price": 1090,
     "desc": "ช่อขนาดใหญ่ ดอกทานตะวัน 6 ดอก เลือกสีดอกได้",
-    "colors": [
+    "sold": 1,
+    "soldAt": "2026-11-07T07:18:42.684Z",
+    "options": [
       {
-        "name": "ส้ม",
-        "image": "images/bouquet/ช่อดอกทานตะวัน-S16/ส้ม-1200฿.jpg"
+        "name": "สี",
+        "values": [
+          "ส้ม",
+          "เหลืองทานตะวัน"
+        ]
+      }
+    ],
+    "variants": [
+      {
+        "match": [
+          "ส้ม"
+        ],
+        "price": 1090,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s16/s16-mwdmimst0.webp"
       },
       {
-        "name": "เหลืองทานตะวัน",
-        "image": "images/bouquet/ช่อดอกทานตะวัน-S16/เหลืองทานตะวัน-1200฿.jpg"
+        "match": [
+          "เหลืองทานตะวัน"
+        ],
+        "price": 1090,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s16/s16-mwdmixjc0.webp"
       }
     ]
   },
@@ -1268,6 +1505,8 @@
     ],
     "name": "ช่อดอกทานตะวัน - S17",
     "desc": "ช่อขนาดใหญ่ ดอกทานตะวันส้ม 20 ดอก เลือกสีช่อได้",
+    "sold": 2,
+    "soldAt": "2026-11-07T07:18:42.684Z",
     "options": [
       {
         "name": "สีช่อ",
@@ -1291,7 +1530,7 @@
           "ปกติ"
         ],
         "price": 1100,
-        "image": "images/bouquet/ช่อดอกทานตะวัน-S17/ครีม-ปกติ-1200฿.jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s17/s17-mwdmj7l60.webp",
         "tag": "ใหญ่"
       },
       {
@@ -1300,7 +1539,7 @@
           "ใส่เงิน 20 ใบ"
         ],
         "price": 1200,
-        "image": "images/bouquet/ช่อดอกทานตะวัน-S17/ครีม-ใส่เงิน20ใบ-1300฿.jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s17/s17-mwdmjdwq0.webp",
         "tag": "ใส่เงิน"
       },
       {
@@ -1309,7 +1548,7 @@
           "ปกติ"
         ],
         "price": 1100,
-        "image": "images/bouquet/ช่อดอกทานตะวัน-S17/ชมพู-ปกติ-1200฿.jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s17/s17-mwdmjin80.webp",
         "tag": "ใหญ่"
       }
     ]
@@ -1322,7 +1561,9 @@
     "name": "ช่อดอกทานตะวัน - S18",
     "price": 1190,
     "desc": "ช่อขนาดใหญ่ ดอกทานตะวันส้ม 7 ดอก",
-    "image": "images/bouquet/ช่อดอกทานตะวัน-S18 1300฿.jpg"
+    "sold": 1,
+    "soldAt": "2026-11-08T01:27:25.256Z",
+    "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s18/s18-mwdlvjz90.webp"
   },
   {
     "id": "s19",
@@ -1332,15 +1573,19 @@
     "name": "ช่อดอกทานตะวัน - S19",
     "price": 3000,
     "desc": "ช่อขนาดใหญ่ ดอกทานตะวันส้ม",
-    "image": "images/bouquet/ช่อดอกทานตะวัน-S19 3000฿.jpg"
+    "sold": 1,
+    "soldAt": "2026-11-07T07:18:42.684Z",
+    "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/s19/s19-mwdlvtmp0.webp"
   },
   {
     "id": "sm01",
     "cat": "ช่อดอกไม้",
     "flowerType": "ทานตะวัน",
     "size": "ใส่เงิน",
-    "name": "ช่อดอกทานตะวันใส่เงิน 10-15ใบ - SM01",
+    "name": "ช่อดอกทานตะวันใส่เงิน - SM01",
     "desc": "ดอกทานตะวัน 3 ดอก+ซองใส่เงิน เลือกสีได้",
+    "sold": 3,
+    "soldAt": "2026-11-07T07:18:42.684Z",
     "options": [
       {
         "name": "สีดอก",
@@ -1373,7 +1618,7 @@
           "ใส่เงิน 10 ใบ"
         ],
         "price": 249,
-        "image": "images/bouquet/ช่อดอกทานตะวันใส่เงิน-SM01/ส้ม-น้ำเงิน-เงิน10ใบ-249฿.jpg"
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/sm01/sm01-mwdmk9qg0.webp"
       },
       {
         "match": [
@@ -1382,7 +1627,7 @@
           "ใส่เงิน 10 ใบ"
         ],
         "price": 249,
-        "image": "images/bouquet/ช่อดอกทานตะวันใส่เงิน-SM01/เหลือง-แดง-เงิน10ใบ-249฿.jpg"
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/sm01/sm01-mwdmkx4g0.webp"
       },
       {
         "match": [
@@ -1391,7 +1636,7 @@
           "ใส่เงิน 10 ใบ"
         ],
         "price": 249,
-        "image": "images/bouquet/ช่อดอกทานตะวันใส่เงิน-SM01/เหลืองทานตะวัน-แดง-เงิน10ใบ-249฿.jpg"
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/sm01/sm01-mwdml28f0.webp"
       },
       {
         "match": [
@@ -1400,7 +1645,7 @@
           "ใส่เงิน 15 ใบ"
         ],
         "price": 274,
-        "image": "images/bouquet/ช่อดอกทานตะวันใส่เงิน-SM01/ส้ม-แดง-เงิน15ใบ-274฿.jpg"
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/sm01/sm01-mwdmk1so0.webp"
       }
     ]
   },
@@ -1410,16 +1655,32 @@
     "flowerType": "ทานตะวัน",
     "size": "ใส่เงิน",
     "name": "ช่อดอกทานตะวันใส่เงิน 10ใบ - SM02",
-    "price": 449,
     "desc": "ดอกทานตะวันส้ม 5 ดอก+ซองใส่เงิน 10 ใบ เลือกสีช่อได้",
-    "colors": [
+    "sold": 2,
+    "soldAt": "2026-11-07T07:18:42.684Z",
+    "options": [
       {
-        "name": "น้ำเงิน",
-        "image": "images/bouquet/ช่อดอกทานตะวันใส่เงิน-SM02/น้ำเงิน-449฿.jpg"
+        "name": "สี",
+        "values": [
+          "น้ำเงิน",
+          "น้ำตาล"
+        ]
+      }
+    ],
+    "variants": [
+      {
+        "match": [
+          "น้ำเงิน"
+        ],
+        "price": 449,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/sm02/sm02-mwdmlf6k0.webp"
       },
       {
-        "name": "น้ำตาล",
-        "image": "images/bouquet/ช่อดอกทานตะวันใส่เงิน-SM02/น้ำตาล-449฿.jpg"
+        "match": [
+          "น้ำตาล"
+        ],
+        "price": 449,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/sm02/sm02-mwdmljy60.webp"
       }
     ]
   },
@@ -1431,7 +1692,7 @@
     "name": "ช่อดอกทานตะวันใส่เงิน 15ใบ - SM03",
     "price": 499,
     "desc": "ดอกทานตะวันเหลืองจิ๋ว+ซองใส่เงิน 15 ใบ",
-    "image": "images/bouquet/ช่อดอกทานตะวันเงิน15ใบ-SM03 499฿.jpg"
+    "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/sm03/sm03-mwdlw3si0.webp"
   },
   {
     "id": "sm04",
@@ -1441,7 +1702,9 @@
     "name": "ช่อดอกทานตะวันใส่เงิน 20ใบ - SM04",
     "price": 399,
     "desc": "ดอกทานตะวันเหลือง 3 ดอก+ซองใส่เงิน 20 ใบ",
-    "image": "images/bouquet/ช่อดอกทานตะวันเงิน20ใบ-SM04 399฿.jpg"
+    "sold": 1,
+    "soldAt": "2026-11-07T07:18:42.684Z",
+    "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/sm04/sm04-mwdlwe490.webp"
   },
   {
     "id": "sm05",
@@ -1449,20 +1712,40 @@
     "flowerType": "ทานตะวัน",
     "size": "ใส่เงิน",
     "name": "ช่อดอกทานตะวันใส่เงิน 30ใบ - SM05",
-    "price": 499,
     "desc": "ดอกทานตะวันส้ม 5 ดอก+ซองใส่เงิน 30 ใบ เลือกสีช่อได้",
-    "colors": [
+    "sold": 2,
+    "soldAt": "2026-11-07T07:18:42.684Z",
+    "options": [
       {
-        "name": "ชมพูขาว",
-        "image": "images/bouquet/ช่อดอกทานตะวันใส่เงิน-SM05/ชมพูขาว-เงิน30ใบ-499฿.jpg"
+        "name": "สี",
+        "values": [
+          "ชมพูขาว",
+          "น้ำเงินขาว",
+          "ฟ้าขาว"
+        ]
+      }
+    ],
+    "variants": [
+      {
+        "match": [
+          "ชมพูขาว"
+        ],
+        "price": 499,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/sm05/sm05-mwdlwpgg0.webp"
       },
       {
-        "name": "น้ำเงินขาว",
-        "image": "images/bouquet/ช่อดอกทานตะวันใส่เงิน-SM05/น้ำเงินขาว-เงิน30ใบ-499฿.jpg"
+        "match": [
+          "น้ำเงินขาว"
+        ],
+        "price": 499,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/sm05/sm05-mwdlwygj0.webp"
       },
       {
-        "name": "ฟ้าขาว",
-        "image": "images/bouquet/ช่อดอกทานตะวันใส่เงิน-SM05/ฟ้าขาว-เงิน30ใบ-499฿.jpg"
+        "match": [
+          "ฟ้าขาว"
+        ],
+        "price": 499,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/sm05/sm05-mwdlx3t40.webp"
       }
     ]
   },
@@ -1472,31 +1755,57 @@
     "flowerType": "ทิวลิป",
     "size": "เล็ก",
     "name": "ช่อดอกทิวลิป - T01",
-    "price": 69,
     "desc": "ดอกทิวลิป 1 ดอก เลือกสีได้",
-    "colors": [
+    "hidden": true,
+    "options": [
       {
-        "name": "ขาว",
-        "image": "images/bouquet/ช่อดอกทิวลิป-T01/ขาว-69฿.jpg"
-      },
-      {
-        "name": "ชมพู",
-        "image": "images/bouquet/ช่อดอกทิวลิป-T01/ชมพู-69฿.jpg"
-      },
-      {
-        "name": "แดง",
-        "image": "images/bouquet/ช่อดอกทิวลิป-T01/แดง-69฿.jpg"
-      },
-      {
-        "name": "ม่วง",
-        "image": "images/bouquet/ช่อดอกทิวลิป-T01/ม่วง-69฿.jpg"
-      },
-      {
-        "name": "เหลือง",
-        "image": "images/bouquet/ช่อดอกทิวลิป-T01/เหลือง-69฿.jpg"
+        "name": "สี",
+        "values": [
+          "ขาว",
+          "ชมพู",
+          "แดง",
+          "ม่วง",
+          "เหลือง"
+        ]
       }
     ],
-    "hidden": true
+    "variants": [
+      {
+        "match": [
+          "ขาว"
+        ],
+        "price": 69,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/t01/t01-mwdgif810.webp"
+      },
+      {
+        "match": [
+          "ชมพู"
+        ],
+        "price": 69,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/t01/t01-mwdgipcl0.webp"
+      },
+      {
+        "match": [
+          "แดง"
+        ],
+        "price": 69,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/t01/t01-mwdgj0760.webp"
+      },
+      {
+        "match": [
+          "ม่วง"
+        ],
+        "price": 69,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/t01/t01-mwdgj6ta0.webp"
+      },
+      {
+        "match": [
+          "เหลือง"
+        ],
+        "price": 69,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/t01/t01-mwdgje0v0.webp"
+      }
+    ]
   },
   {
     "id": "t02",
@@ -1508,6 +1817,8 @@
     ],
     "name": "ช่อดอกทิวลิป - T02",
     "desc": "ช่อขนาดเล็ก ดอกทิวลิป 1 ดอก เลือกสีได้ (สามารถเพิ่มซองใส่เงินได้)",
+    "sold": 11,
+    "soldAt": "2026-11-08T01:27:25.256Z",
     "options": [
       {
         "name": "สีดอก",
@@ -1541,7 +1852,7 @@
           "ปกติ"
         ],
         "price": 99,
-        "image": "images/bouquet/ช่อดอกทิวลิป-T02/ชมพู-ขาว-ปกติ-99฿.jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/t02/t02-mwdlfoie0.webp",
         "tag": "เล็ก"
       },
       {
@@ -1551,7 +1862,7 @@
           "ปกติ"
         ],
         "price": 99,
-        "image": "images/bouquet/ช่อดอกทิวลิป-T02/แดง-ขาว-ปกติ-99฿.jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/t02/t02-mwdleo0f0.webp",
         "tag": "เล็ก"
       },
       {
@@ -1561,7 +1872,7 @@
           "ใส่เงิน 3 ใบ"
         ],
         "price": 114,
-        "image": "images/bouquet/ช่อดอกทิวลิป-T02/แดง-ขาว-ใส่เงิน3ใบ-114฿.jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/t02/t02-mwdlex680.webp",
         "tag": "ใส่เงิน"
       },
       {
@@ -1571,7 +1882,7 @@
           "ปกติ"
         ],
         "price": 99,
-        "image": "images/bouquet/ช่อดอกทิวลิป-T02/แดง-ดำ-ปกติ-99฿.jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/t02/t02-mwdlf48d0.webp",
         "tag": "เล็ก"
       },
       {
@@ -1581,7 +1892,7 @@
           "ปกติ"
         ],
         "price": 99,
-        "image": "images/bouquet/ช่อดอกทิวลิป-T02/แดง-แดง-ปกติ-99฿.jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/t02/t02-mwdlfb4g0.webp",
         "tag": "เล็ก"
       },
       {
@@ -1591,7 +1902,7 @@
           "ปกติ"
         ],
         "price": 99,
-        "image": "images/bouquet/ช่อดอกทิวลิป-T02/แดง-น้ำตาล-ปกติ-99฿.jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/t02/t02-mwdlfj430.webp",
         "tag": "เล็ก"
       }
     ]
@@ -1602,16 +1913,32 @@
     "flowerType": "ทิวลิป",
     "size": "กลาง",
     "name": "ช่อดอกทิวลิป - T03",
-    "price": 249,
     "desc": "ช่อขนาดกลาง ดอกทิวลิป 4 ดอก เลือกสีได้",
-    "colors": [
+    "sold": 2,
+    "soldAt": "2026-11-07T07:18:42.684Z",
+    "options": [
       {
-        "name": "ฟ้า",
-        "image": "images/bouquet/ช่อดอกทิวลิป-T03/ทิวลิป-249฿-ฟ้า.jpg"
+        "name": "สี",
+        "values": [
+          "ฟ้า",
+          "ม่วง"
+        ]
+      }
+    ],
+    "variants": [
+      {
+        "match": [
+          "ฟ้า"
+        ],
+        "price": 249,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/t03/t03-mwdlg2bn0.webp"
       },
       {
-        "name": "ม่วง",
-        "image": "images/bouquet/ช่อดอกทิวลิป-T03/ทิวลิป-249฿-ม่วง.jpg"
+        "match": [
+          "ม่วง"
+        ],
+        "price": 249,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/t03/t03-mwdlg6tc0.webp"
       }
     ]
   },
@@ -1621,24 +1948,48 @@
     "flowerType": "ทิวลิป",
     "size": "กลาง",
     "name": "ช่อดอกทิวลิป - T04",
-    "price": 299,
     "desc": "ช่อขนาดกลาง ดอกทิวลิป 5 ดอก เลือกสีได้",
-    "colors": [
+    "sold": 2,
+    "soldAt": "2026-11-08T01:27:25.256Z",
+    "options": [
       {
-        "name": "แดง",
-        "image": "images/bouquet/ช่อดอกทิวลิป-T04/ทิวลิป-299฿-แดง.jpg"
+        "name": "สี",
+        "values": [
+          "แดง",
+          "ดอกแดงช่อขาว",
+          "ดอกเหลืองช่อเขียว",
+          "ดอกเหลืองช่อครีม"
+        ]
+      }
+    ],
+    "variants": [
+      {
+        "match": [
+          "แดง"
+        ],
+        "price": 299,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/t04/t04-mwdlgl6g0.webp"
       },
       {
-        "name": "ดอกแดงช่อขาว",
-        "image": "images/bouquet/ช่อดอกทิวลิป-T04/ทิวลิป-299฿-แดง-ขาว.jpg"
+        "match": [
+          "ดอกแดงช่อขาว"
+        ],
+        "price": 299,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/t04/t04-mwdlgq8p0.webp"
       },
       {
-        "name": "ดอกเหลืองช่อเขียว",
-        "image": "images/bouquet/ช่อดอกทิวลิป-T04/ทิวลิป-299฿-เหลือง-เขียว.jpg"
+        "match": [
+          "ดอกเหลืองช่อเขียว"
+        ],
+        "price": 299,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/t04/t04-mwdlgv030.webp"
       },
       {
-        "name": "ดอกเหลืองช่อครีม",
-        "image": "images/bouquet/ช่อดอกทิวลิป-T04/ทิวลิป-299฿-เหลือง-ครีม.jpg"
+        "match": [
+          "ดอกเหลืองช่อครีม"
+        ],
+        "price": 299,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/t04/t04-mwdlgz4u0.webp"
       }
     ]
   },
@@ -1648,16 +1999,32 @@
     "flowerType": "ทิวลิป",
     "size": "กลาง",
     "name": "ช่อดอกทิวลิป - T05",
-    "price": 349,
     "desc": "ช่อขนาดกลาง ดอกทิวลิป 6 ดอก เลือกสีได้",
-    "colors": [
+    "sold": 2,
+    "soldAt": "2026-11-07T07:18:42.684Z",
+    "options": [
       {
-        "name": "ชมพู",
-        "image": "images/bouquet/ช่อดอกทิวลิป-T05/ทิวลิปเกาหลี-399฿-ชมพู-ขาว.jpg"
+        "name": "สี",
+        "values": [
+          "ชมพู",
+          "ฟ้า"
+        ]
+      }
+    ],
+    "variants": [
+      {
+        "match": [
+          "ชมพู"
+        ],
+        "price": 349,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/t05/t05-mwdlha7q0.webp"
       },
       {
-        "name": "ฟ้า",
-        "image": "images/bouquet/ช่อดอกทิวลิป-T05/ทิวลิปเกาหลี-399฿-ฟ้า-น้ำเงิน.jpg"
+        "match": [
+          "ฟ้า"
+        ],
+        "price": 349,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/t05/t05-mwdlhflc0.webp"
       }
     ]
   },
@@ -1671,6 +2038,8 @@
     ],
     "name": "ช่อดอกทิวลิป - T06",
     "desc": "ช่อขนาดกลาง ดอกทิวลิป 6 ดอก เลือกสีได้",
+    "sold": 4,
+    "soldAt": "2026-11-08T01:27:25.256Z",
     "options": [
       {
         "name": "สีดอก",
@@ -1708,7 +2077,7 @@
           "ปกติ"
         ],
         "price": 349,
-        "image": "images/bouquet/ช่อดอกทิวลิป-T06/แดง-แดง-ปกติ-349฿.jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/t06/t06-mwdlhppj0.webp",
         "tag": "กลาง"
       },
       {
@@ -1718,7 +2087,7 @@
           "ปกติ"
         ],
         "price": 349,
-        "image": "images/bouquet/ช่อดอกทิวลิป-T06/น้ำเงิน-น้ำเงิน-ปกติ-349฿.jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/t06/t06-mwdlhvlw0.webp",
         "tag": "กลาง"
       },
       {
@@ -1728,7 +2097,7 @@
           "ปกติ"
         ],
         "price": 349,
-        "image": "images/bouquet/ช่อดอกทิวลิป-T06/ม่วง-ชมพู-ปกติ-349฿.jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/t06/t06-mwdli3tx0.webp",
         "tag": "กลาง"
       },
       {
@@ -1738,7 +2107,7 @@
           "ปกติ"
         ],
         "price": 349,
-        "image": "images/bouquet/ช่อดอกทิวลิป-T06/ม่วง-ม่วง1-ปกติ-349฿.jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/t06/t06-mwdliblg0.webp",
         "tag": "กลาง"
       },
       {
@@ -1748,7 +2117,7 @@
           "ปกติ"
         ],
         "price": 349,
-        "image": "images/bouquet/ช่อดอกทิวลิป-T06/ม่วง-ม่วง2-ปกติ-349฿.jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/t06/t06-mwdliibl0.webp",
         "tag": "กลาง"
       },
       {
@@ -1758,7 +2127,7 @@
           "ปกติ"
         ],
         "price": 349,
-        "image": "images/bouquet/ช่อดอกทิวลิป-T06/เหลือง-เหลือง-ปกติ-349฿.jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/t06/t06-mwdlinzt0.webp",
         "tag": "กลาง"
       },
       {
@@ -1768,7 +2137,7 @@
           "ใส่เงิน 10 ใบ"
         ],
         "price": 399,
-        "image": "images/bouquet/ช่อดอกทิวลิป-T06/เหลือง-เหลือง-ใส่เงิน10ใบ-399฿.jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/t06/t06-mwdlisxd0.webp",
         "tag": "ใส่เงิน"
       }
     ]
@@ -1781,7 +2150,9 @@
     "name": "ช่อดอกทิวลิป - T07",
     "price": 349,
     "desc": "ช่อขนาดกลาง ดอกทิวลิปชมพู ตกแต่งด้วยดอกลิลลี่ชมพู",
-    "image": "images/bouquet/ช่อดอกทิวลิป-T07 349฿.jpg"
+    "sold": 1,
+    "soldAt": "2026-11-07T07:18:42.684Z",
+    "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/t07/t07-mwdljbzq0.webp"
   },
   {
     "id": "t08",
@@ -1793,6 +2164,8 @@
     ],
     "name": "ช่อดอกทิวลิป - T08",
     "desc": "ช่อขนาดกลาง ดอกทิวลิป 5 ดอก ทำสี เลือกสีได้",
+    "sold": 5,
+    "soldAt": "2026-11-08T01:17:01.080Z",
     "options": [
       {
         "name": "สีดอก",
@@ -1827,7 +2200,7 @@
           "ปกติ"
         ],
         "price": 399,
-        "image": "images/bouquet/ช่อดอกทิวลิป-T08/ชมพู-ชมพู-ปกติ-399฿.jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/t08/t08-mwdljndl0.webp",
         "tag": "กลาง"
       },
       {
@@ -1837,7 +2210,7 @@
           "ใส่เงิน 10 ใบ"
         ],
         "price": 449,
-        "image": "images/bouquet/ช่อดอกทิวลิป-T08/ชมพู-ชมพู-ใส่เงิน10ใบ-449฿.jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/t08/t08-mwdljrrh0.webp",
         "tag": "ใส่เงิน"
       },
       {
@@ -1847,9 +2220,8 @@
           "ใส่เงิน 10 ใบ"
         ],
         "price": 449,
-        "image": "images/bouquet/ช่อดอกทิวลิป-T08/ฟ้า-ฟ้า-ใส่เงิน10ใบ-449฿.jpg",
-        "tag": "ใส่เงิน",
-        "ready": true
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/t08/t08-mwdljwrs0.webp",
+        "tag": "ใส่เงิน"
       },
       {
         "match": [
@@ -1858,7 +2230,7 @@
           "ปกติ"
         ],
         "price": 399,
-        "image": "images/bouquet/ช่อดอกทิวลิป-T08/ม่วง-ม่วง-ปกติ-399฿.jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/t08/t08-mwdlk2lg0.webp",
         "tag": "กลาง"
       },
       {
@@ -1868,7 +2240,7 @@
           "ใส่เงิน 16 ใบ"
         ],
         "price": 479,
-        "image": "images/bouquet/ช่อดอกทิวลิป-T08/ม่วง-ม่วง-ใส่เงิน16ใบ-479฿.jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/t08/t08-mwdlk8o50.webp",
         "tag": "ใส่เงิน"
       }
     ]
@@ -1881,7 +2253,7 @@
     "name": "ช่อดอกทิวลิป - T09",
     "price": 449,
     "desc": "ช่อขนาดกลาง ดอกทิวลิปชมพู 7 ดอก",
-    "image": "images/bouquet/ช่อดอกทิวลิป-T09 449฿.jpg"
+    "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/t09/t09-mwdlkhru0.webp"
   },
   {
     "id": "t10",
@@ -1891,7 +2263,9 @@
     "name": "ช่อดอกทิวลิป - T10",
     "price": 499,
     "desc": "ช่อขนาดใหญ่ ดอกทิวลิปขาว 8 ดอก",
-    "image": "images/bouquet/ช่อดอกทิวลิป-T10 499฿.jpg"
+    "sold": 1,
+    "soldAt": "2026-11-07T07:18:42.684Z",
+    "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/t10/t10-mwdlkoqr0.webp"
   },
   {
     "id": "t11",
@@ -1899,16 +2273,32 @@
     "flowerType": "ทิวลิป",
     "size": "ใหญ่",
     "name": "ช่อดอกทิวลิป - T11",
-    "price": 499,
     "desc": "ช่อขนาดใหญ่ ดอกทิวลิปชมพูขาว ตกแต่งด้วยดอกเดซี่ เลือกสีได้",
-    "colors": [
+    "sold": 2,
+    "soldAt": "2026-11-07T07:18:42.684Z",
+    "options": [
       {
-        "name": "ชมพู",
-        "image": "images/bouquet/ช่อดอกทิวลิป-T11/ทิวลิปเกาหลี-499฿-ชมพูขาว-ขาว.jpg"
+        "name": "สี",
+        "values": [
+          "ชมพู",
+          "เหลือง"
+        ]
+      }
+    ],
+    "variants": [
+      {
+        "match": [
+          "ชมพู"
+        ],
+        "price": 499,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/t11/t11-mwdlkwz60.webp"
       },
       {
-        "name": "เหลือง",
-        "image": "images/bouquet/ช่อดอกทิวลิป-T11/ทิวลิปเกาหลี-499฿-เหลืองขาว-ขาว.jpg"
+        "match": [
+          "เหลือง"
+        ],
+        "price": 499,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/t11/t11-mwdll1dh0.webp"
       }
     ]
   },
@@ -1921,19 +2311,33 @@
       "ใส่เงิน"
     ],
     "name": "ช่อดอกทิวลิป - T12",
-    "price": 599,
     "desc": "ช่อขนาดใหญ่ ดอกทิวลิปเหลือง 10 ดอก เพิ่มซองใส่เงินได้",
-    "sizes": [
+    "sold": 1,
+    "soldAt": "2026-11-07T07:18:42.684Z",
+    "options": [
       {
-        "name": "ปกติ",
+        "name": "ไซซ์",
+        "values": [
+          "ปกติ",
+          "ใส่เงิน 1 ใบ"
+        ]
+      }
+    ],
+    "variants": [
+      {
+        "match": [
+          "ปกติ"
+        ],
         "price": 599,
-        "image": "images/bouquet/ช่อดอกทิวลิป-T12/ทิวลิป-549฿-เหลือง.jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/t12/t12-mwdllcdv0.webp",
         "tag": "ใหญ่"
       },
       {
-        "name": "ใส่เงิน 1 ใบ",
+        "match": [
+          "ใส่เงิน 1 ใบ"
+        ],
         "price": 607,
-        "image": "images/bouquet/ช่อดอกทิวลิป-T12/ช่อดอกทิวลิปเงิน1ใบ-TM01 554฿.jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/t12/t12-mwdllgoi0.webp",
         "tag": "ใส่เงิน"
       }
     ]
@@ -1944,27 +2348,41 @@
     "flowerType": "ทิวลิป",
     "size": "ใหญ่",
     "name": "ช่อดอกทิวลิป - T14",
-    "price": 649,
     "desc": "ช่อดอกทิวลิปจากลวดกำมะหยี่ จำนวน 10 ดอก 🌷\nงานแฮนด์เมด เก็บไว้ได้นาน เหมาะสำหรับมอบเป็นของขวัญในทุกโอกาสพิเศษ",
     "image": "images\\bouquet\\ช่อดอกทิวลิป-T14 649฿ ชมพู (2).jpg",
-    "colors": [
+    "options": [
       {
-        "name": "ชมพู",
-        "image": "images\\bouquet\\ช่อดอกทิวลิป-T14 649฿ ชมพู (2).jpg",
+        "name": "สี",
+        "values": [
+          "ชมพู",
+          "น้ำเงิน"
+        ]
+      }
+    ],
+    "variants": [
+      {
+        "match": [
+          "ชมพู"
+        ],
+        "price": 649,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/t14/t14-mwdllvza0.webp",
         "images": [
-          "images\\bouquet\\ช่อดอกทิวลิป-T14 649฿ ชมพู (2).jpg",
-          "images\\bouquet\\ช่อดอกทิวลิป-T14 649฿ ชมพู (1).jpg",
-          "images\\bouquet\\ช่อดอกทิวลิป-T14 649฿ ชมพู (3).jpg"
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/t14/t14-mwdllvza0.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/t14/t14-mwdllvza1.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/t14/t14-mwdllvza2.webp"
         ],
         "ready": true
       },
       {
-        "name": "น้ำเงิน",
-        "image": "images\\bouquet\\ช่อดอกทิวลิป-T14 649฿ น้ำเงิน (1).jpg",
+        "match": [
+          "น้ำเงิน"
+        ],
+        "price": 649,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/t14/t14-mwdlm3yp0.webp",
         "images": [
-          "images\\bouquet\\ช่อดอกทิวลิป-T14 649฿ น้ำเงิน (1).jpg",
-          "images\\bouquet\\ช่อดอกทิวลิป-T14 649฿ น้ำเงิน (2).jpg",
-          "images\\bouquet\\ช่อดอกทิวลิป-T14 649฿ น้ำเงิน (3).jpg"
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/t14/t14-mwdlm3yp0.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/t14/t14-mwdlm3yp1.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/t14/t14-mwdlm3yp2.webp"
         ],
         "ready": true
       }
@@ -1978,15 +2396,19 @@
     "name": "ช่อดอกทิวลิป - T13",
     "price": 799,
     "desc": "ช่อขนาดใหญ่ ดอกทิวลิปชมพู 7 ดอก ม่วง 6 ดอก",
-    "image": "images/bouquet/ช่อดอกทิวลิป-T13 649฿.jpg"
+    "sold": 1,
+    "soldAt": "2026-11-08T01:17:01.080Z",
+    "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/t13/t13-mwdlmdt50.webp"
   },
   {
     "id": "tm01",
     "cat": "ช่อดอกไม้",
     "flowerType": "ทิวลิป",
     "size": "ใส่เงิน",
-    "name": "ช่อดอกทิวลิปใส่เงิน 5-10ใบ - TM01",
+    "name": "ช่อดอกทิวลิปใส่เงิน - TM01",
     "desc": "ดอกทิวลิป 3 ดอก+ซองใส่เงิน",
+    "sold": 4,
+    "soldAt": "2026-11-08T01:27:25.256Z",
     "options": [
       {
         "name": "สีดอก",
@@ -2023,8 +2445,7 @@
           "ใส่เงิน 10 ใบ"
         ],
         "price": 249,
-        "image": "images/bouquet/ช่อดอกทิวลิปใส่เงิน-TM01/แดง-ขาว-ใส่เงิน10ใบ-249฿.jpg",
-        "ready": true
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/tm01/tm01-mwdlmkql0.webp"
       },
       {
         "match": [
@@ -2033,7 +2454,7 @@
           "ใส่เงิน 10 ใบ"
         ],
         "price": 249,
-        "image": "images/bouquet/ช่อดอกทิวลิปใส่เงิน-TM01/ฟ้า-น้ำเงิน-ใส่เงิน10ใบ-249฿.jpg"
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/tm01/tm01-mwdlmsc90.webp"
       },
       {
         "match": [
@@ -2042,7 +2463,7 @@
           "ใส่เงิน 10 ใบ"
         ],
         "price": 249,
-        "image": "images/bouquet/ช่อดอกทิวลิปใส่เงิน-TM01/ฟ้า-ฟ้า-ใส่เงิน10ใบ-249฿.jpg"
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/tm01/tm01-mwdlmwa40.webp"
       },
       {
         "match": [
@@ -2051,7 +2472,7 @@
           "ใส่เงิน 5 ใบ"
         ],
         "price": 224,
-        "image": "images/bouquet/ช่อดอกทิวลิปใส่เงิน-TM01/ม่วง-ขาว-ใส่เงิน5ใบ-224฿.jpg"
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/tm01/tm01-mwdln1180.webp"
       },
       {
         "match": [
@@ -2060,7 +2481,7 @@
           "ใส่เงิน 6 ใบ"
         ],
         "price": 229,
-        "image": "images/bouquet/ช่อดอกทิวลิปใส่เงิน-TM01/ม่วง-ขาว-ใส่เงิน6ใบ-229฿.jpg"
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/tm01/tm01-mwdln6630.webp"
       },
       {
         "match": [
@@ -2069,7 +2490,7 @@
           "ใส่เงิน 10 ใบ"
         ],
         "price": 249,
-        "image": "images/bouquet/ช่อดอกทิวลิปใส่เงิน-TM01/ม่วง-ม่วง-ใส่เงิน10ใบ-249฿.jpg"
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/tm01/tm01-mwdlnbe30.webp"
       },
       {
         "match": [
@@ -2078,7 +2499,7 @@
           "ใส่เงิน 6 ใบ"
         ],
         "price": 229,
-        "image": "images/bouquet/ช่อดอกทิวลิปใส่เงิน-TM01/เหลือง-ขาว-ใส่เงิน6ใบ-229฿.jpg"
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/tm01/tm01-mwdloy920.webp"
       }
     ]
   },
@@ -2090,7 +2511,9 @@
     "name": "ช่อดอกทิวลิปใส่เงิน 15ใบ - TM02",
     "price": 524,
     "desc": "ดอกทิวลิปแดงหรู 3 ดอก ตกแต่งด้วยดอกลิลลี่แดงหรู+ซองใส่เงิน 15 ใบ",
-    "image": "images/bouquet/ช่อดอกทิวลิปเงิน15ใบ-TM02 524฿.jpg"
+    "sold": 1,
+    "soldAt": "2026-11-07T07:18:42.684Z",
+    "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/tm02/tm02-mwdlp6og0.webp"
   },
   {
     "id": "g01",
@@ -2101,19 +2524,33 @@
       "ใส่เงิน"
     ],
     "name": "ช่อดอกเยอบีร่า - G01",
-    "price": 89,
     "desc": "ช่อขนาดเล็ก ดอกเยอบีร่าม่วง 1 ดอก เพิ่มซองใส่เงินได้",
-    "sizes": [
+    "sold": 3,
+    "soldAt": "2026-11-08T01:27:25.256Z",
+    "options": [
       {
-        "name": "ปกติ",
+        "name": "ไซซ์",
+        "values": [
+          "ปกติ",
+          "ใส่เงิน 2 ใบ"
+        ]
+      }
+    ],
+    "variants": [
+      {
+        "match": [
+          "ปกติ"
+        ],
         "price": 89,
-        "image": "images/bouquet/ช่อดอกเยอบีร่า-G01/เยอบีร่า-89฿-ม่วง-ขาว.jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/g01/g01-mwdh1psn0.webp",
         "tag": "เล็ก"
       },
       {
-        "name": "ใส่เงิน 2 ใบ",
+        "match": [
+          "ใส่เงิน 2 ใบ"
+        ],
         "price": 99,
-        "image": "images/bouquet/ช่อดอกเยอบีร่า-G01/เยอบีร่าเงิน2ใบ-99฿-ม่วง-ขาว.jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/g01/g01-mwdh1vnl0.webp",
         "tag": "ใส่เงิน"
       }
     ]
@@ -2127,19 +2564,33 @@
       "ใส่เงิน"
     ],
     "name": "ช่อดอกเยอบีร่า - G02",
-    "price": 449,
     "desc": "ช่อขนาดกลาง ดอกเยอบีร่าเหลือง 7 ดอก เพิ่มซองใส่เงินได้",
-    "sizes": [
+    "sold": 1,
+    "soldAt": "2026-11-08T01:17:01.080Z",
+    "options": [
       {
-        "name": "ปกติ",
+        "name": "ไซซ์",
+        "values": [
+          "ปกติ",
+          "ใส่เงิน 5 ใบ"
+        ]
+      }
+    ],
+    "variants": [
+      {
+        "match": [
+          "ปกติ"
+        ],
         "price": 449,
-        "image": "images/bouquet/ช่อดอกเยอบีร่า-G02/เยอบีร่า-449฿-เหลือง.jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/g02/g02-mwdh28ho0.webp",
         "tag": "กลาง"
       },
       {
-        "name": "ใส่เงิน 5 ใบ",
+        "match": [
+          "ใส่เงิน 5 ใบ"
+        ],
         "price": 474,
-        "image": "images/bouquet/ช่อดอกเยอบีร่า-G02/เยอบีร่าเงิน5ใบ-474฿-เหลือง.jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/g02/g02-mwdh2epr0.webp",
         "tag": "ใส่เงิน"
       }
     ]
@@ -2152,12 +2603,13 @@
     "name": "ช่อดอกไม้คละชนิด - M01",
     "price": 499,
     "desc": "ช่อดอกไม้คละชนิดสีสันสดใส รวมดอกทิวลิปและดอกเดซี่ในโทนสีพาสเทลน่ารักห่อด้วยกระดาษสีขาวละมุน ผูกโบว์ชมพูหวาน เหมาะสำหรับมอบเป็นของขวัญในวันยินดีและโอกาสพิเศษ",
-    "image": "images/bouquet/ช่อดอกไม้คละชนิด-M01/ช่อดอกไม้คละชนิด-M01 499฿ (1).jpg",
+    "sold": 1,
+    "soldAt": "2026-11-07T07:18:42.684Z",
+    "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/m01/m01-mwdij5iw0.webp",
     "images": [
-      "images/bouquet/ช่อดอกไม้คละชนิด-M01/ช่อดอกไม้คละชนิด-M01 499฿ (1).jpg",
-      "images/bouquet/ช่อดอกไม้คละชนิด-M01/ช่อดอกไม้คละชนิด-M01 499฿ (2).jpg",
-      "images/bouquet/ช่อดอกไม้คละชนิด-M01/ช่อดอกไม้คละชนิด-M01 499฿ (3).jpg",
-      "images/bouquet/ช่อดอกไม้คละชนิด-M01/ช่อดอกไม้คละชนิด-M01 499฿ (4).jpg"
+      "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/m01/m01-mwdij5iw1.webp",
+      "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/m01/m01-mwdij5iw2.webp",
+      "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/m01/m01-mwdij5iw3.webp"
     ]
   },
   {
@@ -2168,7 +2620,84 @@
     "name": "ช่อดอกไม้คละชนิด - M02",
     "price": 499,
     "desc": "ช่อขนาดใหญ่ โทนสีชมพู",
-    "image": "images/bouquet/ช่อดอกไม้คละชนิด-M02 499฿.jpg"
+    "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/m02/m02-mwdijf0l0.webp"
+  },
+  {
+    "id": "m07",
+    "cat": "ช่อดอกไม้",
+    "flowerType": "ดอกไม้คละชนิด",
+    "size": "กลาง",
+    "name": "ช่อดอกไม้คละชนิด - M07",
+    "desc": "ช่อดอกไม้คละชนิด ขนาดกลาง โทนสีพาสเทลสดใส ห่อช่อพร้อมริบบิ้น\nเหมาะสำหรับมอบเป็นของขวัญในทุกโอกาส 💐",
+    "ready": true,
+    "sold": 3,
+    "soldAt": "2026-11-08T01:39:39.681Z",
+    "options": [
+      {
+        "name": "โทนสี",
+        "values": [
+          "โทนม่วง",
+          "โทนชมพู",
+          "โทนฟ้า",
+          "โทนส้ม"
+        ]
+      }
+    ],
+    "variants": [
+      {
+        "match": [
+          "โทนม่วง"
+        ],
+        "price": 499,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/m07/m07-mwdijucq0.webp",
+        "images": [
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/m07/m07-mwdijucq0.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/m07/m07-mwdijucq1.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/m07/m07-mwdijucq2.webp"
+        ],
+        "tag": "กลาง"
+      },
+      {
+        "match": [
+          "โทนชมพู"
+        ],
+        "price": 499,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/m07/m07-mwdinsh60.webp",
+        "images": [
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/m07/m07-mwdinsh60.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/m07/m07-mwdinsh61.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/m07/m07-mwdinsh62.webp"
+        ],
+        "tag": "กลาง"
+      },
+      {
+        "match": [
+          "โทนฟ้า"
+        ],
+        "price": 499,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/m07/m07-mwdikgk20.webp",
+        "images": [
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/m07/m07-mwdikgk20.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/m07/m07-mwdikgk21.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/m07/m07-mwdikgk22.webp"
+        ],
+        "tag": "กลาง"
+      },
+      {
+        "match": [
+          "โทนส้ม"
+        ],
+        "price": 499,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/m07/m07-mwdio10s0.webp",
+        "images": [
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/m07/m07-mwdio10s0.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/m07/m07-mwdio10s1.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/m07/m07-mwdio10s2.webp"
+        ],
+        "tag": "กลาง",
+        "ready": true
+      }
+    ]
   },
   {
     "id": "m03",
@@ -2178,8 +2707,8 @@
     "name": "ช่อดอกไม้คละชนิด - M03",
     "price": 990,
     "desc": "ช่อขนาดใหญ่ โทนสีชมพู",
-    "image": "images/bouquet/ช่อดอกไม้คละชนิด-M03 990฿.jpg",
-    "ready": true
+    "ready": true,
+    "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/m03/m03-mwdin73r0.webp"
   },
   {
     "id": "m04",
@@ -2189,7 +2718,7 @@
     "name": "ช่อดอกไม้คละชนิด - M04",
     "price": 1200,
     "desc": "ช่อขนาดใหญ่ โทนสีชมพูเขียว",
-    "image": "images/bouquet/ช่อดอกไม้คละชนิด-M04 1200฿.jpg"
+    "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/m04/m04-mwdimru00.webp"
   },
   {
     "id": "m05",
@@ -2199,7 +2728,7 @@
     "name": "ช่อดอกไม้คละชนิด - M05",
     "price": 1200,
     "desc": "ช่อขนาดใหญ่ โทนสีชมพูขาว",
-    "image": "images/bouquet/ช่อดอกไม้คละชนิด-M05 1200฿.jpg"
+    "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/m05/m05-mwdin1lx0.webp"
   },
   {
     "id": "m06",
@@ -2209,7 +2738,9 @@
     "name": "ช่อดอกไม้คละชนิด - M06",
     "price": 2000,
     "desc": "ช่อขนาดใหญ่ โทนสีชมพู",
-    "image": "images/bouquet/ช่อดอกไม้คละชนิด-M06 2000฿.jpg"
+    "sold": 1,
+    "soldAt": "2026-11-08T01:17:01.080Z",
+    "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/m06/m06-mwdimjik0.webp"
   },
   {
     "id": "l01",
@@ -2219,7 +2750,9 @@
     "name": "ช่อดอกลิลลี่ - L01",
     "price": 599,
     "desc": "ช่อขนาดใหญ่ ดอกลิลลี่ชมพู",
-    "image": "images/bouquet/ช่อดอกลิลลี่-L01 599฿.jpg"
+    "sold": 1,
+    "soldAt": "2026-11-08T01:39:39.681Z",
+    "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/l01/l01-mwdhbhle0.webp"
   },
   {
     "id": "l02",
@@ -2229,7 +2762,7 @@
     "name": "ช่อดอกลิลลี่ - L02",
     "price": 699,
     "desc": "ช่อขนาดใหญ่ ดอกลิลลี่ฟ้า",
-    "image": "images/bouquet/ช่อดอกลิลลี่-L02 699฿.jpg"
+    "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/l02/l02-mwdhbak90.webp"
   },
   {
     "id": "l03",
@@ -2239,7 +2772,9 @@
     "name": "ช่อดอกลิลลี่ - L03",
     "price": 899,
     "desc": "ช่อขนาดใหญ่ ดอกลิลลี่ชมพูฟ้า",
-    "image": "images/bouquet/ช่อดอกลิลลี่-L03 899฿.jpg"
+    "sold": 2,
+    "soldAt": "2026-11-08T01:27:25.256Z",
+    "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/l03/l03-mwdhbmww0.webp"
   },
   {
     "id": "lm01",
@@ -2249,7 +2784,7 @@
     "name": "ช่อดอกลิลลี่ใส่เงิน 10ใบ - LM01",
     "price": 599,
     "desc": "ดอกลิลลี่ฟ้า-ซองใส่เงิน 10 บ",
-    "image": "images/bouquet/ช่อดอกลิลลี่เงิน10ใบ-LM01 599฿.jpg"
+    "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/lm01/lm01-mwdhbrod0.webp"
   },
   {
     "id": "h01",
@@ -2259,10 +2794,12 @@
     "name": "ช่อดอกไฮเดรนเยีย - H01",
     "price": 299,
     "desc": "ช่อขนาดกลาง ดอกไฮเดรนเยียชมพู 100 ดอก",
+    "sold": 1,
+    "soldAt": "2026-11-08T01:39:39.681Z",
+    "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/h01/h01-mwdh7seg0.webp",
     "images": [
-      "images/bouquet/ช่อดอกไฮเดรนเยีย-H01/ช่อดอกไฮเดรนเยีย-H01 299฿ (1).jpg",
-      "images/bouquet/ช่อดอกไฮเดรนเยีย-H01/ช่อดอกไฮเดรนเยีย-H01 299฿ (2).jpg",
-      "images/bouquet/ช่อดอกไฮเดรนเยีย-H01/ช่อดอกไฮเดรนเยีย-H01 299฿ (3).jpg"
+      "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/h01/h01-mwdh7seg1.webp",
+      "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/h01/h01-mwdh7seg2.webp"
     ]
   },
   {
@@ -2273,11 +2810,24 @@
     "name": "ช่อดอกไฮเดรนเยีย - H02",
     "price": 399,
     "desc": "ช่อดอกไฮเดรนเยียสีชมพู ห่อกระดาษสีขาว งานแฮนด์เมดจากลวดกำมะหยี่\nเหมาะสำหรับมอบเป็นของขวัญในทุกโอกาสพิเศษ และเก็บไว้ได้นาน",
-    "image": "images\\bouquet\\IMG_8502.jpg",
+    "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/h02/h02-mwdg0f9e0.webp",
     "images": [
-      "images\\bouquet\\IMG_8502.jpg",
-      "images\\bouquet\\IMG_8503.jpg",
-      "images\\bouquet\\IMG_8504.jpg"
+      "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/h02/h02-mwdg0f9e1.webp",
+      "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/h02/h02-mwdg0f9e2.webp"
+    ]
+  },
+  {
+    "id": "b01",
+    "cat": "ช่อดอกไม้",
+    "flowerType": "หมี",
+    "size": "ใส่เงิน",
+    "name": "ช่อหมี - B01",
+    "price": 129,
+    "desc": "ช่อหมีสีน้ำตาลแซมทานตะวันจิ๋ว 4 ดอก พร้อมซองใส่เงิน 3 ใบ\nห่อกระดาษสีครีม ผูกริบบิ้นสีเหลืองทองลาย Congratulations",
+    "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/b01/b01-mwdgzul10.webp",
+    "images": [
+      "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/b01/b01-mwdgzul11.webp",
+      "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/b01/b01-mwdgzul12.webp"
     ]
   },
   {
@@ -2288,12 +2838,14 @@
     "name": "กรอบรูปดอกกุหลาบ A4 แนวตั้ง - F01",
     "price": 599,
     "desc": "ดอกุหลาบแดง 3 ดอก ใส่รูป 3 ใบ ขนาดA4 แนวตั้ง",
-    "image": "images/frame/กุหลาบ-A4-ตั้ง-599฿.jpg",
+    "sold": 3,
+    "soldAt": "2026-11-08T01:27:25.256Z",
+    "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/f01/f01-mwe7iouw0.webp",
     "addons": [
       {
         "name": "กล่องใส่กรอบรูป",
-        "price": 50,
-        "image": "images/frame/กล่องใส่กรอบรูป.jpg"
+        "price": 80,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/addons/addon-mwe878bm0.webp"
       }
     ]
   },
@@ -2305,12 +2857,14 @@
     "name": "กรอบรูปดอกเดซี่ A4 แนวตั้ง - F02",
     "price": 499,
     "desc": "ดอกเดซี่คละสี 16 ดอก ขนาดA4 แนวตั้ง",
-    "image": "images/frame/เดซี่-A4-ตั้ง-499฿.jpg",
+    "sold": 3,
+    "soldAt": "2026-11-08T01:39:39.681Z",
+    "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/f02/f02-mwe7ixco0.webp",
     "addons": [
       {
         "name": "กล่องใส่กรอบรูป",
-        "price": 50,
-        "image": "images/frame/กล่องใส่กรอบรูป.jpg"
+        "price": 80,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/addons/addon-mwe878bm0.webp"
       }
     ]
   },
@@ -2322,12 +2876,14 @@
     "name": "กรอบรูปดอกเดซี่ A4 แนวตั้ง - F03",
     "price": 549,
     "desc": "ดอกเดซี่คละสี ใส่รูป 1 ใบ ขนาดA4 แนวตั้ง",
-    "image": "images/frame/เดซี่-A4-ตั้ง-549฿.jpg",
+    "sold": 2,
+    "soldAt": "2026-11-08T01:17:01.080Z",
+    "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/f03/f03-mwe7j4bw0.webp",
     "addons": [
       {
         "name": "กล่องใส่กรอบรูป",
         "price": 50,
-        "image": "images/frame/กล่องใส่กรอบรูป.jpg"
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/addons/addon-mwe878bm0.webp"
       }
     ]
   },
@@ -2337,30 +2893,41 @@
     "flowerType": "เดซี่",
     "size": "A4",
     "name": "กรอบรูปดอกเดซี่ A4 แนวนอน - F04",
-    "price": 499,
     "desc": "ดอกเดซี่คละสี 10 ดอก ขนาดA4 แนวนอน",
-    "colors": [
+    "sold": 1,
+    "soldAt": "2026-11-08T01:27:25.256Z",
+    "options": [
       {
-        "name": "แบบที่ 1",
-        "image": "images/frame/เดซี่-A4-นอน-499฿-แบบที่1.jpg",
-        "addons": [
-          {
-            "name": "กล่องใส่กรอบรูป",
-            "price": 50,
-            "image": "images/frame/กล่องใส่กรอบรูป.jpg"
-          }
+        "name": "สี",
+        "values": [
+          "แบบที่ 1",
+          "แบบที่ 2"
         ]
+      }
+    ],
+    "variants": [
+      {
+        "match": [
+          "แบบที่ 1"
+        ],
+        "price": 499,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/f04/f04-mwe7kisb0.webp",
+        "tag": "A4"
       },
       {
-        "name": "แบบที่ 2",
-        "image": "images/frame/เดซี่-A4-นอน-499฿-แบบที่2.jpg",
-        "addons": [
-          {
-            "name": "กล่องใส่กรอบรูป",
-            "price": 50,
-            "image": "images/frame/กล่องใส่กรอบรูป.jpg"
-          }
-        ]
+        "match": [
+          "แบบที่ 2"
+        ],
+        "price": 499,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/f04/f04-mwe7knzn0.webp",
+        "tag": "A4"
+      }
+    ],
+    "addons": [
+      {
+        "name": "กล่องใส่กรอบรูป",
+        "price": 80,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/addons/addon-mwe878bm0.webp"
       }
     ]
   },
@@ -2369,31 +2936,75 @@
     "cat": "กรอบรูป",
     "flowerType": "ทานตะวัน",
     "size": "A4",
-    "name": "กรอบรูปดอกทานตะวัน A4 แนวนอน - F05",
-    "price": 499,
-    "desc": "ดอกทานตะวันเหลืองจิ๋ว 10 ดอก ขนาดA4 แนวนอน",
-    "colors": [
+    "name": "กรอบรูปดอกทานตะวัน - F05",
+    "desc": "ดอกทานตะวันจิ๋ว 10 ดอก\nใส่รูปและข้อความได้ตามใจ\nขนาดA4 (29.7*21 ซม.) แนวนอน",
+    "sold": 11,
+    "soldAt": "2026-11-08T01:30:35.197Z",
+    "options": [
       {
-        "name": "แบบที่ 1",
-        "image": "images/frame/ทานตะวัน-A4-นอน-499฿-แบบที่1.jpg",
-        "addons": [
-          {
-            "name": "กล่องใส่กรอบรูป",
-            "price": 50,
-            "image": "images/frame/กล่องใส่กรอบรูป.jpg"
-          }
+        "name": "สี",
+        "values": [
+          "แดง",
+          "เหลือง"
         ]
       },
       {
-        "name": "แบบที่ 2",
-        "image": "images/frame/ทานตะวัน-A4-นอน-499฿-แบบที่2.jpg",
-        "addons": [
-          {
-            "name": "กล่องใส่กรอบรูป",
-            "price": 50,
-            "image": "images/frame/กล่องใส่กรอบรูป.jpg"
-          }
+        "name": "แบบ",
+        "values": [
+          "แบบที่ 1",
+          "แบบที่ 2",
+          "แบบที่ 3"
         ]
+      }
+    ],
+    "variants": [
+      {
+        "match": [
+          "เหลือง",
+          "แบบที่ 1"
+        ],
+        "price": 499,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/f05/f05-mwe7lmep0.webp",
+        "tag": "A4"
+      },
+      {
+        "match": [
+          "เหลือง",
+          "แบบที่ 2"
+        ],
+        "price": 499,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/f05/f05-mwe7lu7e0.webp",
+        "tag": "A4"
+      },
+      {
+        "match": [
+          "เหลือง",
+          "แบบที่ 3"
+        ],
+        "price": 499,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/f05/f05-mwe7m5130.webp",
+        "images": [
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/f05/f05-mwe7m5130.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/f05/f05-mwe7m5131.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/f05/f05-mwe7m5132.webp"
+        ],
+        "tag": "A4"
+      },
+      {
+        "match": [
+          "แดง",
+          "แบบที่ 2"
+        ],
+        "price": 499,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/f05/f05-mwe7lfhn0.webp",
+        "tag": "A4"
+      }
+    ],
+    "addons": [
+      {
+        "name": "กล่องใส่กรอบรูป",
+        "price": 80,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/addons/addon-mwe878bm0.webp"
       }
     ]
   },
@@ -2405,12 +3016,14 @@
     "name": "กรอบรูปดอกทานตะวัน A4 แนวนอน - F06",
     "price": 599,
     "desc": "ดอกทานตะวัน 1 ดอก ตกแต่งด้วยดอกไม้คละชนิด ใส่รูป 1 ใบ ขนาดA4 แนวนอน",
-    "image": "images/frame/ทานตะวัน-A4-นอน-599฿.jpg",
+    "sold": 1,
+    "soldAt": "2026-11-07T07:18:42.684Z",
+    "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/f06/f06-mwe7ms0z0.webp",
     "addons": [
       {
         "name": "กล่องใส่กรอบรูป",
-        "price": 50,
-        "image": "images/frame/กล่องใส่กรอบรูป.jpg"
+        "price": 80,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/addons/addon-mwe878bm0.webp"
       }
     ]
   },
@@ -2422,12 +3035,12 @@
     "name": "กรอบรูปดอกทานตะวัน A5 แนวตั้ง - F07",
     "price": 299,
     "desc": "ดอกทานตะวันเหลืองจิ๋ว 7 ดอก ขนาดA5 แนวตั้ง",
-    "image": "images/frame/ทานตะวัน-A5-ตั้ง-299฿.jpg",
+    "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/f07/f07-mwe7o4ft0.webp",
     "addons": [
       {
         "name": "กล่องใส่กรอบรูป",
         "price": 50,
-        "image": "images/frame/กล่องใส่กรอบรูป.jpg"
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/addons/addon-mwe886db0.webp"
       }
     ]
   },
@@ -2439,12 +3052,14 @@
     "name": "กรอบรูปดอกทานตะวัน A5 แนวนอน - F08",
     "price": 299,
     "desc": "ดอกทานตะวันเหลืองจิ๋ว 7 ดอก ใส่รูป 1 ใบ ขนาดA5 แนวนอน",
-    "image": "images/frame/ทานตะวัน-A5-นอน-299฿.jpg",
+    "sold": 5,
+    "soldAt": "2026-11-08T01:39:39.681Z",
+    "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/f08/f08-mwe7objv0.webp",
     "addons": [
       {
         "name": "กล่องใส่กรอบรูป",
         "price": 50,
-        "image": "images/frame/กล่องใส่กรอบรูป.jpg"
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/addons/addon-mwe886db0.webp"
       }
     ]
   },
@@ -2456,12 +3071,14 @@
     "name": "กรอบรูปดอกทิวลิป A5 แนวตั้ง - F09",
     "price": 249,
     "desc": "ดอกทิวลิปชมพูจิ๋ว 14 ดอก ขนาดA5 แนวตั้ง",
-    "image": "images/frame/ทิวลิป-A5-ตั้ง-249฿.jpg",
+    "sold": 4,
+    "soldAt": "2026-11-08T01:39:39.681Z",
+    "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/f09/f09-mwe7oivz0.webp",
     "addons": [
       {
         "name": "กล่องใส่กรอบรูป",
         "price": 50,
-        "image": "images/frame/กล่องใส่กรอบรูป.jpg"
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/addons/addon-mwe886db0.webp"
       }
     ]
   },
@@ -2471,38 +3088,61 @@
     "flowerType": "ทิวลิป",
     "size": "A5",
     "name": "กรอบรูปดอกทิวลิป-F10",
-    "price": 249,
     "desc": "กรอบรูปดอกทิวลิปจิ๋ว 10 ดอก 🌷\nขนาด A5 ใส่รูปได้ 1 ใบ พร้อมข้อความที่เลือกได้ตามต้องการ\nงานแฮนด์เมดน่ารัก มินิมอล เหมาะสำหรับมอบเป็นของขวัญในโอกาสพิเศษ",
-    "image": "images\\frame\\กรอบรูปดอกทิวลิป-F10 249฿ เหลือง (1).jpg",
-    "colors": [
+    "sold": 7,
+    "soldAt": "2026-11-08T01:30:35.197Z",
+    "options": [
       {
-        "name": "เหลือง",
-        "image": "images\\frame\\กรอบรูปดอกทิวลิป-F10 249฿ เหลือง (1).jpg",
+        "name": "สี",
+        "values": [
+          "เหลือง",
+          "ฟ้า",
+          "ชมพู",
+          "ขาว"
+        ]
+      }
+    ],
+    "variants": [
+      {
+        "match": [
+          "เหลือง"
+        ],
+        "price": 249,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/f10/f10-mwe7pfj40.webp",
         "images": [
-          "images\\frame\\กรอบรูปดอกทิวลิป-F10 249฿ เหลือง (1).jpg",
-          "images\\frame\\กรอบรูปดอกทิวลิป-F10 249฿ เหลือง (2).jpg"
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/f10/f10-mwe7pfj40.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/f10/f10-mwe7pfj41.webp"
         ]
       },
       {
-        "name": "ฟ้า",
-        "image": "images\\frame\\กรอบรูปดอกทิวลิป-F10 249฿ ฟ้า.jpg"
+        "match": [
+          "ฟ้า"
+        ],
+        "price": 249,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/f10/f10-mwe7pl910.webp"
       },
       {
-        "name": "ชมพู",
-        "image": "images\\frame\\กรอบรูปดอกทิวลิป-F10 249฿ ชมพู (1).jpg",
+        "match": [
+          "ชมพู"
+        ],
+        "price": 249,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/f10/f10-mwe7pr5m0.webp",
         "images": [
-          "images\\frame\\กรอบรูปดอกทิวลิป-F10 249฿ ชมพู (1).jpg",
-          "images\\frame\\กรอบรูปดอกทิวลิป-F10 249฿ ชมพู (2).jpg",
-          "images\\frame\\กรอบรูปดอกทิวลิป-F10 249฿ ชมพู (3).jpg"
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/f10/f10-mwe7pr5m0.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/f10/f10-mwe7pr5m1.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/f10/f10-mwe7pr5m2.webp"
         ]
       },
       {
-        "name": "ขาว",
-        "image": "images\\frame\\กรอบรูปดอกทิวลิป-F10 249฿ ขาว (1).jpg",
+        "match": [
+          "ขาว"
+        ],
+        "price": 249,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/f10/f10-mwe7pzlq0.webp",
         "images": [
-          "images\\frame\\กรอบรูปดอกทิวลิป-F10 249฿ ขาว (1).jpg",
-          "images\\frame\\กรอบรูปดอกทิวลิป-F10 249฿ ขาว (2).jpg",
-          "images\\frame\\กรอบรูปดอกทิวลิป-F10 249฿ ขาว (3).jpg"
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/f10/f10-mwe7pzlq0.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/f10/f10-mwe7pzlq1.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/f10/f10-mwe7pzlq2.webp"
         ]
       }
     ],
@@ -2510,7 +3150,7 @@
       {
         "name": "กล่องใส่กรอบรูป",
         "price": 50,
-        "image": "images/frame/กล่องใส่กรอบรูป.jpg"
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/addons/addon-mwe886db0.webp"
       }
     ]
   },
@@ -2522,13 +3162,119 @@
     "name": "กรอบรูปดอกไม้คละชนิด A5 แนวนอน - F11",
     "price": 299,
     "desc": "ดอกไม้คละชนิดโทนม่วง ใส่รูป 1 ใบ ขนาดA5 แนวนอน",
-    "image": "images/frame/รวม-A5-นอน-249฿.jpg",
+    "sold": 1,
+    "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/f11/f11-mwe7qc8r0.webp",
     "addons": [
       {
         "name": "กล่องใส่กรอบรูป",
         "price": 50,
-        "image": "images/frame/กล่องใส่กรอบรูป.jpg"
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/addons/addon-mwe886db0.webp"
       }
+    ]
+  },
+  {
+    "id": "f12",
+    "cat": "กรอบรูป",
+    "flowerType": "สตรอว์เบอร์รี่",
+    "size": "A5",
+    "name": "กรอบรูปสตรอว์เบอร์รี่ - F12",
+    "price": 299,
+    "desc": "กรอบรูปดอกไม้แฮนด์เมดจากลวดกำมะหยี่ ดอกเดซี่สีขาวคู่กับสตรอว์เบอร์รีสีแดงสุดน่ารัก 🍓\nขนาด A5 สามารถใส่รูปภาพและข้อความได้ตามต้องการ",
+    "sold": 1,
+    "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/f12/f12-mwe7qvca0.webp",
+    "images": [
+      "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/f12/f12-mwe7qvca1.webp",
+      "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/f12/f12-mwe7qvca2.webp"
+    ],
+    "addons": [
+      {
+        "name": "กล่องใส่กรอบรูป",
+        "price": 50,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/addons/addon-mwe886db0.webp"
+      }
+    ]
+  },
+  {
+    "id": "F13",
+    "cat": "กรอบรูป",
+    "flowerType": "ดอกไม้คละชนิด",
+    "size": "A4",
+    "name": "กรอบรูปดอกไม้คละชนิด - F13",
+    "price": 549,
+    "desc": "กรอบรูปดอกไม้แฮนด์เมด ตกแต่งด้วยดอกไม้ลวดกำมะหยี่ 3 มิติ โทนพาสเทลชมพู ม่วง เหลือง และขาว\nสามารถปรับแต่งรูปภาพ ข้อความ และโทนสีดอกไม้ได้ตามต้องการ เหมาะสำหรับมอบเป็นของขวัญในโอกาสพิเศษ",
+    "sold": 2,
+    "soldAt": "2026-11-08T01:39:39.681Z",
+    "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/f13/f13-mwe7r5yi0.webp",
+    "images": [
+      "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/f13/f13-mwe7r5yi1.webp",
+      "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/f13/f13-mwe7r5yi2.webp"
+    ],
+    "addons": [
+      {
+        "name": "กล่องใส่กรอบรูป",
+        "price": 80,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/addons/addon-mwe878bm0.webp"
+      }
+    ]
+  },
+  {
+    "id": "f14",
+    "cat": "กรอบรูป",
+    "flowerType": "ดอกไม้คละชนิด",
+    "size": "A4",
+    "name": "กรอบรูปดอกไม้คละชนิด - F14",
+    "price": 599,
+    "desc": "กรอบรูปดอกไม้แฮนด์เมด ตกแต่งด้วยดอกไม้ลวดกำมะหยี่ สามารถเลือกและปรับแต่งโทนสี รูปภาพ และข้อความได้ตามต้องการ เหมาะสำหรับมอบเป็นของขวัญในโอกาสพิเศษ",
+    "ready": true,
+    "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/f14/f14-mwe7rgqa0.webp",
+    "images": [
+      "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/f14/f14-mwe7rgqa1.webp",
+      "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/f14/f14-mwe7rgqa2.webp"
+    ],
+    "addons": [
+      {
+        "name": "กล่องใส่กรอบรูป",
+        "price": 80,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/addons/addon-mwe878bm0.webp"
+      }
+    ]
+  },
+  {
+    "id": "f15",
+    "cat": "กรอบรูป",
+    "flowerType": "ดอกไม้คละชนิด",
+    "size": "A4",
+    "name": "กรอบรูปดอกไม้คละชนิด - F15",
+    "price": 549,
+    "desc": "กรอบรูปดอกไม้แฮนด์เมด ตกแต่งด้วยดอกไม้ลวดกำมะหยี่ สามารถเลือกและปรับแต่งโทนสี รูปภาพ และข้อความได้ตามต้องการ เหมาะสำหรับมอบเป็นของขวัญในโอกาสพิเศษ",
+    "sold": 1,
+    "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/f15/f15-mwe7rzr00.webp",
+    "images": [
+      "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/f15/f15-mwe7rzr01.webp",
+      "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/f15/f15-mwe7rzr02.webp"
+    ],
+    "addons": [
+      {
+        "name": "กล่องใส่กรอบรูป",
+        "price": 80,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/addons/addon-mwe878bm0.webp"
+      }
+    ]
+  },
+  {
+    "id": "p13",
+    "cat": "กระถาง",
+    "flowerType": "เดซี่",
+    "size": "5 นิ้ว",
+    "name": "กระถางดอกเดซี่ - P13",
+    "price": 499,
+    "desc": "กระถางดอกเดซี่สีขาวจากลวดกำมะหยี่ ดีไซน์น่ารักละมุน ให้ความรู้สึกสดใส สบายตา\nขนาด 5 นิ้ว เหมาะสำหรับตกแต่งห้องหรือมอบเป็นของขวัญในโอกาสพิเศษ 🌼",
+    "sold": 1,
+    "soldAt": "2026-11-08T01:39:39.681Z",
+    "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/p13/p13-mwe7vv2b0.webp",
+    "images": [
+      "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/p13/p13-mwe7vv2b1.webp",
+      "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/p13/p13-mwe7vv2b2.webp"
     ]
   },
   {
@@ -2539,12 +3285,14 @@
     "name": "กระถางดอกทานตะวัน 3 นิ้ว - P01",
     "price": 99,
     "desc": "ดอกทานตะวัน 1 ดอก ขนาด 3 นิ้ว",
-    "image": "images/pot/ทานตะวัน-3นิ้ว-99฿.jpg",
+    "sold": 3,
+    "soldAt": "2026-11-08T01:17:01.080Z",
+    "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/p01/p01-mwe7wwxf0.webp",
     "addons": [
       {
         "name": "กล่องใส่กระถาง",
         "price": 20,
-        "image": "images/pot/กล่องใส่กระถาง3นิ้ว.jpg"
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/p01/p01-mwe7x9130.webp"
       }
     ]
   },
@@ -2555,7 +3303,8 @@
     "size": "5 นิ้ว",
     "name": "กระถางดอกทานตะวัน 5 นิ้ว - P02",
     "desc": "กระถางดอกทานตะวัน 3 ดอก ขนาด 5 นิ้ว 🌻\nดอกไม้แฮนด์เมดจากลวดกำมะหยี่ จัดในกระถางขนาดกำลังดี เหมาะสำหรับตั้งโต๊ะทำงาน โต๊ะอ่านหนังสือ หรือมอบเป็นของขวัญในโอกาสพิเศษ เก็บไว้ได้นานค่ะ",
-    "image": "images/pot/ทานตะวัน-5นิ้ว-349฿.jpg",
+    "sold": 5,
+    "soldAt": "2026-11-08T01:39:39.681Z",
     "options": [
       {
         "name": "สีดอกเดซี่",
@@ -2571,7 +3320,7 @@
           "ขาว"
         ],
         "price": 349,
-        "image": "images\\pot\\ทานตะวัน-5นิ้ว-349฿.jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/p02/p02-mwe7y2yf0.webp",
         "tag": "5 นิ้ว"
       },
       {
@@ -2579,11 +3328,11 @@
           "ฟ้า"
         ],
         "price": 349,
-        "image": "images\\pot\\กระถาง_กระถางดอกทานตะวัน 5 นิ้ว-P02_349฿ (1).jpg",
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/p02/p02-mwe7yb520.webp",
         "images": [
-          "images\\pot\\กระถาง_กระถางดอกทานตะวัน 5 นิ้ว-P02_349฿ (1).jpg",
-          "images\\pot\\กระถาง_กระถางดอกทานตะวัน 5 นิ้ว-P02_349฿ (2).jpg",
-          "images\\pot\\กระถาง_กระถางดอกทานตะวัน 5 นิ้ว-P02_349฿ (3).jpg"
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/p02/p02-mwe7yb520.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/p02/p02-mwe7yb521.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/p02/p02-mwe7yb522.webp"
         ],
         "tag": "5 นิ้ว"
       }
@@ -2592,7 +3341,7 @@
       {
         "name": "กล่องใส่กระถาง",
         "price": 80,
-        "image": "images\\pot\\IMG_8472.jpg"
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/addons/addon-mwe89rxq0.webp"
       }
     ]
   },
@@ -2604,7 +3353,9 @@
     "name": "กระถางดอกทานตะวัน 5 นิ้ว - P03",
     "price": 599,
     "desc": "ดอกทานตะวัน 6 ดอก ขนาด 5 นิ้ว",
-    "image": "images/pot/ทานตะวัน-5นิ้ว-599฿.jpg"
+    "sold": 1,
+    "soldAt": "2026-11-08T01:17:01.080Z",
+    "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/p03/p03-mwe7z5pp0.webp"
   },
   {
     "id": "p04",
@@ -2614,7 +3365,9 @@
     "name": "กระถางดอกทานตะวัน 9 นิ้ว - P04",
     "price": 1200,
     "desc": "ดอกทานตะวัน 10 ดอก ขนาด 9 นิ้ว",
-    "image": "images/pot/ทานตะวัน-9นิ้ว-1200฿.jpg"
+    "sold": 2,
+    "soldAt": "2026-11-08T01:27:25.256Z",
+    "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/p04/p04-mwe7zqig0.webp"
   },
   {
     "id": "p05",
@@ -2624,7 +3377,9 @@
     "name": "กระถางดอกทิวลิป 3 นิ้ว - P05",
     "price": 89,
     "desc": "ดอกทิวลิปจิ๋ว ขนาด 3 นิ้ว มีสีฟ้า,ชมพู,เหลือง",
-    "image": "images/pot/ทิวลิป-3นิ้ว-89฿.jpg"
+    "sold": 1,
+    "soldAt": "2026-11-08T01:27:25.256Z",
+    "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/p05/p05-mwe7zwtz0.webp"
   },
   {
     "id": "p06",
@@ -2634,7 +3389,9 @@
     "name": "กระถางดอกทิวลิป 3 นิ้ว - P06",
     "price": 99,
     "desc": "ดอกทิวลิปชมพูเหลืองจิ๋ว ขนาด 3 นิ้ว",
-    "image": "images/pot/ทิวลิป-3นิ้ว-99฿.jpg"
+    "sold": 2,
+    "soldAt": "2026-11-08T01:17:01.080Z",
+    "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/p06/p06-mwe803au0.webp"
   },
   {
     "id": "p07",
@@ -2642,16 +3399,34 @@
     "flowerType": "ทิวลิป",
     "size": "5 นิ้ว",
     "name": "กระถางดอกทิวลิป 5 นิ้ว - P07",
-    "price": 299,
     "desc": "ดอกทิวลิปจิ๋ว ขนาด 5 นิ้ว เลือกสีดอกได้",
-    "colors": [
+    "sold": 2,
+    "soldAt": "2026-11-08T01:27:25.256Z",
+    "options": [
       {
-        "name": "ม่วง",
-        "image": "images/pot/ทิวลิป-5นิ้ว-299฿-ม่วง.jpg"
+        "name": "สี",
+        "values": [
+          "ม่วง",
+          "ม่วงฟ้า"
+        ]
+      }
+    ],
+    "variants": [
+      {
+        "match": [
+          "ม่วง"
+        ],
+        "price": 299,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/p07/p07-mwe80enm0.webp",
+        "tag": "5 นิ้ว"
       },
       {
-        "name": "ม่วงฟ้า",
-        "image": "images/pot/ทิวลิป-5นิ้ว-299฿-ม่วงฟ้า.jpg"
+        "match": [
+          "ม่วงฟ้า"
+        ],
+        "price": 299,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/p07/p07-mwe80jp80.webp",
+        "tag": "5 นิ้ว"
       }
     ]
   },
@@ -2663,7 +3438,7 @@
     "name": "กระถางดอกไม้คละชนิด 5 นิ้ว - P08",
     "price": 399,
     "desc": "ดอกไม้คละชนิด โทนชมพูม่วง ขนาด 5 นิ้ว",
-    "image": "images/pot/รวม-5นิ้ว-399฿.jpg"
+    "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/p08/p08-mwe817aj0.webp"
   },
   {
     "id": "p09",
@@ -2673,7 +3448,9 @@
     "name": "กระถางดอกไม้คละชนิด 5 นิ้ว - P09",
     "price": 599,
     "desc": "ดอกไม้คละชนิด โทนชมพูม่วง ขนาด 5 นิ้ว",
-    "image": "images/pot/รวม-5นิ้ว-599฿-แบบที่1.jpg"
+    "sold": 1,
+    "soldAt": "2026-11-08T01:17:01.080Z",
+    "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/p09/p09-mwe81jqc0.webp"
   },
   {
     "id": "p10",
@@ -2683,7 +3460,7 @@
     "name": "กระถางดอกไม้คละชนิด 5 นิ้ว - P10",
     "price": 599,
     "desc": "ดอกไม้คละชนิด โทนพาสเทล ขนาด 5 นิ้ว",
-    "image": "images/pot/รวม-5นิ้ว-599฿-แบบที่2.jpg"
+    "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/p10/p10-mwe81q840.webp"
   },
   {
     "id": "p11",
@@ -2693,7 +3470,7 @@
     "name": "กระถางดอกไม้คละชนิด 5 นิ้ว - P11",
     "price": 1200,
     "desc": "ดอกไม้คละชนิด โทนพาสเทล ขนาด 5 นิ้ว",
-    "image": "images/pot/รวม-5นิ้ว-1200฿.jpg"
+    "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/p11/p11-mwe81xef0.webp"
   },
   {
     "id": "p12",
@@ -2703,7 +3480,9 @@
     "name": "กระถางดอกไม้คละชนิด 9 นิ้ว - P12",
     "price": 1200,
     "desc": "ดอกไม้คละชนิด โทนชมพูม่วง ขนาด 9 นิ้ว",
-    "image": "images/pot/รวม-9นิ้ว-1200฿.jpg"
+    "sold": 1,
+    "soldAt": "2026-11-07T07:18:42.684Z",
+    "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/p12/p12-mwe8231a0.webp"
   },
   {
     "id": "rg01",
@@ -2711,20 +3490,67 @@
     "flowerType": "กุหลาบ",
     "size": "กลิตเตอร์",
     "name": "ช่อดอกกุหลาบกลิตเตอร์ - RG01",
-    "price": 299,
-    "desc": "ดอกกุหลาบกลิตเตอร์ เลือกสีได้",
-    "colors": [
+    "desc": "ช่อดอกกุหลาบกลิตเตอร์ 10 ดอก เลือกสีดอกและสีห่อได้ตามชอบ ✨🌹 เพิ่มความโดดเด่นด้วยประกายกลิตเตอร์ พร้อมกระดาษห่อสีขาวหรือสีดำที่ช่วยเสริมให้ช่อดอกไม้ดูสวยสะดุดตา เหมาะสำหรับมอบให้คนพิเศษในทุกโอกาส 💌",
+    "sold": 6,
+    "soldAt": "2026-11-08T01:27:25.256Z",
+    "options": [
       {
-        "name": "ดอกชมพูช่อขาว",
-        "image": "images/other/กุหลาบ-กลิตเตอร์-299฿-ชมพู-ขาว.jpg"
+        "name": "สีดอก",
+        "values": [
+          "ชมพู",
+          "ชมพูแดง",
+          "แดง"
+        ]
       },
       {
-        "name": "ดอกแดงช่อดำ",
-        "image": "images/other/กุหลาบ-กลิตเตอร์-299฿-แดง-ดำ.jpg"
+        "name": "สีช่อ",
+        "values": [
+          "ขาว",
+          "ดำ"
+        ]
+      }
+    ],
+    "variants": [
+      {
+        "match": [
+          "แดง",
+          "ขาว"
+        ],
+        "price": 299,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/rg01/rg01-mwe8axv00.webp",
+        "images": [
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/rg01/rg01-mwe8axv00.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/rg01/rg01-mwe8axv01.webp",
+          "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/rg01/rg01-mwe8axv02.webp"
+        ],
+        "tag": "กลิตเตอร์"
       },
       {
-        "name": "ดอกชมพูแดงช่อขาว",
-        "image": "images/other/กุหลาบกลิตเตอร์-299฿-ชมพูแดง-ขาว.jpg"
+        "match": [
+          "แดง",
+          "ดำ"
+        ],
+        "price": 299,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/rg01/rg01-mwe8b4tf0.webp",
+        "tag": "กลิตเตอร์"
+      },
+      {
+        "match": [
+          "ชมพู",
+          "ขาว"
+        ],
+        "price": 299,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/rg01/rg01-mwe8akwn0.webp",
+        "tag": "กลิตเตอร์"
+      },
+      {
+        "match": [
+          "ชมพูแดง",
+          "ขาว"
+        ],
+        "price": 299,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/rg01/rg01-mwe8aqyc0.webp",
+        "tag": "กลิตเตอร์"
       }
     ]
   },
@@ -2734,20 +3560,38 @@
     "flowerType": "กุหลาบ",
     "size": "กลิตเตอร์",
     "name": "ช่อดอกกุหลาบกลิตเตอร์ - RG02",
-    "price": 399,
     "desc": "ช่อดอกกุหลาบกลิตเตอร์ เลือกสีได้",
-    "colors": [
+    "options": [
       {
-        "name": "ชมพู",
-        "image": "images/other/กุหลาบกลิตเตอร์-399฿-ชมพู.jpg"
+        "name": "สี",
+        "values": [
+          "ชมพู",
+          "แดง",
+          "ม่วง"
+        ]
+      }
+    ],
+    "variants": [
+      {
+        "match": [
+          "ชมพู"
+        ],
+        "price": 399,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/rg02/rg02-mwe8bf0q0.webp"
       },
       {
-        "name": "แดง",
-        "image": "images/other/กุหลาบกลิตเตอร์-399฿-แดง.jpg"
+        "match": [
+          "แดง"
+        ],
+        "price": 399,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/rg02/rg02-mwe8bjuv0.webp"
       },
       {
-        "name": "ม่วง",
-        "image": "images/other/กุหลาบกลิตเตอร์-399฿-ม่วง.jpg"
+        "match": [
+          "ม่วง"
+        ],
+        "price": 399,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/rg02/rg02-mwe8bort0.webp"
       }
     ]
   },
@@ -2759,7 +3603,9 @@
     "name": "ช่อดอกกุหลาบกลิตเตอร์ - RG03",
     "price": 899,
     "desc": "ช่อกลิตเตอร์น้ำเงินสุดหรู 30 ดอก",
-    "image": "images/other/กุหลาบกลิตเตอร์-899฿-น้ำเงิน-ดำ.jpg"
+    "sold": 1,
+    "soldAt": "2026-11-08T01:27:25.256Z",
+    "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/rg03/rg03-mwe8bvnn0.webp"
   },
   {
     "id": "o01",
@@ -2769,7 +3615,9 @@
     "name": "กล่องดอกทานตะวัน - O01",
     "price": 1200,
     "desc": "ดอกทานตะวัน 5 ดอก",
-    "image": "images/other/กล่อง-ทานตะวัน-1200฿.jpg"
+    "sold": 2,
+    "soldAt": "2026-11-07T07:18:42.684Z",
+    "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/o01/o01-mwe8c2fe0.webp"
   },
   {
     "id": "o02",
@@ -2779,7 +3627,9 @@
     "name": "ดอกไม้เจ้าสาว - O02",
     "price": 399,
     "desc": "ดอกไม้เจ้าสาวโทนสีขาว",
-    "image": "images/other/เจ้าสาว-399฿.jpg"
+    "sold": 1,
+    "soldAt": "2026-11-07T07:18:42.684Z",
+    "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/o02/o02-mwe8ca800.webp"
   },
   {
     "id": "o03",
@@ -2788,7 +3638,9 @@
     "name": "ช่อตุ๊กตา(ตุ๊กตาของลูกค้าเอง) - O03",
     "price": 100,
     "desc": "ตุ๊กตาลูกค้าต้องนำมาเอง ทางร้านมีบริการจัดช่อ",
-    "image": "images/other/ตุ๊กตา-100฿-รวม.jpg"
+    "sold": 4,
+    "soldAt": "2026-11-07T07:18:42.684Z",
+    "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/o03/o03-mwe8cg3f0.webp"
   },
   {
     "id": "o04",
@@ -2796,42 +3648,80 @@
     "flowerType": "ทานตะวัน",
     "size": "มงกุฎ",
     "name": "มงกุฎดอกไม้ - O04",
-    "price": 149,
     "desc": "มงกุฎดอกไม้ เลือกชนิดดอกไม้ได้",
-    "colors": [
+    "options": [
       {
-        "name": "ทานตะวัน",
-        "image": "images/other/มงกุฎ-ทานตะวัน-149฿-แบบที่1.jpg"
+        "name": "สี",
+        "values": [
+          "ทานตะวัน",
+          "ทานตะวันเดซี่",
+          "ไฮเดรนเยีย"
+        ]
+      }
+    ],
+    "variants": [
+      {
+        "match": [
+          "ทานตะวัน"
+        ],
+        "price": 149,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/o04/o04-mwe8d1gq0.webp"
       },
       {
-        "name": "ทานตะวันเดซี่",
-        "image": "images/other/มงกุฎ-ทานตะวัน-149฿-แบบที่2.jpg"
+        "match": [
+          "ทานตะวันเดซี่"
+        ],
+        "price": 149,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/o04/o04-mwe8d6820.webp"
       },
       {
-        "name": "ไฮเดรนเยีย",
-        "image": "images/other/มงกุฎ-ไฮเดรนเยีย-149฿.jpg"
+        "match": [
+          "ไฮเดรนเยีย"
+        ],
+        "price": 149,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/o04/o04-mwe8dcro0.webp"
       }
     ]
   },
   {
-    "id": "f12",
+    "id": "f16",
     "cat": "กรอบรูป",
-    "flowerType": "สตรอว์เบอร์รี่",
+    "flowerType": "ดอกไม้คละชนิด",
     "size": "A5",
-    "name": "กรอบรูปสตรอว์เบอร์รี่ - F12",
-    "price": 299,
-    "desc": "กรอบรูปดอกไม้แฮนด์เมดจากลวดกำมะหยี่ ดอกเดซี่สีขาวคู่กับสตรอว์เบอร์รีสีแดงสุดน่ารัก 🍓\nขนาด A5 สามารถใส่รูปภาพและข้อความได้ตามต้องการ",
-    "image": "images\\frame\\กรอบรูป_กรอบรูปสตรอว์เบอร์รี่-F12_299฿ (1).png",
-    "images": [
-      "images\\frame\\กรอบรูป_กรอบรูปสตรอว์เบอร์รี่-F12_299฿ (1).png",
-      "images\\frame\\กรอบรูป_กรอบรูปสตรอว์เบอร์รี่-F12_299฿ (2).png",
-      "images\\frame\\กรอบรูป_กรอบรูปสตรอว์เบอร์รี่-F12_299฿ (3).png"
+    "name": "กรอบรูปดอกไม้คละชนิด - F16",
+    "sold": 2,
+    "options": [
+      {
+        "name": "สี",
+        "values": [
+          "ฟ้า",
+          "ส้ม"
+        ]
+      }
+    ],
+    "variants": [
+      {
+        "match": [
+          "ฟ้า"
+        ],
+        "price": 299,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/f16/f16-mwdb4drf0.webp",
+        "tag": "A5"
+      },
+      {
+        "match": [
+          "ส้ม"
+        ],
+        "price": 299,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/products/f16/f16-mwdb4nhf0.webp",
+        "tag": "A5"
+      }
     ],
     "addons": [
       {
         "name": "กล่องใส่กรอบรูป",
-        "price": 80,
-        "image": "images\\frame\\กล่องA5.jpg"
+        "price": 50,
+        "image": "https://rfpnejnrosksrpndaytw.supabase.co/storage/v1/object/public/images/addons/addon-mwe886db0.webp"
       }
     ]
   }

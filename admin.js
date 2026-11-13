@@ -1676,6 +1676,7 @@ function addonsEditorHtml(arr, pathPrefix, addAct, colorIndex){
           ${thumbHtml(a.image)}
         </div>
         ${addonPickerHtml(`${pathPrefix}.${k}`, a.image)}
+        ${sbOn() ? '<div class="rv-adv-row"><button type="button" class="btn btn-ghost btn-sm" data-lib="addon" data-path="' + esc(pathPrefix + '.' + k) + '">🖼 เลือกรูปจากคลังรูป (Supabase)</button></div>' : ''}
         <label class="check" style="margin:12px 0 0">
           <input type="checkbox" data-bind="${pathPrefix}.${k}.ready" data-type="bool"${a.ready ? ' checked' : ''}>
           <span>ทำแบบใส่ของเสริมนี้ไว้แล้ว พร้อมส่ง</span>
@@ -3375,11 +3376,11 @@ function libFoot(){
   if(lib.tab === 'check' || lib.tab === 'orphan'){ f.innerHTML = '<span class="lib-note grow">ตรวจจากข้อมูลที่โหลดในหลังบ้านตอนนี้ — กดบันทึกสินค้าให้เรียบร้อยก่อนตรวจ</span>'; return; }
   const n = lib.sel.length, dis = (lib.busy || !n) ? ' disabled' : '';
   f.innerHTML = `<span class="lib-note grow">ในคลัง ${lib.items.length} รูป · เลือกอยู่ ${n} รูป</span>
-    <button type="button" class="btn btn-ghost btn-sm" data-lib-act="all"${lib.busy ? ' disabled' : ''}>เลือกทั้งหมด</button>
+    ${lib.ctx && lib.ctx.single ? '' : `<button type="button" class="btn btn-ghost btn-sm" data-lib-act="all"${lib.busy ? ' disabled' : ''}>เลือกทั้งหมด</button>`}
     <button type="button" class="btn btn-ghost btn-sm" data-lib-act="none"${dis}>ล้างที่เลือก</button>
     <button type="button" class="btn btn-danger btn-sm" data-lib-act="del"${dis}>ลบที่เลือก</button>
     ${lib.ctx ? `<label class="lib-note" style="display:flex;gap:4px;align-items:center;margin:0"><input type="checkbox" id="libKeep"> เก็บไว้ในคลังด้วย (คัดลอกแทนย้าย)</label>
-    <button type="button" class="btn btn-primary" data-lib-act="pick"${dis}>ใส่ ${n} รูปในสินค้านี้</button>` : ''}`;
+    <button type="button" class="btn btn-primary" data-lib-act="pick"${dis}>${lib.ctx.single ? 'ใช้รูปนี้' : `ใส่ ${n} รูปในสินค้านี้`}</button>` : ''}`;
 }
 function libRefreshSel(){
   if(!lib) return;
@@ -3393,6 +3394,7 @@ function libRefreshSel(){
 function libToggle(path, shift){
   const paths = lib.items.map(x => x.path), i = paths.indexOf(path);
   if(i < 0) return;
+  if(lib.ctx && lib.ctx.single){ lib.sel = lib.sel[0] === path ? [] : [path]; lib.last = i; libRefreshSel(); return; } // เลือกได้รูปเดียว (เช่น รูปของเสริม)
   if(shift && lib.last >= 0){
     for(let k = Math.min(lib.last, i); k <= Math.max(lib.last, i); k++) if(!lib.sel.includes(paths[k])) lib.sel.push(paths[k]);
   }else{
@@ -3410,7 +3412,7 @@ function libOnClick(e){
   if(a){
     const act = a.dataset.libAct;
     if(act === 'close') libClose();
-    else if(act === 'all'){ lib.sel = lib.items.map(x => x.path); libRefreshSel(); }
+    else if(act === 'all'){ if(lib.ctx && lib.ctx.single) return; lib.sel = lib.items.map(x => x.path); libRefreshSel(); }
     else if(act === 'none'){ lib.sel = []; libRefreshSel(); }
     else if(act === 'del') libDeleteSel();
     else if(act === 'pick') libReviewOpen();
@@ -3503,8 +3505,8 @@ async function libDeleteSel(){
 // ย้าย (หรือคัดลอก) รูปที่เลือกไป products/<รหัสสินค้า>/ แล้วส่งลิงก์ใหม่กลับให้หน้าแก้ไขสินค้า
 async function libPickSelected(){
   if(!lib || lib.busy || !lib.ctx || !lib.sel.length) return;
-  const ctx = lib.ctx, slug = ctx.slug();
-  if(!slug){ toast('กรอกรหัสสินค้า (ตัวอักษรอังกฤษหรือตัวเลข) ในการ์ดข้อมูลสินค้าก่อน แล้วค่อยเลือกรูป', true); return; }
+  const ctx = lib.ctx, slug = ctx.slug ? ctx.slug() : '';
+  if(!slug && !ctx.dest){ toast('กรอกรหัสสินค้า (ตัวอักษรอังกฤษหรือตัวเลข) ในการ์ดข้อมูลสินค้าก่อน แล้วค่อยเลือกรูป', true); return; }
   const keep = !!(document.getElementById('libKeep') && document.getElementById('libKeep').checked);
   const keys = lib.sel.slice(), tag = Date.now().toString(36);
   lib.review = false; libReviewRender();
@@ -3513,7 +3515,7 @@ async function libPickSelected(){
   const urls = [], fails = [];
   for(let i = 0; i < keys.length; i++){
     const src = keys[i], ext = String(src).split('.').pop();
-    const dst = `products/${slug}/${slug}-${tag}${i}.${ext}`;
+    const dst = ctx.dest ? ctx.dest(tag, i, ext) : `products/${slug}/${slug}-${tag}${i}.${ext}`;
     libStatus(`กำลัง${keep ? 'คัดลอก' : 'ย้าย'}รูป ${i + 1}/${keys.length} …`);
     try{
       await sbMoveCopy(src, dst, keep);
@@ -3574,7 +3576,7 @@ function libReviewRender(){
   if(!ov){ ov = document.createElement('div'); ov.className = 'lib-rv'; ov.id = 'libReview'; box.appendChild(ov); }
   const n = lib.sel.length, keepEl = document.getElementById('libKeep'), keep = !!(keepEl && keepEl.checked);
   ov.innerHTML = `<div class="lib-head"><b>ตรวจรูปที่เลือกก่อนใส่เข้า: ${esc(lib.ctx.label)}</b></div>
-    <div class="rv-body"><p class="lib-note" style="margin-top:0">ลำดับที่ 1 เป็นรูปหลักถ้าสินค้ายังไม่มีรูปหลัก · ปุ่ม ← → เลื่อนลำดับ · ปุ่ม ✕ เอารูปที่เลือกผิดออกจากชุดนี้</p>
+    <div class="rv-body"><p class="lib-note" style="margin-top:0">${lib.ctx.single ? 'รูปนี้จะใช้เป็นรูปของเสริม · ถ้าผิด กด ✕ แล้วกลับไปเลือกใหม่' : 'ลำดับที่ 1 เป็นรูปหลักถ้าสินค้ายังไม่มีรูปหลัก · ปุ่ม ← → เลื่อนลำดับ · ปุ่ม ✕ เอารูปที่เลือกผิดออกจากชุดนี้'}</p>
     <div class="rv-grid">${lib.sel.map((pth, k) => `<div class="rv-it"><img alt="" src="${esc(sbPublicUrl(pth))}"><span class="no">${k + 1}</span><div class="acts"><span><button type="button" data-rv-mv="${k}" data-d="-1"${k === 0 ? ' disabled' : ''}>←</button> <button type="button" data-rv-mv="${k}" data-d="1"${k === n - 1 ? ' disabled' : ''}>→</button></span><button type="button" data-rv-rm="${k}">✕ เอาออก</button></div></div>`).join('')}</div></div>
     <div class="lib-foot"><span class="lib-note grow">${n} รูป · ${keep ? 'คัดลอก (รูปยังอยู่ในคลัง)' : 'ย้ายออกจากคลัง (ถ้าเลือกผิด กู้กลับได้ที่แท็บ “ไฟล์ที่ไม่ได้ใช้”)'}</span>
       <button type="button" class="btn btn-ghost" data-lib-act="rvback">กลับไปเลือกต่อ</button>
@@ -3646,6 +3648,7 @@ async function libRunOrphan(){
       }
     };
     await Promise.all([worker(), worker(), worker(), worker()]);
+    (await sbListRaw('addons')).forEach(o => { if(o.id) files.push({ path: 'addons/' + o.name, size: (o.metadata && o.metadata.size) || 0 }); });
     if(files.length && !used.size){
       toast('ไม่พบสินค้าที่ใช้รูปจาก Supabase เลย — ยกเลิกการตรวจเพื่อความปลอดภัย (เช็กว่าบันทึกสินค้าแล้ว)', true);
       if(lib){ lib.orphan = null; libRender(); }
@@ -3789,6 +3792,18 @@ function libOpenForMain(){
   if(!draft) return;
   libOpen({ label: 'รูปสินค้า ' + (String(draft.id || '').trim() || '(ยังไม่มีรหัส)'), slug: () => pdSlug(draft && draft.id), onPick: pdApplyToMain });
 }
+function libOpenForAddon(path){
+  if(!draft) return;
+  const a = getPath(draft, path);
+  if(!a) return;
+  libOpen({
+    label: 'รูปของเสริม' + (String(a.name || '').trim() ? ' “' + String(a.name).trim() + '”' : '') + ' · ' + (String(draft.id || '').trim() || '(ยังไม่มีรหัส)'),
+    single: true,
+    dest: (tag, i, ext) => `addons/addon-${tag}${i}.${ext}`,
+    onPick: urls => { const row = getPath(draft, path); if(!row || !urls.length) return; row.image = urls[0]; if(path.startsWith('colors.')) renderPricePanel(); else renderAddonsPanel(); }
+  });
+}
+document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-lib="addon"]'); if(b) libOpenForAddon(b.dataset.path); });
 function libOpenForZone(z){
   if(!draft) return;
   const p = z.dataset.pdRow, single = !!z.dataset.pdSingle;
