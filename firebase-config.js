@@ -54,3 +54,15 @@ if (/[?&]migrate=1/.test(location.search) && /OrderManagers/i.test(location.path
   sfbMig.src = 'OrderMigrate.js';
   document.head.appendChild(sfbMig);
 }
+
+/* ระบบออเดอร์: เลือกฐานข้อมูล (รอบ 3 ช่วง 4ก)
+   'firebase' = ใช้ Firebase เหมือนเดิม | 'supabase' = ใช้ Supabase
+   ทดสอบก่อนได้โดยเติม ?src=supabase ท้ายลิงก์หน้าออเดอร์ (ไม่กระทบเครื่องอื่น) ย้อนกลับด้วย ?src=firebase */
+window.ORDERS_SOURCE = 'firebase';
+if (/OrderManagers/i.test(location.pathname)) {
+  if (/[?&]src=supabase/.test(location.search)) { window.ORDERS_SOURCE = 'supabase'; window.ORDERS_SOURCE_TEST = true; }
+  else if (/[?&]src=firebase/.test(location.search)) { window.ORDERS_SOURCE = 'firebase'; }
+  if (window.ORDERS_SOURCE === 'supabase' && !/[?&]migrate=1/.test(location.search)) {
+    document.write('<script src="supabase-js.umd.js"><\/script><script src="OrderData.js"><\/script>');
+  }
+}
