@@ -17,10 +17,6 @@
     <!-- Vue 3 CDN -->
     <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <!-- Firebase SDK (compat) สำหรับซิงค์ข้อมูลระหว่างเครื่อง -->
-    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
 
     <script>
         tailwind.config = {
@@ -105,7 +101,7 @@
         </div>
 
 
-        <!-- Loading state while Firebase reports auth status -->
+        <!-- Loading state while the login status is being checked -->
         <div v-if="!authChecked" class="min-h-[80vh] flex items-center justify-center">
             <i class="fa-solid fa-spinner fa-spin text-3xl text-pink-400"></i>
         </div>
@@ -2016,6 +2012,8 @@
     </div>
 
     <script src="firebase-config.js"></script>
+    <script src="supabase-js.umd.js"></script>
+    <script src="OrderData.js"></script>
     <script src="OrderManagers.js"></script>
 </body>
 </html>

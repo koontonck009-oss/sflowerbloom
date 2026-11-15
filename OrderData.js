@@ -3,21 +3,19 @@
    ตัวแทน "Firebase" สำหรับระบบออเดอร์ (รอบ 3 ช่วง 4ก) — ทำให้ OrderManagers.js
    ทำงานบน Supabase ได้โดยไม่ต้องแก้โค้ดในไฟล์นั้นเลย
 
-   ทำงานเฉพาะเมื่อ window.ORDERS_SOURCE === 'supabase' (ตั้งใน firebase-config.js)
-   ไฟล์นี้ถูกโหลดก่อน OrderManagers.js แล้วแทนที่ตัวแปร global "firebase" ด้วยตัวแทนที่มี
-   หน้าตา API เหมือนเดิม (firestore / auth / batch / runTransaction / onSnapshot)
-   แต่ข้างหลังอ่าน-เขียนตาราง orders / transactions ใน Supabase
+   ไฟล์นี้ถูกโหลดก่อน OrderManagers.js (ดูท้าย OrderManagers.html) แล้วสร้างตัวแปร global "firebase"
+   ที่มีหน้าตา API เหมือนเดิม (firestore / auth / batch / runTransaction / onSnapshot)
+   แต่ข้างหลังอ่าน-เขียนตาราง orders / transactions ใน Supabase — ไม่มีการเชื่อมต่อ Firebase จริงอีกแล้ว
 
    - ล็อกอิน: Supabase Auth (อีเมลแอดมินเดียวกับรอบ 2)
    - อัปเดตสดข้ามเครื่อง: Supabase Realtime
    - แคชในเครื่อง (IndexedDB): เปิดครั้งถัดไปเห็นออเดอร์ทันที แล้วโหลดเฉพาะที่เปลี่ยน
    - รูปแนบออเดอร์: ตอนบันทึก รูปใหม่ (base64) จะถูกอัปโหลดเข้า bucket private "order-photos"
      แล้วเก็บแค่พาธ ตอนแสดงจะขอลิงก์ชั่วคราว (signed URL) ให้เอง ไฟล์ที่ไม่มีออเดอร์ไหนใช้แล้วจะถูกลบ
-   - ย้อนกลับ Firebase ได้ทุกเมื่อ: ตั้ง ORDERS_SOURCE = 'firebase' ใน firebase-config.js
    ========================================================= */
 (function () {
     'use strict';
-    if (window.ORDERS_SOURCE !== 'supabase') return;
+    if (window.__sfbOrdersShim) return; // กันโหลดซ้ำ
 
     if (!window.supabase || !window.supabase.createClient) {
         alert('โหลดไลบรารี Supabase ไม่สำเร็จ (เช็กอินเทอร์เน็ต แล้วรีเฟรชหน้า)');
@@ -590,12 +588,5 @@
     }
     window.addEventListener('online', () => resyncAll(true));
 
-    // ป้ายเล็กๆ บอกว่ากำลังทดสอบด้วย Supabase (โผล่เฉพาะตอนเปิดด้วย ?src=supabase)
-    if (window.ORDERS_SOURCE_TEST && document.body) {
-        const b = document.createElement('div');
-        b.textContent = 'โหมดทดสอบ: Supabase';
-        b.style.cssText = 'position:fixed;left:8px;bottom:8px;z-index:99997;background:#0f766e;color:#fff;font-size:11px;padding:4px 9px;border-radius:999px;opacity:.85;pointer-events:none;font-family:inherit';
-        document.body.appendChild(b);
-    }
     console.info('[OrderData] ระบบออเดอร์ใช้ Supabase');
 })();
