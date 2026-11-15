@@ -11,6 +11,8 @@
    - ล็อกอิน: Supabase Auth (อีเมลแอดมินเดียวกับรอบ 2)
    - อัปเดตสดข้ามเครื่อง: Supabase Realtime
    - แคชในเครื่อง (IndexedDB): เปิดครั้งถัดไปเห็นออเดอร์ทันที แล้วโหลดเฉพาะที่เปลี่ยน
+   - รูปแนบออเดอร์: ตอนบันทึก รูปใหม่ (base64) จะถูกอัปโหลดเข้า bucket private "order-photos"
+     แล้วเก็บแค่พาธ ตอนแสดงจะขอลิงก์ชั่วคราว (signed URL) ให้เอง ไฟล์ที่ไม่มีออเดอร์ไหนใช้แล้วจะถูกลบ
    - ย้อนกลับ Firebase ได้ทุกเมื่อ: ตั้ง ORDERS_SOURCE = 'firebase' ใน firebase-config.js
    ========================================================= */
 (function () {
@@ -68,13 +70,129 @@
     }
     function wrapErr(e) {
         const err = new Error(e && e.message ? e.message : String(e));
-        const c = e && e.code, st = e && e.status;
+        const c = e && e.code, st = (e && (e.status || Number(e.statusCode))) || 0;
         if (c === '42501' || c === 'PGRST301' || c === 'PGRST303' || st === 401 || st === 403) err.code = 'permission-denied';
         else if (c === 'not-found') err.code = 'not-found';
         else if (c === 'aborted') err.code = 'aborted';
         else err.code = 'unavailable';
         err.cause = e;
         return err;
+    }
+
+    /* ---------- รูปแนบออเดอร์ (Supabase Storage แบบ private) ---------- */
+    const PHOTO_BUCKET = 'order-photos';
+    const PHOTO_PREFIX = 'sbstorage:';        // สิ่งที่เก็บในออเดอร์ = sbstorage:<พาธไฟล์>
+    const SIGN_TTL = 7 * 24 * 3600;           // อายุลิงก์ชั่วคราว (วินาที)
+    const SIGN_REFRESH_MS = 12 * 3600 * 1000; // เหลือน้อยกว่านี้ → ขอลิงก์ใหม่
+    const SIGNED_RE = /\/storage\/v1\/object\/sign\/order-photos\/([^?#]+)/;
+    const signed = new Map();                 // พาธ → { url, exp }
+    const badSign = new Map();                // พาธที่ขอลิงก์ไม่ได้ (ไฟล์หาย) → เวลาที่ลอง
+    const uploaded = new Map();               // ลายนิ้วมือรูป base64 → พาธ (กันอัปโหลดซ้ำ)
+
+    function fnv(s) {
+        let h = 0x811c9dc5;
+        for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+        return h.toString(36);
+    }
+    // แปลง url ของรูปทุกช่องในออเดอร์ (images[] และ imageUrl เดิม) ด้วยฟังก์ชัน fn
+    function mapPhotoUrls(d, fn) {
+        if (!d || typeof d !== 'object') return d;
+        if (Array.isArray(d.images)) {
+            d.images = d.images.map((im) => (typeof im === 'string' ? fn(im)
+                : (im && typeof im.url === 'string' ? Object.assign(im, { url: fn(im.url) }) : im)));
+        }
+        if (typeof d.imageUrl === 'string') d.imageUrl = fn(d.imageUrl);
+        return d;
+    }
+    function pathsIn(data) {
+        const out = [];
+        if (!data || typeof data !== 'object') return out;
+        const add = (u) => { if (typeof u === 'string' && u.startsWith(PHOTO_PREFIX)) out.push(u.slice(PHOTO_PREFIX.length)); };
+        if (Array.isArray(data.images)) data.images.forEach((im) => add(typeof im === 'string' ? im : (im && im.url)));
+        add(data.imageUrl);
+        return out;
+    }
+    // ข้อมูลที่ส่งให้แอป: พาธ → ลิงก์ชั่วคราว (ถ้ายังไม่มีลิงก์ คงพาธเดิมไว้ กันข้อมูลหายถ้าผู้ใช้กดบันทึกตอนนั้น)
+    function outData(data) {
+        return mapPhotoUrls(clone(data), (u) => {
+            if (u.startsWith(PHOTO_PREFIX)) { const s = signed.get(u.slice(PHOTO_PREFIX.length)); return s ? s.url : u; }
+            return u;
+        });
+    }
+    async function uploadPhoto(dataUrl) {
+        const key = dataUrl.length + ':' + fnv(dataUrl);
+        if (uploaded.has(key)) return uploaded.get(key);
+        const m = /^data:(image\/[\w.+-]+);base64,/i.exec(dataUrl);
+        const type = m ? m[1].toLowerCase() : 'image/jpeg';
+        const ext = type.indexOf('png') >= 0 ? 'png' : type.indexOf('webp') >= 0 ? 'webp' : 'jpg';
+        const blob = await (await fetch(dataUrl)).blob();
+        const rnd = (window.crypto && window.crypto.randomUUID) ? window.crypto.randomUUID()
+            : (Date.now().toString(36) + Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2));
+        const path = new Date().toISOString().slice(0, 7) + '/' + rnd + '.' + ext;
+        const { error } = await sb.storage.from(PHOTO_BUCKET).upload(path, blob, { contentType: type, upsert: false, cacheControl: '3600' });
+        if (error) throw wrapErr(error);
+        uploaded.set(key, path);
+        return path;
+    }
+    // ก่อนเขียนลงฐานข้อมูล: รูปใหม่ (base64) → อัปโหลด / ลิงก์ชั่วคราวเดิม → แปลงกลับเป็นพาธ
+    async function storeUrl(u) {
+        if (typeof u !== 'string') return u;
+        if (/^data:image\//i.test(u)) return PHOTO_PREFIX + await uploadPhoto(u);
+        const m = SIGNED_RE.exec(u);
+        if (m) { try { return PHOTO_PREFIX + decodeURIComponent(m[1]); } catch (e) { return u; } }
+        return u;
+    }
+    async function prepWrite(data) {
+        const d = clean(data) || {};
+        if (Array.isArray(d.images)) {
+            for (let i = 0; i < d.images.length; i++) {
+                const im = d.images[i];
+                if (typeof im === 'string') d.images[i] = await storeUrl(im);
+                else if (im && typeof im.url === 'string') im.url = await storeUrl(im.url);
+            }
+        }
+        if (typeof d.imageUrl === 'string') d.imageUrl = await storeUrl(d.imageUrl);
+        return d;
+    }
+    function missingSigned(st) {
+        const need = new Set(), now = Date.now();
+        st.map.forEach((v) => pathsIn(v.data).forEach((p) => {
+            const s = signed.get(p);
+            if ((!s || s.exp - now < SIGN_REFRESH_MS) && !(badSign.get(p) > now - 5 * 60 * 1000)) need.add(p);
+        }));
+        return Array.from(need);
+    }
+    async function signPaths(paths) {
+        for (let i = 0; i < paths.length; i += 50) {
+            const part = paths.slice(i, i + 50);
+            const { data, error } = await sb.storage.from(PHOTO_BUCKET).createSignedUrls(part, SIGN_TTL);
+            if (error) throw error;
+            (data || []).forEach((d) => {
+                if (d && d.signedUrl && d.path) { signed.set(d.path, { url: d.signedUrl, exp: Date.now() + SIGN_TTL * 1000 }); badSign.delete(d.path); }
+                else if (d && d.path) badSign.set(d.path, Date.now());
+            });
+        }
+    }
+    function referenced(name, path) {
+        const st = T[name];
+        if (!st) return false;
+        for (const v of st.map.values()) { if (pathsIn(v.data).indexOf(path) >= 0) return true; }
+        return false;
+    }
+    // ลบไฟล์รูปที่เลิกใช้ (รูปที่ถูกเอาออก / ออเดอร์ที่ถูกลบ) — เว้นแต่ออเดอร์อื่นยังใช้ไฟล์เดียวกันอยู่ (เช่น ออเดอร์ที่คัดลอกมา)
+    async function dropUnused(name, prevData, nextData) {
+        if (name !== 'orders') return;
+        const st = T[name];
+        if (!st || !st.loaded) return; // ยังโหลดออเดอร์ไม่ครบ ไม่เสี่ยงลบ
+        const keep = new Set(pathsIn(nextData));
+        const gone = Array.from(new Set(pathsIn(prevData))).filter((p) => !keep.has(p) && !referenced(name, p));
+        if (!gone.length) return;
+        try {
+            const { error } = await sb.storage.from(PHOTO_BUCKET).remove(gone);
+            if (error) throw error;
+            gone.forEach((p) => signed.delete(p));
+            uploaded.forEach((path, key) => { if (gone.indexOf(path) >= 0) uploaded.delete(key); }); // กันนำพาธของไฟล์ที่ลบไปแล้วมาใช้ซ้ำ
+        } catch (e) { console.warn('ลบไฟล์รูปไม่สำเร็จ (ไม่กระทบออเดอร์):', e); }
     }
 
     /* ---------- แคชในเครื่อง (IndexedDB) ---------- */
@@ -123,14 +241,20 @@
         const ids = Array.from(st.map.keys()).sort();
         const docs = ids.map((id) => {
             const v = st.map.get(id);
-            return { id, exists: true, ref: docRef(st.name, id), data: () => clone(v.data) };
+            return { id, exists: true, ref: docRef(st.name, id), data: () => outData(v.data) };
         });
         // empty เป็น false เสมอ: กันโค้ดเดิมที่ "ใส่ออเดอร์ตัวอย่างอัตโนมัติเมื่อฐานข้อมูลว่าง" ไม่ให้เขียนข้อมูลปลอมลงฐานจริง
         return { docs, size: docs.length, empty: false, metadata: { fromCache: !!fromCache, hasPendingWrites: false }, forEach: (f) => docs.forEach(f) };
     }
+    function emitNow(st, fromCache) {
+        st.listeners.forEach((l) => { try { l.cb(snap(st, fromCache && !st.loaded)); } catch (e) { console.error(e); } });
+    }
     function emit(st, fromCache) {
         if (!st.ready) return;
-        st.listeners.forEach((l) => { try { l.cb(snap(st, fromCache)); } catch (e) { console.error(e); } });
+        const need = missingSigned(st);
+        if (!need.length) { emitNow(st, fromCache); return; }
+        // มีรูปที่ยังไม่มีลิงก์ชั่วคราว → ขอลิงก์ก่อนแล้วค่อยส่งข้อมูลให้แอป (ถ้าขอไม่ได้ก็ส่งไปก่อน)
+        signPaths(need).catch((e) => console.warn('ขอลิงก์รูปไม่สำเร็จ:', e)).then(() => emitNow(st, fromCache));
     }
     function saveCache(st) {
         clearTimeout(st.saveT);
@@ -254,40 +378,45 @@
         if (st.map.delete(id)) { emit(st, false); saveCache(st); }
     }
     function docSnap(name, id, row) {
-        return { id, exists: !!row, ref: docRef(name, id), data: () => (row ? clone(row.data) : undefined) };
+        return { id, exists: !!row, ref: docRef(name, id), data: () => (row ? outData(row.data) : undefined) };
     }
     async function getDoc(name, id) {
         if (name !== 'orders' && name !== 'transactions') return docSnap(name, id, null); // เช่น catalog (ไม่ได้ใช้ในโหมดนี้)
         return docSnap(name, id, await fetchRow(name, id));
     }
     async function setDoc(name, id, data, opts) {
+        const prev = T[name] && T[name].map.get(id);
         if (opts && opts.merge) {
             const row = await fetchRow(name, id);
             data = applyPatch(row ? row.data : {}, data);
         } else {
             data = clean(data) || {};
         }
+        data = await prepWrite(data);
         const { data: res, error } = await sb.from(name).upsert({ id, data }, { onConflict: 'id' }).select('id,updated_at');
         if (error) throw wrapErr(error);
         localPut(name, id, data, res && res[0] && res[0].updated_at);
+        await dropUnused(name, prev && prev.data, data);
     }
     async function updateDoc(name, id, patch) {
         for (let i = 0; i < 6; i++) {
             const row = await fetchRow(name, id);
             if (!row) { const e = new Error('ไม่พบเอกสาร ' + name + '/' + id); e.code = 'not-found'; throw wrapErr(e); }
-            const next = applyPatch(row.data, patch);
+            const next = await prepWrite(applyPatch(row.data, patch));
             // เขียนได้ก็ต่อเมื่อแถวยังไม่ถูกเครื่องอื่นแก้ระหว่างนี้ (กันทับกัน)
             const { data: res, error } = await sb.from(name).update({ data: next }).eq('id', id).eq('updated_at', row.updated_at).select('id,updated_at');
             if (error) throw wrapErr(error);
-            if (res && res.length) { localPut(name, id, next, res[0].updated_at); return; }
+            if (res && res.length) { localPut(name, id, next, res[0].updated_at); await dropUnused(name, row.data, next); return; }
             await sleep(60 * (i + 1));
         }
         const e = new Error('write-conflict'); e.code = 'aborted'; throw wrapErr(e);
     }
     async function deleteDoc(name, id) {
+        const prev = T[name] && T[name].map.get(id);
         const { error } = await sb.from(name).delete().eq('id', id);
         if (error) throw wrapErr(error);
         localDel(name, id);
+        await dropUnused(name, prev && prev.data, null);
     }
     function docRef(name, id) {
         return {
@@ -313,7 +442,11 @@
             const { data: res, error } = await sb.from(name).upsert(ch, { onConflict: 'id' }).select('id,updated_at');
             if (error) throw wrapErr(error);
             const ts = new Map((res || []).map((r) => [r.id, r.updated_at]));
-            ch.forEach((r) => localPut(name, r.id, r.data, ts.get(r.id)));
+            for (const r of ch) {
+                const prev = tstate(name).map.get(r.id);
+                localPut(name, r.id, r.data, ts.get(r.id));
+                await dropUnused(name, prev && prev.data, r.data);
+            }
         }
     }
     function batch() {
@@ -331,7 +464,7 @@
                     const sets = [];
                     for (const op of g.set) {
                         if (op.o && op.o.merge) { await setDoc(name, op.r.id, op.d, op.o); continue; }
-                        sets.push({ id: op.r.id, data: clean(op.d) || {} });
+                        sets.push({ id: op.r.id, data: await prepWrite(op.d) });
                     }
                     if (sets.length) await upsertRows(name, sets);
                     // update: อ่านแถวเดิมเป็นก้อน → รวม patch → เขียนกลับ
@@ -341,20 +474,22 @@
                         try { fetched = await fetchRows(name, ids); } catch (e) { throw wrapErr(e); }
                         const rows = new Map(fetched.map((r) => [r.id, r]));
                         const out = [];
-                        g.update.forEach((op) => {
+                        for (const op of g.update) {
                             const row = rows.get(op.r.id);
-                            if (!row) { console.warn('ข้าม (ไม่พบเอกสาร):', name, op.r.id); return; }
-                            out.push({ id: op.r.id, data: applyPatch(row.data, op.p) });
-                        });
+                            if (!row) { console.warn('ข้าม (ไม่พบเอกสาร):', name, op.r.id); continue; }
+                            out.push({ id: op.r.id, data: await prepWrite(applyPatch(row.data, op.p)) });
+                        }
                         if (out.length) await upsertRows(name, out);
                     }
                     // delete
                     const dids = g.del.map((op) => op.r.id);
                     for (let i = 0; i < dids.length; i += 100) {
                         const part = dids.slice(i, i + 100);
+                        const prevs = part.map((id) => T[name] && T[name].map.get(id));
                         const { error } = await sb.from(name).delete().in('id', part);
                         if (error) throw wrapErr(error);
                         part.forEach((id) => localDel(name, id));
+                        for (const pv of prevs) await dropUnused(name, pv && pv.data, null);
                     }
                 }
             }
@@ -381,11 +516,12 @@
                 let row = reads.get(key(w.r));
                 if (row === undefined) row = await fetchRow(name, id);
                 if (!row) { const e = new Error('ไม่พบเอกสาร ' + name + '/' + id); e.code = 'not-found'; throw wrapErr(e); }
-                const next = applyPatch(row.data, w.p);
+                const next = await prepWrite(applyPatch(row.data, w.p));
                 const { data: res, error } = await sb.from(name).update({ data: next }).eq('id', id).eq('updated_at', row.updated_at).select('id,updated_at');
                 if (error) throw wrapErr(error);
                 if (!res || !res.length) { conflict = true; break; }
                 localPut(name, id, next, res[0].updated_at);
+                await dropUnused(name, row.data, next);
             }
             if (!conflict) return result;
             await sleep(80 * (attempt + 1));
@@ -445,6 +581,7 @@
     function resyncAll(force) {
         Object.keys(T).forEach((k) => {
             const st = T[k];
+            if (st.started && st.ready && missingSigned(st).length) emit(st, false); // ต่ออายุลิงก์รูปที่ใกล้หมด
             if (st.started && (force || Date.now() - st.lastSync > 30000)) sync(st).catch(() => {});
         });
     }
