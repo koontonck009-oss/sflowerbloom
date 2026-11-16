@@ -126,9 +126,17 @@
     <img id="brandLogo" src="images/logo.png?v=2" alt="โลโก้ร้าน" onerror="this.parentElement.innerHTML='<svg viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot;><path d=&quot;M12 2c1.5 2 1.5 4 0 6-1.5-2-1.5-4 0-6z&quot; fill=&quot;#F0568C&quot;/><path d=&quot;M12 22c-3-3-6-6-6-10a6 6 0 0112 0c0 4-3 7-6 10z&quot; fill=&quot;#F0568C&quot; opacity=&quot;0.9&quot;/></svg>'">
   </div>
   <span class="brand-name" id="brandName" onclick="brandTap()">S.Flower Bloom</span>
-  <!-- เมนูหลัก (จอคอมเท่านั้น ≥860px — มือถือซ่อนด้วย CSS) -->
+  <!-- เมนูหลัก (จอคอมเท่านั้น ≥860px — มือถือซ่อนด้วย CSS) · ลำดับจริงตั้งได้ที่หลังบ้าน (applyDtMenuOrder ใน script.js) -->
   <nav class="dt-nav" id="dtNav" aria-label="เมนูหลัก">
     <button type="button" class="dt-link" data-key="home" data-act="home">หน้าแรก</button>
+    <div class="dt-item" data-key="occasion" id="dtOccItem" hidden>
+      <button type="button" class="dt-link dt-has-sub" aria-haspopup="true">โอกาสพิเศษ<span class="dt-caret" aria-hidden="true"></span></button>
+      <div class="dt-sub dt-attr-sub" id="dtOccSub" role="menu"></div><!-- สร้างจาก OCCASIONS ใน syncDtNav (โชว์เฉพาะโอกาสที่มีสินค้าติดอยู่) -->
+    </div>
+    <div class="dt-item" data-key="tone" id="dtToneItem" hidden>
+      <button type="button" class="dt-link dt-has-sub" aria-haspopup="true">โทนสี<span class="dt-caret" aria-hidden="true"></span></button>
+      <div class="dt-sub dt-attr-sub" id="dtToneSub" role="menu"></div><!-- สร้างจาก TONES ใน syncDtNav -->
+    </div>
     <div class="dt-item" data-key="all" id="dtProdItem">
       <button type="button" class="dt-link dt-has-sub" data-act="all" aria-haspopup="true">สินค้า<span class="dt-caret" aria-hidden="true"></span></button>
       <div class="dt-sub dt-prod-sub" id="dtProdSub" role="menu"></div><!-- หมวดหมู่ → ขนาด (สร้างจาก CATS / CATEGORY_SIZES ใน syncDtNav) -->

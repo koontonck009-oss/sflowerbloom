@@ -61,6 +61,18 @@ function sizeTagText(p){ return sizeTagsOf(p).join(', '); }
 // ชนิดดอกไม้ที่หน้าร้านกรองได้ — อ่านจาก window.FLOWER_TYPES ใน firebase-config.js (แหล่งเดียวกับหน้าร้าน เพิ่มชนิดใหม่แก้ที่นั่นที่เดียว)
 // ใช้ได้กับทุกหมวด — หน้าร้านจะโชว์ตัวกรองชนิดดอกไม้ให้หมวดที่มีสินค้าตั้งค่านี้ไว้ (ช่อดอกไม้โชว์เสมอ)
 const FLOWER_TYPE_TAGS = Array.isArray(window.FLOWER_TYPES) ? window.FLOWER_TYPES.slice() : [];
+// โอกาสพิเศษ / โทนสี (สินค้าติดได้หลายค่า) และลำดับเมนูหน้าร้านจอคอม — ค่าเริ่มต้นจาก firebase-config.js · แก้ได้ที่ ตัวเลือกร้าน
+const OCCASION_TAGS = Array.isArray(window.OCCASIONS) ? window.OCCASIONS.slice() : [];
+const TONE_TAGS = Array.isArray(window.TONES) ? window.TONES.slice() : [];
+const MENU_LABELS = { home:'หน้าแรก', occasion:'โอกาสพิเศษ', tone:'โทนสี', all:'สินค้า', flower:'ชนิดดอกไม้', price:'ราคา', reviews:'รีวิวจากลูกค้า', how:'วิธีการสั่งซื้อ', contact:'ติดต่อเรา' };
+const MENU_KEYS = Object.keys(MENU_LABELS);
+function normMenuOrder(a){
+  const seen = new Set(), out = [];
+  (Array.isArray(a) ? a : []).forEach(k => { if(MENU_KEYS.includes(k) && !seen.has(k)){ seen.add(k); out.push(k); } });
+  MENU_KEYS.forEach(k => { if(!seen.has(k)) out.push(k); });
+  return out;
+}
+const MENU_ORDER = normMenuOrder(window.MENU_ORDER);
 // สถานะชนิดดอกไม้ของสินค้า: 'ok' | 'none' (ช่อดอกไม้ที่ยังไม่ระบุ) | 'off' (ค่านอกรายการหน้าร้าน) | 'skip' (หมวดอื่นที่ไม่มีค่า)
 function flowerStateOf(p){
   const t = String(p.flowerType ?? '').trim();
@@ -85,7 +97,7 @@ const CATEGORY_SIZE_TAGS = {
 // หมวดหมู่ที่หน้าร้านแสดง (เรียงตามลำดับแท็บ ไม่รวม "ทั้งหมด") · หมวดหลักที่โค้ดบางจุดอ้างชื่อตรงๆ ห้ามแก้ชื่อ/ลบ
 const CORE_CAT = 'ช่อดอกไม้';
 const SHOP_CATS = ['ช่อดอกไม้', 'กรอบรูป', 'กระถาง', 'อื่นๆ'];
-const DEFAULT_SHOP_OPTIONS = { cats: SHOP_CATS.slice(), flowers: FLOWER_TYPE_TAGS.slice(), sizes: clone(CATEGORY_SIZE_TAGS) };
+const DEFAULT_SHOP_OPTIONS = { cats: SHOP_CATS.slice(), flowers: FLOWER_TYPE_TAGS.slice(), sizes: clone(CATEGORY_SIZE_TAGS), occasions: OCCASION_TAGS.slice(), tones: TONE_TAGS.slice(), menu: MENU_ORDER.slice() };
 function cleanNameList(a, fallback){
   if(!Array.isArray(a)) return fallback.slice();
   return [...new Set(a.map(x => String(x ?? '').trim()).filter(x => x && x !== 'ทั้งหมด'))];
@@ -100,6 +112,9 @@ function applyShopOptions(o){
   const sizes = (src.sizes && typeof src.sizes === 'object') ? src.sizes : d.sizes;
   SHOP_CATS.splice(0, SHOP_CATS.length, ...cats);
   FLOWER_TYPE_TAGS.splice(0, FLOWER_TYPE_TAGS.length, ...flowers);
+  OCCASION_TAGS.splice(0, OCCASION_TAGS.length, ...cleanNameList(src.occasions, d.occasions));
+  TONE_TAGS.splice(0, TONE_TAGS.length, ...cleanNameList(src.tones, d.tones));
+  MENU_ORDER.splice(0, MENU_ORDER.length, ...normMenuOrder(Array.isArray(src.menu) ? src.menu : d.menu));
   Object.keys(CATEGORY_SIZE_TAGS).forEach(k => delete CATEGORY_SIZE_TAGS[k]);
   cats.forEach(c => { const s = cleanNameList(sizes[c], []); if(s.length) CATEGORY_SIZE_TAGS[c] = s; });
 }
@@ -1137,6 +1152,19 @@ function sizeFieldHtml(){
   };
 }
 
+// ช่องเลือกหลายค่า (โอกาสพิเศษ / โทนสี) — ติ๊กแล้วเก็บเป็น array ใน draft[key] · ค่าเก่าที่ไม่อยู่ในรายการแล้วยังโชว์ให้เห็น จะได้เอาออกได้
+function tagChipsHtml(key, label, list){
+  const cur = Array.isArray(draft[key]) ? draft[key] : [];
+  const all = [...list, ...cur.filter(v => !list.includes(v))];
+  const body = all.length
+    ? all.map(v => {
+        const on = cur.includes(v), off = !list.includes(v);
+        return `<label class="chip-opt${on ? ' is-on' : ''}"><input type="checkbox" data-multi="${key}" data-val="${esc(v)}"${on ? ' checked' : ''}><span>${esc(v)}${off ? ' (ไม่อยู่ในรายการแล้ว)' : ''}</span></label>`;
+      }).join('')
+    : '<p class="field-hint">ยังไม่มีตัวเลือก — เพิ่มได้ที่ ตัวเลือกร้าน</p>';
+  return `<div class="field"><span>${label}</span><div class="chip-multi">${body}</div></div>`;
+}
+
 function renderMainPanel(){
   const mode = priceMode(draft);
   const hasVars = mode !== 'single';
@@ -1189,6 +1217,11 @@ function renderMainPanel(){
       </div>
       ${offFlower ? '<p class="field-hint size-warn">⚠ ชนิดดอกไม้นี้หน้าร้านไม่มีให้กรอง — เลือกชนิดที่ถูกต้องจากรายการ</p>' : ''}
       ${size.notes}
+
+      <div class="main-row">
+        ${tagChipsHtml('occasions', 'โอกาสพิเศษ (เลือกได้หลายอย่าง)', OCCASION_TAGS)}
+        ${tagChipsHtml('tones', 'โทนสี (เลือกได้หลายสี)', TONE_TAGS)}
+      </div>
 
       <div class="main-row">
         <label class="field">
@@ -1731,6 +1764,17 @@ function comboTagChoices(cat, current){
 function onDraftInput(e){
   const el = e.target;
   if(!draft) return;
+
+  if(el.dataset.multi){
+    const k = el.dataset.multi, v = el.dataset.val;
+    const arr = Array.isArray(draft[k]) ? draft[k].slice() : [];
+    const i = arr.indexOf(v);
+    if(el.checked && i < 0) arr.push(v);
+    if(!el.checked && i >= 0) arr.splice(i, 1);
+    draft[k] = arr;
+    const chip = el.closest('.chip-opt'); if(chip) chip.classList.toggle('is-on', el.checked);
+    return;
+  }
 
   if(el.dataset.bind){
     const type = el.dataset.type;
@@ -2432,6 +2476,12 @@ function cleanProduct(p){
   out.id = str(p.id);
   out.cat = str(p.cat);
   if(str(p.flowerType)) out.flowerType = str(p.flowerType);
+  { // โอกาสพิเศษ / โทนสี: เก็บเป็น array เฉพาะที่มีค่า (ไม่มี = ไม่ใส่ฟิลด์ ไฟล์สินค้าเดิมไม่เปลี่ยน)
+    const tg = a => [...new Set((Array.isArray(a) ? a : []).map(str).filter(Boolean))];
+    const oc = tg(p.occasions), tn = tg(p.tones);
+    if(oc.length) out.occasions = oc;
+    if(tn.length) out.tones = tn;
+  }
   // ช่อง "ขนาด/ป้ายกำกับ" พิมพ์ได้หลายค่าคั่นด้วยจุลภาค (เช่น "กลาง, ใส่เงิน") — เก็บเป็น array ถ้ามี
   // มากกว่า 1 ค่า หรือเก็บเป็น string เดี่ยวเหมือนเดิมถ้ามีค่าเดียว (ไม่เปลี่ยนหน้าตาไฟล์โดยไม่จำเป็น)
   {
@@ -4806,6 +4856,8 @@ function useCount(kind, name, cat){
   if(!n) return 0;
   if(kind === 'cats') return catalog.filter(p => String(p.cat ?? '').trim() === n).length;
   if(kind === 'flowers') return catalog.filter(p => String(p.flowerType ?? '').trim() === n).length;
+  if(kind === 'tones') return catalog.filter(p => Array.isArray(p.tones) && p.tones.includes(n)).length;
+  if(kind === 'occasions') return catalog.filter(p => Array.isArray(p.occasions) && p.occasions.includes(n)).length;
   if(!cat) return 0;
   return catalog.filter(p => String(p.cat ?? '').trim() === cat && allTagsOf(p).includes(n)).length;
 }
@@ -4817,7 +4869,10 @@ function openOptionsModal(){
     tab: 'cats',
     sizeCat: 0,
     cats: names.map(n => ({ orig: n, name: n, sizes: (CATEGORY_SIZE_TAGS[n] || []).map(s => ({ orig: s, name: s })) })),
-    flowers: FLOWER_TYPE_TAGS.map(n => ({ orig: n, name: n }))
+    flowers: FLOWER_TYPE_TAGS.map(n => ({ orig: n, name: n })),
+    occasions: OCCASION_TAGS.map(n => ({ orig: n, name: n })),
+    tones: TONE_TAGS.map(n => ({ orig: n, name: n })),
+    menu: MENU_ORDER.map(k => ({ orig: k, name: k }))
   };
   $('optScrim').hidden = false;
   renderOptionsModal();
@@ -4831,6 +4886,9 @@ function closeOptionsModal(){
 function omList(){
   if(om.tab === 'cats') return om.cats;
   if(om.tab === 'flowers') return om.flowers;
+  if(om.tab === 'occasions') return om.occasions;
+  if(om.tab === 'tones') return om.tones;
+  if(om.tab === 'menu') return om.menu;
   const c = om.cats[om.sizeCat];
   return c ? c.sizes : [];
 }
@@ -4842,10 +4900,27 @@ function renderOptionsModal(focusIdx){
     b.setAttribute('aria-selected', String(on));
   });
   const kind = om.tab;
+  $('optAddRow').style.display = kind === 'menu' ? 'none' : ''; // ลำดับเมนูมีรายการตายตัว ไม่เพิ่ม/ลบ แค่เลื่อนขึ้นลง
+  if(kind === 'menu'){
+    const items = om.menu;
+    $('optBody').innerHTML = '<p class="om-note">ลำดับในรายการนี้ = ลำดับเมนูบนหัวเว็บ (จอคอม) จากซ้ายไปขวา · มือถือไม่มีเมนูนี้ ใช้ตัวกรองแทน · “โอกาสพิเศษ” และ “โทนสี” จะโผล่บนเมนูเมื่อมีสินค้าติดค่านั้นแล้วเท่านั้น</p>'
+      + items.map((r, i) => `<div class="om-row" data-i="${i}">
+        <span class="om-menu-n">${i + 1}</span>
+        <span class="om-menu-label">${esc(MENU_LABELS[r.orig] || r.orig)}</span>
+        <button type="button" class="om-ico" data-act="up" title="เลื่อนขึ้น (ไปทางซ้าย)" aria-label="เลื่อนขึ้น"${i === 0 ? ' disabled' : ''}>▲</button>
+        <button type="button" class="om-ico" data-act="down" title="เลื่อนลง (ไปทางขวา)" aria-label="เลื่อนลง"${i === items.length - 1 ? ' disabled' : ''}>▼</button>
+      </div>`).join('');
+    omValidateUI();
+    return;
+  }
   let head = '';
   if(kind === 'cats'){
     $('optAddLabel').textContent = 'เพิ่มหมวดหมู่';
     head = '<p class="om-note">ลำดับในรายการนี้ = ลำดับแท็บหมวดบนหน้าร้าน · หมวดใหม่ยังไม่มีตัวกรองขนาด (ไปเพิ่มที่แท็บ “ขนาด”)</p>';
+  } else if(kind === 'occasions' || kind === 'tones'){
+    const isTone = kind === 'tones';
+    $('optAddLabel').textContent = isTone ? 'เพิ่มโทนสี' : 'เพิ่มโอกาสพิเศษ';
+    head = `<p class="om-note">ลำดับในรายการนี้ = ลำดับปุ่มบนหน้าร้าน · ${isTone ? 'ชื่อที่มีคำว่า ชมพู แดง ส้ม เหลือง เขียว ฟ้า น้ำเงิน ม่วง น้ำตาล ขาว ครีม ดำ คละ จะมีจุดสีหน้าชื่อให้เอง' : 'ตั้งชื่อให้ลูกค้าเข้าใจทันที เช่น วันเกิด รับปริญญา'} · ไปติ๊กให้สินค้าแต่ละชิ้นที่หน้าแก้ไขสินค้า · หน้าร้านโชว์เฉพาะค่าที่มีสินค้าติดอยู่</p>`;
   } else if(kind === 'flowers'){
     $('optAddLabel').textContent = 'เพิ่มชนิดดอกไม้';
     head = '<p class="om-note">ตัวกรองบนหน้าร้านและหลังบ้านเรียงตามจำนวนสินค้า มากไปน้อย · ช่องเลือกในหน้าแก้ไขสินค้าเรียงตามรายการนี้</p>';
@@ -4898,6 +4973,8 @@ function omProblem(){
   if(!om.cats.some(c => c.name.trim())) return 'ต้องมีหมวดหมู่อย่างน้อย 1 หมวด';
   return check(om.cats, 'หมวดหมู่')
     || check(om.flowers, 'ชนิดดอกไม้')
+    || check(om.occasions, 'โอกาสพิเศษ')
+    || check(om.tones, 'โทนสี')
     || om.cats.map(c => check(c.sizes, `ขนาดของ “${c.name.trim() || 'หมวดใหม่'}”`)).find(Boolean)
     || '';
 }
@@ -4921,7 +4998,7 @@ function optAddRow(){
 }
 
 // เปลี่ยนชื่อในสินค้า (แก้พร้อมกันทีเดียว ไม่ไล่ต่อเป็นทอด จึงสลับชื่อกันได้) คืนจำนวนสินค้าที่ถูกแก้
-function applyRenames(list, catMap, flowerMap, sizeMaps){
+function applyRenames(list, catMap, flowerMap, sizeMaps, toneMap = new Map(), occMap = new Map()){
   let changed = 0;
   list.forEach(p => {
     let touched = false;
@@ -4942,6 +5019,10 @@ function applyRenames(list, catMap, flowerMap, sizeMaps){
     if(catMap.has(oldCat)){ p.cat = catMap.get(oldCat); touched = true; }
     const f = String(p.flowerType ?? '').trim();
     if(flowerMap.has(f)){ p.flowerType = flowerMap.get(f); touched = true; }
+    [['tones', toneMap], ['occasions', occMap]].forEach(([k, m]) => {
+      if(!m.size || !Array.isArray(p[k])) return;
+      if(p[k].some(x => m.has(x))){ p[k] = [...new Set(p[k].map(x => (m.has(x) ? m.get(x) : x)))]; touched = true; }
+    });
     if(touched) changed++;
   });
   return changed;
@@ -4982,8 +5063,9 @@ async function saveOptionsModal(){
   const clean = arr => arr.map(r => ({ orig: r.orig, name: r.name.trim() })).filter(r => r.name);
   const cats = om.cats.map(c => ({ orig: c.orig, name: c.name.trim(), sizes: clean(c.sizes) })).filter(c => c.name);
   const flowers = clean(om.flowers);
+  const occasions = clean(om.occasions), tones = clean(om.tones);
 
-  const catMap = new Map(), flowerMap = new Map(), sizeMaps = new Map();
+  const catMap = new Map(), flowerMap = new Map(), sizeMaps = new Map(), toneMap = new Map(), occMap = new Map();
   cats.forEach(c => {
     if(c.orig != null && c.orig !== c.name) catMap.set(c.orig, c.name);
     if(c.orig == null) return;
@@ -4992,13 +5074,17 @@ async function saveOptionsModal(){
     if(m.size) sizeMaps.set(c.orig, m);
   });
   flowers.forEach(f => { if(f.orig != null && f.orig !== f.name) flowerMap.set(f.orig, f.name); });
+  occasions.forEach(f => { if(f.orig != null && f.orig !== f.name) occMap.set(f.orig, f.name); });
+  tones.forEach(f => { if(f.orig != null && f.orig !== f.name) toneMap.set(f.orig, f.name); });
 
   const next = clone(catalog);
-  const changed = applyRenames(next, catMap, flowerMap, sizeMaps);
+  const changed = applyRenames(next, catMap, flowerMap, sizeMaps, toneMap, occMap);
   if(changed){
     const parts = [];
     catMap.forEach((n, o) => parts.push(`หมวด “${o}” → “${n}”`));
     flowerMap.forEach((n, o) => parts.push(`ชนิด “${o}” → “${n}”`));
+    occMap.forEach((n, o) => parts.push(`โอกาส “${o}” → “${n}”`));
+    toneMap.forEach((n, o) => parts.push(`โทนสี “${o}” → “${n}”`));
     sizeMaps.forEach(m => m.forEach((n, o) => parts.push(`ขนาด “${o}” → “${n}”`)));
     const ok = await askConfirm('แก้ชื่อสินค้าตามด้วย?',
       `สินค้า ${changed} ชิ้นที่ใช้ชื่อเดิมจะถูกแก้เป็นชื่อใหม่ให้อัตโนมัติ (${parts.join(' · ')})`, 'บันทึก');
@@ -5008,6 +5094,9 @@ async function saveOptionsModal(){
   const opts = {
     cats: cats.map(c => c.name),
     flowers: flowers.map(f => f.name),
+    occasions: occasions.map(f => f.name),
+    tones: tones.map(f => f.name),
+    menu: om.menu.map(r => r.orig),
     sizes: Object.fromEntries(cats.filter(c => c.sizes.length).map(c => [c.name, c.sizes.map(s => s.name)]))
   };
   const btn = $('optSave');

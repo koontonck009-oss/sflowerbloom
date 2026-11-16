@@ -933,6 +933,7 @@ function renderNav(){
   // เลื่อนแถบแท็บแนวนอนให้ปุ่มที่ active อยู่ในมุมมองเสมอ (เผื่อชื่อหมวดยาวจนล้นจอ)
   const activeBtn = nav.querySelector('.cat-btn.active');
   if(activeBtn) activeBtn.scrollIntoView({ behavior:'smooth', inline:'nearest', block:'nearest' });
+  paintFilterCount();
   updateBottomNav();
 }
 // ความสูงรวมของแถบ sticky ด้านบน (แถบค้นหา+ตะกร้า และแถบหมวดหมู่) ใช้คำนวณระยะเลื่อน/scrollspy
@@ -1078,6 +1079,17 @@ function setSize(s){
 
 // รายชนิดอ่านจาก window.FLOWER_TYPES ใน firebase-config.js (แหล่งเดียวกับหลังบ้าน) · ปุ่ม "ทั้งหมด" อยู่หน้าสุดเสมอ
 const FLOWER_TYPES = ['ทั้งหมด', ...(Array.isArray(window.FLOWER_TYPES) ? window.FLOWER_TYPES : [])];
+// โอกาสพิเศษ / โทนสี / ลำดับเมนูคอม — ค่าเริ่มต้นจาก firebase-config.js · หลังบ้านบันทึกทับได้ (ดู applyShopOptions)
+const OCCASIONS = Array.isArray(window.OCCASIONS) ? window.OCCASIONS.slice() : [];
+const TONES = Array.isArray(window.TONES) ? window.TONES.slice() : [];
+const MENU_KEYS = ['home','occasion','tone','all','flower','price','reviews','how','contact'];
+const MENU_ORDER = (Array.isArray(window.MENU_ORDER) ? window.MENU_ORDER : MENU_KEYS).slice();
+function normMenuOrder(a){
+  const seen = new Set(), out = [];
+  (Array.isArray(a) ? a : []).forEach(k => { if(MENU_KEYS.includes(k) && !seen.has(k)){ seen.add(k); out.push(k); } });
+  MENU_KEYS.forEach(k => { if(!seen.has(k)) out.push(k); }); // คีย์ที่ขาดไปต่อท้ายตามลำดับเดิม
+  return out;
+}
 // ใส่ตัวเลือกร้านจากหลังบ้านทับค่าเริ่มต้น (หมวดหมู่ · ชนิดดอกไม้ · ขนาดของแต่ละหมวด) ปุ่ม "ทั้งหมด" ใส่ให้เองหน้าสุดเสมอ
 function applyShopOptions(o){
   if(!o || typeof o !== 'object') return;
@@ -1087,6 +1099,10 @@ function applyShopOptions(o){
   const cats = clean(o.cats), flowers = clean(o.flowers);
   if(cats && cats.length) CATS.splice(0, CATS.length, 'ทั้งหมด', ...cats);
   if(flowers) FLOWER_TYPES.splice(0, FLOWER_TYPES.length, 'ทั้งหมด', ...flowers);
+  const tonesIn = clean(o.tones), occsIn = clean(o.occasions);
+  if(tonesIn) TONES.splice(0, TONES.length, ...tonesIn);
+  if(occsIn) OCCASIONS.splice(0, OCCASIONS.length, ...occsIn);
+  if(Array.isArray(o.menu)) MENU_ORDER.splice(0, MENU_ORDER.length, ...normMenuOrder(o.menu));
   if(o.sizes && typeof o.sizes === 'object'){
     Object.keys(CATEGORY_SIZES).forEach(k => delete CATEGORY_SIZES[k]);
     CATS.slice(1).forEach(c => {
@@ -1097,8 +1113,38 @@ function applyShopOptions(o){
 }
 // ชนิดดอกไม้ที่เลือก — เลือกได้หลายชนิดพร้อมกัน (Set ว่าง = ทุกชนิด) ใช้ได้ทุกหมวด ไม่ต้องเลือกหมวดก่อน
 let activeFlowerTypes = new Set();
-function flowerMatches(p, set = activeFlowerTypes){
-  return !set || set.size === 0 || set.has(p.flowerType);
+// โทนสี / โอกาสพิเศษที่เลือก — เลือกได้หลายค่า (Set ว่าง = ทั้งหมด) สินค้าติดได้หลายค่า (p.tones / p.occasions เป็น array)
+let activeTones = new Set();
+let activeOccasions = new Set();
+function attrMatch(list, set){
+  if(!set || set.size === 0) return true;
+  return Array.isArray(list) && list.some(x => set.has(x));
+}
+// ชื่อที่หน้าร้านโชว์ได้ = อยู่ในรายการของร้านและมีสินค้าติดอยู่จริง (ยังไม่มีสินค้าติด = ซ่อนทั้งกลุ่ม/ทั้งเมนู ลูกค้าไม่เห็นตัวเลือกว่าง)
+function tonesInUse(){ return TONES.filter(t => PRODUCTS.some(p => Array.isArray(p.tones) && p.tones.includes(t))); }
+function occasionsInUse(){ return OCCASIONS.filter(t => PRODUCTS.some(p => Array.isArray(p.occasions) && p.occasions.includes(t))); }
+function attrCount(key, v){ return PRODUCTS.filter(p => Array.isArray(p[key]) && p[key].includes(v)).length; }
+// จุดสีหน้าชื่อโทน — เดาจากคำไทยในชื่อ (ชื่อที่ไม่รู้จักไม่มีจุด) · มี 2 สีขึ้นไปในชื่อเดียว = จุดแบ่งครึ่ง
+const TONE_DOT_MAP = [[/ชมพู/,'#F0568C'],[/แดง/,'#D7263D'],[/ส้ม/,'#F29A3B'],[/เหลือง/,'#F6C945'],[/เขียว/,'#6BB36B'],[/ฟ้า|น้ำเงิน/,'#5B9BD5'],[/ม่วง/,'#8E6BBF'],[/น้ำตาล/,'#8B5E3C'],[/ขาว|ครีม/,'#F3EBDD'],[/ดำ/,'#2E2A2C']];
+function toneDotHtml(name){
+  const n = String(name || '');
+  if(/คละ|หลากสี|รุ้ง/.test(n)) return '<i class="tone-dot" style="background:conic-gradient(#F0568C,#F6C945,#6BB36B,#5B9BD5,#8E6BBF,#F0568C)" aria-hidden="true"></i>';
+  const cols = TONE_DOT_MAP.filter(([re]) => re.test(n)).map(([, c]) => c);
+  if(!cols.length) return '';
+  const bg = cols.length === 1 ? cols[0] : `linear-gradient(135deg,${cols[0]} 50%,${cols[1]} 50%)`;
+  return `<i class="tone-dot" style="background:${bg}" aria-hidden="true"></i>`;
+}
+function flowerMatches(p, set = activeFlowerTypes, tones = activeTones, occs = activeOccasions){
+  return (!set || set.size === 0 || set.has(p.flowerType)) && attrMatch(p.tones, tones) && attrMatch(p.occasions, occs);
+}
+function toggleAttrIn(set, v){ if(set.has(v)) set.delete(v); else set.add(v); }
+function setTone(i){
+  if(i < 0) activeTones = new Set(); else toggleAttrIn(activeTones, TONES[i]);
+  renderCatalog(); renderFilterSidebar(); updateFilterBadge();
+}
+function setOccasion(i){
+  if(i < 0) activeOccasions = new Set(); else toggleAttrIn(activeOccasions, OCCASIONS[i]);
+  renderCatalog(); renderFilterSidebar(); updateFilterBadge();
 }
 // ชนิดดอกไม้ที่มีสินค้าอยู่จริงในขอบเขตที่เลือก (ไม่เลือกหมวด = ทั้งร้าน)
 function flowerTypesInScope(catsSet){
@@ -1277,6 +1323,7 @@ let filterGroupOpen = { sort:false, more:false };
 // มีตัวกรองใดต่างจากค่าเริ่มต้นหรือไม่ (ใช้โชว์/ซ่อนปุ่ม "ล้างตัวกรอง")
 function filtersAreActive(st){
   return st.cats.size > 0 || st.flowerTypes.size > 0 || (st.sizes && st.sizes.size > 0)
+    || (st.tones && st.tones.size > 0) || (st.occasions && st.occasions.size > 0)
     || st.customMin !== PRICE_SLIDER_MIN || st.customMax !== PRICE_SLIDER_MAX
     || st.sortOrder !== 'none' || st.ready || st.favorites || st.allSplit;
 }
@@ -1284,7 +1331,8 @@ function sidebarState(){
   return {
     cats: activeCats, customMin: customPriceMin, customMax: customPriceMax,
     sortOrder: activeSortOrder, ready: showReadyOnly, favorites: showFavoritesOnly,
-    allSplit: showAllVariantsSplit, sizes: activeSizes, flowerTypes: activeFlowerTypes
+    allSplit: showAllVariantsSplit, sizes: activeSizes, flowerTypes: activeFlowerTypes,
+    tones: activeTones, occasions: activeOccasions
   };
 }
 // ซ่อน/โชว์ปุ่มล้างตัวกรองบนแถบข้างโดยไม่วาดแผงใหม่ (ใช้ตอนลากแถบราคา กันแถบกระตุก)
@@ -1299,7 +1347,7 @@ function countResultsForState(st){
   let total = 0;
   cats.forEach(cat => {
     const opts = { range, sizes: CATEGORY_SIZES[cat] ? st.sizes : new Set(), readyOnly: st.ready, favOnly: st.favorites };
-    PRODUCTS.filter(p => p.cat === cat && matchesSearch(p) && flowerMatches(p, st.flowerTypes)).forEach(p => {
+    PRODUCTS.filter(p => p.cat === cat && matchesSearch(p) && flowerMatches(p, st.flowerTypes, st.tones, st.occasions)).forEach(p => {
       const passing = allVariantsOf(p).filter(v => variantPasses(p, v, opts));
       total += st.allSplit ? passing.length : (passing.length ? 1 : 0);
     });
@@ -1357,6 +1405,27 @@ function buildFilterPanelHtml(state, mode){
       return `<button class="filter-pill${t === 'ทั้งหมด' ? '' : ' is-multi'} ${on?'active':''}" aria-pressed="${on}" onclick="${setFlowerFn}('${t}')">${t}${cnt}</button>`;
     }).join('')}</div>`);
 
+  // โอกาสพิเศษ / โทนสี — เลือกได้หลายค่า โชว์เฉพาะค่าที่มีสินค้าติดอยู่จริง (ไม่มีเลย = ไม่โชว์กลุ่ม)
+  const attrGroup = (kind) => {
+    const isTone = kind === 'tone';
+    const full = isTone ? TONES : OCCASIONS;
+    const list = isTone ? tonesInUse() : occasionsInUse();
+    if(!list.length) return '';
+    const set = (isTone ? state.tones : state.occasions) || new Set();
+    const fn = mode === 'sidebar' ? (isTone ? 'setTone' : 'setOccasion') : (isTone ? 'setDraftTone' : 'setDraftOccasion');
+    const key = isTone ? 'tones' : 'occasions';
+    const title = isTone ? '<svg class="ic" aria-hidden="true"><use href="#i-palette"/></svg> โทนสี' : '<svg class="ic" aria-hidden="true"><use href="#i-gift"/></svg> โอกาสพิเศษ';
+    const pills = [`<button class="filter-pill ${set.size === 0 ? 'active' : ''}" aria-pressed="${set.size === 0}" onclick="${fn}(-1)">ทั้งหมด</button>`]
+      .concat(list.map(t => {
+        const on = set.has(t);
+        const cnt = mode === 'sheet' ? `<span class="fp-n">${attrCount(key, t)}</span>` : '';
+        return `<button class="filter-pill is-multi ${on ? 'active' : ''}" aria-pressed="${on}" onclick="${fn}(${full.indexOf(t)})">${isTone ? toneDotHtml(t) : ''}${escapeHtml(t)}${cnt}</button>`;
+      })).join('');
+    return group(title, set.size, `<div class="filter-pills">${pills}</div>`);
+  };
+  const occHtml = attrGroup('occasion');
+  const toneHtml = attrGroup('tone');
+
   const priceHtml = PRICES_HIDDEN ? '' : group('ช่วงราคา', 0, renderPriceSliderHtml(state, mode));
 
   const sortHtml = PRICES_HIDDEN ? '' : group('เรียงตามราคา', 0, `
@@ -1395,8 +1464,9 @@ function buildFilterPanelHtml(state, mode){
 
   const catGroup = group('หมวดหมู่', 0, `<div class="filter-pills fp-cats">${catHtml}</div>`);
   // มือถือ: หมวดหมู่ → ชนิดดอกไม้ → ขนาด → เพิ่มเติม (พร้อมส่ง/โปรด/แยกแบบ/เรียงราคา) → ราคา · คอมคงลำดับเดิม
-  if(isSheet) return catGroup + flowerHtml + sizeHtml + moreHtml + priceHtml;
-  return catGroup + sizeHtml + flowerHtml + priceHtml + sortHtml + moreHtml;
+  // ลูกค้าใหม่ไม่รู้จักร้าน → เริ่มจาก "ซื้อให้ใคร/โอกาสอะไร" (โอกาส → โทนสี) ก่อนค่อยลงรายละเอียดหมวด/ชนิด/ขนาด/ราคา
+  if(isSheet) return occHtml + toneHtml + catGroup + flowerHtml + sizeHtml + moreHtml + priceHtml;
+  return occHtml + toneHtml + catGroup + sizeHtml + flowerHtml + priceHtml + sortHtml + moreHtml;
 }
 
 // Desktop sidebar — always visible, applies every change immediately (no apply button needed)
@@ -1422,6 +1492,8 @@ function clearSidebarFilters(){
   dtFlatAll = false;
   activeSizes = new Set();
   activeFlowerTypes = new Set();
+  activeTones = new Set();
+  activeOccasions = new Set();
   renderNav();
   renderCatalog();
   renderFilterSidebar();
@@ -1444,7 +1516,9 @@ function openFilterSheet(){
     favorites: showFavoritesOnly,
     allSplit: showAllVariantsSplit,
     sizes: new Set(activeSizes),
-    flowerTypes: new Set(activeFlowerTypes)
+    flowerTypes: new Set(activeFlowerTypes),
+    tones: new Set(activeTones),
+    occasions: new Set(activeOccasions)
   };
   renderFilterSheetBody();
   const fsb = document.getElementById('filterSheetBody'); if(fsb) fsb.scrollTop = 0; // เปิดใหม่ทุกครั้งเริ่มจากบนสุด (หมวดหมู่)
@@ -1488,10 +1562,18 @@ function setDraftFlowerType(t){
   if(t === 'ทั้งหมด') filterDraft.flowerTypes = new Set(); else toggleFlowerIn(filterDraft.flowerTypes, t);
   renderFilterSheetBody();
 }
+function setDraftTone(i){
+  if(i < 0) filterDraft.tones = new Set(); else toggleAttrIn(filterDraft.tones, TONES[i]);
+  renderFilterSheetBody();
+}
+function setDraftOccasion(i){
+  if(i < 0) filterDraft.occasions = new Set(); else toggleAttrIn(filterDraft.occasions, OCCASIONS[i]);
+  renderFilterSheetBody();
+}
 function clearFilterDraft(){
   // "ล้าง" ในแผงล้างทุกอย่างที่เห็นในแผง (รวมพร้อมส่ง/เรียงราคา/รายการโปรด) — ยังไม่มีผลกับหน้าสินค้าจนกว่าจะกด "ดู N รายการ"
   filterDraft = { cats:new Set(), customMin:PRICE_SLIDER_MIN, customMax:PRICE_SLIDER_MAX,
-    sortOrder:'none', ready:false, favorites:false, allSplit:false, sizes:new Set(), flowerTypes:new Set() };
+    sortOrder:'none', ready:false, favorites:false, allSplit:false, sizes:new Set(), flowerTypes:new Set(), tones:new Set(), occasions:new Set() };
   renderFilterSheetBody();
 }
 function applyFilterDraft(){
@@ -1504,6 +1586,8 @@ function applyFilterDraft(){
   showAllVariantsSplit = filterDraft.allSplit;
   activeSizes = new Set(filterDraft.sizes);
   activeFlowerTypes = new Set(filterDraft.flowerTypes);
+  activeTones = new Set(filterDraft.tones);
+  activeOccasions = new Set(filterDraft.occasions);
   if(activeCats.size !== 1) scrollSpyCat = 'ทั้งหมด'; else scrollSpyCat = [...activeCats][0];
   renderNav();
   renderCatalog();
@@ -1513,15 +1597,19 @@ function applyFilterDraft(){
   scrollToCatalogTop();
 }
 // จุดสีบนปุ่ม "ตัวกรอง" (มือถือ) โชว์เมื่อมีตัวกรองใดๆ ต่างไปจากค่าเริ่มต้น
-function updateFilterBadge(){
+// วาดเลขจำนวนกลุ่มตัวกรอง + จุดบนปุ่ม "ตัวกรอง" (มือถือ) — renderNav วาดปุ่มนี้ใหม่ทุกครั้ง จึงเรียกซ้ำตอนท้าย renderNav ด้วย เลขจะไม่หายเมื่อแถบหมวดถูกวาดใหม่ทีหลัง
+function paintFilterCount(){
   const dot = document.getElementById('filterBadgeDot');
   const priceActive = customPriceMin !== PRICE_SLIDER_MIN || customPriceMax !== PRICE_SLIDER_MAX;
   // นับ "กลุ่มตัวกรอง" ที่เปิดอยู่ (ไม่ใช่จำนวนค่า) เพื่อโชว์เป็นตัวเลขบนปุ่มตัวกรองบนมือถือ
   const n = [activeCats.size > 0, priceActive, activeSortOrder !== 'none', showReadyOnly, showFavoritesOnly,
-             showAllVariantsSplit, activeFlowerTypes.size > 0, activeSizes.size > 0].filter(Boolean).length;
+             showAllVariantsSplit, activeFlowerTypes.size > 0, activeSizes.size > 0, activeTones.size > 0, activeOccasions.size > 0].filter(Boolean).length;
   if(dot) dot.classList.toggle('show', n > 0);
   const cnt = document.getElementById('filterCount');
   if(cnt){ cnt.textContent = n; cnt.hidden = n === 0; }
+}
+function updateFilterBadge(){
+  paintFilterCount();
   // ชิป "พร้อมส่ง" ด่วนบนแถบหมวด ให้สถานะตรงกับตัวกรองเสมอ ไม่ว่าจะเปลี่ยนจากแผงตัวกรองหรือจากชิป
   document.querySelectorAll('.cat-quick-ready').forEach(b => b.classList.toggle('active', showReadyOnly));
   updateBottomNav();
@@ -1804,6 +1892,7 @@ function catalogPreviewOn(){
   if(!mobile) return false;
   const priceActive = customPriceMin !== PRICE_SLIDER_MIN || customPriceMax !== PRICE_SLIDER_MAX;
   return !searchQuery && activeCats.size === 0 && activeFlowerTypes.size === 0 && activeSizes.size === 0
+    && activeTones.size === 0 && activeOccasions.size === 0
     && !priceActive && !showReadyOnly && !showFavoritesOnly && !showAllVariantsSplit;
 }
 function renderCatalog(){
@@ -1911,7 +2000,7 @@ function renderCatalog(){
     }
     totalMatches += items.length;
     // เลือกชนิดดอกไม้ตอนดูทุกหมวด: ซ่อนหมวดที่ไม่มีสินค้าชนิดนั้น ไม่ให้ขึ้น "0 รายการ" เต็มหน้า
-    if(!items.length && activeFlowerTypes.size && activeCats.size === 0) return '';
+    if(!items.length && (activeFlowerTypes.size || activeTones.size || activeOccasions.size) && activeCats.size === 0) return '';
     const capped = previewOn && items.length > CAT_PREVIEW_MAX;
     if(capped) previewApplied = true;
     const moreBtnHtml = capped
@@ -1987,6 +2076,8 @@ function imgSrcFromThumbHtml(html){
 function catalogFilterSummary(){
   const parts = [];
   if(activeCats.size) parts.push([...activeCats].join(' + '));
+  if(activeOccasions.size) parts.push([...activeOccasions].join(' + '));
+  if(activeTones.size) parts.push('โทน' + [...activeTones].join(' + '));
   if(activeFlowerTypes.size) parts.push([...activeFlowerTypes].join(' + '));
   if(activeSizes.size) parts.push('ขนาด ' + [...activeSizes].join(' + '));
   if(customPriceMin !== PRICE_SLIDER_MIN || customPriceMax !== PRICE_SLIDER_MAX){
@@ -4328,6 +4419,14 @@ function bnavChipList(){
   const c = [];
   if(searchQuery) c.push(['search', '🔍 “' + searchQuery + '”']);
   if(activeCats.size > 0) c.push(['cat', [...activeCats][0]]);
+  if(activeOccasions.size > 0){
+    const o = [...activeOccasions];
+    c.push(['occasion', o.length <= 2 ? o.join(', ') : o.length + ' โอกาส']);
+  }
+  if(activeTones.size > 0){
+    const t = [...activeTones];
+    c.push(['tone', 'โทน' + (t.length <= 2 ? t.join(', ') : t.length + ' สี')]);
+  }
   if(showReadyOnly) c.push(['ready', '⚡ พร้อมส่ง']);
   if(showFavoritesOnly) c.push(['fav', '♥ รายการโปรด']);
   if(customPriceMin !== PRICE_SLIDER_MIN || customPriceMax !== PRICE_SLIDER_MAX){
@@ -4354,6 +4453,8 @@ function bnavRemoveChip(k){
     case 'sort': activeSortOrder = 'none'; bnavRefreshAll(); break;
     case 'sizes': activeSizes = new Set(); bnavRefreshAll(); break;
     case 'flower': activeFlowerTypes = new Set(); bnavRefreshAll(); break;
+    case 'occasion': activeOccasions = new Set(); bnavRefreshAll(); break;
+    case 'tone': activeTones = new Set(); bnavRefreshAll(); break;
     case 'split': toggleAllVariantsSplit(false); break;
   }
 }
@@ -4432,6 +4533,8 @@ function dtApply(setter, scrollToList, browse){
   dtFlatAll = false;
   activeSizes = new Set();
   activeFlowerTypes = new Set();
+  activeTones = new Set();
+  activeOccasions = new Set();
   scrollSpyCat = 'ทั้งหมด';
   if(setter) setter();
   renderNav();
@@ -4458,6 +4561,24 @@ function dtCat(cat, size){
 }
 function dtFlower(t){
   dtApply(() => { activeFlowerTypes = new Set([t]); }, true);
+}
+function dtOccasion(i){
+  dtApply(() => { if(OCCASIONS[i]) activeOccasions = new Set([OCCASIONS[i]]); }, true);
+}
+function dtTone(i){
+  dtApply(() => { if(TONES[i]) activeTones = new Set([TONES[i]]); }, true);
+}
+// เรียงเมนูหลักคอมตามที่ตั้งไว้ที่หลังบ้าน (ย้าย element เดิมทั้งก้อน ไม่สร้างใหม่ จึงไม่กระทบตัวฟังเหตุการณ์)
+function applyDtMenuOrder(){
+  const nav = document.getElementById('dtNav');
+  if(!nav) return;
+  const sig = MENU_ORDER.join('|');
+  if(nav.dataset.order === sig) return;
+  MENU_ORDER.forEach(k => {
+    const el = nav.querySelector(':scope > [data-key="' + k + '"]');
+    if(el) nav.appendChild(el);
+  });
+  nav.dataset.order = sig;
 }
 function dtOpenInfo(title){
   const m = document.getElementById('dtInfoModal');
@@ -4486,7 +4607,9 @@ function dtCloseInfo(){
 function syncDtNav(){
   const nav = document.getElementById('dtNav');
   if(!nav) return;
+  applyDtMenuOrder();
   const none = activeCats.size === 0 && activeFlowerTypes.size === 0 && activeSizes.size === 0
+    && activeTones.size === 0 && activeOccasions.size === 0
     && customPriceMin === PRICE_SLIDER_MIN && customPriceMax === PRICE_SLIDER_MAX
     && activeSortOrder === 'none' && !showReadyOnly && !showFavoritesOnly && !showAllVariantsSplit && !searchQuery;
   if(!none) dtBrowse = true; // มีตัวกรองใช้งานอยู่ (เช่นกดไทล์หมวด) = แสดงแถบตัวกรอง
@@ -4519,6 +4642,20 @@ function syncDtNav(){
     mark(b, priceOn && Number(b.dataset.min) === customPriceMin && Number(b.dataset.max) === customPriceMax);
   });
   mark(nav.querySelector('.dt-item[data-key="price"] > .dt-link'), priceOn);
+  // โอกาสพิเศษ / โทนสี (ซ่อนทั้งเมนูถ้ายังไม่มีสินค้าติดค่านั้นเลย)
+  [['dtOccItem','dtOccSub',occasionsInUse,OCCASIONS,'occasion',activeOccasions,false],['dtToneItem','dtToneSub',tonesInUse,TONES,'tone',activeTones,true]].forEach(([itemId, subId, getList, full, act, activeSet, dot]) => {
+    const it = document.getElementById(itemId), sb = document.getElementById(subId);
+    if(!it || !sb) return;
+    const list = getList();
+    it.hidden = list.length === 0;
+    const sg = list.join('|');
+    if(sb.dataset.sig !== sg){
+      sb.innerHTML = list.map(t => `<button type="button" role="menuitem" data-act="${act}" data-i="${full.indexOf(t)}" data-t="${escapeHtml(t)}">${dot ? toneDotHtml(t) : ''}${escapeHtml(t)}</button>`).join('');
+      sb.dataset.sig = sg;
+    }
+    sb.querySelectorAll('[data-act="' + act + '"]').forEach(b => mark(b, activeSet.has(b.dataset.t)));
+    mark(it.querySelector(':scope > .dt-link'), activeSet.size > 0);
+  });
   // ชนิดดอกไม้
   const item = document.getElementById('dtFlowerItem');
   const sub = document.getElementById('dtFlowerSub');
@@ -4547,6 +4684,8 @@ function syncDtNav(){
     else if(act === 'size') dtCat(b.dataset.cat, b.dataset.s);
     else if(act === 'price') dtPrice(Number(b.dataset.min), Number(b.dataset.max));
     else if(act === 'flower') dtFlower(b.dataset.t);
+    else if(act === 'occasion') dtOccasion(Number(b.dataset.i));
+    else if(act === 'tone') dtTone(Number(b.dataset.i));
     else if(act === 'reviews') openReviewsAll();
     else if(act === 'info') dtOpenInfo(b.dataset.title || '');
     // เมนูย่อยค้างเปิดอยู่ใต้เมาส์หลังกด → ซ่อนไว้จนกว่าเมาส์จะออก
