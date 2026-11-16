@@ -1,24 +1,24 @@
 /* =========================================================
    S.Flower Bloom - script.js
-   ระบบทั้งหมดของหน้าเว็บ: โหลดสินค้าจาก products.json, ตะกร้าสินค้า,
+   ระบบทั้งหมดของหน้าเว็บ: โหลดสินค้าจาก Supabase, ตะกร้าสินค้า,
    ตัวเลือกสินค้า (สี/ไซซ์/ของเสริม), คำนวณราคา และระบบสั่งซื้อ
    ถูกเรียกใช้จาก index.html ผ่าน <script src="script.js" defer><\/script>
    ========================================================= */
 
 /* ---------------- แก้ไขสินค้าตรงนี้ได้เลย ---------------- */
-let PRODUCTS = []; // โหลดจาก products.json ตอนเปิดหน้าเว็บ (ดูฟังก์ชัน loadProducts ด้านล่าง)
+let PRODUCTS = []; // โหลดจาก Supabase ตอนเปิดหน้าเว็บ (ดูฟังก์ชัน loadProducts ด้านล่าง)
 const PAGE_LINK = 'https://m.me/S.Flower.Bloom44';
 
 /* ---------- โหมดปิดราคาทั้งร้าน (สวิตช์อยู่ที่หลังบ้าน admin.html) ----------
-   ค่าเริ่มต้น = ซ่อนไว้ก่อน เพื่อกันราคาหลุดเมื่ออ่านค่าจาก Firestore ไม่ทัน/ไม่ได้ (ตกไปใช้ products.json)
-   จะแสดงราคาก็ต่อเมื่ออ่านเอกสารจาก Firestore ได้สำเร็จ และหลังบ้านไม่ได้เปิดสวิตช์ซ่อนราคาไว้ */
+   ค่าเริ่มต้น = ซ่อนไว้ก่อน เพื่อกันราคาหลุดเมื่ออ่านค่าจาก Supabase ไม่ทัน/ไม่ได้
+   จะแสดงราคาก็ต่อเมื่ออ่านข้อมูลจาก Supabase ได้สำเร็จ และหลังบ้านไม่ได้เปิดสวิตช์ซ่อนราคาไว้ */
 let PRICES_HIDDEN = true;
-let cloudHidePrices = true;   // ค่าที่อ่านได้ล่าสุดจาก Firestore
+let cloudHidePrices = true;   // ค่าที่อ่านได้ล่าสุดจาก Supabase
 /* ---------- โหมดปิดระบบสั่งทำ/ตะกร้า (สวิตช์ "ปิดระบบสั่งทำ / ตะกร้า" ที่หลังบ้าน) ----------
    ยังแสดงราคาตามปกติ แต่ปิดตะกร้า/ปุ่มสั่งทำ ให้ลูกค้าแคปหน้าจอแล้วทักเพจ
    ค่าเริ่มต้น = ปิดไว้ก่อน (เหมือนราคา) — จะเปิดสั่งทำ/ตะกร้าก็ต่อเมื่อหลังบ้านตั้ง orderClosed เป็น false ชัดเจนเท่านั้น */
 let ORDERS_CLOSED = true;
-let cloudOrderClosed = true; // ค่าที่อ่านได้ล่าสุดจาก Firestore (ช่อง orderClosed)
+let cloudOrderClosed = true; // ค่าที่อ่านได้ล่าสุดจาก Supabase (ช่อง orderClosed)
 /* ---------- ยอดสั่งซื้อขั้นต่ำที่นัดรับฟรี (ตั้งค่าที่หลังบ้าน ช่อง freePickupMin) ----------
    ค่าเริ่มต้น 399 — อ่านค่าไม่ได้/ค่าผิดปกติจะใช้ 399 */
 const DEFAULT_FREE_PICKUP_MIN = 399;
@@ -39,15 +39,15 @@ function setOrdersClosed(v){
 function ordersBlocked(){ return PRICES_HIDDEN || ORDERS_CLOSED; } // ปิดสั่งซื้อไม่ว่าด้วยเหตุผลใด (ซ่อนราคา หรือ ปิดสั่งทำ)
 let REVIEW_HIDDEN = new Set(); // รูปรีวิวที่ร้านลบออกจากเว็บ (ซ่อน) จากหลังบ้าน — ไม่แสดงในแถบรีวิว/รีวิวทั้งหมด/แกลเลอรีสินค้า
 let REVIEW_TAGS = {};         // ป้ายสินค้าของรูปรีวิว { 'review12.jpg': ['s13'] } จากหลังบ้าน (ช่อง reviewsJson) — ว่าง = รีวิวไม่ผูกสินค้า
-let cloudStamp = null;        // ตราเวลา+สถานะสวิตช์+เวลาแก้ตัวเลือกร้านล่าสุดจาก Firestore
+let cloudStamp = null;        // ตราเวลา+สถานะสวิตช์+เวลาแก้ตัวเลือกร้านล่าสุดจาก Supabase
 let cloudOptions = null;      // ตัวเลือกร้าน (หมวดหมู่/ชนิดดอกไม้/ขนาด) ที่แก้จากหลังบ้าน null = ใช้ค่าเริ่มต้นในไฟล์นี้
-let CATALOG_DOC_STAMP = null; // ตราที่ใช้ตอนโหลดหน้านี้ (null = ไม่ได้ใช้ข้อมูลจาก Firestore)
+let CATALOG_DOC_STAMP = null; // ตราที่ใช้ตอนโหลดหน้านี้ (null = ไม่ได้ใช้ข้อมูลจาก Supabase)
 let SITE_CFG = null;           // ค่า "แต่งหน้าร้าน" จากหลังบ้าน (ช่อง siteJson) — null = ใช้ค่าตั้งต้นในโค้ด/HTML
 let SITE_SHOP_NAME = 'S.Flower Bloom';
 let _siteReadyRes; const SITE_READY = new Promise(r => { _siteReadyRes = r; }); // แบนเนอร์/ป๊อปอัปรอจนรู้ค่าตั้งก่อนค่อยเริ่ม
 const PRICE_ASK_SHORT = 'สอบถามราคาทางเพจ';
 const PRICE_LOADING_SHORT = 'กำลังโหลดราคา…';
-let PRICES_PENDING = false;   // true = ยังไม่รู้สถานะราคาจาก Firestore (โหลดไม่ทัน/เน็ตช้า) — ยังซ่อนราคาไว้เหมือนเดิม แต่โชว์ว่า "กำลังโหลดราคา…" แทนข้อความให้ไปถามเพจ
+let PRICES_PENDING = false;   // true = ยังไม่รู้สถานะราคาจาก Supabase (โหลดไม่ทัน/เน็ตช้า) — ยังซ่อนราคาไว้เหมือนเดิม แต่โชว์ว่า "กำลังโหลดราคา…" แทนข้อความให้ไปถามเพจ
 function setPricesPending(v){
   PRICES_PENDING = !!v;
   document.documentElement.classList.toggle('prices-pending', PRICES_PENDING);
@@ -187,7 +187,7 @@ function selectSizeVariant(id, idx){
    สินค้าเก่าที่ใช้ colors/sizes/addons แบบเดิมไม่ต้องแก้อะไร อยู่ร่วมกันได้ปกติ — ระบบนี้ทำงาน
    เฉพาะสินค้าที่มีทั้ง p.options และ p.variants เท่านั้น
 
-   โครงสร้างในไฟล์ products.json:
+   โครงสร้างข้อมูลสินค้า (JSON ในตาราง shop_catalog):
    "options": [
      { "name": "สีดอก", "values": ["ส้ม", "เหลือง"] },
      { "name": "สีช่อ", "values": ["ขาว", "แดง"] },
@@ -313,7 +313,7 @@ function parseCartKey(key){
 }
 
 // ค่าเริ่มต้นของหมวดหมู่/ขนาด — ถ้าแก้จากหลังบ้าน (เมนู ⋯ เพิ่มเติม › จัดการหมวดหมู่ / ชนิดดอกไม้ / ขนาด)
-// ตอนโหลดจาก Firestore ฟังก์ชัน applyShopOptions ด้านล่างจะเปลี่ยนค่าใน CATS / CATEGORY_SIZES / FLOWER_TYPES ในที่เดิม
+// ตอนโหลดจาก Supabase ฟังก์ชัน applyShopOptions ด้านล่างจะเปลี่ยนค่าใน CATS / CATEGORY_SIZES / FLOWER_TYPES ในที่เดิม
 const CATS = ['ทั้งหมด','ช่อดอกไม้','กรอบรูป','กระถาง','อื่นๆ'];
 const CATEGORY_SIZES = {
   'ช่อดอกไม้': ['ทั้งหมด','เล็ก','กลาง','ใหญ่','ใส่เงิน',],
@@ -459,7 +459,7 @@ function updateModalHeart(){
     modalHeart.setAttribute('aria-label', fav ? 'เอาออกจากรายการโปรด' : 'บันทึกไว้ในรายการโปรด');
   });
 }
-// สินค้าบางชิ้น (หรือบางแบบ) อาจถูกลบออกจาก products.json ไปแล้ว — ตัดรายการโปรดที่ค้างอยู่ทิ้งไปด้วย
+// สินค้าบางชิ้น (หรือบางแบบ) อาจถูกลบออกจากระบบไปแล้ว — ตัดรายการโปรดที่ค้างอยู่ทิ้งไปด้วย
 function pruneFavoritesAgainstProducts(){
   let changed = false;
   [...favorites].forEach(k => {
@@ -498,7 +498,7 @@ let searchQuery = '';
 let scrollSpyObserver = null;
 let cart = loadCartFromStorage(); // key -> { qty, unitPrice, label } — restored from the browser if the customer visited before
 
-// สินค้าบางชิ้นอาจถูกลบออกจาก products.json ไปแล้วตั้งแต่ลูกค้าแวะมาครั้งก่อน —
+// สินค้าบางชิ้นอาจถูกลบออกจากระบบไปแล้วตั้งแต่ลูกค้าแวะมาครั้งก่อน —
 // ตัดรายการเหล่านั้นออกจากตะกร้าที่กู้คืนมา กันไม่ให้ค้างเป็นรายการผี
 function pruneCartAgainstProducts(){
   let changed = false;
@@ -1078,9 +1078,9 @@ function setSize(s){
   updateFilterBadge();
 }
 
-// รายชนิดอ่านจาก window.FLOWER_TYPES ใน firebase-config.js (แหล่งเดียวกับหลังบ้าน) · ปุ่ม "ทั้งหมด" อยู่หน้าสุดเสมอ
+// รายชนิดอ่านจาก window.FLOWER_TYPES ใน supabase-config.js (แหล่งเดียวกับหลังบ้าน) · ปุ่ม "ทั้งหมด" อยู่หน้าสุดเสมอ
 const FLOWER_TYPES = ['ทั้งหมด', ...(Array.isArray(window.FLOWER_TYPES) ? window.FLOWER_TYPES : [])];
-// โอกาสพิเศษ / โทนสี / ลำดับเมนูคอม — ค่าเริ่มต้นจาก firebase-config.js · หลังบ้านบันทึกทับได้ (ดู applyShopOptions)
+// โอกาสพิเศษ / โทนสี / ลำดับเมนูคอม — ค่าเริ่มต้นจาก supabase-config.js · หลังบ้านบันทึกทับได้ (ดู applyShopOptions)
 const OCCASIONS = Array.isArray(window.OCCASIONS) ? window.OCCASIONS.slice() : [];
 const TONES = Array.isArray(window.TONES) ? window.TONES.slice() : [];
 const MENU_KEYS = ['home','occasion','tone','all','flower','price','reviews','how','contact'];
@@ -3666,15 +3666,10 @@ function addModalToCart(){
   if(!pdIsDesktop()) closeProductModal(); // จอคอมอยู่หน้าเดิมต่อ จะได้ดูสินค้าแนะนำ/เพิ่มชิ้นอื่นได้ (ตัวเลขตะกร้าบนแถบบนอัปเดตเอง)
 }
 
-/* ---------- โหลดข้อมูลสินค้าจาก products.json ----------
-   แก้ไข/เพิ่ม/ลบสินค้าได้ที่ไฟล์ products.json โดยตรง ไม่ต้องแก้ไฟล์นี้เลย
-   ต้องเปิดเว็บผ่านลิงก์จริง (เช่น Netlify) เท่านั้น ถ้าดับเบิลคลิกเปิดไฟล์ตรงๆ
-   (file://) เบราว์เซอร์จะบล็อกการโหลดไฟล์ json แล้วจะเห็นข้อความแจ้ง error สีแดงแทน */
-/* ดึงสินค้าจาก Firestore (ที่หลังบ้าน admin.html บันทึกไว้)
-   คืนค่า null ถ้ายังไม่ได้ตั้งค่า Firebase หรือเชื่อมต่อไม่ได้ เพื่อให้หน้าร้าน
-   ตกไปใช้ products.json ต่อได้ตามปกติ ลูกค้าจะไม่เห็นหน้าเว็บพัง */
-/* ตัวสลับแหล่งข้อมูล: window.DATA_SOURCE = 'supabase' (ตั้งใน firebase-config.js) → อ่านจากตาราง shop_catalog ใน Supabase
-   ไม่ตั้ง/เป็นอย่างอื่น = อ่านจาก Firestore แบบเดิม · คืนข้อมูลหน้าตาเดียวกับเอกสาร Firestore (ช่องที่ว่างไม่ใส่ เหมือนไม่มีช่องนั้น) */
+/* ---------- โหลดข้อมูลสินค้าจาก Supabase ----------
+   แก้ไข/เพิ่ม/ลบสินค้าที่หลังบ้าน (admin.html) ข้อมูลเก็บในตาราง shop_catalog ใน Supabase
+   ค่าเชื่อมต่ออยู่ที่ supabase-config.js (SUPABASE_URL / SUPABASE_KEY)
+   fetchCatalogDocFromSupabase คืนข้อมูลเป็นออบเจ็กต์ (ช่องที่ว่างไม่ใส่ เหมือนไม่มีช่องนั้น) */
 async function fetchCatalogDocFromSupabase(){
   const base = String(window.SUPABASE_URL || '').replace(/\/+$/, '');
   if(!base || !window.SUPABASE_KEY) return null;
@@ -3691,24 +3686,9 @@ async function fetchCatalogDocFromSupabase(){
   Object.keys(MAP).forEach(c => { if(r[c] !== null && r[c] !== undefined) d[MAP[c]] = r[c]; });
   return d;
 }
-async function fetchProductsFromFirestore(){
-  let data;
-  if(window.DATA_SOURCE === 'supabase'){
-    data = await fetchCatalogDocFromSupabase();
-    if(!data) return null;
-  }else{
-    const cfg = window.FIREBASE_CONFIG;
-    if(!cfg || !cfg.projectId || String(cfg.apiKey || '').includes('ใส่ค่าจริง')) return null;
-    const [appMod, dbMod] = await Promise.all([
-      import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js'),
-      import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js')
-    ]);
-    const app = appMod.getApps().length ? appMod.getApps()[0] : appMod.initializeApp(cfg);
-    const ref = dbMod.doc(dbMod.getFirestore(app), window.CATALOG_COLLECTION || 'catalog', window.CATALOG_DOC || 'products');
-    const snap = await dbMod.getDoc(ref);
-    if(!snap.exists()) return null;
-    data = snap.data() || {};
-  }
+async function fetchProductsFromSupabase(){
+  const data = await fetchCatalogDocFromSupabase();
+  if(!data) return null;
   cloudHidePrices = data.hidePrices === true;
   cloudOrderClosed = data.orderClosed !== false; // ไม่มีช่องนี้ = ปิดไว้ก่อน เปิดเฉพาะเมื่อหลังบ้านสั่ง false
   cloudFreePickupMin = parseFreePickupMin(data.freePickupMin);
@@ -3798,108 +3778,50 @@ function applySiteSettings(cfg){
   }catch(err){ console.warn('ใช้ค่าแต่งหน้าร้านไม่สำเร็จ ใช้ค่าเดิมต่อ:', err); }
 }
 
-// ห่อ loadProducts: ไม่ว่าจะโหลดจาก Firestore / products.json / ล้มเหลว ต้องปล่อยให้แบนเนอร์กับป๊อปอัปเริ่มเสมอ
+// ห่อ loadProducts: ไม่ว่าจะโหลดสำเร็จหรือล้มเหลว ต้องปล่อยให้แบนเนอร์กับป๊อปอัปเริ่มเสมอ
 async function loadProducts(){
   try{ await loadProductsInner(); }
   finally{ _siteReadyRes(); }
 }
+/* ดึงสินค้าจาก Supabase: ลองใหม่เองสูงสุด 4 ครั้ง (รอไม่เกิน 20 วินาทีต่อครั้ง)
+   ระหว่างรอ PRICES_HIDDEN ยังเป็น true ตลอด จึงไม่มีทางโชว์ราคาทั้งที่ร้านเปิดสวิตช์ซ่อนไว้
+   ถ้าลองครบแล้วยังไม่ได้ จะโชว์ข้อความให้กดลองใหม่ */
 async function loadProductsInner(){
   const catalogEl = document.getElementById('catalog');
-  // ลอง Firestore ก่อน แต่ไม่ยอมรอเกิน 6 วินาที ไม่งั้นเน็ตช้าจะค้างหน้าร้านทั้งหน้า
-  // ถ้าช้า/ล้มเหลว (cloudPending) หน้าร้านเปิดจาก products.json ไปก่อน แล้วให้ loadPricesLate ตามดึงต่อเบื้องหลัง
-  let cloudPromise = null, cloudPending = false;
-  try{
-    cloudPromise = fetchProductsFromFirestore();
-    cloudPromise.catch(() => {}); // กัน error เด้งเป็น unhandled ตอนที่เราเลิกรอไปแล้ว (ตัว loadPricesLate จะรอ/จับเองอีกที)
-    const CLOUD_SLOW = {};
-    const fromCloud = await Promise.race([
-      cloudPromise,
-      new Promise(resolve => setTimeout(() => resolve(CLOUD_SLOW), 6000))
-    ]);
-    if(fromCloud === CLOUD_SLOW){
-      cloudPending = true;
-    } else if(fromCloud){
-      PRODUCTS = fromCloud;
-      applyShopOptions(cloudOptions);
-      setPricesHidden(cloudHidePrices);
-      setOrdersClosed(cloudOrderClosed);
-      setFreePickupMin(cloudFreePickupMin);
-      applySiteSettings(SITE_CFG);
-      CATALOG_DOC_STAMP = cloudStamp;
-      finishLoadingProducts();
-      return;
-    }
-  } catch(err){
-    cloudPending = true;
-    cloudPromise = null; // ครั้งแรกล้มเหลวแล้ว — loadPricesLate จะเริ่มลองใหม่เอง
-    console.warn('ดึงสินค้าจาก Firestore ไม่สำเร็จ จะใช้ products.json แทน:', err);
-  }
-  // ยังไม่รู้สถานะสวิตช์ราคา: ซ่อนราคาไว้ก่อน (กันราคาหลุด) แต่โชว์ว่ากำลังโหลด ไม่ใช่ให้ไปถามเพจ
-  if(cloudPending) setPricesPending(true);
-  try{
-    const res = await fetch('products.json');
-    if(!res.ok) throw new Error('HTTP ' + res.status);
-    PRODUCTS = await res.json();
-  } catch(err){
-    catalogEl.innerHTML = `
-      <div style="text-align:center; padding:60px 20px; color:var(--rose-dark);">
-        <p style="font-size:16px; font-weight:400; margin-bottom:8px;"><svg class="ic" aria-hidden="true"><use href="#i-alert"/></svg> โหลดข้อมูลสินค้าไม่สำเร็จ</p>
-        <p style="font-size:13.5px; color:var(--plum);">กรุณาตรวจสอบว่าไฟล์ products.json อยู่ในโฟลเดอร์เดียวกับเว็บไซต์<br>และเปิดเว็บผ่านลิงก์จริง ไม่ใช่การดับเบิลคลิกเปิดไฟล์โดยตรง</p>
-      </div>`;
-    console.error('โหลด products.json ไม่สำเร็จ:', err);
-    if(cloudPending) loadPricesLate(cloudPromise);
-    return;
-  }
-  finishLoadingProducts();
-  if(cloudPending) loadPricesLate(cloudPromise);
-}
-
-/* Firestore ตอบช้า/ล้มเหลวตอนเปิดหน้า: หน้าร้านเปิดจาก products.json ไปก่อน (ยังซ่อนราคา โชว์ "กำลังโหลดราคา…")
-   แล้วรอ/ลองดึง Firestore ต่อเบื้องหลัง พอได้ค่าจริงก็อัปเดตหน้าเดิมเลย ไม่ต้องรีโหลด
-   ลองครบแล้วยังไม่ได้ค่อยตกไปโชว์ข้อความให้แคปหน้าจอถามราคาทางเพจเหมือนเดิม
-   (ระหว่างรอ PRICES_HIDDEN ยังเป็น true ตลอด จึงไม่มีทางโชว์ราคาทั้งที่ร้านเปิดสวิตช์ซ่อนไว้) */
-async function loadPricesLate(firstPromise){
   const withCap = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
-  const delays = firstPromise ? [0, 3000, 8000, 15000] : [3000, 8000, 15000];
-  let list = null;
+  const delays = [0, 3000, 8000, 15000];
+  let fromCloud = null;
   for(let i = 0; i < delays.length; i++){
     if(delays[i]) await new Promise(r => setTimeout(r, delays[i]));
     try{
-      const p = (i === 0 && firstPromise) ? firstPromise : fetchProductsFromFirestore();
-      list = await withCap(p, 20000);
-      break; // ได้คำตอบแล้ว (ได้รายการ หรือ null = ไม่มีเอกสาร/ยังไม่ได้ตั้งค่า) ไม่ต้องลองซ้ำ
-    }catch(err){ list = null; }
-  }
-  if(list && list.length){
-    try{
-      PRODUCTS = list;
-      applyShopOptions(cloudOptions);
-      setPricesHidden(cloudHidePrices);
-      setOrdersClosed(cloudOrderClosed);
-      setFreePickupMin(cloudFreePickupMin);
-      CATALOG_DOC_STAMP = cloudStamp;
-      setPricesPending(false);
-      PRODUCTS = PRODUCTS.filter(p => !(p && p.hidden));
-      pruneCartAgainstProducts();
-      pruneFavoritesAgainstProducts();
-      renderNav();
-      renderCatalog();
-      renderFilterSidebar();
-      updateFilterBadge();
-      updateCartUI();
-      if(modalProductId) updateModalPriceDisplay(); // ลูกค้าเปิดหน้าสินค้าค้างไว้ระหว่างรอ — อัปเดตกล่องราคาให้ด้วย
-      return;
+      fromCloud = await withCap(fetchProductsFromSupabase(), 20000);
+      break; // ได้คำตอบแล้ว (ได้รายการ หรือ null = ยังไม่มีข้อมูล/ยังไม่ได้ตั้งค่า) ไม่ต้องลองซ้ำ
     }catch(err){
-      console.warn('ใช้ข้อมูลที่ตามโหลดมาไม่สำเร็จ:', err);
+      fromCloud = null;
+      console.warn('ดึงสินค้าจาก Supabase ไม่สำเร็จ (ครั้งที่ ' + (i + 1) + '):', err);
     }
   }
-  // ลองครบแล้วยังไม่ได้ — เลิกโชว์ "กำลังโหลด" แล้วกลับไปข้อความให้ถามราคาทางเพจ
-  setPricesPending(false);
-  renderCatalog();
-  if(modalProductId) updateModalPriceDisplay();
+  if(fromCloud && fromCloud.length){
+    PRODUCTS = fromCloud;
+    applyShopOptions(cloudOptions);
+    setPricesHidden(cloudHidePrices);
+    setOrdersClosed(cloudOrderClosed);
+    setFreePickupMin(cloudFreePickupMin);
+    applySiteSettings(SITE_CFG);
+    CATALOG_DOC_STAMP = cloudStamp;
+    setPricesPending(false);
+    finishLoadingProducts();
+    return;
+  }
+  catalogEl.innerHTML = `
+    <div style="text-align:center; padding:60px 20px; color:var(--rose-dark);">
+      <p style="font-size:16px; font-weight:400; margin-bottom:8px;"><svg class="ic" aria-hidden="true"><use href="#i-alert"/></svg> โหลดข้อมูลสินค้าไม่สำเร็จ</p>
+      <p style="font-size:13.5px; color:var(--plum); margin-bottom:14px;">อินเทอร์เน็ตอาจช้าหรือหลุด ลองโหลดใหม่อีกครั้งนะคะ</p>
+      <button type="button" onclick="location.reload()" style="padding:9px 22px; border-radius:999px; border:1px solid var(--rose-dark); background:#fff; color:var(--rose-dark); font:inherit; cursor:pointer;">ลองใหม่</button>
+    </div>`;
 }
 
-/* ขั้นตอนหลังได้ข้อมูลสินค้ามาแล้ว ใช้ร่วมกันทั้งทาง Firestore และ products.json */
+/* ขั้นตอนหลังได้ข้อมูลสินค้ามาแล้ว ใช้ร่วมกันหลังโหลดจาก Supabase สำเร็จ */
 function finishLoadingProducts(){
   // สินค้าที่ซ่อนจากหลังบ้าน (hidden: true) ไม่แสดงบนหน้าร้านเลย — ตัดออกก่อนขั้นตอนอื่นทั้งหมด
   // ตะกร้าและรายการโปรดที่ค้างสินค้านี้อยู่จะถูกเคลียร์ตามโดย prune ด้านล่างเอง
@@ -3936,14 +3858,14 @@ const PRODUCTS_LOADED = loadProducts().catch(() => {});
 })();
 
 /* ลูกค้ากลับมาที่แท็บ: เช็คว่าหลังบ้านเปิด/ปิดสวิตช์ราคา หรือแก้ข้อมูลสินค้าไปหรือยัง ถ้าเปลี่ยนให้โหลดหน้าใหม่
-   (กันลูกค้าที่เปิดหน้าค้างไว้เห็นราคาเก่า) เช็คเฉพาะตอนที่หน้านี้ใช้ข้อมูลจาก Firestore และไม่เช็คถี่เกิน 30 วินาที */
+   (กันลูกค้าที่เปิดหน้าค้างไว้เห็นราคาเก่า) เช็คเฉพาะตอนที่หน้านี้ใช้ข้อมูลจาก Supabase และไม่เช็คถี่เกิน 30 วินาที */
 let lastCloudCheck = 0;
 document.addEventListener('visibilitychange', async () => {
   if(document.visibilityState !== 'visible' || !CATALOG_DOC_STAMP) return;
   if(Date.now() - lastCloudCheck < 30000) return;
   lastCloudCheck = Date.now();
   try{
-    await fetchProductsFromFirestore();
+    await fetchProductsFromSupabase();
     if(cloudStamp && cloudStamp !== CATALOG_DOC_STAMP) location.reload();
   } catch(err){ /* เน็ตหลุด — ใช้ข้อมูลเดิมต่อ */ }
 });
@@ -3998,7 +3920,7 @@ async function scanReviewsFallback(){
 }
 async function loadReviews(){
   const found = (await loadReviewList()) || (await scanReviewsFallback());
-  // รูปที่เพิ่มจากหลังบ้านด้วย path (เก็บใน REVIEW_TAGS คีย์ที่มี /) — ต้องรอข้อมูลจาก Firestore โหลดเสร็จก่อน
+  // รูปที่เพิ่มจากหลังบ้านด้วย path (เก็บใน REVIEW_TAGS คีย์ที่มี /) — ต้องรอข้อมูลจาก Supabase โหลดเสร็จก่อน
   try{ await PRODUCTS_LOADED; }catch(_){}
   Object.keys(REVIEW_TAGS).filter(k => k.includes('/')).forEach(k => {
     const src = reviewSrcOf(k);

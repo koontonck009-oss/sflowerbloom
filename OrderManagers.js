@@ -1,29 +1,18 @@
-// 🔥 ตั้งค่า Firebase ตรงนี้ — เอาค่ามาจาก Firebase Console
-        // Project settings (รูปเฟือง) > General > Your apps > SDK setup and configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyAKFvEnppUTj2iW8UXsh4-fCnMBvtF1UP8",
-            authDomain: "sflowerbloomordermanager.firebaseapp.com",
-            databaseURL: "https://sflowerbloomordermanager-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "sflowerbloomordermanager",
-            storageBucket: "sflowerbloomordermanager.firebasestorage.app",
-            messagingSenderId: "135079797740",
-            appId: "1:135079797740:web:5d3113074955f0ce3c16c9"
-        };
-        firebase.initializeApp(firebaseConfig);
+// ฐานข้อมูลของระบบนี้คือ Supabase — ผ่านตัวแทน window.firebase ที่ OrderData.js สร้างไว้ (ไม่ได้เชื่อม Firebase จริง)
         const db = firebase.firestore();
-        // แคชข้อมูลไว้ในเครื่อง: เปิดครั้งถัดไปแสดงออเดอร์ทันทีจากเครื่อง แล้วดึงเฉพาะส่วนที่เปลี่ยนจากเซิร์ฟเวอร์
-        // (ต้องเรียกก่อนใช้ Firestore อย่างอื่น) ถ้าเบราว์เซอร์ไม่รองรับ จะทำงานแบบเดิมโดยไม่แคช
+        // แคชข้อมูลไว้ในเครื่อง: เปิดครั้งถัดไปแสดงออเดอร์ทันทีจากเครื่อง แล้วดึงเฉพาะส่วนที่เปลี่ยนจากเซิร์ฟเวอร์ (ทำโดย OrderData.js)
+        // (ต้องเรียกก่อนใช้ฐานข้อมูลอย่างอื่น) ถ้าเบราว์เซอร์ไม่รองรับ จะทำงานแบบเดิมโดยไม่แคช
         try {
             db.settings({ cacheSizeBytes: 200 * 1024 * 1024 });
             db.enablePersistence({ synchronizeTabs: true })
-                .catch((err) => console.warn('Firestore offline cache unavailable:', err && err.code));
+                .catch((err) => console.warn('Offline cache unavailable:', err && err.code));
         } catch (err) {
-            console.warn('Firestore offline cache setup failed:', err);
+            console.warn('Offline cache setup failed:', err);
         }
         const auth = firebase.auth();
 
         // Login screen accepts a plain "admin" id, but the real password check happens
-        // on Firebase's servers (via this fixed account), not in this file's JS —
+        // on Supabase's servers (via this fixed account), not in this file's JS —
         // so the password is never sitting in readable page source.
         const ADMIN_LOGIN_EMAIL = 'admin@sflowerbloom.local';
 
@@ -856,28 +845,16 @@
                 async function loadProductCatalog() {
                     let list = null;
                     try {
-                        if (window.DATA_SOURCE === 'supabase' && window.SUPABASE_URL && window.SUPABASE_KEY) {
-                            // อ่านจาก Supabase (ตาราง shop_catalog ใครก็อ่านได้) — ตั้งค่าที่ firebase-config.js
+                        if (window.SUPABASE_URL && window.SUPABASE_KEY) {
+                            // อ่านจาก Supabase (ตาราง shop_catalog ใครก็อ่านได้) — ตั้งค่าที่ supabase-config.js
                             const base = String(window.SUPABASE_URL).replace(/\/+$/, '');
                             const res = await fetch(base + '/rest/v1/shop_catalog?id=eq.1&select=json_data', { headers: { apikey: window.SUPABASE_KEY }, cache: 'no-store' });
                             if (!res.ok) throw new Error('supabase ' + res.status);
                             const rows = await res.json();
                             const raw = rows && rows[0] && rows[0].json_data;
                             if (typeof raw === 'string') list = JSON.parse(raw);
-                        } else {
-                            const snap = await db.collection('catalog').doc('products').get();
-                            if (snap.exists) {
-                                const d = snap.data() || {};
-                                list = typeof d.json === 'string' ? JSON.parse(d.json) : d.list;
-                            }
                         }
-                    } catch (err) { console.warn('โหลดสินค้าจากระบบข้อมูลไม่ได้ จะลองใช้ products.json', err); }
-                    if (!Array.isArray(list) || !list.length) {
-                        try {
-                            const r = await fetch('products.json', { cache: 'no-cache' });
-                            if (r.ok) list = await r.json();
-                        } catch (err) { console.warn('โหลด products.json ไม่ได้', err); }
-                    }
+                    } catch (err) { console.warn('โหลดสินค้าจาก Supabase ไม่ได้', err); }
                     const products = (Array.isArray(list) ? list : []).map(toOrderProduct).filter(Boolean);
                     // ของเสริม (เช่น กล่องใส่กรอบรูป) ให้ค้นหา/เลือกได้เองด้วย — รวมชื่อ+ราคาที่ซ้ำกัน
                     const addonSeen = new Set();
@@ -1779,7 +1756,7 @@
                     imageUrlInput.value = '';
                 }
 
-                // Resize + re-encode as JPEG so the stored base64 stays safely under Firestore's 1MB/document limit.
+                // Resize + re-encode as JPEG so the stored base64 stays safely under the 1MB/document limit.
                 // Budget is divided across MAX_ORDER_IMAGES so multiple attached photos on one order still fit
                 // comfortably under the 1MB/doc cap alongside the order's other fields.
                 function compressImageToDataURL(img) {
@@ -2125,7 +2102,7 @@
                         }
                         showToast(`นำเข้าข้อมูลเก่า ${imp.orders.length} ออเดอร์สำเร็จ`);
                         imp.orders = []; imp.open = false;
-                    } catch (err) { console.error(err); showToast('นำเข้าไม่สำเร็จ ตรวจสอบการเชื่อมต่อ / Firestore rules'); }
+                    } catch (err) { console.error(err); showToast('นำเข้าไม่สำเร็จ ตรวจสอบการเชื่อมต่อ / นโยบาย (RLS) ของ Supabase'); }
                     imp.busy = false;
                 }
 
@@ -2339,7 +2316,7 @@
                     };
                     db.collection('transactions').doc(id).set(data)
                         .then(() => showToast(editingTxId.value ? 'แก้ไขรายการเรียบร้อย' : 'บันทึกรายการเรียบร้อย'))
-                        .catch(() => showToast('บันทึกไม่สำเร็จ ตรวจสอบการเชื่อมต่อ / Firestore rules'));
+                        .catch(() => showToast('บันทึกไม่สำเร็จ ตรวจสอบการเชื่อมต่อ / นโยบาย (RLS) ของ Supabase'));
                     // ย้ายมุมมองไปเดือนของรายการที่เพิ่งบันทึก เพื่อให้เห็นรายการทันที
                     if (accRangeActive.value) {
                         const lo = [accDateFrom.value, accDateTo.value].filter(Boolean).sort()[0];
@@ -2442,7 +2419,7 @@
 
                 let listenersStarted = false;
 
-                function startFirestoreListeners() {
+                function startOrderListeners() {
                     if (listenersStarted) return;
                     listenersStarted = true;
 
@@ -2461,16 +2438,16 @@
                         if (!fromCache || !snapshot.empty) ordersLoaded.value = true;
                     }, (err) => {
                         ordersLoaded.value = true;
-                        console.error('Firestore (orders) error:', err);
-                        showToast('เชื่อมต่อฐานข้อมูลไม่สำเร็จ ตรวจสอบ Firebase config');
+                        console.error('Orders listener error:', err);
+                        showToast('เชื่อมต่อฐานข้อมูลไม่สำเร็จ ตรวจสอบการตั้งค่า Supabase (supabase-config.js)');
                     });
 
                     // รายรับ-รายจ่ายที่กรอกเอง
                     db.collection('transactions').onSnapshot((snapshot) => {
                         transactions.value = snapshot.docs.map(d => d.data());
                     }, (err) => {
-                        console.error('Firestore (transactions) error:', err);
-                        showToast('โหลดข้อมูลบัญชีไม่สำเร็จ ตรวจสอบ Firestore rules ของ transactions');
+                        console.error('Transactions listener error:', err);
+                        showToast('โหลดข้อมูลบัญชีไม่สำเร็จ ตรวจสอบนโยบาย (RLS) ของตาราง transactions');
                     });
 
                 }
@@ -2492,11 +2469,11 @@
                             if (['auth/wrong-password', 'auth/invalid-credential', 'auth/invalid-login-credentials'].includes(err.code)) {
                                 loginError.value = 'รหัสผ่านไม่ถูกต้อง';
                             } else if (err.code === 'auth/user-not-found') {
-                                loginError.value = 'ยังไม่ได้ตั้งค่าบัญชีนี้ใน Firebase Console';
+                                loginError.value = 'ยังไม่ได้สร้างบัญชีผู้ดูแลนี้ใน Supabase Auth';
                             } else if (err.code === 'auth/too-many-requests') {
                                 loginError.value = 'ลองผิดพลาดหลายครั้งเกินไป กรุณารอสักครู่แล้วลองใหม่';
                             } else if (err.code === 'auth/operation-not-allowed') {
-                                loginError.value = 'ยังไม่ได้เปิดใช้ระบบ Email/Password ใน Firebase Console';
+                                loginError.value = 'ยังไม่ได้เปิดใช้ระบบ Email/Password ใน Supabase Auth';
                             } else {
                                 loginError.value = 'เข้าสู่ระบบไม่สำเร็จ: ' + err.message;
                             }
@@ -2517,7 +2494,7 @@
                         authChecked.value = true;
                         if (user) {
                             loadProductCatalog();
-                            startFirestoreListeners();
+                            startOrderListeners();
                         }
                     });
 

@@ -1,17 +1,15 @@
 /* =========================================================
    S.Flower Bloom - admin.js
    หลังบ้านจัดการสินค้า: ล็อกอิน, เพิ่ม/แก้ไข/ลบสินค้า, จัดการสี ไซซ์
-   ตัวเลือกหลายชั้น และของเสริม แล้วบันทึกขึ้น Firestore
+   ตัวเลือกหลายชั้น และของเสริม แล้วบันทึกขึ้น Supabase
 
    ข้อมูลทั้งหมดเก็บเป็น "ข้อความ JSON ก้อนเดียว" ในเอกสาร catalog/products
    เหตุผล: หน้าร้านอ่านแค่ครั้งเดียวต่อการเปิดเว็บ 1 ครั้ง (ไม่ใช่ 96 ครั้ง)
-   โควต้าฟรีของ Firebase จึงเหลือเฟือ และโครงสร้างข้อมูลเหมือน products.json เป๊ะ
+   โควต้าฟรีของ Supabase จึงเหลือเฟือ
    ========================================================= */
 
-const SDK = 'https://www.gstatic.com/firebasejs/10.12.2/';
-const FIRESTORE_DOC_LIMIT = 1048576; // 1 MB ต่อเอกสาร
+const CATALOG_SIZE_LIMIT = 1048576; // กันข้อมูลสินค้าก้อนเดียวใหญ่เกินไป (ไม่เกิน ~1 MB)
 
-let fb = null;           // { auth, db, authApi, dbApi }
 let catalog = [];        // รายการสินค้าทั้งหมด
 let reviewHidden = new Set(); // รูปรีวิวที่ "ลบออกจากเว็บ" (ซ่อน) เก็บในช่อง reviewsJson คีย์ __hidden
 let reviewTags = {};      // ป้ายสินค้าของรูปรีวิว { 'review12.jpg': ['s13'] } เก็บในเอกสารเดียวกับสินค้า (ช่อง reviewsJson)
@@ -58,10 +56,10 @@ function sizeTagsOf(p){
   return Array.isArray(p.size) ? p.size : [p.size];
 }
 function sizeTagText(p){ return sizeTagsOf(p).join(', '); }
-// ชนิดดอกไม้ที่หน้าร้านกรองได้ — อ่านจาก window.FLOWER_TYPES ใน firebase-config.js (แหล่งเดียวกับหน้าร้าน เพิ่มชนิดใหม่แก้ที่นั่นที่เดียว)
+// ชนิดดอกไม้ที่หน้าร้านกรองได้ — อ่านจาก window.FLOWER_TYPES ใน supabase-config.js (แหล่งเดียวกับหน้าร้าน เพิ่มชนิดใหม่แก้ที่นั่นที่เดียว)
 // ใช้ได้กับทุกหมวด — หน้าร้านจะโชว์ตัวกรองชนิดดอกไม้ให้หมวดที่มีสินค้าตั้งค่านี้ไว้ (ช่อดอกไม้โชว์เสมอ)
 const FLOWER_TYPE_TAGS = Array.isArray(window.FLOWER_TYPES) ? window.FLOWER_TYPES.slice() : [];
-// โอกาสพิเศษ / โทนสี (สินค้าติดได้หลายค่า) และลำดับเมนูหน้าร้านจอคอม — ค่าเริ่มต้นจาก firebase-config.js · แก้ได้ที่ ตัวเลือกร้าน
+// โอกาสพิเศษ / โทนสี (สินค้าติดได้หลายค่า) และลำดับเมนูหน้าร้านจอคอม — ค่าเริ่มต้นจาก supabase-config.js · แก้ได้ที่ ตัวเลือกร้าน
 const OCCASION_TAGS = Array.isArray(window.OCCASIONS) ? window.OCCASIONS.slice() : [];
 const TONE_TAGS = Array.isArray(window.TONES) ? window.TONES.slice() : [];
 const MENU_LABELS = { home:'หน้าแรก', occasion:'โอกาสพิเศษ', tone:'โทนสี', all:'สินค้า', flower:'ชนิดดอกไม้', price:'ราคา', reviews:'รีวิวจากลูกค้า', how:'วิธีการสั่งซื้อ', contact:'ติดต่อเรา' };
@@ -86,7 +84,7 @@ function flowerMatchesFilter(p, f){
   return String(p.flowerType ?? '').trim() === f;
 }
 // ตัวเลือก "ขนาด/ป้ายกำกับ" ของแต่ละหมวด — ค่าด้านล่างเป็นค่าเริ่มต้น ใช้เมื่อยังไม่เคยแก้ในเมนู
-// "เมนูซ้าย › หมวดหมู่ / ชนิด / ขนาด" (ถ้าแก้ในเมนูแล้ว ระบบใช้ค่าที่บันทึกใน Firestore แทน
+// "เมนูซ้าย › หมวดหมู่ / ชนิด / ขนาด" (ถ้าแก้ในเมนูแล้ว ระบบใช้ค่าที่บันทึกใน Supabase แทน
 // และหน้าร้านอ่านชุดเดียวกัน ไม่ต้องแก้โค้ดสองฝั่งอีก) ตัวแปรนี้ถูกเปลี่ยนค่าในที่เดิมโดย applyShopOptions
 const CATEGORY_SIZE_TAGS = {
   'ช่อดอกไม้': ['เล็ก', 'กลาง', 'ใหญ่', 'ใส่เงิน'],
@@ -102,7 +100,7 @@ function cleanNameList(a, fallback){
   if(!Array.isArray(a)) return fallback.slice();
   return [...new Set(a.map(x => String(x ?? '').trim()).filter(x => x && x !== 'ทั้งหมด'))];
 }
-// ใส่ตัวเลือกร้านที่โหลดจาก Firestore (null = ใช้ค่าเริ่มต้น) โดยเปลี่ยนค่าใน array/object เดิม โค้ดส่วนอื่นอ่านต่อได้เลย
+// ใส่ตัวเลือกร้านที่โหลดจาก Supabase (null = ใช้ค่าเริ่มต้น) โดยเปลี่ยนค่าใน array/object เดิม โค้ดส่วนอื่นอ่านต่อได้เลย
 function applyShopOptions(o){
   const d = DEFAULT_SHOP_OPTIONS;
   const src = (o && typeof o === 'object') ? o : {};
@@ -214,63 +212,11 @@ function setPath(obj, path, value){
 /* ───────────────── เริ่มระบบ ───────────────── */
 
 async function boot(){
-  if(window.DATA_SOURCE === 'supabase'){
-    if(!sbOn()){
-      $('bootScreen').innerHTML = '<div class="empty"><p class="empty-title">ยังไม่ได้ตั้งค่า Supabase</p><p>เปิดไฟล์ firebase-config.js แล้วกรอก SUPABASE_URL และ SUPABASE_KEY (หรือเปลี่ยน DATA_SOURCE กลับเป็น firebase)</p></div>';
-      return;
-    }
-    return bootSupabase();
-  }
-  const cfg = window.FIREBASE_CONFIG;
-  if(!cfg || !cfg.projectId || String(cfg.apiKey || '').includes('ใส่ค่าจริง')){
-    $('bootScreen').innerHTML =
-      '<div class="empty"><p class="empty-title">ยังไม่ได้ตั้งค่า Firebase</p>' +
-      '<p>เปิดไฟล์ firebase-config.js แล้วกรอกค่าจากโปรเจกต์ Firebase ของร้าน ' +
-      '(คัดลอกได้จากไฟล์ระบบจัดการออเดอร์ที่ใช้อยู่)</p></div>';
+  if(!sbOn()){
+    $('bootScreen').innerHTML = '<div class="empty"><p class="empty-title">ยังไม่ได้ตั้งค่า Supabase</p><p>เปิดไฟล์ supabase-config.js แล้วกรอก SUPABASE_URL และ SUPABASE_KEY</p></div>';
     return;
   }
-
-  try{
-    const [appMod, authMod, dbMod] = await Promise.all([
-      import(SDK + 'firebase-app.js'),
-      import(SDK + 'firebase-auth.js'),
-      import(SDK + 'firebase-firestore.js')
-    ]);
-    const app = appMod.getApps().length ? appMod.getApps()[0] : appMod.initializeApp(cfg);
-    fb = {
-      authApi: authMod,
-      dbApi: dbMod,
-      auth: authMod.getAuth(app),
-      db: dbMod.getFirestore(app)
-    };
-  } catch(err){
-    $('bootScreen').innerHTML =
-      '<div class="empty"><p class="empty-title">เชื่อมต่อ Firebase ไม่ได้</p>' +
-      '<p>ตรวจสอบอินเทอร์เน็ต แล้วลองรีเฟรชหน้านี้อีกครั้ง</p></div>';
-    console.error(err);
-    return;
-  }
-
-  fb.authApi.onAuthStateChanged(fb.auth, user => {
-    $('bootScreen').hidden = true;
-    // UI check เป็นด่านเพิ่มความชัดเจน; สิทธิ์เขียนจริงบังคับโดย Firestore Rules
-    const isStoreAdmin = user && user.email === window.ADMIN_EMAIL;
-    if(isStoreAdmin){
-      $('loginScreen').hidden = true;
-      $('app').hidden = false;
-      loadCatalog();
-      loadShipFees();
-    } else {
-      if(user){
-        fb.authApi.signOut(fb.auth);
-        $('loginError').textContent = 'บัญชีนี้ไม่มีสิทธิ์เข้าระบบจัดการสินค้า';
-        $('loginError').hidden = false;
-      }
-      $('app').hidden = true;
-      $('loginScreen').hidden = false;
-      $('loginUser').focus();
-    }
-  });
+  return bootSupabase();
 }
 
 async function doLogin(){
@@ -290,23 +236,16 @@ async function doLogin(){
   btn.textContent = 'กำลังเข้าสู่ระบบ…';
   try{
     // หน้าร้านนี้มีบัญชีผู้ดูแลเพียงบัญชีเดียว จึงไม่เปิดให้ป้อนอีเมลอื่น
-    if(dsSupabase()){
-      const ses = await sbTokenReq('password', { email: sbAdminEmail(), password: pass });
-      if(!ses){
-        if(/invalid/i.test(SB.lastErr)) throw { code: 'auth/invalid-credential' };
-        throw new Error(SB.lastErr || 'ไม่ทราบสาเหตุ');
-      }
-      if(sbJwtEmail(ses.access_token) !== sbAdminEmail()){ sbSessionSet(null); throw new Error('บัญชีนี้ไม่มีสิทธิ์เข้าระบบจัดการสินค้า'); }
-      SB.pass = pass;
-      $('loginPass').value = '';
-      $('loginScreen').hidden = true; $('app').hidden = false;
-      loadCatalog(); loadShipFees();
-    }else{
-      const email = window.ADMIN_EMAIL || 'admin@sflowerbloom.local';
-      await fb.authApi.signInWithEmailAndPassword(fb.auth, email, pass);
-      sbSignInQuiet(pass);
-      $('loginPass').value = '';
+    const ses = await sbTokenReq('password', { email: sbAdminEmail(), password: pass });
+    if(!ses){
+      if(/invalid/i.test(SB.lastErr)) throw { code: 'auth/invalid-credential' };
+      throw new Error(SB.lastErr || 'ไม่ทราบสาเหตุ');
     }
+    if(sbJwtEmail(ses.access_token) !== sbAdminEmail()){ sbSessionSet(null); throw new Error('บัญชีนี้ไม่มีสิทธิ์เข้าระบบจัดการสินค้า'); }
+    SB.pass = pass;
+    $('loginPass').value = '';
+    $('loginScreen').hidden = true; $('app').hidden = false;
+    loadCatalog(); loadShipFees();
   } catch(err){
     errEl.textContent = err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password'
       ? 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง'
@@ -318,7 +257,7 @@ async function doLogin(){
   }
 }
 
-/* ───────────────── อ่าน/เขียน Firestore ───────────────── */
+/* ───────────────── อ่าน/เขียนข้อมูลร้าน (Supabase) ───────────────── */
 
 /* ───────────────── ค่าส่งต่อสินค้า (ข้อมูลภายใน — ลูกค้าไม่เห็น) ─────────────────
    เก็บแยกจาก catalog/products ใน shopPrivate/shipping เป็น { "รหัสสินค้า": { fee, note } }
@@ -326,9 +265,6 @@ async function doLogin(){
 let shipFees = {};
 let shipReadOk = false; // อ่านเอกสารสำเร็จแล้วเท่านั้นถึงยอมเขียนทับ (กันเขียนข้อมูลว่างทับของเดิมตอนอ่านไม่ได้)
 
-function shipRef(){
-  return fb.dbApi.doc(fb.db, window.PRIVATE_COLLECTION || 'shopPrivate', window.SHIPPING_DOC || 'shipping');
-}
 
 function shipOf(id){ return shipFees[String(id || '')] || null; }
 
@@ -351,14 +287,14 @@ async function loadShipFees(){
     shipFees = {};
     shipReadOk = false;
     console.error(err);
-    toast('อ่านข้อมูลค่าส่งไม่ได้' + (err.code === 'permission-denied' ? ' — ต้องเพิ่มกฎ Firestore ให้ shopPrivate (ดูคำแนะนำที่ฉันให้ไว้)' : ': ' + (err.code || err.message)), true);
+    toast('อ่านข้อมูลค่าส่งไม่ได้' + (err.code === 'permission-denied' ? ' — ต้องเพิ่มนโยบาย (RLS) ให้ตาราง shop_private' : ': ' + (err.code || err.message)), true);
   }
   renderList();
 }
 
 async function persistShipFees(){
   if(!shipReadOk){
-    toast('ยังบันทึกค่าส่งไม่ได้ เพราะอ่านข้อมูลเดิมไม่สำเร็จ (เช็กกฎ Firestore แล้วรีเฟรชหน้า)', true);
+    toast('ยังบันทึกค่าส่งไม่ได้ เพราะอ่านข้อมูลเดิมไม่สำเร็จ (เช็กนโยบาย (RLS) ของ Supabase แล้วรีเฟรชหน้า)', true);
     return false;
   }
   try{
@@ -375,9 +311,6 @@ async function persistShipFees(){
   }
 }
 
-function catalogRef(){
-  return fb.dbApi.doc(fb.db, window.CATALOG_COLLECTION || 'catalog', window.CATALOG_DOC || 'products');
-}
 
 async function loadCatalog(){
   setSaveState('กำลังโหลดสินค้า…', 'is-saving');
@@ -420,8 +353,8 @@ async function loadCatalog(){
 async function saveCatalog(successMsg){
   const json = JSON.stringify(catalog);
   const bytes = new Blob([json]).size;
-  if(bytes > FIRESTORE_DOC_LIMIT * 0.9){
-    toast('ข้อมูลสินค้าใหญ่เกินกว่าที่ Firestore เก็บได้ในเอกสารเดียว ยังบันทึกไม่ได้', true);
+  if(bytes > CATALOG_SIZE_LIMIT * 0.9){
+    toast('ข้อมูลสินค้าใหญ่เกินกว่าจะบันทึกในครั้งเดียว ยังบันทึกไม่ได้', true);
     return false;
   }
 
@@ -440,7 +373,7 @@ async function saveCatalog(successMsg){
   } catch(err){
     setSaveState('บันทึกไม่สำเร็จ', 'is-error');
     toast(err.code === 'permission-denied'
-      ? 'บันทึกไม่ได้: กฎความปลอดภัยของ Firestore ยังไม่อนุญาต'
+      ? 'บันทึกไม่ได้: นโยบายความปลอดภัย (RLS) ของ Supabase ยังไม่อนุญาต'
       : 'บันทึกไม่สำเร็จ: ' + (err.code || err.message), true);
     console.error(err);
     return false;
@@ -521,7 +454,7 @@ async function toggleOrdersClosed(){
     btn.disabled = false;
     setSaveState('บันทึกไม่สำเร็จ', 'is-error');
     toast(err.code === 'permission-denied'
-      ? 'บันทึกไม่ได้: กฎความปลอดภัยของ Firestore ยังไม่อนุญาตให้เพิ่มช่อง orderClosed'
+      ? 'บันทึกไม่ได้: นโยบายความปลอดภัย (RLS) ของ Supabase ยังไม่อนุญาตให้เพิ่มช่อง orderClosed'
       : 'บันทึกไม่สำเร็จ: ' + (err.code || err.message), true);
     console.error(err);
   }
@@ -572,7 +505,7 @@ async function saveFreeMin(){
   } catch(err){
     setSaveState('บันทึกไม่สำเร็จ', 'is-error');
     toast(err.code === 'permission-denied'
-      ? 'บันทึกไม่ได้: กฎความปลอดภัยของ Firestore ยังไม่อนุญาตให้เพิ่มช่อง freePickupMin'
+      ? 'บันทึกไม่ได้: นโยบายความปลอดภัย (RLS) ของ Supabase ยังไม่อนุญาตให้เพิ่มช่อง freePickupMin'
       : 'บันทึกไม่สำเร็จ: ' + (err.code || err.message), true);
     console.error(err);
   } finally {
@@ -606,7 +539,7 @@ async function togglePricesHidden(){
     btn.disabled = false;
     setSaveState('บันทึกไม่สำเร็จ', 'is-error');
     toast(err.code === 'permission-denied'
-      ? 'บันทึกไม่ได้: กฎความปลอดภัยของ Firestore ยังไม่อนุญาตให้เพิ่มช่อง hidePrices'
+      ? 'บันทึกไม่ได้: นโยบายความปลอดภัย (RLS) ของ Supabase ยังไม่อนุญาตให้เพิ่มช่อง hidePrices'
       : 'บันทึกไม่สำเร็จ: ' + (err.code || err.message), true);
     console.error(err);
   }
@@ -2611,7 +2544,7 @@ function validateDraft(){
   return null;
 }
 
-/* ตัดช่องว่างและฟิลด์ว่างทิ้ง เพื่อให้ข้อมูลหน้าตาเหมือน products.json เดิมเป๊ะ */
+/* ตัดช่องว่างและฟิลด์ว่างทิ้ง เพื่อให้ข้อมูลหน้าตาเหมือนรูปแบบเดิมเป๊ะ */
 function cleanProduct(p){
   const out = {};
   const str = v => String(v ?? '').trim();
@@ -3180,7 +3113,7 @@ function updateCatalogBtn(rows){
 /* ───────────────── รูปรีวิวลูกค้า ─────────────────
    ไฟล์รูปยังอยู่ที่ images/reviews/reviewN.jpg เหมือนเดิม (หน้าร้านหาเองตามเลขไฟล์)
    หลังบ้านเก็บแค่ "ป้ายสินค้า" ของแต่ละรูป ในช่อง reviewsJson ของเอกสารเดียวกับสินค้า
-   หน้าร้านเลยได้ป้ายมาพร้อมสินค้า ไม่ต้องอ่าน Firestore เพิ่ม — รูปที่ไม่ผูกสินค้ายังแสดงในแถบรีวิวเหมือนเดิม */
+   หน้าร้านเลยได้ป้ายมาพร้อมสินค้า ไม่ต้องอ่านข้อมูลเพิ่ม — รูปที่ไม่ผูกสินค้ายังแสดงในแถบรีวิวเหมือนเดิม */
 
 const REVIEW_DIR = 'images/reviews/';
 const REVIEW_MAX = 200, REVIEW_BATCH = 20;
@@ -3311,7 +3244,7 @@ async function reviewAddMany(){
   renderReviewsModal();
 }
 /* ───────────── ที่เก็บรูปบน Supabase Storage + ย่อรูปก่อนอัปโหลด ─────────────
-   เปิดใช้เมื่อกรอก SUPABASE_URL / SUPABASE_KEY ใน firebase-config.js (ถ้าเว้นว่าง ระบบเขียนลงโฟลเดอร์เว็บแบบเดิม)
+   เปิดใช้เมื่อกรอก SUPABASE_URL / SUPABASE_KEY ใน supabase-config.js (ถ้าเว้นว่าง ระบบเขียนลงโฟลเดอร์เว็บแบบเดิม)
    ล็อกอิน Supabase ด้วยอีเมล/รหัสผ่านแอดมินชุดเดียวกัน (สร้างผู้ใช้ไว้ใน Supabase Auth) → สิทธิ์เขียนรูปเฉพาะแอดมิน
    รูปที่ได้เป็นลิงก์เต็ม https://…supabase.co/storage/v1/object/public/… เก็บลงข้อมูลสินค้า/รีวิวแทนพาธ images/… */
 const SB = { pass: null, lastErr: '' };
@@ -3330,18 +3263,12 @@ function sbSessionSet(v){ try{ if(v) localStorage.setItem(SB_SESSION_KEY, JSON.s
 async function sbTokenReq(grant, body){
   let res;
   try{ res = await fetch(sbApi('/auth/v1/token?grant_type=' + grant), { method: 'POST', headers: sbHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify(body) }); }
-  catch(e){ throw new Error('เชื่อมต่อ Supabase ไม่ได้ (เช็ก SUPABASE_URL ใน firebase-config.js และอินเทอร์เน็ต)'); }
+  catch(e){ throw new Error('เชื่อมต่อ Supabase ไม่ได้ (เช็ก SUPABASE_URL ใน supabase-config.js และอินเทอร์เน็ต)'); }
   const j = await res.json().catch(() => ({}));
   if(!res.ok || !j.access_token){ SB.lastErr = String(j.error_description || j.msg || j.message || j.error || ('HTTP ' + res.status)); return null; }
   const ses = { access_token: j.access_token, refresh_token: j.refresh_token, expires_at: j.expires_at || (Math.floor(Date.now() / 1000) + (j.expires_in || 3600)) };
   sbSessionSet(ses);
   return ses;
-}
-// หลังล็อกอิน Firebase สำเร็จ ลองล็อกอิน Supabase เงียบๆ ด้วยรหัสผ่านเดียวกัน (พลาดไม่เป็นไร ตอนอัปโหลดจะถามรหัสอีกครั้ง)
-async function sbSignInQuiet(pass){
-  if(!sbOn()) return;
-  SB.pass = pass;
-  try{ await sbTokenReq('password', { email: sbAdminEmail(), password: pass }); }catch(e){}
 }
 function sbAskPassword(){
   return new Promise(res => {
@@ -3637,7 +3564,6 @@ function libOnClick(e){
     else if(act === 'rvback'){ lib.review = false; libReviewRender(); }
     else if(act === 'size'){ lib.size = a.dataset.v; try{ localStorage.setItem('sfb-lib-size', lib.size); }catch(err){} if(lib.tab === 'orphan') libRender(); else { const g = document.getElementById('libGrid'); if(g) g.style.gridTemplateColumns = `repeat(auto-fill,minmax(${libGridPx()}px,1fr))`; document.querySelectorAll('.lib-sizes button').forEach(b => b.classList.toggle('is-on', b.dataset.v === lib.size)); } }
     else if(act === 'check') libRunCheck();
-    else if(act === 'export') libExportProducts();
     else if(act === 'orphan') libRunOrphan();
     else if(act === 'orphan-del') libDeleteOrphans();
     else if(act === 'orestore') libRestoreOrphans();
@@ -3929,7 +3855,7 @@ async function libRestoreOrphans(){
     libReload();
   }
 }
-/* ── แท็บตรวจก่อนลบรูปใน GitHub + ดาวน์โหลด products.json ใหม่ ── */
+/* ── แท็บตรวจก่อนลบรูปใน GitHub ── */
 function libCheckHtml(){
   const c = lib.check;
   let res = '<p class="lib-note">กดตรวจเพื่อดูว่ายังมีสินค้า รีวิว หรือการตั้งค่าหน้าร้านที่ชี้ไปที่รูปเก่าใน GitHub (<code>images/…</code>) อยู่ตรงไหนบ้าง</p>';
@@ -3940,14 +3866,10 @@ function libCheckHtml(){
     lines.push(c.rv.length ? `<p class="lib-err"><b>✗ รูปรีวิว ${c.rv.length} รูป ยังเป็นไฟล์ใน GitHub</b> (เช่น ${esc(c.rv.slice(0, 3).join(', '))})</p>` : '<p class="lib-ok"><b>✓ รูปรีวิวที่แสดงอยู่ใช้รูปจาก Supabase ทั้งหมด</b> (รูปที่ซ่อนไว้ไม่นับ)</p>');
     lines.push(c.site ? `<p class="lib-err"><b>✗ การตั้งค่าหน้าร้าน (โลโก้/แบนเนอร์/ป๊อปอัป) มี ${c.site} จุดที่ยังชี้ images/…</b></p>` : '<p class="lib-ok"><b>✓ การตั้งค่าหน้าร้านที่บันทึกไว้ไม่ชี้ images/… แล้ว</b></p>');
     const clean = !c.prods.length && !c.rv.length && !c.site;
-    lines.push(clean ? '<p class="lib-ok"><b>ผ่านทั้งหมด</b> — ทำข้อถัดไป (ดาวน์โหลด products.json ใหม่ไปทับใน repo) แล้วลบ images/products, bouquet, frame, pot, other และ images/reviews ใน repo ได้ ส่วนโลโก้ แบนเนอร์ ไอคอน และไฟล์ที่ index.html / style.css เรียกใช้ตรงๆ ให้เก็บไว้</p>' : '<p class="lib-err"><b>ยังไม่ควรลบรูปใน repo</b> — แก้รายการด้านบนให้เป็นลิงก์ Supabase ก่อน แล้วกดตรวจใหม่</p>');
+    lines.push(clean ? '<p class="lib-ok"><b>ผ่านทั้งหมด</b> — ลบ images/products, bouquet, frame, pot, other และ images/reviews ใน repo ได้ ส่วนโลโก้ แบนเนอร์ ไอคอน และไฟล์ที่ index.html / style.css เรียกใช้ตรงๆ ให้เก็บไว้</p>' : '<p class="lib-err"><b>ยังไม่ควรลบรูปใน repo</b> — แก้รายการด้านบนให้เป็นลิงก์ Supabase ก่อน แล้วกดตรวจใหม่</p>');
     res = lines.join('');
   }
-  return `<div class="lib-chk"><div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px"><button type="button" class="btn btn-primary" data-lib-act="check"${c === 'busy' ? ' disabled' : ''}>ตรวจตอนนี้</button></div>${res}
-  <hr style="border:0;border-top:1px solid #f0dfe6;margin:14px 0">
-  <p><b>products.json ตัวสำรองของหน้าร้าน</b></p>
-  <p class="lib-note">หน้าร้านใช้ไฟล์นี้เป็นตัวสำรองเมื่อ Firebase โหลดช้า/ล่ม และแอปจัดการออเดอร์ก็ใช้เหมือนกัน ตอนนี้ในไฟล์ยังเป็นพาธรูปเก่า ให้ดาวน์โหลดตัวใหม่จากข้อมูลสินค้าล่าสุดไปทับไฟล์ <code>products.json</code> ใน repo ก่อนลบรูปเก่า</p>
-  <button type="button" class="btn btn-ghost" data-lib-act="export">ดาวน์โหลด products.json ใหม่</button></div>`;
+  return `<div class="lib-chk"><div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px"><button type="button" class="btn btn-primary" data-lib-act="check"${c === 'busy' ? ' disabled' : ''}>ตรวจตอนนี้</button></div>${res}</div>`;
 }
 async function libRunCheck(){
   if(!lib || lib.check === 'busy') return;
@@ -3963,14 +3885,6 @@ async function libRunCheck(){
   if(!lib) return;
   lib.check = { prods, rv, site };
   libRender();
-}
-function libExportProducts(){
-  const blob = new Blob([JSON.stringify(catalog, null, 2)], { type: 'application/json' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob); a.download = 'products.json';
-  document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
-  toast('ดาวน์โหลด products.json แล้ว — เอาไปทับไฟล์เดิมใน repo');
 }
 // ผลลัพธ์ของการเลือกรูปจากคลัง → ใส่เข้าสินค้า (เหมือนตอนลากรูปอัปโหลด)
 function pdApplyToMain(urls){
@@ -4028,9 +3942,7 @@ function libOpenForZone(z){
   libOpen({ label: label + ' · ' + (String(draft.id || '').trim() || '(ยังไม่มีรหัส)'), slug: () => pdSlug(draft && draft.id), onPick: urls => { if(p === 'im') pdApplyToModal(urls); else pdApplyToRow(p, urls, single); } });
 }
 
-/* ───────────── รอบ 2: ย้ายข้อมูลร้านจาก Firebase ไป Supabase (ตัวย้ายครั้งเดียว) ─────────────
-   อ่านเอกสาร Firestore catalog/products + shopPrivate/shipping + shopPrivate/soldLog → เขียนลงตาราง
-   shop_catalog / shop_private ใน Supabase แล้วอ่านกลับมาเทียบ — ไม่แก้และไม่ลบข้อมูลใน Firebase · ย้ายซ้ำได้ (เขียนทับ) */
+/* ───────────── ตัวช่วยคุยกับ Supabase (REST) ───────────── */
 const SB_CAT_MAP = [
   ['json', 'json_data'], ['count', 'item_count'], ['updatedAt', 'updated_at'],
   ['hidePrices', 'hide_prices'], ['hidePricesUpdatedAt', 'hide_prices_updated_at'],
@@ -4040,9 +3952,6 @@ const SB_CAT_MAP = [
   ['reviewsJson', 'reviews_json'], ['reviewsUpdatedAt', 'reviews_updated_at'],
   ['siteJson', 'site_json'], ['siteUpdatedAt', 'site_updated_at']
 ];
-const SB_PRIV_KEYS = ['shipping', 'soldLog'];
-const SB_CAT_NUMERIC = new Set(['item_count', 'free_pickup_min']);
-let mig = null; // { src, step, busy }
 async function sbRest(method, path, body, extra){
   const token = await sbToken();
   let res;
@@ -4067,171 +3976,10 @@ function migNorm(v){
   if(typeof v === 'object' && typeof v.toDate === 'function') return v.toDate().toISOString();
   return v;
 }
-function migCatalogRow(d){
-  const row = { id: 1 };
-  const src = Object.assign({}, d);
-  if(typeof src.json !== 'string' && Array.isArray(src.list)){ src.json = JSON.stringify(src.list); src.count = src.list.length; } // ข้อมูลรุ่นเก่าที่เก็บเป็น array
-  SB_CAT_MAP.forEach(([f, c]) => {
-    let v = migNorm(src[f]);
-    if(c === 'free_pickup_min' && v !== null){ const n = Number(v); v = isFinite(n) ? n : null; }
-    if(c === 'item_count' && v !== null){ const n = Math.round(Number(v)); v = isFinite(n) ? n : null; }
-    row[c] = v;
-  });
-  return row;
-}
-function migPrivRow(key, d){
-  return { key, json_data: migNorm(d.json), item_count: (migNorm(d.count) === null ? null : Math.round(Number(d.count)) || 0), updated_at: migNorm(d.updatedAt) };
-}
-function migExtraFields(d, known){ return Object.keys(d || {}).filter(k => !known.includes(k) && !(k === 'list' && Array.isArray(d.list))); }
-function migCount(jsonStr, kind){
-  try{
-    const v = JSON.parse(jsonStr);
-    if(kind === 'list') return Array.isArray(v) ? v.length : 0;
-    return v && typeof v === 'object' ? Object.keys(v).filter(k => k !== '__hidden').length : 0;
-  }catch(e){ return -1; }
-}
-async function migReadFirebase(){
-  if(!fb || !fb.dbApi) throw new Error('ยังไม่ได้ล็อกอิน Firebase');
-  const out = { catalog: null, priv: {}, privErr: {} };
-  const cs = await fb.dbApi.getDoc(catalogRef());
-  out.catalog = cs.exists() ? (cs.data() || {}) : null;
-  for(const k of SB_PRIV_KEYS){
-    try{
-      const ref = k === 'shipping' ? shipRef() : soldLogRef();
-      const sn = await fb.dbApi.getDoc(ref);
-      out.priv[k] = sn.exists() ? (sn.data() || {}) : null;
-    }catch(e){ out.priv[k] = null; out.privErr[k] = e.code || e.message; }
-  }
-  return out;
-}
-function migSummaryHtml(src){
-  const c = src.catalog, rows = [];
-  if(!c) rows.push('<li class="lib-err"><b>ไม่พบข้อมูลสินค้าใน Firebase</b></li>');
-  else{
-    const raw = typeof c.json === 'string' ? c.json : (Array.isArray(c.list) ? JSON.stringify(c.list) : '');
-    rows.push(`<li>สินค้า <b>${migCount(raw, 'list')}</b> ชิ้น</li>`);
-    rows.push(`<li>ซ่อนราคา: <b>${c.hidePrices === true ? 'เปิด' : 'ปิด'}</b> · ปิดสั่งทำ: <b>${c.orderClosed !== false ? 'ปิดอยู่' : 'เปิดรับ'}</b> · ยอดนัดรับฟรี: <b>${c.freePickupMin ?? '(ไม่ได้ตั้ง)'}</b></li>`);
-    rows.push(`<li>ตัวเลือกร้าน: <b>${typeof c.optionsJson === 'string' ? 'มี' : 'ไม่มี'}</b> · ป้ายผูกรีวิว: <b>${typeof c.reviewsJson === 'string' ? migCount(c.reviewsJson, 'obj') + ' รายการ' : 'ไม่มี'}</b> · การตั้งค่าหน้าร้าน: <b>${typeof c.siteJson === 'string' ? 'มี' : 'ไม่มี'}</b></li>`);
-    const extra = migExtraFields(c, SB_CAT_MAP.map(x => x[0]));
-    if(extra.length) rows.push(`<li class="lib-note">ช่องที่ไม่ได้ย้าย (ไม่จำเป็นต่อหน้าร้าน): ${extra.map(esc).join(', ')}</li>`);
-  }
-  SB_PRIV_KEYS.forEach(k => {
-    const d = src.priv[k], label = k === 'shipping' ? 'ค่าส่งต่อสินค้า' : 'ประวัติยอดขาย';
-    if(src.privErr[k]) rows.push(`<li class="lib-err">${label}: อ่านไม่ได้ (${esc(src.privErr[k])})</li>`);
-    else if(!d) rows.push(`<li>${label}: <b>ยังไม่มีข้อมูล</b></li>`);
-    else rows.push(`<li>${label}: <b>${migCount(d.json, k === 'shipping' ? 'obj' : 'list')}</b> รายการ</li>`);
-  });
-  return `<ul>${rows.join('')}</ul>`;
-}
-function migRender(){
-  const sc = document.getElementById('migScrim'); if(!sc || !mig) return;
-  const body = sc.querySelector('#migBody');
-  const busy = mig.busy ? ' disabled' : '';
-  body.innerHTML = `<p class="lib-note" style="margin-top:0">คัดลอกข้อมูลร้านจาก Firebase ไป Supabase <b>ไม่แก้และไม่ลบอะไรใน Firebase</b> · กดย้ายซ้ำได้ (เขียนทับ) · ก่อนใช้ต้องรัน <code>supabase-round2.sql</code> ใน Supabase ก่อน</p>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0">
-      <button type="button" class="btn btn-primary" data-mig="read"${busy}>1. อ่านจาก Firebase</button>
-      <button type="button" class="btn btn-primary" data-mig="write"${busy}${mig.src && mig.src.catalog ? '' : ' disabled'}>2. ย้ายไป Supabase และตรวจผล</button>
-      <button type="button" class="btn btn-ghost" data-mig="verify"${busy}${mig.src && mig.src.catalog ? '' : ' disabled'}>ตรวจผลอีกครั้ง</button></div>
-    ${mig.src ? '<p><b>ข้อมูลใน Firebase ตอนนี้</b></p>' + migSummaryHtml(mig.src) : ''}
-    <div id="migLog">${mig.log || ''}</div>`;
-}
-function migOpen(){
-  if(!sbOn()) return;
-  libStyle();
-  const old = document.getElementById('migScrim'); if(old) old.remove();
-  mig = { src: null, busy: false, log: '' };
-  const sc = document.createElement('div');
-  sc.className = 'lib-scrim'; sc.id = 'migScrim';
-  sc.innerHTML = `<div class="lib-box" style="height:auto;max-height:92vh;width:min(760px,100%)"><div class="lib-head"><b>ย้ายข้อมูลร้านไป Supabase (รอบ 2)</b><button type="button" class="btn btn-ghost btn-sm" data-mig="close">ปิด</button></div><div class="lib-body" id="migBody"></div></div>`;
-  document.body.appendChild(sc);
-  sc.addEventListener('click', e => {
-    const b = e.target.closest('[data-mig]'); if(!b || !mig) return;
-    const a = b.dataset.mig;
-    if(a === 'close'){ if(mig.busy){ toast('กำลังทำงานอยู่ รอให้เสร็จก่อน', true); return; } sc.remove(); mig = null; }
-    else if(a === 'read') migDoRead();
-    else if(a === 'write') migDoWrite();
-    else if(a === 'verify') migDoVerify(true);
-  });
-  migRender();
-}
-function migLog(html){ if(!mig) return; mig.log = (mig.log || '') + html; migRender(); }
-async function migDoRead(){
-  if(!mig || mig.busy) return;
-  mig.busy = true; mig.log = ''; migRender();
-  try{ mig.src = await migReadFirebase(); }
-  catch(e){ mig.log = `<p class="lib-err">อ่านจาก Firebase ไม่ได้: ${esc(e.message || e)}</p>`; }
-  if(mig){ mig.busy = false; migRender(); }
-}
-async function migDoWrite(){
-  if(!mig || mig.busy || !mig.src || !mig.src.catalog) return;
-  if(!confirm('คัดลอกข้อมูลร้านไป Supabase ตอนนี้ใช่ไหม? (ข้อมูลใน Firebase ไม่ถูกแตะต้อง · ถ้าเคยย้ายแล้วจะเขียนทับข้อมูลที่ Supabase)')) return;
-  mig.busy = true; mig.log = ''; migRender();
-  try{
-    await sbEnsureSession();
-    await sbRest('POST', 'shop_catalog?on_conflict=id', migCatalogRow(mig.src.catalog), { Prefer: 'resolution=merge-duplicates,return=minimal' });
-    migLog('<p class="lib-ok">✓ เขียนข้อมูลหน้าร้านลง shop_catalog แล้ว</p>');
-    const rows = SB_PRIV_KEYS.filter(k => mig.src.priv[k]).map(k => migPrivRow(k, mig.src.priv[k]));
-    if(rows.length){
-      await sbRest('POST', 'shop_private?on_conflict=key', rows, { Prefer: 'resolution=merge-duplicates,return=minimal' });
-      migLog(`<p class="lib-ok">✓ เขียนข้อมูลภายในร้าน ${rows.length} รายการลง shop_private แล้ว</p>`);
-    }
-  }catch(e){
-    migLog(`<p class="lib-err">✗ ย้ายไม่สำเร็จ: ${esc(e.message || e)}</p>`);
-    if(mig){ mig.busy = false; migRender(); }
-    return;
-  }
-  if(mig) mig.busy = false;
-  await migDoVerify(false);
-}
-function migSame(col, a, b){
-  if(a === null || a === undefined) return b === null || b === undefined;
-  if(SB_CAT_NUMERIC.has(col)) return Number(a) === Number(b);
-  return a === b;
-}
-async function migDoVerify(clear){
-  if(!mig || (mig.busy && clear) || !mig.src || !mig.src.catalog) return;
-  mig.busy = true; if(clear) mig.log = ''; migRender();
-  const lines = [];
-  try{
-    // 1) อ่านแบบคนทั่วไป (เหมือนที่หน้าร้านจะอ่าน) แล้วเทียบทุกช่อง
-    let res;
-    try{ res = await fetch(sbApi('/rest/v1/shop_catalog?id=eq.1&select=*'), { headers: { apikey: window.SUPABASE_KEY } }); }
-    catch(e){ throw new Error('เชื่อมต่อ Supabase ไม่ได้ (เช็กอินเทอร์เน็ต)'); }
-    if(!res.ok){ const j = await res.json().catch(() => ({})); throw new Error(sbRestErr(j.message || j.hint || ('HTTP ' + res.status))); }
-    const got = (await res.json())[0];
-    if(!got) lines.push('<p class="lib-err">✗ คนทั่วไปอ่าน shop_catalog ไม่เจอแถวข้อมูล (เช็กนโยบายอ่านสาธารณะใน SQL)</p>');
-    else{
-      const want = migCatalogRow(mig.src.catalog), bad = [];
-      Object.keys(want).forEach(c => { if(c !== 'id' && !migSame(c, want[c], got[c])) bad.push(c); });
-      lines.push(bad.length
-        ? `<p class="lib-err"><b>✗ ข้อมูลหน้าร้านไม่ตรงกับ Firebase ในช่อง:</b> ${bad.map(esc).join(', ')}</p>`
-        : `<p class="lib-ok"><b>✓ ข้อมูลหน้าร้านตรงกับ Firebase ทุกช่อง</b> (${SB_CAT_MAP.length} ช่อง) · คนทั่วไปอ่านได้ถูกต้อง สินค้า ${migCount(got.json_data || '', 'list')} ชิ้น</p>`);
-    }
-    // 2) ข้อมูลภายในร้าน: แอดมินอ่านได้ครบ / คนทั่วไปต้องอ่านไม่ได้
-    const priv = await sbRest('GET', 'shop_private?select=*');
-    for(const k of SB_PRIV_KEYS){
-      const d = mig.src.priv[k]; if(!d) continue;
-      const r = (priv || []).find(x => x.key === k), want = migPrivRow(k, d);
-      lines.push(r && r.json_data === want.json_data && Number(r.item_count) === Number(want.item_count)
-        ? `<p class="lib-ok">✓ ${k === 'shipping' ? 'ค่าส่งต่อสินค้า' : 'ประวัติยอดขาย'} ตรงกับ Firebase</p>`
-        : `<p class="lib-err">✗ ${k === 'shipping' ? 'ค่าส่งต่อสินค้า' : 'ประวัติยอดขาย'} ไม่ตรงกับ Firebase หรือยังไม่ได้ย้าย</p>`);
-    }
-    let anon = null;
-    try{ const r2 = await fetch(sbApi('/rest/v1/shop_private?select=key'), { headers: { apikey: window.SUPABASE_KEY } }); anon = r2.ok ? await r2.json() : []; }catch(e){ anon = []; }
-    lines.push(Array.isArray(anon) && anon.length
-      ? '<p class="lib-err"><b>✗ อันตราย: คนทั่วไปอ่านข้อมูลภายในร้าน (shop_private) ได้</b> — ตรวจนโยบายใน SQL ก่อนใช้งานต่อ</p>'
-      : '<p class="lib-ok">✓ คนทั่วไปอ่านข้อมูลภายในร้านไม่ได้ (ปลอดภัย)</p>');
-  }catch(e){ lines.push(`<p class="lib-err">✗ ตรวจผลไม่สำเร็จ: ${esc(e.message || e)}</p>`); }
-  if(mig){ mig.log = (mig.log || '') + lines.join(''); mig.busy = false; migRender(); }
-}
-/* ───────────── ชั้นข้อมูลหลังบ้าน: Firebase หรือ Supabase ─────────────
-   ตัวสลับ: window.DATA_SOURCE = 'supabase' (ตั้งใน firebase-config.js) · ไม่ตั้ง = Firebase แบบเดิม
+/* ───────────── ชั้นข้อมูลหลังบ้าน (Supabase) ─────────────
    ทุกการอ่าน/เขียนเอกสารร้านผ่าน dataGetDoc / dataSetDoc (kind = 'catalog' | 'shipping' | 'soldLog') */
-function dsSupabase(){ return window.DATA_SOURCE === 'supabase' && sbOn(); }
-function currentAdminEmail(){
-  if(dsSupabase()) return sbAdminEmail();
-  return (fb && fb.auth && fb.auth.currentUser) ? (fb.auth.currentUser.email || '') : '';
-}
+function dsSupabase(){ return sbOn(); }
+function currentAdminEmail(){ return sbAdminEmail(); }
 function sbJwtEmail(tok){
   try{ return JSON.parse(atob(String(tok).split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).email || ''; }catch(e){ return ''; }
 }
@@ -4265,9 +4013,7 @@ function sbCatVal(c, v){
   if(c === 'item_count'){ const n = Math.round(Number(v)); return isFinite(n) ? n : null; }
   return v;
 }
-function dataRef(kind){ return kind === 'catalog' ? catalogRef() : (kind === 'shipping' ? shipRef() : soldLogRef()); }
 async function dataGetDoc(kind){
-  if(!dsSupabase()) return fb.dbApi.getDoc(dataRef(kind));
   const rows = kind === 'catalog'
     ? await sbRest('GET', 'shop_catalog?id=eq.1&select=*')
     : await sbRest('GET', 'shop_private?key=eq.' + encodeURIComponent(kind) + '&select=*');
@@ -4282,9 +4028,8 @@ async function dataGetDoc(kind){
   }
   return { exists: () => !!r, data: () => d };
 }
-// opts = { merge: true } → อัปเดตเฉพาะช่องที่ส่งมา (เหมือน Firestore) · ไม่ส่ง = เขียนทับทั้งเอกสาร
+// opts = { merge: true } → อัปเดตเฉพาะช่องที่ส่งมา (อัปเดตเฉพาะช่อง) · ไม่ส่ง = เขียนทับทั้งเอกสาร
 async function dataSetDoc(kind, data, opts){
-  if(!dsSupabase()) return opts ? fb.dbApi.setDoc(dataRef(kind), data, opts) : fb.dbApi.setDoc(dataRef(kind), data);
   try{
     if(kind === 'catalog'){
       const row = { id: 1 };
@@ -4800,7 +4545,7 @@ async function persistReviewTags(next, hidden){
   } catch(err){
     setSaveState('บันทึกไม่สำเร็จ', 'is-error');
     toast(err.code === 'permission-denied'
-      ? 'บันทึกไม่ได้: กฎความปลอดภัยของ Firestore ยังไม่อนุญาตให้เพิ่มช่อง reviewsJson / reviewsUpdatedAt'
+      ? 'บันทึกไม่ได้: นโยบายความปลอดภัย (RLS) ของ Supabase ยังไม่อนุญาตให้เพิ่มช่อง reviewsJson / reviewsUpdatedAt'
       : 'บันทึกไม่สำเร็จ: ' + (err.code || err.message), true);
     console.error(err);
     return false;
@@ -5184,14 +4929,14 @@ function applyRenames(list, catMap, flowerMap, sizeMaps, toneMap = new Map(), oc
   return changed;
 }
 
-// เขียนตัวเลือกร้าน (และสินค้าที่ถูกแก้ชื่อตาม ถ้ามี) ลง Firestore ในคำสั่งเดียว — สำเร็จพร้อมกันหรือไม่สำเร็จพร้อมกัน
+// เขียนตัวเลือกร้าน (และสินค้าที่ถูกแก้ชื่อตาม ถ้ามี) ลง Supabase ในคำสั่งเดียว — สำเร็จพร้อมกันหรือไม่สำเร็จพร้อมกัน
 async function saveOptionsToCloud(opts, nextCatalog){
   const now = new Date().toISOString();
   const payload = { optionsJson: JSON.stringify(opts), optionsUpdatedAt: now };
   if(nextCatalog){
     const json = JSON.stringify(nextCatalog);
-    if(new Blob([json]).size > FIRESTORE_DOC_LIMIT * 0.9){
-      toast('ข้อมูลสินค้าใหญ่เกินกว่าที่ Firestore เก็บได้ในเอกสารเดียว ยังบันทึกไม่ได้', true);
+    if(new Blob([json]).size > CATALOG_SIZE_LIMIT * 0.9){
+      toast('ข้อมูลสินค้าใหญ่เกินกว่าจะบันทึกในครั้งเดียว ยังบันทึกไม่ได้', true);
       return false;
     }
     Object.assign(payload, {
@@ -5207,7 +4952,7 @@ async function saveOptionsToCloud(opts, nextCatalog){
   } catch(err){
     setSaveState('บันทึกไม่สำเร็จ', 'is-error');
     toast(err.code === 'permission-denied'
-      ? 'บันทึกไม่ได้: กฎความปลอดภัยของ Firestore ยังไม่อนุญาตให้เพิ่มช่อง optionsJson / optionsUpdatedAt'
+      ? 'บันทึกไม่ได้: นโยบายความปลอดภัย (RLS) ของ Supabase ยังไม่อนุญาตให้เพิ่มช่อง optionsJson / optionsUpdatedAt'
       : 'บันทึกไม่สำเร็จ: ' + (err.code || err.message), true);
     console.error(err);
     return false;
@@ -5275,8 +5020,7 @@ $('loginUser').addEventListener('keydown', e => { if(e.key === 'Enter') $('login
 $('logoutBtn').addEventListener('click', async () => {
   const ok = await askConfirm('ออกจากระบบ', 'ต้องล็อกอินใหม่เพื่อกลับเข้ามาจัดการสินค้า', 'ออกจากระบบ');
   if(ok){
-    if(dsSupabase()){ sbSessionSet(null); SB.pass = null; location.reload(); }
-    else fb.authApi.signOut(fb.auth);
+    sbSessionSet(null); SB.pass = null; location.reload();
   }
 });
 
@@ -5315,12 +5059,6 @@ if(sbOn()){
   lb.innerHTML = '<svg class="sb-ico" viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="14" height="12" rx="2"/><circle cx="7.5" cy="8.5" r="1.3"/><path d="M3.5 14l4-3.5 3 2.5 2.5-2 3.5 3"/></svg><span>คลังรูป</span>';
   rb.insertAdjacentElement('afterend', lb);
   lb.addEventListener('click', () => libOpen(null));
-  const mb = rb.cloneNode(false);
-  mb.id = 'migrateBtn'; mb.title = 'ย้ายข้อมูลร้านจาก Firebase ไป Supabase (รอบ 2) — ไม่แก้ข้อมูลใน Firebase';
-  mb.innerHTML = '<svg class="sb-ico" viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6c0-1.4 2.7-2.5 6-2.5S16 4.6 16 6s-2.7 2.5-6 2.5S4 7.4 4 6z"/><path d="M4 6v4c0 1.4 2.7 2.5 6 2.5s6-1.1 6-2.5V6"/><path d="M4 10v4c0 1.4 2.7 2.5 6 2.5s6-1.1 6-2.5v-4"/></svg><span>ย้ายข้อมูลไป Supabase</span>';
-  lb.insertAdjacentElement('afterend', mb);
-  mb.addEventListener('click', () => migOpen());
-  if(dsSupabase()) mb.style.display = 'none'; // ตัวย้ายข้อมูลใช้ตอนยังอ่านจาก Firebase เท่านั้น
 }
 $('soldBtn').addEventListener('click', openSoldModal);
 $('soldScrim').addEventListener('click', e => { if(e.target === $('soldScrim')) closeSoldModal(); });
@@ -5695,7 +5433,7 @@ document.addEventListener('keydown', e => {
    ========================================================= */
 const SITE_DEFAULT_COLOR = '#F62188';
 const SITE_DEFAULT_FAQ = [{"q": "S.Flower Bloom มีหน้าร้านไหม", "a": "ปัจจุบันเรายังไม่มีหน้าร้าน แต่สามารถนัดรับได้ในเมืองนครสวรรค์ และอำเภอพยุหะคีรี"}, {"q": "บริการจัดส่งจาก S.Flower Bloom", "a": "ทางร้านของเรามีบริการนัดรับในตัวเมืองนครสวรรค์และอำเภอพยุหะคีรี เพื่อให้มั่นใจว่าสินค้าจะถูกส่งถึงมือผู้รับอย่างปลอดภัยและไม่เกิดความเสียหาย สำหรับการจัดส่งพัสดุ เรามีบริการส่ง EMS ผ่านไปรษณีย์ไทย โดยทำการแพ็กสินค้าอย่างดีรัดกุม เพื่อลดความเสี่ยงของการชำรุดหรือเสียหายในระหว่างการขนส่งจนถึงมือผู้รับ"}, {"q": "ดอกไม้สามารถเก็บได้นานเท่าไหร่?", "a": "ดอกไม้ลวดกำมะหยี่ของเราสามารถคงความสวยงามได้นาน 3–5 ปี หรือยาวนานกว่านั้น เนื่องจากเป็นวัสดุทนทาน ไม่เหี่ยว ไม่ต้องรดน้ำ เพื่อรักษาความงดงามของดอกไม้ แนะนำให้หลีกเลี่ยงบริเวณที่มีฝุ่นเยอะ เพราะฝุ่นอาจเกาะบนผิวกำมะหยี่ทำให้ดูหมองลงได้ค่ะ"}, {"q": "ใช้เวลาทำกี่วัน?", "a": "โดยทั่วไปประมาณ 3–5 วัน (สามารถแจ้งเวลาประมาณการให้ลูกค้าทราบเป็นกรณีไป)"}];
-let siteCfgSaved = null;   // ค่าที่บันทึกไว้ใน Firestore (null = ยังไม่เคยตั้ง)
+let siteCfgSaved = null;   // ค่าที่บันทึกไว้ใน Supabase (null = ยังไม่เคยตั้ง)
 let site = null;           // { tab, cfg, dirty, uploaded }
 const siteBlobUrls = {};   // path → blob URL ไว้ดูตัวอย่างรูปที่เพิ่งอัปโหลด (ไฟล์ยังไม่ขึ้นเว็บ)
 
@@ -6003,7 +5741,7 @@ async function saveSite(){
   }catch(err){
     setSaveState('บันทึกไม่สำเร็จ', 'is-error');
     siteHint(err.code === 'permission-denied'
-      ? 'บันทึกไม่ได้: กฎความปลอดภัยของ Firestore ยังไม่อนุญาตให้เพิ่มช่อง siteJson / siteUpdatedAt'
+      ? 'บันทึกไม่ได้: นโยบายความปลอดภัย (RLS) ของ Supabase ยังไม่อนุญาตให้เพิ่มช่อง siteJson / siteUpdatedAt'
       : 'บันทึกไม่สำเร็จ: ' + (err.code || err.message), true);
     console.error(err);
   } finally { btn.disabled = false; }
@@ -6018,9 +5756,6 @@ let soldLogReadOk = false;
 let sm = null; // { tab:'entry'|'log', q, cat, edits: Map(ดัชนีสินค้า → ยอดรวมใหม่) }
 
 function soldNow(p){ const n = Math.floor(Number(p && p.sold)); return n > 0 ? n : 0; }
-function soldLogRef(){
-  return fb.dbApi.doc(fb.db, window.PRIVATE_COLLECTION || 'shopPrivate', window.SOLD_LOG_DOC || 'soldLog');
-}
 function soldWhen(iso, short){
   const d = new Date(iso);
   if(isNaN(d)) return '';
@@ -6043,7 +5778,7 @@ async function loadSoldLog(){
     soldLog = []; soldLogReadOk = false;
     console.error(err);
     toast('อ่านประวัติยอดขายไม่ได้' + (err.code === 'permission-denied'
-      ? ' — ต้องเพิ่มกฎ Firestore ให้เอกสาร shopPrivate/soldLog' : ': ' + (err.code || err.message)), true);
+      ? ' — ต้องเพิ่มนโยบาย (RLS) ให้ตาราง shop_private' : ': ' + (err.code || err.message)), true);
   }
   if(sm) renderSoldModal();
 }
@@ -6092,7 +5827,7 @@ function soldRowsHtml(){
 }
 
 function soldLogHtml(){
-  if(!soldLogReadOk) return '<div class="empty"><p class="empty-title">ยังอ่านประวัติไม่ได้</p><p>เช็กกฎ Firestore ของ shopPrivate/soldLog แล้วเปิดหน้านี้ใหม่</p></div>';
+  if(!soldLogReadOk) return '<div class="empty"><p class="empty-title">ยังอ่านประวัติไม่ได้</p><p>เช็กนโยบาย (RLS) ของตาราง shop_private (soldLog) แล้วเปิดหน้านี้ใหม่</p></div>';
   if(!soldLog.length) return '<div class="empty"><p class="empty-title">ยังไม่มีประวัติ</p><p>ทุกครั้งที่กดบันทึกยอดขายในหน้ากรอกยอด จะมาอยู่ที่นี่</p></div>';
   return soldLog.map(e => {
     const items = Array.isArray(e.items) ? e.items : [];
@@ -6174,7 +5909,7 @@ async function saveSold(){
       soldLog = next; logged = true;
     }catch(err){ console.error(err); }
   }
-  toast(logged ? `บันทึกยอดขาย ${changes.length} รายการแล้ว` : `บันทึกยอดขาย ${changes.length} รายการแล้ว แต่ยังเก็บประวัติไม่ได้ (เช็กกฎ Firestore ของ shopPrivate/soldLog)`, !logged);
+  toast(logged ? `บันทึกยอดขาย ${changes.length} รายการแล้ว` : `บันทึกยอดขาย ${changes.length} รายการแล้ว แต่ยังเก็บประวัติไม่ได้ (เช็กนโยบาย (RLS) ของตาราง shop_private (soldLog))`, !logged);
   sm.edits.clear();
   renderSoldModal();
   renderList();

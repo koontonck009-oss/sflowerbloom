@@ -1,20 +1,11 @@
 /* =========================================================
-   S.Flower Bloom - firebase-config.js  (ชื่อไฟล์เดิม — ตอนนี้เก็บค่าตั้งของ Supabase)
-   ใช้ร่วมกันทั้ง index.html (หน้าร้าน), admin.html (หลังบ้าน), OrderManagers.html (ระบบออเดอร์) และ backup.html
-   ไม่มีการเชื่อมต่อ Firebase อีกแล้ว (ย้ายมา Supabase ครบแล้ว)
+   S.Flower Bloom - supabase-config.js
+   ค่าตั้งของ Supabase + ค่าเริ่มต้นของร้าน ใช้ร่วมกันทั้ง index.html (หน้าร้าน),
+   admin.html (หลังบ้าน) และ OrderManagers.html (ระบบจัดการออเดอร์)
    ========================================================= */
 /* บัญชีผู้ดูแลร้าน (ชุดเดียวกับระบบจัดการออเดอร์)
    ช่องผู้ใช้กรอกว่า admin ระบบจะแปลงเป็นอีเมลข้างล่างนี้ให้เอง */
 window.ADMIN_EMAIL = "admin@sflowerbloom.local";
-
-/* ตำแหน่งที่เก็บข้อมูลสินค้าใน Firestore */
-window.CATALOG_COLLECTION = "catalog";
-window.CATALOG_DOC = "products";
-
-/* ข้อมูลภายในร้าน (ลูกค้าอ่านไม่ได้) — ค่าส่งต่อสินค้า เก็บแยกจากข้อมูลสินค้า
-   ต้องตั้ง Firestore Rules ให้ shopPrivate/{doc} อ่าน-เขียนได้เฉพาะที่ล็อกอิน */
-window.PRIVATE_COLLECTION = "shopPrivate";
-window.SHIPPING_DOC = "shipping";
 
 /* ชนิดดอกไม้ "ค่าเริ่มต้น" ใช้ร่วมกันทั้งหน้าร้านและหลังบ้าน
    ปกติไม่ต้องแก้ที่นี่แล้ว — เพิ่ม/ลบ/เรียงชนิดดอกไม้ หมวดหมู่ และขนาดได้ที่หลังบ้าน
@@ -28,13 +19,10 @@ window.OCCASIONS = ['วันเกิด', 'วันครบรอบ/วา
 window.TONES = ['ชมพู', 'แดง', 'ส้ม/เหลือง', 'ขาว/ครีม', 'ม่วง', 'ฟ้า/น้ำเงิน', 'คละสี'];
 window.MENU_ORDER = ['home', 'occasion', 'tone', 'all', 'flower', 'price', 'reviews', 'how', 'contact'];
 
-/* ที่เก็บรูปบน Supabase Storage (รอบ 1: ย้ายเฉพาะรูป ข้อมูลยังอยู่ที่ Firebase)
-   เว้นว่าง = ระบบอัปโหลดรูปแบบเดิม (เขียนลงโฟลเดอร์เว็บแล้วลากขึ้น GitHub)
-   กรอกแล้ว = หลังบ้านย่อรูปเป็น WebP แล้วอัปขึ้น Supabase ให้เลย ได้ลิงก์รูปกลับมาใช้ทันที
-   ค่าสองตัวนี้เปิดเผยในเว็บได้ (Project URL และ publishable/anon key) — ห้ามใส่ service_role key เด็ดขาด */
+/* Supabase: ข้อมูลร้าน (ตาราง shop_catalog / shop_private / orders ฯลฯ) และที่เก็บรูป (Storage)
+   ค่าสองตัวนี้เปิดเผยในเว็บได้ (Project URL และ publishable/anon key) — ห้ามใส่ service_role key
+   ชื่อ bucket ตรงกับที่สร้างใน supabase-setup.sql */
 window.SUPABASE_URL = 'https://rfpnejnrosksrpndaytw.supabase.co';          // เช่น https://abcdefgh.supabase.co
 window.SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJmcG5lam5yb3Nrc3JwbmRheXR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMxMjg0MDEsImV4cCI6MjEwODcwNDQwMX0.OtRaAZ9PKgowhJOz4LUpOUW1Oile_eYIEkm1yU2_sQE';          // publishable (anon) key
 window.SUPABASE_BUCKET = 'images'; // ชื่อ bucket (ตรงกับที่สร้างใน supabase-setup.sql)
 window.SUPABASE_ADMIN_EMAIL = '';  // เว้นว่าง = ใช้อีเมลเดียวกับ ADMIN_EMAIL ด้านบน (ต้องสร้างผู้ใช้นี้ใน Supabase Auth ด้วยรหัสผ่านเดียวกัน)
-
-window.DATA_SOURCE = 'supabase';

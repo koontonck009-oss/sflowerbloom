@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- สวิตช์หน้าร้าน (ตั้งค่าที่คลาสของ <html> ด้านล่าง):
      prices-hidden = ซ่อนราคาทั้งเว็บ | orders-closed = ปิดรับออเดอร์/ตะกร้า
-     ลบคลาสออกเพื่อเปิดใช้งานปกติ (อาจถูก script.js ปรับตามค่าจาก Firebase) -->
+     ลบคลาสออกเพื่อเปิดใช้งานปกติ (อาจถูก script.js ปรับตามค่าจาก Supabase) -->
 <html lang="th" class="prices-hidden orders-closed">
 <head>
 <!-- ============================================================
@@ -58,9 +58,9 @@
 <link rel="stylesheet" href="style.css">
 
 <!-- 6) สคริปต์ที่ต้องโหลดก่อน script.js (ท้าย body)
-     - firebase-config.js ต้องเป็นสคริปต์ปกติ (ไม่ใส่ defer) เพื่อให้ config พร้อมก่อน script.js ทำงาน
+     - supabase-config.js ต้องเป็นสคริปต์ปกติ (ไม่ใส่ defer) เพื่อให้ config พร้อมก่อน script.js ทำงาน
      - Vercel Analytics: ใช้ได้เมื่อเปิด Analytics ใน Vercel Dashboard และ deploy บน Vercel -->
-<script src="firebase-config.js"></script>
+<script src="supabase-config.js"></script>
 <script>window.va = window.va || function () { (window.va.q = window.va.q || []).push(arguments); };</script>
 <script defer src="/_vercel/insights/script.js"></script>
 </head>
