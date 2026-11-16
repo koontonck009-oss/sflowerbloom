@@ -64,6 +64,13 @@ body {
     transform-origin: top left;
 }
 
+/* ตอนพิมพ์จริง กรอบรูปถูกบังคับสูง 145mm (ดูใน @media print ด้านล่าง) ดังนั้นตอนวัดความสูงก็ต้องใช้ค่าเดียวกัน
+   ไม่งั้นระบบวัดได้เตี้ยกว่าจริง ไม่ยอมย่อหน้า แล้วส่วนล่าง (ช่องเซ็นชื่อ) จะถูกตัดหายไป */
+.print-measure-mode .image-frame {
+    height: 145mm;
+    max-height: 145mm;
+}
+
 /* Plain CSS (not Tailwind arbitrary classes) so they exist from the very first print,
    before the Tailwind CDN has had a chance to generate them. */
 .print-img-grid { display: grid; }

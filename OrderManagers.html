@@ -694,11 +694,16 @@
                                     <button v-if="order.deliveryDate && !isFinishedStatus(order.status)" type="button" @click="openQuickEdit('date', order)" title="เลื่อน/แก้วันส่ง" class="w-7 h-7 rounded-lg bg-slate-100 active:bg-slate-200 text-slate-500 flex items-center justify-center"><i class="fa-solid fa-pen text-[10px]"></i></button>
                                     <button v-if="order.deliveryType === 'pickup' && order.deliveryDate && !order.deliveryTime && !isFinishedStatus(order.status)" type="button" @click="openQuickEdit('date', order)" class="text-[11px] font-medium text-indigo-600 px-2 py-0.5 rounded-full border border-dashed border-indigo-300 bg-indigo-50/50 active:bg-indigo-100">＋ ระบุเวลา</button>
                                     <span v-if="urgencyChip(order)" :class="urgencyChip(order).cls" class="px-2 py-0.5 rounded-full text-[11px] font-bold">{{ urgencyChip(order).text }}</span>
-                                    <span v-if="order.notes && !isExpanded(order)" class="md:hidden px-1.5 py-0.5 rounded-full text-[11px] text-amber-700 bg-amber-50 border border-amber-100">📌 มีหมายเหตุ</span>
+                                    <span v-if="(order.notes || hasItemNotes(order)) && !isExpanded(order)" class="md:hidden px-1.5 py-0.5 rounded-full text-[11px] text-amber-700 bg-amber-50 border border-amber-100">📌 มีหมายเหตุ</span>
                                 </div>
                             </div>
                             <button type="button" :disabled="order.status === 'cancelled'" @click="openQuickEdit('payment', order)" title="บันทึกการชำระเงิน" class="text-right shrink-0 -m-1 p-1 rounded-lg active:bg-slate-100">
                                 <div v-if="order.status === 'cancelled'" class="text-sm font-bold text-slate-400">ยกเลิกแล้ว</div>
+                                <template v-else-if="getRemainingBalance(order) > 0 && isCodOrder(order)">
+                                    <div class="text-[11px] text-sky-600 leading-tight">🚚 ยอดที่ต้องเก็บ</div>
+                                    <div class="text-base font-bold text-sky-700">฿{{ formatNumber(getRemainingBalance(order)) }}</div>
+                                    <div class="text-[10px] text-pink-500 leading-tight">แตะเมื่อเก็บเงินแล้ว</div>
+                                </template>
                                 <template v-else-if="getRemainingBalance(order) > 0">
                                     <div class="text-[11px] text-slate-400 leading-tight">ค้างชำระ</div>
                                     <div class="text-base font-bold text-rose-600">฿{{ formatNumber(getRemainingBalance(order)) }}</div>
@@ -738,6 +743,11 @@
                             <div class="min-w-0 flex-1">
                                 
                                 <p :class="isExpanded(order) ? '' : 'line-clamp-2 md:line-clamp-none'" class="text-slate-900 font-semibold whitespace-pre-line leading-relaxed">{{ order.products }}</p>
+                                <div v-if="hasItemNotes(order)" :class="isExpanded(order) ? '' : 'hidden md:block'" class="mt-1.5 space-y-1">
+                                    <p v-for="(it, ni) in itemNotesOf(order)" :key="'in' + ni" class="text-xs text-amber-800 pl-2 border-l-2 border-amber-400 leading-relaxed">
+                                        📝 <b>{{ itemLabelOf(it) }}</b> — {{ it.note }}
+                                    </p>
+                                </div>
                                 <p v-if="order.notes" :class="isExpanded(order) ? '' : 'hidden md:block'" class="text-xs text-amber-700 mt-1.5 pl-2 border-l-2 border-amber-300 leading-relaxed">
                                     📌 หมายเหตุ: {{ order.notes }}
                                 </p>
@@ -1270,7 +1280,13 @@
                         <i class="fa-solid fa-list-check"></i>
                         <span>รายการสินค้า & รายละเอียดช่อดอกไม้ที่ต้องจัด:</span>
                     </div>
-                    <div class="whitespace-pre-line text-slate-900 text-sm font-semibold leading-relaxed bg-white p-2.5 rounded-lg border border-pink-100 min-h-[40px]">
+                    <div v-if="hasItemNotes(order)" class="text-slate-900 text-sm leading-relaxed bg-white p-2.5 rounded-lg border border-pink-100 min-h-[40px] space-y-1.5">
+                        <div v-for="(it, pi2) in printItemsOf(order)" :key="'pi' + pi2">
+                            <div class="font-semibold">{{ pi2 + 1 }}. {{ itemLabelOf(it) }}</div>
+                            <div v-if="String(it.note || '').trim()" class="ml-5 mt-0.5 text-xs font-bold text-amber-900 bg-amber-50 px-2 py-1 rounded border-l-4 border-amber-500">📝 หมายเหตุ: {{ it.note }}</div>
+                        </div>
+                    </div>
+                    <div v-else class="whitespace-pre-line text-slate-900 text-sm font-semibold leading-relaxed bg-white p-2.5 rounded-lg border border-pink-100 min-h-[40px]">
                         {{ order.products }}
                     </div>
                     <div v-if="order.notes" class="text-amber-900 bg-amber-50 p-2 rounded-lg border border-amber-200 flex items-start gap-2">
@@ -1412,6 +1428,13 @@
                                     <div v-if="addonsFor(item).length" class="flex flex-wrap items-center gap-1.5" style="grid-column: 1 / -1">
                                         <span class="text-[11px] text-slate-400">ของเสริม:</span>
                                         <button v-for="a in addonsFor(item)" :key="a.name" type="button" tabindex="-1" @click="addAddon(item, a)" class="text-xs px-2.5 py-1 rounded-full border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100">+ {{ a.name }} ฿{{ formatNumber(a.price) }}</button>
+                                    </div>
+                                    <div style="grid-column: 1 / -1">
+                                        <button v-if="!isItemNoteOpen(item)" type="button" tabindex="-1" @click="openItemNote(item)" class="text-[11px] text-slate-500 hover:text-amber-700">＋ หมายเหตุชิ้นนี้ <span class="text-slate-400">(เช่น ใส่การ์ด, เปลี่ยนสีริบบิ้น)</span></button>
+                                        <div v-else class="flex items-center gap-2">
+                                            <span class="shrink-0 text-xs">📝</span>
+                                            <input :data-item-note="item.id" v-model="item.note" type="text" maxlength="200" placeholder="หมายเหตุเฉพาะชิ้นนี้ เช่น ใส่การ์ดวันเกิด, ริบบิ้นสีชมพู" class="w-full px-3 py-2 sm:py-1.5 border border-amber-200 rounded-xl text-sm bg-amber-50/60 focus:outline-none focus:ring-2 focus:ring-amber-400/30 focus:border-amber-400">
+                                        </div>
                                     </div>
                                 </div>
                             </div>

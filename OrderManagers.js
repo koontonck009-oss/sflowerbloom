@@ -576,8 +576,29 @@
                     const total = Number(o.totalAmount) || 0, paid = Number(o.depositAmount) || 0;
                     if (total <= 0) return null;
                     if (paid >= total) return { text: 'ชำระครบ', cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' };
+                    if (o.paymentMode === 'cod') return { text: '🚚 เก็บเงินปลายทาง', cls: 'bg-sky-50 text-sky-700 border-sky-200' };
                     if (paid > 0) return { text: 'มัดจำแล้ว', cls: 'bg-amber-50 text-amber-700 border-amber-200' };
                     return { text: 'ยังไม่ชำระ', cls: 'bg-rose-50 text-rose-700 border-rose-200' };
+                }
+                // ===== เก็บเงินปลายทาง + หมายเหตุต่อสินค้าแต่ละชิ้น =====
+                function isCodOrder(o) { return !!o && o.paymentMode === 'cod'; }
+                function itemLabelOf(i) {
+                    const label = String((i && i.details) || '').trim();
+                    const qty = Number(i && i.qty) || 0;
+                    return qty > 1 ? `${label} (x${qty} ${(i && i.unit) || ''})`.trim() : label;
+                }
+                // รายการที่มีหมายเหตุของตัวเอง (ใช้โชว์บนการ์ด)
+                function itemNotesOf(o) {
+                    return ((o && o.items) || []).filter(i => String(i.note || '').trim() && String(i.details || '').trim());
+                }
+                function hasItemNotes(o) { return itemNotesOf(o).length > 0; }
+                // รายการสินค้าทีละชิ้นสำหรับใบสั่งงาน
+                function printItemsOf(o) { return ((o && o.items) || []).filter(i => String(i.details || '').trim()); }
+                const itemNoteOpen = ref({}); // item.id -> true เมื่อกดเปิดช่องหมายเหตุในฟอร์ม
+                function isItemNoteOpen(item) { return !!String(item.note || '').trim() || !!itemNoteOpen.value[item.id]; }
+                function openItemNote(item) {
+                    itemNoteOpen.value = { ...itemNoteOpen.value, [item.id]: true };
+                    nextTick(() => { const el = document.querySelector('[data-item-note="' + item.id + '"]'); if (el) el.focus(); });
                 }
                 function statusLabelOf(st) { return ({ pending: 'รอดำเนินการ', in_progress: 'กำลังทำ', ready: 'พร้อมส่ง/รับ', completed: 'ส่งสำเร็จ', cancelled: 'ยกเลิก' })[st] || st; }
 
@@ -1342,7 +1363,8 @@
                             details: item.details || '',
                             qty: item.qty || 1,
                             unit: item.unit || 'ช่อ',
-                            price: item.price || 0
+                            price: item.price || 0,
+                            note: item.note || ''
                         }));
                     } else {
                         const lines = (order.products || '').split('\n').map(l => l.trim()).filter(Boolean);
@@ -1431,7 +1453,11 @@
 
                     const itemsToSave = messageItems.value
                         .filter(item => (item.details || '').trim())
-                        .map(item => ({ details: item.details, qty: Number(item.qty) || 0, unit: item.unit || '', price: Number(item.price) || 0 }));
+                        .map(item => {
+                            const row = { details: item.details, qty: Number(item.qty) || 0, unit: item.unit || '', price: Number(item.price) || 0 };
+                            if (String(item.note || '').trim()) row.note = String(item.note).trim();
+                            return row;
+                        });
 
                     try {
                         await db.collection('orders').doc(messageSourceOrder.value.id).update({
@@ -1876,7 +1902,12 @@
                     // drop untouched blank rows and make qty/price real numbers
                     form.value.items = (form.value.items || [])
                         .filter(i => String(i.details || '').trim() || Number(i.price))
-                        .map(i => ({ ...i, qty: Number(i.qty) || 0, price: Number(i.price) || 0 }));
+                        .map(i => {
+                            const row = { ...i, qty: Number(i.qty) || 0, price: Number(i.price) || 0 };
+                            const n = String(i.note || '').trim();
+                            if (n) row.note = n; else delete row.note;
+                            return row;
+                        });
                     if (formItemizedMode.value && form.value.items && form.value.items.length > 0) {
                         // Itemized mode: products text + totalAmount are derived from the item rows (+ shipping fee)
                         form.value.products = form.value.items
@@ -2519,6 +2550,7 @@
                     suggestForId, suggestIndex, suggestionsFor, onItemInput, onItemFocus, onItemKeydown, pickProduct, variantPanel, pickVariant, closeVariantPanel, quick, quickCats, quickTypes, quickList, toggleQuickCat, pickFromQuick, addonsFor, addAddon,
                     filteredOrders, activeOrdersCount, statusCounts, completedCount, cancelledCount, totalOrderCount, thisMonthCount, desktopStatusTabs, typeTabs, hasActiveFilters, clearAllFilters, isMoreMenuOpen, cardMoreId, isRangeOpen, rangeFrom, rangeTo, rangeLabel, rangeStats, setRangePreset, clearRange, toggleOverdue, monthUi, setMonthUi, onMonthChange, pendingCount, pickupCount, shippingCount, totalDepositSum, totalRemainingSum,
                     toastMessage, deleteTarget, receiptTarget, selectedForPrint, ordersToPrint,
+                    isCodOrder, itemLabelOf, itemNotesOf, hasItemNotes, printItemsOf, isItemNoteOpen, openItemNote,
                     openModal, closeModal, saveOrder, confirmDelete, executeDelete, queueManual,
                     getRemainingBalance, getDeliveryUrgency, mapUrlOf, formatNumber, formatDate, getStatusClass,
                     getProgressWidth, isStepActive, getProgressColor, getProgressDotColor, handleStatusChange, unpaidConfirm, resolveUnpaid, unpaidOnly, paymentBadge, statusLabelOf, queueOpen, todayQueue, overdueCount, jumpToOrder, toastUndo, runToastUndo,
