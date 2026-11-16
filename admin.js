@@ -22,7 +22,7 @@ let pricesHidden = false; // สวิตช์ "ซ่อนราคาบน�
 let draft = null;        // สินค้าที่กำลังแก้ไขอยู่
 let draftIndex = -1;     // -1 = สินค้าใหม่
 let filterCat = 'ทั้งหมด';   // หมวดหมู่ ('ทั้งหมด' หรือชื่อหมวด)
-let filterStatus = '';      // สถานะ: '' = ทั้งหมด · '__fix__' ต้องแก้ไข · '__multi__' มีหลายแบบ · '__hidden__' ซ่อนอยู่ (ใช้ร่วมกับหมวดหมู่ได้)
+let filterStatus = '';      // สถานะ: '' = ทั้งหมด · '__fix__' ต้องแก้ไข · '__multi__' มีหลายแบบ · '__notone__'/'__noocc__' ยังไม่ใส่โทนสี/โอกาส · '__hidden__' ซ่อนอยู่ (ใช้ร่วมกับหมวดหมู่ได้)
 let filterFlower = '';   // '' = ทุกชนิด · '__none__' = ช่อดอกไม้ที่ยังไม่ระบุชนิด · '__off__' = ชนิดนอกรายการหน้าร้าน · อื่นๆ = ชื่อชนิด
 let searchTerm = '';
 // มุมมองสินค้า: 'grid' (การ์ดเหมือนหน้าร้าน — ค่าเริ่มต้น) หรือ 'list' (ตาราง) จำค่าที่เลือกไว้ในเบราว์เซอร์
@@ -694,6 +694,27 @@ function variantInfoOf(p){
 }
 
 function isMulti(p){ return !!variantInfoOf(p); }
+
+// สถานะโทนสี / โอกาสพิเศษของสินค้า (key = 'tones' | 'occasions')
+// 'ok' = ใส่แล้ว (ระดับสินค้า หรือทุกแบบที่ขายอยู่ใส่ครบ) · 'partial' = ใส่แค่บางแบบ ส่วนที่เหลือหน้าร้านจะไม่นับ · 'none' = ยังไม่ใส่เลย
+function attrStateOf(p, key){
+  const has = o => !!o && Array.isArray(o[key]) && o[key].some(x => String(x ?? '').trim());
+  if(has(p)) return 'ok';
+  const rows = Array.isArray(p.variants) && p.options && p.options.length ? p.variants : [];
+  if(!rows.length) return 'none';
+  const n = rows.filter(has).length;
+  return n === 0 ? 'none' : n === rows.length ? 'ok' : 'partial';
+}
+function attrWarnTags(p){
+  const out = [];
+  [['tones', 'โทนสี'], ['occasions', 'โอกาส']].forEach(([k, label]) => {
+    const st = attrStateOf(p, k);
+    if(st === 'none') out.push(`<span class="tag tag-attr">ยังไม่ใส่${label}</span>`);
+    else if(st === 'partial') out.push(`<span class="tag tag-attr">${label}ไม่ครบทุกแบบ</span>`);
+  });
+  return out;
+}
+const attrMissing = (p, key) => attrStateOf(p, key) !== 'ok';
 function expandKey(p, i){ return String(p.id || '') || '#' + i; }
 
 function variantPanelHtml(p, i){
@@ -736,6 +757,7 @@ function cardHtml(p, i, filtering){
   if(!mainImageOf(p)) warns.push('<span class="tag tag-warn">ยังไม่มีรูป</span>');
   if(fs === 'off') warns.push(`<span class="tag tag-warn">⚠ ${esc(String(p.flowerType).trim())}</span>`);
   if(fs === 'none') warns.push('<span class="tag tag-warn">ยังไม่ระบุชนิด</span>');
+  warns.push(...attrWarnTags(p));
   const isRange = pi.text.includes('–');
   const priceTxt = pi.text === '—' ? 'ยังไม่มีราคา' : (isRange ? 'เริ่มต้น ' + pi.text.split('–')[0] : pi.text);
   return `
@@ -785,6 +807,8 @@ function visibleProducts(){
     .filter(({ p }) => filterStatus === '__hidden__' ? !!p.hidden : !p.hidden)
     .filter(({ p }) => filterStatus !== '__fix__' || needsFix(p))
     .filter(({ p }) => filterStatus !== '__multi__' || isMulti(p))
+    .filter(({ p }) => filterStatus !== '__notone__' || attrMissing(p, 'tones'))
+    .filter(({ p }) => filterStatus !== '__noocc__' || attrMissing(p, 'occasions'))
     .filter(({ p }) => filterCat === 'ทั้งหมด' || p.cat === filterCat)
     .filter(({ p }) => !q ||
       String(p.name || '').toLowerCase().includes(q) ||
@@ -815,6 +839,10 @@ function renderList(){
   if(filterStatus === '__fix__' && !fixCount) filterStatus = '';
   if(filterStatus === '__multi__' && !multiCount) filterStatus = '';
   if(filterStatus === '__hidden__' && !hiddenCount) filterStatus = '';
+  const noToneCount = catalog.filter(p => !p.hidden && attrMissing(p, 'tones')).length;
+  const noOccCount = catalog.filter(p => !p.hidden && attrMissing(p, 'occasions')).length;
+  if(filterStatus === '__notone__' && !noToneCount) filterStatus = '';
+  if(filterStatus === '__noocc__' && !noOccCount) filterStatus = '';
   if(filterCat !== 'ทั้งหมด' && !allCats().includes(filterCat)) filterCat = 'ทั้งหมด';
   // กลุ่มสินค้าที่กำลังดูอยู่ (สถานะ "ซ่อนอยู่" = เฉพาะที่ซ่อน, อย่างอื่น = เฉพาะที่ยังขาย)
   const pool = catalog.filter(p => filterStatus === '__hidden__' ? p.hidden : !p.hidden);
@@ -826,6 +854,8 @@ function renderList(){
   const statusOpts = [['', 'ทุกสถานะ']];
   if(fixCount) statusOpts.push(['__fix__', `⚠ ต้องแก้ไข (${fixCount})`]);
   if(multiCount) statusOpts.push(['__multi__', `มีหลายแบบ (${multiCount})`]);
+  if(noToneCount) statusOpts.push(['__notone__', `🎨 ยังไม่ใส่โทนสี (${noToneCount})`]);
+  if(noOccCount) statusOpts.push(['__noocc__', `🎁 ยังไม่ใส่โอกาส (${noOccCount})`]);
   if(hiddenCount) statusOpts.push(['__hidden__', `ซ่อนอยู่ (${hiddenCount})`]);
   $('statusFilter').innerHTML = statusOpts.map(([v, l]) => `<option value="${esc(v)}"${v === filterStatus ? ' selected' : ''}>${esc(l)}</option>`).join('');
   $('statusFilter').classList.toggle('is-active', !!filterStatus);
@@ -882,6 +912,7 @@ function renderList(){
     const warns = [];
     if(p.hidden) warns.push('<span class="tag tag-hidden">ซ่อนอยู่</span>');
     if(!mainImageOf(p)) warns.push('<span class="tag tag-warn">ยังไม่มีรูป</span>');
+    warns.push(...attrWarnTags(p));
     const fs = flowerStateOf(p);
     const flowerHtml = fs === 'ok' ? `<span class="row-flower">🌸 ${esc(String(p.flowerType).trim())}</span>`
       : fs === 'off' ? `<span class="tag tag-warn">⚠ ${esc(String(p.flowerType).trim())} (หน้าร้านกรองไม่ได้)</span>`
@@ -1219,8 +1250,8 @@ function renderMainPanel(){
       ${size.notes}
 
       <div class="main-row">
-        ${tagChipsHtml('occasions', 'โอกาสพิเศษ (เลือกได้หลายอย่าง)', OCCASION_TAGS)}
-        ${tagChipsHtml('tones', 'โทนสี (เลือกได้หลายสี)', TONE_TAGS)}
+        ${tagChipsHtml('occasions', mode === 'options' ? 'โอกาสพิเศษ — ค่าทั้งสินค้า (ใช้กับแบบที่ไม่ได้ตั้งเอง)' : 'โอกาสพิเศษ (เลือกได้หลายอย่าง)', OCCASION_TAGS)}
+        ${tagChipsHtml('tones', mode === 'options' ? 'โทนสี — ค่าทั้งสินค้า (ใช้กับแบบที่ไม่ได้ตั้งเอง)' : 'โทนสี (เลือกได้หลายสี)', TONE_TAGS)}
       </div>
 
       <div class="main-row">
@@ -1403,6 +1434,89 @@ function comboToolsHtml(combos){
     </div>`;
 }
 
+// โทนสี / โอกาสพิเศษรายแบบ (variant) — v.tones / v.occasions เป็น array · ไม่ติ๊กอะไรเลย = หน้าร้านใช้ค่าของทั้งสินค้าแทน
+function comboAttrLabel(v){
+  const t = v && Array.isArray(v.tones) ? v.tones.length : 0;
+  const o = v && Array.isArray(v.occasions) ? v.occasions.length : 0;
+  return (t || o) ? `🎨 ${t} · 🎁 ${o}` : 'ตั้งค่า';
+}
+function comboAttrChipsHtml(ci, key, label, list, v){
+  const cur = v && Array.isArray(v[key]) ? v[key] : [];
+  const all = [...list, ...cur.filter(x => !list.includes(x))];
+  const body = all.length
+    ? all.map(x => {
+        const on = cur.includes(x), off = !list.includes(x);
+        return `<label class="chip-opt${on ? ' is-on' : ''}"><input type="checkbox" data-cmulti="${key}" data-ci="${ci}" data-val="${esc(x)}"${on ? ' checked' : ''}><span>${esc(x)}${off ? ' (ไม่อยู่ในรายการแล้ว)' : ''}</span></label>`;
+      }).join('')
+    : '<p class="field-hint">ยังไม่มีตัวเลือก — เพิ่มได้ที่ ตัวเลือกร้าน</p>';
+  return `<div class="combo-attr-group"><span class="combo-attr-label">${label}</span><div class="chip-multi">${body}</div></div>`;
+}
+
+// ดูรูปใหญ่ของแต่ละแบบ (กดรูปเล็กในตารางตัวเลือก) — รูปหลัก + รูปเพิ่มเติมเลือกดูได้ · ปุ่ม "แก้พาธ" เปิดช่องแก้พาธรูปหลักของแถวนั้น
+function toggleComboPathRow(ci, forceOpen){
+  const tb = document.querySelector(`#panelPrice .combo-item[data-ci="${ci}"]`);
+  const row = tb && tb.querySelector('.combo-imgrow');
+  if(!row) return;
+  row.hidden = forceOpen ? false : !row.hidden;
+  if(!row.hidden){ const i = row.querySelector('input'); if(i) i.focus(); }
+}
+let lbState = null;
+function closeComboLightbox(){
+  const el = document.getElementById('lbScrim');
+  if(el) el.hidden = true;
+  lbState = null;
+}
+function renderComboLightbox(){
+  const el = document.getElementById('lbScrim');
+  if(!el || !lbState) return;
+  const { list, i, ci, title } = lbState;
+  el.querySelector('.lb-title').textContent = `${title} · ${i + 1}/${list.length}`;
+  const img = el.querySelector('.lb-img');
+  img.classList.remove('is-missing');
+  img.src = list[i];
+  el.querySelector('.lb-prev').hidden = el.querySelector('.lb-next').hidden = list.length < 2;
+  el.querySelector('.lb-strip').innerHTML = list.length < 2 ? '' : list.map((src, k) =>
+    `<button type="button" class="lb-t${k === i ? ' is-on' : ''}" data-lb-i="${k}"><img src="${esc(src)}" alt=""></button>`).join('');
+  el.querySelector('[data-lb-path]').hidden = i !== 0;
+}
+function openComboLightbox(ci){
+  const combo = comboList(draft.options)[ci];
+  const v = variantFor(combo);
+  const list = v ? imgsOf(v).map(x => x.replace(/\\/g, '/')) : [];
+  if(!list.length) return;
+  let el = document.getElementById('lbScrim');
+  if(!el){
+    el = document.createElement('div');
+    el.id = 'lbScrim'; el.className = 'lb-scrim'; el.hidden = true;
+    el.innerHTML = `<div class="lb-box" role="dialog" aria-modal="true" aria-label="ดูรูปใหญ่">
+      <div class="lb-head"><span class="lb-title"></span><button type="button" class="lb-close" aria-label="ปิด">✕</button></div>
+      <div class="lb-stage"><button type="button" class="lb-nav lb-prev" aria-label="รูปก่อนหน้า">‹</button><img class="lb-img" alt=""><button type="button" class="lb-nav lb-next" aria-label="รูปถัดไป">›</button></div>
+      <div class="lb-strip"></div>
+      <div class="lb-foot"><button type="button" class="btn btn-ghost btn-sm" data-lb-path>แก้พาธรูปหลัก</button></div>
+    </div>`;
+    document.body.appendChild(el);
+    el.addEventListener('click', e => {
+      if(e.target === el || e.target.closest('.lb-close')) return closeComboLightbox();
+      if(!lbState) return;
+      const n = lbState.list.length;
+      if(e.target.closest('.lb-prev')){ lbState.i = (lbState.i - 1 + n) % n; renderComboLightbox(); }
+      else if(e.target.closest('.lb-next')){ lbState.i = (lbState.i + 1) % n; renderComboLightbox(); }
+      else if(e.target.closest('[data-lb-i]')){ lbState.i = +e.target.closest('[data-lb-i]').dataset.lbI; renderComboLightbox(); }
+      else if(e.target.closest('[data-lb-path]')){ const c = lbState.ci; closeComboLightbox(); toggleComboPathRow(c, true); }
+    });
+    el.querySelector('.lb-img').addEventListener('error', e => e.target.classList.add('is-missing'));
+    document.addEventListener('keydown', e => {
+      if(!lbState) return;
+      if(e.key === 'Escape'){ e.stopPropagation(); closeComboLightbox(); }
+      else if(e.key === 'ArrowLeft' && lbState.list.length > 1){ lbState.i = (lbState.i - 1 + lbState.list.length) % lbState.list.length; renderComboLightbox(); }
+      else if(e.key === 'ArrowRight' && lbState.list.length > 1){ lbState.i = (lbState.i + 1) % lbState.list.length; renderComboLightbox(); }
+    }, true);
+  }
+  lbState = { list, i: 0, ci, title: combo.join(' · ') };
+  el.hidden = false;
+  renderComboLightbox();
+}
+
 function comboRowHtml(c, ci){
   const v = variantFor(c);
   const filtered = comboMatches(c, v) ? '' : ' is-filtered';
@@ -1411,14 +1525,22 @@ function comboRowHtml(c, ci){
                 <tr>
                   <td class="c-sell"><input type="checkbox" data-act="toggle-combo" data-ci="${ci}"${v ? ' checked' : ''} aria-label="ขาย"></td>
                   <td class="c-ready"><label><input type="checkbox" data-combo-ready="${ci}"${v && v.ready ? ' checked' : ''}${v ? '' : ' disabled'}><span class="c-lbl">พร้อมส่ง</span></label></td>
-                  <td class="c-thumb"><button type="button" class="combo-thumb" data-combo-path="${ci}" title="กดเพื่อเปลี่ยนรูปหลัก / แก้พาธ"${v ? '' : ' disabled'}>${thumbHtml(v ? v.image : '', 'combo-thumb-img')}</button></td>
+                  <td class="c-thumb"><button type="button" class="combo-thumb" data-combo-path="${ci}" title="กดเพื่อดูรูปใหญ่"${v ? '' : ' disabled'}>${thumbHtml(v ? v.image : '', 'combo-thumb-img')}</button></td>
                   <td class="combo-combo">${c.map(esc).join(' · ')}</td>
                   <td class="c-price"><input type="number" min="0" step="1" data-combo-price="${ci}" value="${v ? (num(v.price) || '') : ''}" placeholder="${v ? 'ราคา' : 'ไม่ขาย'}" aria-label="ราคา"></td>
                   <td class="c-tag"><select data-combo-tag="${ci}"${v ? '' : ' disabled'}>${comboTagChoices(draft.cat, v && v.tag).map(([val, label]) => `<option value="${esc(val)}"${(v && v.tag || '') === val ? ' selected' : ''}>${esc(label)}</option>`).join('')}</select></td>
                   <td class="c-more"><button type="button" class="btn btn-ghost btn-sm combo-more" data-combo-more="${ci}"${v ? '' : ' disabled'} title="รูปเพิ่มเติมที่ลูกค้าเห็นต่อจากรูปหลัก">${comboMoreLabel(v)}</button></td>
+                  <td class="c-attr"><button type="button" class="btn btn-ghost btn-sm combo-attr-btn" data-combo-attr="${ci}"${v ? '' : ' disabled'} title="โทนสี 🎨 / โอกาสพิเศษ 🎁 ของแบบนี้ (ไม่ติ๊ก = ใช้ค่าของทั้งสินค้า)">${comboAttrLabel(v)}</button></td>
+                </tr>
+                <tr class="combo-attrrow" hidden>
+                  <td colspan="8">
+                    ${comboAttrChipsHtml(ci, 'tones', 'โทนสีของแบบนี้', TONE_TAGS, v)}
+                    ${comboAttrChipsHtml(ci, 'occasions', 'โอกาสพิเศษของแบบนี้', OCCASION_TAGS, v)}
+                    <p class="field-hint">ไม่ติ๊กอะไรเลย = หน้าร้านใช้ค่าโทน/โอกาสของทั้งสินค้าแทน</p>
+                  </td>
                 </tr>
                 <tr class="combo-imgrow" hidden>
-                  <td colspan="7">
+                  <td colspan="8">
                     <label class="combo-pathlabel"><span>พาธรูปหลัก</span>
                       <input type="text" data-combo-image="${ci}" value="${v ? esc(v.image || '') : ''}" placeholder="images/…" autocomplete="off"${v ? '' : ' disabled'}>
                     </label>
@@ -1648,6 +1770,7 @@ function renderPricePanel(){
                 <th class="c-price">ราคา</th>
                 <th class="c-tag">ตัวกรองขนาด</th>
                 <th class="c-more">แกลเลอรี</th>
+                <th class="c-attr">โทนสี/โอกาส</th>
               </tr>
             </thead>
             ${combos.map((c, ci) => comboRowHtml(c, ci)).join('')}
@@ -1764,6 +1887,22 @@ function comboTagChoices(cat, current){
 function onDraftInput(e){
   const el = e.target;
   if(!draft) return;
+
+  if(el.dataset.cmulti){
+    const combo = comboList(draft.options)[+el.dataset.ci];
+    const vr = variantFor(combo);
+    if(!vr) return;
+    const k = el.dataset.cmulti, val = el.dataset.val;
+    const arr = Array.isArray(vr[k]) ? vr[k].slice() : [];
+    const i = arr.indexOf(val);
+    if(el.checked && i < 0) arr.push(val);
+    if(!el.checked && i >= 0) arr.splice(i, 1);
+    if(arr.length) vr[k] = arr; else delete vr[k];
+    const chip = el.closest('.chip-opt'); if(chip) chip.classList.toggle('is-on', el.checked);
+    const btn = el.closest('tbody').querySelector('[data-combo-attr]');
+    if(btn) btn.textContent = comboAttrLabel(vr);
+    return;
+  }
 
   if(el.dataset.multi){
     const k = el.dataset.multi, v = el.dataset.val;
@@ -2417,15 +2556,19 @@ function onComboToggle(e){
   const tagSelect = tr.querySelector('[data-combo-tag]');
   const moreBtn = tr.querySelector('[data-combo-more]');
   const pathBtn = tr.querySelector('[data-combo-path]');
+  const attrBtn = tr.querySelector('[data-combo-attr]');
   tr.classList.toggle('is-off', !el.checked);
-  imageInput.disabled = readyInput.disabled = tagSelect.disabled = moreBtn.disabled = pathBtn.disabled = !el.checked;
+  imageInput.disabled = readyInput.disabled = tagSelect.disabled = moreBtn.disabled = pathBtn.disabled = attrBtn.disabled = !el.checked;
   priceInput.placeholder = el.checked ? 'ราคา' : 'ไม่ขาย';
   if(!el.checked){
     priceInput.value = ''; imageInput.value = ''; readyInput.checked = false; tagSelect.value = '';
     const th = tr.querySelector('.combo-thumb-img');
     if(th){ th.removeAttribute('src'); th.classList.add('is-missing'); }
     tr.querySelector('.combo-imgrow').hidden = true;
+    tr.querySelector('.combo-attrrow').hidden = true;
+    tr.querySelectorAll('[data-cmulti]').forEach(i => { i.checked = false; const ch = i.closest('.chip-opt'); if(ch) ch.classList.remove('is-on'); });
   }
+  attrBtn.textContent = comboAttrLabel(variantFor(comboList(draft.options)[+el.dataset.ci]));
   moreBtn.textContent = comboMoreLabel(variantFor(comboList(draft.options)[+el.dataset.ci]));
   const counter = $('comboCount');
   if(counter) counter.textContent = draft.variants.length;
@@ -2550,6 +2693,10 @@ function cleanProduct(p){
       const o = { match: (v.match || []).map(str), price: num(v.price) };
       { const all = imgsOf(v).map(s => String(s).replace(/\\/g, '/')); if(all.length) o.image = all[0]; if(all.length > 1) o.images = all; }
       if(str(v.tag)) o.tag = str(v.tag);
+      { const tg = a => [...new Set((Array.isArray(a) ? a : []).map(str).filter(Boolean))];
+        const vt = tg(v.tones), vo = tg(v.occasions);
+        if(vt.length) o.tones = vt;
+        if(vo.length) o.occasions = vo; }
       if(v.ready) o.ready = true;
       return o;
     });
@@ -4856,8 +5003,10 @@ function useCount(kind, name, cat){
   if(!n) return 0;
   if(kind === 'cats') return catalog.filter(p => String(p.cat ?? '').trim() === n).length;
   if(kind === 'flowers') return catalog.filter(p => String(p.flowerType ?? '').trim() === n).length;
-  if(kind === 'tones') return catalog.filter(p => Array.isArray(p.tones) && p.tones.includes(n)).length;
-  if(kind === 'occasions') return catalog.filter(p => Array.isArray(p.occasions) && p.occasions.includes(n)).length;
+  if(kind === 'tones' || kind === 'occasions'){
+    const has = (o, k) => !!o && Array.isArray(o[k]) && o[k].includes(n);
+    return catalog.filter(p => has(p, kind) || (p.variants || []).some(v => has(v, kind))).length;
+  }
   if(!cat) return 0;
   return catalog.filter(p => String(p.cat ?? '').trim() === cat && allTagsOf(p).includes(n)).length;
 }
@@ -4920,7 +5069,7 @@ function renderOptionsModal(focusIdx){
   } else if(kind === 'occasions' || kind === 'tones'){
     const isTone = kind === 'tones';
     $('optAddLabel').textContent = isTone ? 'เพิ่มโทนสี' : 'เพิ่มโอกาสพิเศษ';
-    head = `<p class="om-note">ลำดับในรายการนี้ = ลำดับปุ่มบนหน้าร้าน · ${isTone ? 'ชื่อที่มีคำว่า ชมพู แดง ส้ม เหลือง เขียว ฟ้า น้ำเงิน ม่วง น้ำตาล ขาว ครีม ดำ คละ จะมีจุดสีหน้าชื่อให้เอง' : 'ตั้งชื่อให้ลูกค้าเข้าใจทันที เช่น วันเกิด รับปริญญา'} · ไปติ๊กให้สินค้าแต่ละชิ้นที่หน้าแก้ไขสินค้า · หน้าร้านโชว์เฉพาะค่าที่มีสินค้าติดอยู่</p>`;
+    head = `<p class="om-note">ลำดับในรายการนี้ = ลำดับปุ่มบนหน้าร้าน · ${isTone ? 'ตั้งชื่อโทนให้ลูกค้าเข้าใจทันที เช่น ชมพู ขาว/ครีม คละสี' : 'ตั้งชื่อให้ลูกค้าเข้าใจทันที เช่น วันเกิด รับปริญญา'} · ไปติ๊กให้สินค้าแต่ละชิ้นที่หน้าแก้ไขสินค้า · หน้าร้านโชว์เฉพาะค่าที่มีสินค้าติดอยู่</p>`;
   } else if(kind === 'flowers'){
     $('optAddLabel').textContent = 'เพิ่มชนิดดอกไม้';
     head = '<p class="om-note">ตัวกรองบนหน้าร้านและหลังบ้านเรียงตามจำนวนสินค้า มากไปน้อย · ช่องเลือกในหน้าแก้ไขสินค้าเรียงตามรายการนี้</p>';
@@ -5022,6 +5171,13 @@ function applyRenames(list, catMap, flowerMap, sizeMaps, toneMap = new Map(), oc
     [['tones', toneMap], ['occasions', occMap]].forEach(([k, m]) => {
       if(!m.size || !Array.isArray(p[k])) return;
       if(p[k].some(x => m.has(x))){ p[k] = [...new Set(p[k].map(x => (m.has(x) ? m.get(x) : x)))]; touched = true; }
+    });
+    // โทนสี/โอกาสที่ติ๊กไว้รายแบบ (variants[i].tones / .occasions) ก็เปลี่ยนชื่อตามด้วย
+    [['tones', toneMap], ['occasions', occMap]].forEach(([k, m]) => {
+      if(!m.size) return;
+      (p.variants || []).forEach(v => {
+        if(v && Array.isArray(v[k]) && v[k].some(x => m.has(x))){ v[k] = [...new Set(v[k].map(x => (m.has(x) ? m.get(x) : x)))]; touched = true; }
+      });
     });
     if(touched) changed++;
   });
@@ -5476,11 +5632,17 @@ drawerBody.addEventListener('change', e => {
 drawerBody.addEventListener('click', onDraftClick);
 drawerBody.addEventListener('click', e => { const b = e.target.closest('[data-combo-more]'); if(b && !b.disabled) openImgModal(+b.dataset.comboMore); });
 drawerBody.addEventListener('click', e => {
+  const b = e.target.closest('[data-combo-attr]');
+  if(!b || b.disabled) return;
+  const row = b.closest('tbody').querySelector('.combo-attrrow');
+  row.hidden = !row.hidden;
+});
+drawerBody.addEventListener('click', e => {
   const p = e.target.closest('[data-combo-path]');
   if(p && !p.disabled){
-    const row = p.closest('tbody').querySelector('.combo-imgrow');
-    row.hidden = !row.hidden;
-    if(!row.hidden) row.querySelector('input').focus();
+    const v = variantFor(comboList(draft.options)[+p.dataset.comboPath]);
+    if(v && imgsOf(v).length){ openComboLightbox(+p.dataset.comboPath); return; }
+    toggleComboPathRow(+p.dataset.comboPath); // ยังไม่มีรูป → เปิดช่องใส่พาธให้เลย
     return;
   }
   const cb = e.target.closest('[data-cb]');

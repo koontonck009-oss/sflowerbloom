@@ -876,6 +876,7 @@ function variantPasses(p, v, opts){
   const price = variantPriceOf(p, v);
   if(price < opts.range.min || price > opts.range.max) return false;
   if(!variantMatchesSizeFilter(p, v, opts.sizes)) return false;
+  if(!variantMatchesAttrs(p, v, opts.tones || activeTones, opts.occasions || activeOccasions)) return false;
   if(opts.readyOnly && !variantIsReadyOf(p, v)) return false;
   if(opts.favOnly && !isVariantFavorite(p, v)) return false;
   return true;
@@ -1121,21 +1122,33 @@ function attrMatch(list, set){
   return Array.isArray(list) && list.some(x => set.has(x));
 }
 // ชื่อที่หน้าร้านโชว์ได้ = อยู่ในรายการของร้านและมีสินค้าติดอยู่จริง (ยังไม่มีสินค้าติด = ซ่อนทั้งกลุ่ม/ทั้งเมนู ลูกค้าไม่เห็นตัวเลือกว่าง)
-function tonesInUse(){ return TONES.filter(t => PRODUCTS.some(p => Array.isArray(p.tones) && p.tones.includes(t))); }
-function occasionsInUse(){ return OCCASIONS.filter(t => PRODUCTS.some(p => Array.isArray(p.occasions) && p.occasions.includes(t))); }
-function attrCount(key, v){ return PRODUCTS.filter(p => Array.isArray(p[key]) && p[key].includes(v)).length; }
-// จุดสีหน้าชื่อโทน — เดาจากคำไทยในชื่อ (ชื่อที่ไม่รู้จักไม่มีจุด) · มี 2 สีขึ้นไปในชื่อเดียว = จุดแบ่งครึ่ง
-const TONE_DOT_MAP = [[/ชมพู/,'#F0568C'],[/แดง/,'#D7263D'],[/ส้ม/,'#F29A3B'],[/เหลือง/,'#F6C945'],[/เขียว/,'#6BB36B'],[/ฟ้า|น้ำเงิน/,'#5B9BD5'],[/ม่วง/,'#8E6BBF'],[/น้ำตาล/,'#8B5E3C'],[/ขาว|ครีม/,'#F3EBDD'],[/ดำ/,'#2E2A2C']];
-function toneDotHtml(name){
-  const n = String(name || '');
-  if(/คละ|หลากสี|รุ้ง/.test(n)) return '<i class="tone-dot" style="background:conic-gradient(#F0568C,#F6C945,#6BB36B,#5B9BD5,#8E6BBF,#F0568C)" aria-hidden="true"></i>';
-  const cols = TONE_DOT_MAP.filter(([re]) => re.test(n)).map(([, c]) => c);
-  if(!cols.length) return '';
-  const bg = cols.length === 1 ? cols[0] : `linear-gradient(135deg,${cols[0]} 50%,${cols[1]} 50%)`;
-  return `<i class="tone-dot" style="background:${bg}" aria-hidden="true"></i>`;
+function tonesInUse(){ return TONES.filter(t => PRODUCTS.some(p => productHasAttr(p, 'tones', t))); }
+function occasionsInUse(){ return OCCASIONS.filter(t => PRODUCTS.some(p => productHasAttr(p, 'occasions', t))); }
+function attrCount(key, v){ return PRODUCTS.filter(p => productHasAttr(p, key, v)).length; }
+// โทนสี / โอกาสพิเศษ ระดับ "แบบ" (variant): แบบที่แอดมินติ๊กไว้เองใช้ค่าของแบบนั้นตรงๆ · แบบที่ไม่ได้ติ๊กอะไรเลย
+// ใช้ค่าของทั้งสินค้า (p.tones / p.occasions) แทน · ไม่มีทั้งสองระดับ = ไม่ติดโทน/โอกาสใดๆ (ไม่ผ่านตัวกรองที่เลือก)
+function variantAttrOf(p, v, key){
+  let src = null;
+  if(v){
+    if(v.optionIndex != null && hasNewOptions(p)) src = p.variants[v.optionIndex];
+    else if(v.sizeIndex != null && p.sizes) src = p.sizes[v.sizeIndex];
+    else if(v.colorIndex != null && p.colors) src = p.colors[v.colorIndex];
+  }
+  if(src && Array.isArray(src[key]) && src[key].length) return src[key];
+  return Array.isArray(p[key]) ? p[key] : [];
+}
+function variantMatchesAttrs(p, v, tones, occs){
+  return attrMatch(variantAttrOf(p, v, 'tones'), tones) && attrMatch(variantAttrOf(p, v, 'occasions'), occs);
+}
+// สินค้านี้มีอย่างน้อยหนึ่งแบบที่ติดค่านี้ (ใช้ตัดสินว่าจะโชว์ปุ่ม/เมนูโทนสี-โอกาสไหม)
+function productHasAttr(p, key, val){
+  return allVariantsOf(p).some(v => variantAttrOf(p, v, key).includes(val));
 }
 function flowerMatches(p, set = activeFlowerTypes, tones = activeTones, occs = activeOccasions){
-  return (!set || set.size === 0 || set.has(p.flowerType)) && attrMatch(p.tones, tones) && attrMatch(p.occasions, occs);
+  if(set && set.size > 0 && !set.has(p.flowerType)) return false;
+  if((!tones || tones.size === 0) && (!occs || occs.size === 0)) return true;
+  // โทนสี/โอกาสตัดสินรายแบบ — สินค้าผ่านเมื่อมีอย่างน้อยหนึ่งแบบตรง (ตัวตัดสินจริงอยู่ที่ variantPasses)
+  return allVariantsOf(p).some(v => variantMatchesAttrs(p, v, tones, occs));
 }
 function toggleAttrIn(set, v){ if(set.has(v)) set.delete(v); else set.add(v); }
 function setTone(i){
@@ -1346,7 +1359,7 @@ function countResultsForState(st){
   const cats = st.cats.size ? CATS.slice(1).filter(c => st.cats.has(c)) : CATS.slice(1);
   let total = 0;
   cats.forEach(cat => {
-    const opts = { range, sizes: CATEGORY_SIZES[cat] ? st.sizes : new Set(), readyOnly: st.ready, favOnly: st.favorites };
+    const opts = { range, sizes: CATEGORY_SIZES[cat] ? st.sizes : new Set(), readyOnly: st.ready, favOnly: st.favorites, tones: st.tones, occasions: st.occasions };
     PRODUCTS.filter(p => p.cat === cat && matchesSearch(p) && flowerMatches(p, st.flowerTypes, st.tones, st.occasions)).forEach(p => {
       const passing = allVariantsOf(p).filter(v => variantPasses(p, v, opts));
       total += st.allSplit ? passing.length : (passing.length ? 1 : 0);
@@ -1419,7 +1432,7 @@ function buildFilterPanelHtml(state, mode){
       .concat(list.map(t => {
         const on = set.has(t);
         const cnt = mode === 'sheet' ? `<span class="fp-n">${attrCount(key, t)}</span>` : '';
-        return `<button class="filter-pill is-multi ${on ? 'active' : ''}" aria-pressed="${on}" onclick="${fn}(${full.indexOf(t)})">${isTone ? toneDotHtml(t) : ''}${escapeHtml(t)}${cnt}</button>`;
+        return `<button class="filter-pill is-multi ${on ? 'active' : ''}" aria-pressed="${on}" onclick="${fn}(${full.indexOf(t)})">${escapeHtml(t)}${cnt}</button>`;
       })).join('');
     return group(title, set.size, `<div class="filter-pills">${pills}</div>`);
   };
@@ -1463,10 +1476,10 @@ function buildFilterPanelHtml(state, mode){
   }
 
   const catGroup = group('หมวดหมู่', 0, `<div class="filter-pills fp-cats">${catHtml}</div>`);
-  // มือถือ: หมวดหมู่ → ชนิดดอกไม้ → ขนาด → เพิ่มเติม (พร้อมส่ง/โปรด/แยกแบบ/เรียงราคา) → ราคา · คอมคงลำดับเดิม
-  // ลูกค้าใหม่ไม่รู้จักร้าน → เริ่มจาก "ซื้อให้ใคร/โอกาสอะไร" (โอกาส → โทนสี) ก่อนค่อยลงรายละเอียดหมวด/ชนิด/ขนาด/ราคา
-  if(isSheet) return occHtml + toneHtml + catGroup + flowerHtml + sizeHtml + moreHtml + priceHtml;
-  return occHtml + toneHtml + catGroup + sizeHtml + flowerHtml + priceHtml + sortHtml + moreHtml;
+  // มือถือ: หมวดหมู่ → ชนิดดอกไม้ → โอกาสพิเศษ → โทนสี → ขนาด → เพิ่มเติม (พร้อมส่ง/โปรด/แยกแบบ/เรียงราคา) → ราคา · คอมคงลำดับเดิม
+  // โอกาสพิเศษ → โทนสี วางต่อจากชนิดดอกไม้ (คอมวางต่อจากชนิดดอกไม้เช่นกัน)
+  if(isSheet) return catGroup + flowerHtml + occHtml + toneHtml + sizeHtml + moreHtml + priceHtml;
+  return catGroup + sizeHtml + flowerHtml + occHtml + toneHtml + priceHtml + sortHtml + moreHtml;
 }
 
 // Desktop sidebar — always visible, applies every change immediately (no apply button needed)
@@ -1949,7 +1962,7 @@ function renderCatalog(){
     );
     totalMatches += flatItems.length;
     flatHtml = `<div class="cat-section" id="${catSectionId('ทั้งหมด')}" data-cat="ทั้งหมด">
-      <div class="section-title"><h3>สินค้าทั้งหมด</h3><span>${flatItems.length} รายการ</span></div>
+      <div class="section-title"><h3>${escapeHtml([...activeOccasions, ...activeTones].join(' · ') || 'สินค้าทั้งหมด')}</h3><span>${flatItems.length} รายการ</span></div>
       <div class="grid">${flatItems.map(v => renderProductCard(v.product, v)).join('')}</div>
     </div>`;
   }
@@ -1989,10 +2002,10 @@ function renderCatalog(){
         const hasIdx = only && (only.colorIndex != null || only.optionIndex != null || only.sizeIndex != null);
         if(e.passing.length === 1 && e.total > 1 && hasIdx) return renderProductCard(e.p, only);
         // ตัวกรองขนาด (เช่น ใส่เงิน) บีบเหลือบางแบบ — จำไว้ว่าแบบไหนผ่าน เพื่อให้รูปบนการ์ดและหน้าสินค้าตรงกับตัวกรอง
-        if((activeSizes.size || searchQuery) && hasNewOptions(e.p) && e.passing.length < e.total){
+        if((activeSizes.size || activeTones.size || activeOccasions.size || searchQuery) && hasNewOptions(e.p) && e.passing.length < e.total){
           cardNarrowByProduct[e.p.id] = e.passing.filter(x => x.optionIndex != null).map(x => x.optionIndex);
         }
-        if((activeSizes.size || searchQuery) && e.p.sizes && e.p.sizes.length && !hasNewOptions(e.p) && !(e.p.colors && e.p.colors.length) && e.passing.length < e.total){
+        if((activeSizes.size || activeTones.size || activeOccasions.size || searchQuery) && e.p.sizes && e.p.sizes.length && !hasNewOptions(e.p) && !(e.p.colors && e.p.colors.length) && e.passing.length < e.total){
           cardNarrowSizesByProduct[e.p.id] = e.passing.filter(x => x.sizeIndex != null).map(x => x.sizeIndex);
         }
         return renderProductCard(e.p, undefined, e);
@@ -4563,10 +4576,10 @@ function dtFlower(t){
   dtApply(() => { activeFlowerTypes = new Set([t]); }, true);
 }
 function dtOccasion(i){
-  dtApply(() => { if(OCCASIONS[i]) activeOccasions = new Set([OCCASIONS[i]]); }, true);
+  dtApply(() => { if(OCCASIONS[i]) activeOccasions = new Set([OCCASIONS[i]]); showAllVariantsSplit = true; dtFlatAll = true; }, true); // แยกทุกสี/ทุกแบบเป็นการ์ดเหมือนเมนู "สินค้า"
 }
 function dtTone(i){
-  dtApply(() => { if(TONES[i]) activeTones = new Set([TONES[i]]); }, true);
+  dtApply(() => { if(TONES[i]) activeTones = new Set([TONES[i]]); showAllVariantsSplit = true; dtFlatAll = true; }, true); // แยกทุกสี/ทุกแบบเป็นการ์ดเหมือนเมนู "สินค้า"
 }
 // เรียงเมนูหลักคอมตามที่ตั้งไว้ที่หลังบ้าน (ย้าย element เดิมทั้งก้อน ไม่สร้างใหม่ จึงไม่กระทบตัวฟังเหตุการณ์)
 function applyDtMenuOrder(){
@@ -4617,7 +4630,7 @@ function syncDtNav(){
   if(layout) layout.classList.toggle('dt-browse', dtBrowse);
   const mark = (el, on) => { if(el) el.classList.toggle('active', !!on); };
   mark(nav.querySelector('[data-key="home"]'), none);
-  mark(nav.querySelector('.dt-item[data-key="all"] > .dt-link'), (dtFlatAll && showAllVariantsSplit) || activeCats.size > 0);
+  mark(nav.querySelector('.dt-item[data-key="all"] > .dt-link'), (dtFlatAll && showAllVariantsSplit && activeTones.size === 0 && activeOccasions.size === 0) || activeCats.size > 0);
   // สินค้า: เมนูย่อย หมวด → ขนาด (วาดใหม่เมื่อรายการหมวด/ขนาดเปลี่ยน เช่น หลังโหลดจากหลังบ้าน)
   const prodSub = document.getElementById('dtProdSub');
   if(prodSub){
@@ -4650,7 +4663,7 @@ function syncDtNav(){
     it.hidden = list.length === 0;
     const sg = list.join('|');
     if(sb.dataset.sig !== sg){
-      sb.innerHTML = list.map(t => `<button type="button" role="menuitem" data-act="${act}" data-i="${full.indexOf(t)}" data-t="${escapeHtml(t)}">${dot ? toneDotHtml(t) : ''}${escapeHtml(t)}</button>`).join('');
+      sb.innerHTML = list.map(t => `<button type="button" role="menuitem" data-act="${act}" data-i="${full.indexOf(t)}" data-t="${escapeHtml(t)}">${escapeHtml(t)}</button>`).join('');
       sb.dataset.sig = sg;
     }
     sb.querySelectorAll('[data-act="' + act + '"]').forEach(b => mark(b, activeSet.has(b.dataset.t)));
