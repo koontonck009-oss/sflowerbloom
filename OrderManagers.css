@@ -82,6 +82,16 @@ body {
 .print-img-h-4 { max-height: 65mm; }
 .print-img-h-6 { max-height: 42mm; }
 
+/* รูปในใบสั่งงาน: ครอปให้เต็มช่อง และให้ตารางรูปสูงเต็มกรอบ (แบ่งความสูงเท่ากันทุกแถว) */
+.image-frame { height: 145mm; box-sizing: border-box; }
+.image-frame .print-img-grid { flex: 1 1 auto; width: 100%; height: 100%; min-height: 0; grid-auto-rows: minmax(0, 1fr); }
+.image-frame .print-img-grid > div { position: relative; min-width: 0; min-height: 0; }
+.image-frame .print-img-grid img { width: 100%; height: 100%; max-width: 100%; max-height: none !important; object-fit: cover; }
+/* รูปที่ถูกหมุน 90/270 องศา ใช้ครอปไม่ได้ (สัดส่วนสลับ) จึงคงแบบเห็นรูปครบ */
+.image-frame .print-img-grid img[style*="rotate(90deg)"],
+.image-frame .print-img-grid img[style*="rotate(270deg)"],
+.image-frame .print-img-grid img[style*="rotate(-90deg)"] { object-fit: contain; }
+
 /* Print styles for Receipt and Work Order printing */
 @media print {
     body * {
