@@ -53,7 +53,7 @@
       <span class="sb-label">หน้าร้านของลูกค้า</span>
       <button type="button" class="sb-item sb-pop" id="settingsBtn" title="ซ่อนราคา ปิดระบบสั่งทำ และยอดนัดรับฟรี"><svg class="sb-ico" viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10" cy="10" r="2.6"/><path d="M10 2.5v2M10 15.5v2M2.5 10h2M15.5 10h2M4.7 4.7l1.4 1.4M13.9 13.9l1.4 1.4M4.7 15.3l1.4-1.4M13.9 6.1l1.4-1.4"/></svg><span>ตั้งค่าร้าน</span></button>
       <button type="button" class="sb-item sb-pop" id="siteBtn" title="แบนเนอร์ ป๊อปอัป ข้อความหน้าร้าน ชื่อ โลโก้ สี และ FAQ"><svg class="sb-ico" viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="4" width="15" height="12" rx="2"/><path d="M2.5 8h15M6 12h4"/></svg><span>แต่งหน้าร้าน</span></button>
-      <button type="button" class="sb-item sb-pop" id="reviewsBtn" title="ผูกรูปรีวิวลูกค้ากับสินค้า ให้ไปโผล่ในแกลเลอรีของสินค้านั้น"><svg class="sb-ico" viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 2.5l2.3 4.7 5.2.7-3.8 3.6.9 5.1L10 14.1 5.4 16.6l.9-5.1L2.5 7.9l5.2-.7L10 2.5z"/></svg><span>รีวิวลูกค้า</span></button>
+      <button type="button" class="sb-item sb-pop" id="reviewsBtn" title="เลือกว่ารูปรีวิวแต่ละรูปเป็นของสินค้าไหน รูปจะไปแสดงในหน้าสินค้านั้น"><svg class="sb-ico" viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 2.5l2.3 4.7 5.2.7-3.8 3.6.9 5.1L10 14.1 5.4 16.6l.9-5.1L2.5 7.9l5.2-.7L10 2.5z"/></svg><span>รีวิวลูกค้า</span></button>
       <button type="button" class="sb-item sb-pop" id="optionsBtn" title="เพิ่ม แก้ชื่อ เรียงลำดับ: หมวดหมู่ ชนิดดอกไม้ ขนาด โอกาสพิเศษ โทนสี และลำดับเมนูหน้าร้าน"><svg class="sb-ico" viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3h6l8 8-6 6-8-8V3z"/><circle cx="6.5" cy="6.5" r="1"/></svg><span>ตัวเลือกร้าน</span></button>
       <span class="sb-label">เครื่องมือ</span>
       <button type="button" class="sb-item sb-pop" id="catalogBtn" title="ดาวน์โหลดภาพแคตตาล็อก (JPG)"><svg class="sb-ico" viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="14" height="14" rx="2"/><circle cx="7.5" cy="7.5" r="1.3"/><path d="M17 13l-4-4-7 8"/></svg><span id="catalogLabel">แคตตาล็อก</span></button>
@@ -92,6 +92,13 @@
       <button type="button" class="set-chip" id="ssPrice"></button>
       <button type="button" class="set-chip" id="ssOrder"></button>
       <button type="button" class="set-chip" id="ssFree"></button>
+      <span class="set-chip set-chip-edit" id="ssFreeEdit" hidden>
+        <span>นัดรับฟรี</span>
+        <input type="number" id="ssFreeInput" min="1" max="100000" step="1" inputmode="numeric" aria-label="ยอดสั่งซื้อขั้นต่ำที่นัดรับฟรี (บาท)">
+        <span>บาทขึ้นไป</span>
+        <button type="button" class="set-edit-ok" id="ssFreeOk">บันทึก</button>
+        <button type="button" class="set-edit-no" id="ssFreeNo" aria-label="ยกเลิก">✕</button>
+      </span>
     </div>
 
     <div class="card list-card" id="listCard">
@@ -298,17 +305,9 @@
 <div class="confirm-scrim" id="revScrim" hidden>
   <div class="vm-card rv-card" role="dialog" aria-modal="true" aria-labelledby="revTitle">
     <h3 class="vm-title" id="revTitle">รูปรีวิวลูกค้า</h3>
-    <div class="rv-addbar"><button type="button" class="btn btn-ghost btn-sm" id="revAddOpen">＋ เพิ่มรูปรีวิวใหม่</button><span class="rv-adv-note">ลากรูปมาวางได้เลย ระบบย่อรูปและตั้งชื่อให้เอง</span></div>
-    <div class="rv-addpanel" id="revAddPanel" hidden>
-      <div class="rv-drop" id="revDrop" tabindex="0" role="button"><b>ลากรูปรีวิวมาวางที่นี่</b><span>หรือคลิกเพื่อเลือกรูป (เลือกได้หลายรูป) · ระบบย่อรูปและตั้งชื่อให้เอง</span></div>
+    <div class="rv-addpanel rv-addpanel-open" id="revAddPanel">
+      <div class="rv-drop" id="revDrop" tabindex="0" role="button"><b>＋ เพิ่มรูปรีวิวใหม่ — ลากรูปมาวางที่นี่ หรือกดเพื่อเลือกรูป</b><span>เลือกได้หลายรูปพร้อมกัน ระบบจัดการรูปให้เอง</span></div>
       <input type="file" id="revFile" accept="image/*" multiple hidden>
-      <div class="rv-adv-row"><button type="button" class="btn btn-ghost btn-sm" id="revPickDir">เลือกโฟลเดอร์เว็บ</button><span class="rv-adv-note" id="revDirName"></span></div>
-      <div id="revPending"></div>
-      <details class="rv-old"><summary>วิธีเดิม: พิมพ์ชื่อไฟล์เอง</summary>
-      <p class="rv-add-help">วางชื่อไฟล์รูปที่เอาไปไว้ใน <b>images/reviews/</b> แล้ว — <b>หนึ่งบรรทัดต่อหนึ่งรูป</b> (เช่น abc.jpg) · ต้องอัปโหลดเว็บขึ้นไปแล้วก่อน ระบบจะตรวจว่าเปิดรูปได้จริง</p>
-      <textarea id="revAddText" rows="4" spellcheck="false" placeholder="review201.jpg&#10;review202.jpg&#10;รีวิวใหม่.jpg"></textarea>
-      <div class="rv-adv-row"><button type="button" class="btn btn-primary btn-sm" id="revAddGo">ตรวจและเพิ่ม</button><button type="button" class="btn btn-ghost btn-sm" id="revAddClose">ซ่อนช่องนี้</button></div>
-      </details>
       <div id="revAddOut"></div>
     </div>
     <div class="vm-body rv-body">
@@ -316,7 +315,7 @@
       <!-- กริดรูปรีวิวทั้งหมด -->
       <div id="revAllView">
         <div class="rv-summary" id="revSummary"></div>
-        <input type="search" id="revSearch" class="rv-search" placeholder="🔍 ค้นหาชื่อไฟล์ เช่น review20" autocomplete="off" spellcheck="false">
+        <input type="search" id="revSearch" class="rv-search" placeholder="🔍 ค้นหาด้วยรหัสหรือชื่อสินค้า" autocomplete="off" spellcheck="false">
         <div id="revCtx"></div>
         <div class="rv-filter" id="revFilter"></div>
         <div class="rv-grid" id="revGrid"></div>
@@ -338,7 +337,6 @@
       <p class="vm-hint" id="revHint"></p>
       <button type="button" class="vm-btn" id="revUndo" disabled>↶ เลิกทำ</button>
       <button type="button" class="vm-btn" id="revCancel">ปิด</button>
-      <button type="button" class="vm-btn vm-save" id="revSave" disabled>บันทึก</button>
     </div>
   </div>
 </div>
