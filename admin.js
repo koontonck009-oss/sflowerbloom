@@ -1116,17 +1116,18 @@ function sizeFieldHtml(){
   };
 }
 
-// ช่องเลือกหลายค่า (โอกาสพิเศษ / โทนสี) — ติ๊กแล้วเก็บเป็น array ใน draft[key] · ค่าเก่าที่ไม่อยู่ในรายการแล้วยังโชว์ให้เห็น จะได้เอาออกได้
-function tagChipsHtml(key, label, list){
+// ช่องเลือกหลายค่า (โอกาสพิเศษ / โทนสี) — ดรอปดาวน์ติ๊กหลายค่า หน้าตาเหมือนช่อง "ขนาด" · เก็บเป็น array ใน draft[key]
+// ค่าเก่าที่ไม่อยู่ในรายการแล้วยังโชว์ให้เห็น จะได้ติ๊กออกได้
+function tagMenuHtml(key, label, list, ph){
   const cur = Array.isArray(draft[key]) ? draft[key] : [];
   const all = [...list, ...cur.filter(v => !list.includes(v))];
   const body = all.length
     ? all.map(v => {
         const on = cur.includes(v), off = !list.includes(v);
-        return `<label class="chip-opt${on ? ' is-on' : ''}"><input type="checkbox" data-multi="${key}" data-val="${esc(v)}"${on ? ' checked' : ''}><span>${esc(v)}${off ? ' (ไม่อยู่ในรายการแล้ว)' : ''}</span></label>`;
+        return `<label class="size-opt${off ? ' is-off' : ''}"><input type="checkbox" data-multi="${key}" data-val="${esc(v)}"${on ? ' checked' : ''}><span>${esc(v)}${off ? ' (ไม่อยู่ในรายการแล้ว)' : ''}</span></label>`;
       }).join('')
-    : '<p class="field-hint">ยังไม่มีตัวเลือก — เพิ่มได้ที่ ตัวเลือกร้าน</p>';
-  return `<div class="field"><span>${label}</span><div class="chip-multi">${body}</div></div>`;
+    : '<p class="field-hint" style="padding:8px 12px;margin:0">ยังไม่มีตัวเลือก — เพิ่มได้ที่ ตัวเลือกร้าน</p>';
+  return `<div class="field"><span>${label}</span><details class="menu size-menu"><summary class="size-summary" data-ph="${esc(ph)}">${esc(all.filter(v => cur.includes(v)).join(', ')) || esc(ph)}</summary><div class="menu-pop size-pop">${body}</div></details></div>`;
 }
 
 function renderMainPanel(){
@@ -1159,11 +1160,19 @@ function renderMainPanel(){
   $('panelMain').innerHTML = `
     <div class="main-rows">
 
-      <div class="main-row main-row-top">
+      <div class="main-row main-row-id">
+        <label class="field">
+          <span>รหัสสินค้า</span>
+          <input type="text" data-bind="id" value="${esc(draft.id)}" placeholder="เช่น s16">
+        </label>
         <label class="field">
           <span>ชื่อสินค้า</span>
           <input type="text" data-bind="name" value="${esc(draft.name)}" placeholder="เช่น ช่อดอกทานตะวัน - S16">
         </label>
+      </div>
+      <p class="field-hint">รหัสห้ามซ้ำกับสินค้าอื่น ใช้เป็นตัวอ้างอิงในตะกร้าและใบสั่งซื้อ</p>
+
+      <div class="main-row main-row-top">
         <label class="field">
           <span>หมวดหมู่</span>
           <select data-bind="cat">
@@ -1178,33 +1187,17 @@ function renderMainPanel(){
           </select>
         </label>
         ${size.field}
+        ${tagMenuHtml('occasions', 'โอกาสพิเศษ', OCCASION_TAGS, 'เลือกโอกาส')}
+        ${tagMenuHtml('tones', 'โทนสี', TONE_TAGS, 'เลือกโทนสี')}
       </div>
       ${offFlower ? '<p class="field-hint size-warn">⚠ ชนิดดอกไม้นี้หน้าร้านไม่มีให้กรอง — เลือกชนิดที่ถูกต้องจากรายการ</p>' : ''}
       ${size.notes}
-
-      <div class="main-row">
-        ${tagChipsHtml('occasions', mode === 'options' ? 'โอกาสพิเศษ — ค่าทั้งสินค้า (ใช้กับแบบที่ไม่ได้ตั้งเอง)' : 'โอกาสพิเศษ (เลือกได้หลายอย่าง)', OCCASION_TAGS)}
-        ${tagChipsHtml('tones', mode === 'options' ? 'โทนสี — ค่าทั้งสินค้า (ใช้กับแบบที่ไม่ได้ตั้งเอง)' : 'โทนสี (เลือกได้หลายสี)', TONE_TAGS)}
-      </div>
+      <p class="field-hint">โอกาสพิเศษและโทนสี ติ๊กได้หลายอย่าง${mode === 'options' ? ' · ค่านี้เป็นของทั้งสินค้า ใช้กับแบบที่ไม่ได้ตั้งเอง' : ''}</p>
 
       <div class="main-row">
         <label class="field">
           <span>รายละเอียด</span>
           <textarea data-bind="desc" placeholder="อธิบายสิ่งที่ลูกค้าจะได้รับ เช่น จำนวนดอก สีกระดาษห่อ">${esc(draft.desc || '')}</textarea>
-        </label>
-      </div>
-
-      <div class="main-row">
-        <label class="check${hasVars ? ' is-locked' : ''}" style="margin:0">
-          <input type="checkbox" ${hasVars ? 'disabled' : 'data-bind="ready" data-type="bool"'}${draft.ready ? ' checked' : ''}>
-          <span>${hasVars ? 'พร้อมส่ง — ตั้งแยกในแต่ละแถวของการ์ด “ตัวแปร”' : 'ทำไว้แล้ว พร้อมส่งทันที (ขึ้นป้าย “พร้อมส่ง” ในหน้าร้าน)'}</span>
-        </label>
-      </div>
-
-      <div class="main-row">
-        <label class="check" style="margin:0">
-          <input type="checkbox" data-bind="hidden" data-type="bool"${draft.hidden ? ' checked' : ''}>
-          <span>ซ่อนจากหน้าร้าน (เลิกขายแล้ว) — ข้อมูลยังเก็บไว้ เปิดกลับมาขายได้ทุกเมื่อ</span>
         </label>
       </div>
 
@@ -1223,13 +1216,17 @@ function renderMainPanel(){
       </div>
 
       <div class="main-row">
-        <div>
-          <label class="field">
-            <span>รหัสสินค้า</span>
-            <input type="text" data-bind="id" value="${esc(draft.id)}" placeholder="เช่น s16">
-          </label>
-          <p class="field-hint">รหัสห้ามซ้ำกับสินค้าอื่น ใช้เป็นตัวอ้างอิงในตะกร้าและใบสั่งซื้อ</p>
-        </div>
+        <label class="check${hasVars ? ' is-locked' : ''}" style="margin:0">
+          <input type="checkbox" ${hasVars ? 'disabled' : 'data-bind="ready" data-type="bool"'}${draft.ready ? ' checked' : ''}>
+          <span>${hasVars ? 'พร้อมส่ง — ตั้งแยกในแต่ละแถวของการ์ด “ตัวแปร”' : 'ทำไว้แล้ว พร้อมส่งทันที (ขึ้นป้าย “พร้อมส่ง” ในหน้าร้าน)'}</span>
+        </label>
+      </div>
+
+      <div class="main-row">
+        <label class="check" style="margin:0">
+          <input type="checkbox" data-bind="hidden" data-type="bool"${draft.hidden ? ' checked' : ''}>
+          <span>ซ่อนจากหน้าร้าน (เลิกขายแล้ว) — ข้อมูลยังเก็บไว้ เปิดกลับมาขายได้ทุกเมื่อ</span>
+        </label>
       </div>
     </div>`;
 }
@@ -1288,27 +1285,11 @@ function renderMediaPanel(){
         </div>`).join('');
   $('panelMedia').innerHTML = `
     <div class="group">
-      <div class="rv-drop pd-drop" tabindex="0" role="button"><b>ลากรูปสินค้ามาวางที่นี่</b><span>หรือคลิกเพื่อเลือกรูป (เลือกได้หลายรูป) · รูปแรกเป็นรูปหลักถ้ายังว่าง · ระบบย่อรูปและตั้งชื่อให้เอง</span></div>
+      <div class="rv-drop pd-drop" tabindex="0" role="button"><b>ลากรูปสินค้ามาวางที่นี่ หรือคลิกเพื่อเลือกรูป (เลือกได้หลายรูป)</b></div>
       ${sbOn() ? '<div class="rv-adv-row"><button type="button" class="btn btn-ghost btn-sm" data-lib="main">🖼 เลือกจากคลังรูป</button></div>' : ''}
       <input type="file" class="pd-file" accept="image/*" multiple hidden>
-      ${sbOn() ? '' : `<div class="rv-adv-row"><button type="button" class="btn btn-ghost btn-sm" data-act="pd-pickdir">เลือกโฟลเดอร์เว็บ</button><span class="rv-adv-note" id="pdDirName">${window.showDirectoryPicker ? '' : 'ต้องเปิดด้วย Chrome หรือ Edge บนคอมพิวเตอร์'}</span></div>`}
       <div id="pdOut"></div>
-      ${pdPendingHtml()}
       ${all.length ? `<div class="pd-grid">${tiles}</div>` : '<p class="group-note" style="margin:10px 0 0">ยังไม่มีรูป ลากรูปมาวางด้านบนได้เลย</p>'}
-      <details class="rv-old"><summary>วิธีเดิม: พิมพ์พาธรูปเอง</summary>
-      <p class="group-note">ใส่เป็นที่อยู่ไฟล์ในโฟลเดอร์ images เช่น images/bouquet/ช่อทานตะวัน/เล็ก.jpg — ต้องอัปโหลดไฟล์รูปขึ้นเว็บแยกต่างหากก่อน · รูปของแต่ละตัวเลือกใส่ในการ์ด “ตัวแปร”</p>
-      <div class="img-field">
-        <label class="field">
-          <span>รูปหลัก</span>
-          <input type="text" data-bind="image" value="${esc(draft.image || '')}" placeholder="images/…">
-        </label>
-        ${thumbHtml(draft.image)}
-      </div>
-      <div style="margin-top:14px">
-        <span class="field" style="margin:0"><span>รูปเพิ่มเติม (แกลเลอรี)</span></span>
-        ${imageListHtml(draft.images, 'images')}
-      </div>
-      </details>
     </div>`;
 }
 
@@ -1845,6 +1826,12 @@ function onDraftInput(e){
     if(!el.checked && i >= 0) arr.splice(i, 1);
     draft[k] = arr;
     const chip = el.closest('.chip-opt'); if(chip) chip.classList.toggle('is-on', el.checked);
+    const mnu = el.closest('details.size-menu');
+    if(mnu){
+      const sum = mnu.querySelector('summary');
+      const txt = [...mnu.querySelectorAll('input[data-multi]')].filter(i => i.checked).map(i => i.dataset.val).join(', ');
+      if(sum) sum.textContent = txt || sum.dataset.ph || '';
+    }
     return;
   }
 
@@ -1947,13 +1934,6 @@ function onDraftClick(e){
       clearVariables();
       return;
 
-    case 'pd-pickdir':
-      rvGetRoot(true);
-      return;
-    case 'pd-pending-done':
-      pdPendingSet([]);
-      renderMediaPanel();
-      return;
     case 'pd-main': case 'pd-left': case 'pd-right': case 'pd-rm': {
       const all = pdAll(), i = +btn.dataset.k;
       if(i < 0 || i >= all.length) return;
@@ -3460,12 +3440,12 @@ function libOpen(ctx){
   libStyle();
   const old = document.getElementById('libScrim'); if(old) old.remove();
   let sz = 'm'; try{ sz = localStorage.getItem('sfb-lib-size') || 'm'; }catch(e){}
-  lib = { items: [], sel: [], ctx: ctx || null, tab: 'grid', busy: false, loading: true, last: -1, check: null, orphan: null, osel: new Set(), size: ['s', 'm', 'l'].includes(sz) ? sz : 'm', zoom: null, review: false };
+  lib = { items: [], sel: [], ctx: ctx || null, tab: 'grid', busy: false, loading: true, last: -1, orphan: null, osel: new Set(), size: ['s', 'm', 'l'].includes(sz) ? sz : 'm', zoom: null, review: false };
   const sc = document.createElement('div');
   sc.className = 'lib-scrim'; sc.id = 'libScrim';
   sc.innerHTML = `<div class="lib-box">
     <div class="lib-head"><b id="libTitle"></b>
-      <div class="lib-tabs"><button type="button" data-lib-tab="grid">คลังรูป</button><button type="button" data-lib-tab="orphan">ไฟล์ที่ไม่ได้ใช้</button><button type="button" data-lib-tab="check">ตรวจก่อนลบรูปใน GitHub</button></div>
+      <div class="lib-tabs"><button type="button" data-lib-tab="grid">คลังรูป</button><button type="button" data-lib-tab="orphan">ไฟล์ที่ไม่ได้ใช้</button></div>
       <button type="button" class="btn btn-ghost btn-sm" data-lib-act="close">ปิด</button></div>
     <div class="lib-body" id="libBody"></div>
     <div class="lib-foot" id="libFoot"></div>
@@ -3500,15 +3480,14 @@ function libSizesHtml(){
 function libRender(){
   if(!lib) return;
   const sc = document.getElementById('libScrim'); if(!sc) return;
-  sc.querySelector('#libTitle').textContent = lib.ctx ? ('เลือกรูปเข้า: ' + lib.ctx.label) : 'คลังรูป (Supabase)';
+  sc.querySelector('#libTitle').textContent = lib.ctx ? ('เลือกรูปเข้า: ' + lib.ctx.label) : 'คลังรูป';
   sc.querySelectorAll('[data-lib-tab]').forEach(b => b.classList.toggle('is-on', b.dataset.libTab === lib.tab));
   const body = sc.querySelector('#libBody');
-  if(lib.tab === 'check'){ body.innerHTML = libCheckHtml(); libFoot(); return; }
   if(lib.tab === 'orphan'){ body.innerHTML = libOrphanHtml(); libFoot(); libRefreshOrphan(); return; }
   const grid = lib.items.map((it, k) => `<div class="lib-it" data-p="${esc(it.path)}"><img loading="lazy" decoding="async" alt="" src="${esc(sbPublicUrl(it.path))}"><span class="ck"></span><button type="button" class="zm" data-zm="${k}" title="ขยายดูรูปใหญ่">🔍</button><span class="sz">${Math.max(1, Math.round(it.size / 1024))} KB</span></div>`).join('');
-  body.innerHTML = `<div class="lib-drop" id="libDrop" tabindex="0" role="button"><b>ลากรูปสินค้ามาวางที่นี่ได้ทีละหลายร้อยรูป</b> หรือคลิกเพื่อเลือก<small>ระบบย่อเป็น WebP ให้เอง · ไฟล์ HEIC จากไอโฟนใช้ไม่ได้ ให้แปลงเป็น JPG ก่อน · เปิดแท็บค้างไว้จนกว่าจะเสร็จ</small></div>
+  body.innerHTML = `<div class="lib-drop" id="libDrop" tabindex="0" role="button"><b>ลากรูปมาวางที่นี่</b> หรือคลิกเพื่อเลือกรูป<small>ลากได้ทีละหลายรูป · ระบบย่อรูปให้เอง · รูปจากไอโฟนต้องเป็นไฟล์ JPG · อย่าปิดหน้านี้จนกว่าจะอัปโหลดเสร็จ</small></div>
     <p class="lib-note" id="libStatus">${lib.loading ? 'กำลังโหลดรายการรูป …' : ''}</p>
-    <p class="lib-note">${lib.ctx ? 'คลิกรูปเพื่อเลือก (เลขบนรูปคือลำดับ — รูปแรกเป็นรูปหลักถ้ายังว่าง) · ' : 'คลิกรูปเพื่อเลือก · '}กด 🔍 ที่มุมรูปเพื่อขยายดู (เลื่อนด้วยปุ่มลูกศร ← → ได้) · กด Shift ค้างแล้วคลิกเพื่อเลือกเป็นช่วง · ขนาดรูป${libSizesHtml()}</p>
+    <p class="lib-note">${lib.ctx ? 'คลิกรูปเพื่อเลือก (เลขบนรูปคือลำดับ รูปแรกเป็นรูปหลัก)' : 'คลิกรูปเพื่อเลือก'} · กด 🔍 เพื่อดูรูปใหญ่ · ขนาดรูป${libSizesHtml()}</p>
     <div class="lib-grid" id="libGrid" style="grid-template-columns:repeat(auto-fill,minmax(${libGridPx()}px,1fr))">${grid || (lib.loading ? '' : '<p class="lib-note">คลังยังว่างอยู่ — ลากรูปมาวางด้านบนได้เลย</p>')}</div>`;
   const drop = body.querySelector('#libDrop');
   drop.addEventListener('click', () => sc.querySelector('#libFile').click());
@@ -3517,14 +3496,13 @@ function libRender(){
 }
 function libFoot(){
   const f = document.getElementById('libFoot'); if(!f || !lib) return;
-  if(lib.tab === 'check' || lib.tab === 'orphan'){ f.innerHTML = '<span class="lib-note grow">ตรวจจากข้อมูลที่โหลดในหลังบ้านตอนนี้ — กดบันทึกสินค้าให้เรียบร้อยก่อนตรวจ</span>'; return; }
+  if(lib.tab === 'orphan'){ f.innerHTML = '<span class="lib-note grow">ตรวจจากข้อมูลที่โหลดในหลังบ้านตอนนี้ — กดบันทึกสินค้าให้เรียบร้อยก่อนตรวจ</span>'; return; }
   const n = lib.sel.length, dis = (lib.busy || !n) ? ' disabled' : '';
   f.innerHTML = `<span class="lib-note grow">ในคลัง ${lib.items.length} รูป · เลือกอยู่ ${n} รูป</span>
     ${lib.ctx && lib.ctx.single ? '' : `<button type="button" class="btn btn-ghost btn-sm" data-lib-act="all"${lib.busy ? ' disabled' : ''}>เลือกทั้งหมด</button>`}
     <button type="button" class="btn btn-ghost btn-sm" data-lib-act="none"${dis}>ล้างที่เลือก</button>
     <button type="button" class="btn btn-danger btn-sm" data-lib-act="del"${dis}>ลบที่เลือก</button>
-    ${lib.ctx ? `<label class="lib-note" style="display:flex;gap:4px;align-items:center;margin:0"><input type="checkbox" id="libKeep"> เก็บไว้ในคลังด้วย (คัดลอกแทนย้าย)</label>
-    <button type="button" class="btn btn-primary" data-lib-act="pick"${dis}>${lib.ctx.single ? 'ใช้รูปนี้' : `ใส่ ${n} รูปในสินค้านี้`}</button>` : ''}`;
+    ${lib.ctx ? `<button type="button" class="btn btn-primary" data-lib-act="pick"${dis}>${lib.ctx.single ? 'ใช้รูปนี้' : `ใส่ ${n} รูปในสินค้านี้`}</button>` : ''}`;
 }
 function libRefreshSel(){
   if(!lib) return;
@@ -3563,7 +3541,6 @@ function libOnClick(e){
     else if(act === 'pick-go') libPickSelected();
     else if(act === 'rvback'){ lib.review = false; libReviewRender(); }
     else if(act === 'size'){ lib.size = a.dataset.v; try{ localStorage.setItem('sfb-lib-size', lib.size); }catch(err){} if(lib.tab === 'orphan') libRender(); else { const g = document.getElementById('libGrid'); if(g) g.style.gridTemplateColumns = `repeat(auto-fill,minmax(${libGridPx()}px,1fr))`; document.querySelectorAll('.lib-sizes button').forEach(b => b.classList.toggle('is-on', b.dataset.v === lib.size)); } }
-    else if(act === 'check') libRunCheck();
     else if(act === 'orphan') libRunOrphan();
     else if(act === 'orphan-del') libDeleteOrphans();
     else if(act === 'orestore') libRestoreOrphans();
@@ -3650,7 +3627,6 @@ async function libPickSelected(){
   if(!lib || lib.busy || !lib.ctx || !lib.sel.length) return;
   const ctx = lib.ctx, slug = ctx.slug ? ctx.slug() : '';
   if(!slug && !ctx.dest){ toast('กรอกรหัสสินค้า (ตัวอักษรอังกฤษหรือตัวเลข) ในการ์ดข้อมูลสินค้าก่อน แล้วค่อยเลือกรูป', true); return; }
-  const keep = !!(document.getElementById('libKeep') && document.getElementById('libKeep').checked);
   const keys = lib.sel.slice(), tag = Date.now().toString(36);
   lib.review = false; libReviewRender();
   lib.busy = true; libFoot();
@@ -3659,11 +3635,11 @@ async function libPickSelected(){
   for(let i = 0; i < keys.length; i++){
     const src = keys[i], ext = String(src).split('.').pop();
     const dst = ctx.dest ? ctx.dest(tag, i, ext) : `products/${slug}/${slug}-${tag}${i}.${ext}`;
-    libStatus(`กำลัง${keep ? 'คัดลอก' : 'ย้าย'}รูป ${i + 1}/${keys.length} …`);
+    libStatus(`กำลังย้ายรูป ${i + 1}/${keys.length} …`);
     try{
-      await sbMoveCopy(src, dst, keep);
+      await sbMoveCopy(src, dst, false);
       const oldUrl = sbPublicUrl(src), newUrl = sbPublicUrl(dst);
-      if(!keep) Object.keys(lmap).forEach(h => { if(lmap[h] === oldUrl) lmap[h] = newUrl; });
+      Object.keys(lmap).forEach(h => { if(lmap[h] === oldUrl) lmap[h] = newUrl; });
       urls.push(newUrl);
     }catch(e){ fails.push(sbErrText(e)); }
   }
@@ -3717,11 +3693,11 @@ function libReviewRender(){
   let ov = document.getElementById('libReview');
   if(!lib || !lib.review){ if(ov) ov.remove(); return; }
   if(!ov){ ov = document.createElement('div'); ov.className = 'lib-rv'; ov.id = 'libReview'; box.appendChild(ov); }
-  const n = lib.sel.length, keepEl = document.getElementById('libKeep'), keep = !!(keepEl && keepEl.checked);
+  const n = lib.sel.length;
   ov.innerHTML = `<div class="lib-head"><b>ตรวจรูปที่เลือกก่อนใส่เข้า: ${esc(lib.ctx.label)}</b></div>
     <div class="rv-body"><p class="lib-note" style="margin-top:0">${lib.ctx.single ? 'รูปนี้จะใช้เป็นรูปของเสริม · ถ้าผิด กด ✕ แล้วกลับไปเลือกใหม่' : 'ลำดับที่ 1 เป็นรูปหลักถ้าสินค้ายังไม่มีรูปหลัก · ปุ่ม ← → เลื่อนลำดับ · ปุ่ม ✕ เอารูปที่เลือกผิดออกจากชุดนี้'}</p>
     <div class="rv-grid">${lib.sel.map((pth, k) => `<div class="rv-it"><img alt="" src="${esc(sbPublicUrl(pth))}"><span class="no">${k + 1}</span><div class="acts"><span><button type="button" data-rv-mv="${k}" data-d="-1"${k === 0 ? ' disabled' : ''}>←</button> <button type="button" data-rv-mv="${k}" data-d="1"${k === n - 1 ? ' disabled' : ''}>→</button></span><button type="button" data-rv-rm="${k}">✕ เอาออก</button></div></div>`).join('')}</div></div>
-    <div class="lib-foot"><span class="lib-note grow">${n} รูป · ${keep ? 'คัดลอก (รูปยังอยู่ในคลัง)' : 'ย้ายออกจากคลัง (ถ้าเลือกผิด กู้กลับได้ที่แท็บ “ไฟล์ที่ไม่ได้ใช้”)'}</span>
+    <div class="lib-foot"><span class="lib-note grow">${n} รูป · รูปจะย้ายออกจากคลังไปอยู่ในสินค้านี้ (ถ้าเลือกผิด กู้กลับได้ที่แท็บ “ไฟล์ที่ไม่ได้ใช้”)</span>
       <button type="button" class="btn btn-ghost" data-lib-act="rvback">กลับไปเลือกต่อ</button>
       <button type="button" class="btn btn-primary" data-lib-act="pick-go"${n ? '' : ' disabled'}>ยืนยัน ใส่ ${n} รูป</button></div>`;
 }
@@ -3854,37 +3830,6 @@ async function libRestoreOrphans(){
     lib.busy = false; libRender();
     libReload();
   }
-}
-/* ── แท็บตรวจก่อนลบรูปใน GitHub ── */
-function libCheckHtml(){
-  const c = lib.check;
-  let res = '<p class="lib-note">กดตรวจเพื่อดูว่ายังมีสินค้า รีวิว หรือการตั้งค่าหน้าร้านที่ชี้ไปที่รูปเก่าใน GitHub (<code>images/…</code>) อยู่ตรงไหนบ้าง</p>';
-  if(c === 'busy') res = '<p class="lib-note">กำลังตรวจ … (ตรวจรูปรีวิวใช้เวลาสักครู่)</p>';
-  else if(c){
-    const lines = [];
-    lines.push(c.prods.length ? `<p class="lib-err"><b>✗ สินค้า ${c.prods.length} รายการ ยังมีรูปที่ชี้ images/…</b></p><ul>${c.prods.slice(0, 40).map(p => `<li>${esc(p.id)} — ${p.n} รูป (เช่น ${esc(p.first)})</li>`).join('')}${c.prods.length > 40 ? '<li>…</li>' : ''}</ul>` : '<p class="lib-ok"><b>✓ สินค้าทุกชิ้นใช้รูปจาก Supabase แล้ว</b></p>');
-    lines.push(c.rv.length ? `<p class="lib-err"><b>✗ รูปรีวิว ${c.rv.length} รูป ยังเป็นไฟล์ใน GitHub</b> (เช่น ${esc(c.rv.slice(0, 3).join(', '))})</p>` : '<p class="lib-ok"><b>✓ รูปรีวิวที่แสดงอยู่ใช้รูปจาก Supabase ทั้งหมด</b> (รูปที่ซ่อนไว้ไม่นับ)</p>');
-    lines.push(c.site ? `<p class="lib-err"><b>✗ การตั้งค่าหน้าร้าน (โลโก้/แบนเนอร์/ป๊อปอัป) มี ${c.site} จุดที่ยังชี้ images/…</b></p>` : '<p class="lib-ok"><b>✓ การตั้งค่าหน้าร้านที่บันทึกไว้ไม่ชี้ images/… แล้ว</b></p>');
-    const clean = !c.prods.length && !c.rv.length && !c.site;
-    lines.push(clean ? '<p class="lib-ok"><b>ผ่านทั้งหมด</b> — ลบ images/products, bouquet, frame, pot, other และ images/reviews ใน repo ได้ ส่วนโลโก้ แบนเนอร์ ไอคอน และไฟล์ที่ index.html / style.css เรียกใช้ตรงๆ ให้เก็บไว้</p>' : '<p class="lib-err"><b>ยังไม่ควรลบรูปใน repo</b> — แก้รายการด้านบนให้เป็นลิงก์ Supabase ก่อน แล้วกดตรวจใหม่</p>');
-    res = lines.join('');
-  }
-  return `<div class="lib-chk"><div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px"><button type="button" class="btn btn-primary" data-lib-act="check"${c === 'busy' ? ' disabled' : ''}>ตรวจตอนนี้</button></div>${res}</div>`;
-}
-async function libRunCheck(){
-  if(!lib || lib.check === 'busy') return;
-  lib.check = 'busy'; libRender();
-  const GH = /^(\.\/)?images\//i;
-  const walk = (o, cb) => { if(typeof o === 'string') cb(o.trim()); else if(Array.isArray(o)) o.forEach(x => walk(x, cb)); else if(o && typeof o === 'object') Object.keys(o).forEach(k => walk(o[k], cb)); };
-  const prods = [];
-  catalog.forEach(p => { let n = 0, first = ''; walk(p, s => { if(GH.test(s)){ n++; if(!first) first = s; } }); if(n) prods.push({ id: p.id, n, first }); });
-  let site = 0;
-  try{ if(siteCfgSaved) walk(siteCfgSaved, s => { if(GH.test(s)) site++; }); }catch(e){}
-  let rv = [];
-  try{ rv = (await scanReviewFiles()).filter(k => !reviewHidden.has(k) && !/^https?:/i.test(k)); }catch(e){}
-  if(!lib) return;
-  lib.check = { prods, rv, site };
-  libRender();
 }
 // ผลลัพธ์ของการเลือกรูปจากคลัง → ใส่เข้าสินค้า (เหมือนตอนลากรูปอัปโหลด)
 function pdApplyToMain(urls){
@@ -4292,12 +4237,6 @@ async function pdUploadToModal(list){
   }finally{
     const z2 = document.querySelector('#imgBody .pd-rowdrop'); if(z2) z2.classList.remove('is-busy');
   }
-}
-function pdPendingHtml(){
-  const a = pdPendingGet();
-  if(!a.length) return '';
-  const short = a.slice(0, 12).map(x => esc(x.replace(PD_DIR, ''))).join(', ') + (a.length > 12 ? ' …' : '');
-  return `<div class="rv-pending"><b>ยังไม่ได้อัปโหลดขึ้น GitHub: ${a.length} รูป</b><br>ลากโฟลเดอร์ <code>images/products</code> ไปวางใน GitHub แล้วกดปุ่มด้านล่าง${a.length > 100 ? '<br>⚠ GitHub รับลากไฟล์ได้ไม่เกิน 100 ไฟล์ต่อครั้ง — ให้ลากเป็นชุดๆ' : ''}<br><small>${short}</small><br><button type="button" class="btn btn-ghost btn-sm" data-act="pd-pending-done">อัปโหลดขึ้น GitHub แล้ว (ล้างรายการ)</button></div>`;
 }
 async function rvSha(file){
   const buf = await crypto.subtle.digest('SHA-256', await file.arrayBuffer());
@@ -5055,7 +4994,7 @@ $('optionsBtn').addEventListener('click', openOptionsModal);
 $('reviewsBtn').addEventListener('click', () => openReviewsModal());
 if(sbOn()){
   const rb = $('reviewsBtn'), lb = rb.cloneNode(false);
-  lb.id = 'libraryBtn'; lb.title = 'อัปรูปสินค้าทีละหลายร้อยรูปเก็บไว้ในคลัง แล้วไปเลือกเข้าสินค้าจากหน้าแก้ไขสินค้า · ตรวจก่อนลบรูปใน GitHub';
+  lb.id = 'libraryBtn'; lb.title = 'อัปรูปสินค้าทีละหลายร้อยรูปเก็บไว้ในคลัง แล้วไปเลือกเข้าสินค้าจากหน้าแก้ไขสินค้า';
   lb.innerHTML = '<svg class="sb-ico" viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="14" height="12" rx="2"/><circle cx="7.5" cy="8.5" r="1.3"/><path d="M3.5 14l4-3.5 3 2.5 2.5-2 3.5 3"/></svg><span>คลังรูป</span>';
   rb.insertAdjacentElement('afterend', lb);
   lb.addEventListener('click', () => libOpen(null));
@@ -5967,10 +5906,10 @@ $('siteLogoFile').addEventListener('change', e => { const f = e.target.files[0];
 
 boot();
 
-/* ───── หน้าแก้ไขสินค้า: ป้าย "ยังไม่ได้บันทึก" + เมนูข้ามไปแต่ละส่วน ───── */
+/* ───── หน้าแก้ไขสินค้า: ป้าย "ยังไม่ได้บันทึก" ───── */
 (function(){
-  const page = $('editorPage'), badge = $('edDirty'), jump = $('edJump');
-  if(!page || !badge || !jump) return;
+  const page = $('editorPage'), badge = $('edDirty');
+  if(!page || !badge) return;
   let base = null;
   const snap = () => { try{ return draft ? JSON.stringify(draft) : null; }catch(e){ return null; } };
   const check = () => { badge.hidden = page.hidden || base === null || snap() === base; };
@@ -5980,26 +5919,6 @@ boot();
   }).observe(page, { attributes:true, attributeFilter:['hidden'] });
   ['input', 'change', 'click'].forEach(ev => page.addEventListener(ev, () => setTimeout(check, 0), true));
 
-  const ids = [...jump.querySelectorAll('[data-jump]')].map(b => b.dataset.jump);
-  const setActive = id => jump.querySelectorAll('[data-jump]').forEach(b => b.classList.toggle('is-active', b.dataset.jump === id));
-  jump.addEventListener('click', e => {
-    const b = e.target.closest('[data-jump]'); if(!b) return;
-    const el = $(b.dataset.jump); if(!el) return;
-    if(el.tagName === 'DETAILS') el.open = true;
-    setActive(b.dataset.jump);
-    lockUntil = Date.now() + 1100; // กันแถบเด้งกลับระหว่างเลื่อน (การ์ดท้ายๆ ที่หน้าเลื่อนไม่ถึงบนสุด)
-    el.scrollIntoView({ behavior:'smooth', block:'start' });
-  });
-  let raf = 0, lockUntil = 0;
-  window.addEventListener('scroll', () => {
-    if(page.hidden || raf || Date.now() < lockUntil) return;
-    raf = requestAnimationFrame(() => {
-      raf = 0;
-      let cur = ids[0];
-      for(const id of ids){ const el = $(id); if(el && el.getBoundingClientRect().top <= 150) cur = id; }
-      setActive(cur);
-    });
-  }, { passive:true });
 })();
 
 /* ───── ป๊อปอัป: ปุ่ม ✕ มุมขวาบน (กดแล้วเท่ากับกดปุ่มยกเลิก/ปิดของป๊อปอัปนั้น) ───── */

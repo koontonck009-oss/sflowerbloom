@@ -876,12 +876,12 @@ body.prices-off #posterOneBtn{ display:none !important; }
 .main-rows{ display:flex; flex-direction:column; gap:14px; }
 .main-rows .field-hint{ margin:-6px 0 0; }
 .main-row{ display:grid; grid-template-columns:minmax(0,1fr); gap:12px; align-items:start; }
-.main-row-top{ grid-template-columns:minmax(0,1.7fr) repeat(3, minmax(0,1fr)); }
-.main-row .field{ margin:0; }
-.main-row .field-hint{ margin:6px 0 0; }
-.main-row .size-menu,.main-row .size-summary{ width:100%; }
-@media (max-width:1180px){ .main-row-top{ grid-template-columns:repeat(2, minmax(0,1fr)); } .main-row-top > .field:first-child{ grid-column:1 / -1; } }
-@media (max-width:520px){ .main-row-top{ grid-template-columns:minmax(0,1fr); } }
+.main-row-id{ grid-template-columns:minmax(0,1fr) minmax(0,2.4fr); }
+.main-row-top{ grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); }
+@media (max-width:520px){ .main-row-id{ grid-template-columns:minmax(0,1fr); } }
+/* ดรอปดาวน์ติ๊กหลายค่าในแถวบน: ข้อความยาวตัดด้วย … ไม่ให้ช่องสูงไม่เท่ากัน */
+.main-row-top .size-summary{ position:relative; padding-right:30px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.main-row-top .size-summary::after{ position:absolute; right:12px; top:50%; transform:translateY(-50%); float:none; }
 
 /* ───── หน้าต่างสร้าง/แก้ไขตัวเลือก ───── */
 #varScrim{ z-index:55; }                       /* กล่องยืนยัน (z 60) ต้องอยู่เหนือหน้าต่างนี้ */
@@ -1455,19 +1455,10 @@ body.vm-chip-dragging, body.vm-chip-dragging *{ cursor:grabbing !important; user
 .ed-title .drawer-sub{ display:inline; }
 .ed-dirty[hidden]{ display:none; }
 
-.ed-jump{ display:flex; gap:6px; padding:0 0 10px; overflow-x:auto; scrollbar-width:none; border-bottom:1px solid var(--line); }
-.ed-jump::-webkit-scrollbar{ display:none; }
-.ed-jump button{
-  flex:none; padding:6px 13px; border:1px solid var(--line); border-radius:999px;
-  background:var(--panel); font:inherit; font-size:13.5px; font-weight:500; color:var(--ink-2); cursor:pointer;
-}
-.ed-jump button:hover{ background:var(--line-soft); color:var(--ink); }
-.ed-jump button.is-active{ background:var(--brand-soft); border-color:var(--brand); color:var(--brand-dark); font-weight:600; }
-
-.ed-main > .ed-card, .ed-main > details.ed-card{ scroll-margin-top:124px; }
-.ed-side{ top:128px; }
+.ed-main > .ed-card, .ed-main > details.ed-card{ scroll-margin-top:80px; }
+.ed-side{ top:84px; }
 @media (max-width:900px){
-  .ed-main > .ed-card, .ed-main > details.ed-card{ scroll-margin-top:112px; }
+  .ed-main > .ed-card, .ed-main > details.ed-card{ scroll-margin-top:72px; }
   .ed-sticky .ed-bar{ padding:10px 0 8px; }
 }
 
