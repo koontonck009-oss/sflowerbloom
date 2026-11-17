@@ -87,6 +87,8 @@ body {
 .image-frame .print-img-grid { flex: 1 1 auto; width: 100%; height: 100%; min-height: 0; grid-auto-rows: minmax(0, 1fr); }
 .image-frame .print-img-grid > div { position: relative; min-width: 0; min-height: 0; }
 .image-frame .print-img-grid img { width: 100%; height: 100%; max-width: 100%; max-height: none !important; object-fit: cover; }
+/* ใบสั่งงานที่มีรูปเดียว: แสดงเป็นสัดส่วน 4:5 (แนวตั้ง) กึ่งกลางกรอบ ไม่ครอปจนเต็มขอบ */
+.image-frame .print-img-grid-1 img { width: auto; height: 100%; max-width: 100%; aspect-ratio: 4 / 5; object-fit: cover; }
 /* รูปที่ถูกหมุน 90/270 องศา ใช้ครอปไม่ได้ (สัดส่วนสลับ) จึงคงแบบเห็นรูปครบ */
 .image-frame .print-img-grid img[style*="rotate(90deg)"],
 .image-frame .print-img-grid img[style*="rotate(270deg)"],
