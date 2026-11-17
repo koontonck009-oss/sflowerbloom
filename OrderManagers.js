@@ -54,6 +54,7 @@
                     else if (action === 'tracking') openTrackingModal(o);
                     else if (action === 'delete') confirmDelete(o);
                     else if (action === 'addItem') openQuickEdit('addItem', o);
+                    else if (action === 'unpaid') openUnpaidMessage(o);
                 }
 
                 // ---------- Quick edit (fill in a single missing detail from the card) ----------
@@ -1541,7 +1542,143 @@
                 }
 
                 async function copyMessageToClipboard() {
-                    const text = generatedMessage.value;
+                    const result = await copyTextWithQr(generatedMessage.value, attachQr.value);
+                    toastCopyResult(result);
+                }
+
+                // ---------- รูป QR โอนเงิน (เก็บใน Supabase Storage: order-photos/settings/qr-transfer.png) ----------
+                // อัปโหลดครั้งเดียวจากเมนู ⋯ มุมขวาบน ใช้ได้ทุกเครื่อง · ตอนคัดลอกจะใส่ข้อความ + รูปลงคลิปบอร์ดพร้อมกัน
+                const QR_BUCKET = 'order-photos';
+                const QR_PATH = 'settings/qr-transfer.png';
+                const QR_MAX_SIDE = 1000;               // ย่อด้านยาวสุดไม่เกินนี้ (ยังสแกนได้ชัด)
+                const attachQr = ref(true);             // ติ๊กแนบรูป QR ตอนคัดลอก
+                const qrBlob = ref(null);               // รูป QR ปัจจุบัน (แคชในหน้านี้)
+                const qrPreviewUrl = ref('');
+                const qrLoading = ref(false);
+                const isQrModalOpen = ref(false);
+                const qrPending = ref(null);            // { blob, url } รูปที่เพิ่งเลือก รอกดบันทึก
+                const qrUploading = ref(false);
+                let qrLoadPromise = null;
+
+                function qrStorage() {
+                    const s = window.__sfbOrdersShim;
+                    return s && s.sb && s.sb.storage ? s.sb.storage.from(QR_BUCKET) : null;
+                }
+                function setQrBlob(blob) {
+                    qrBlob.value = blob || null;
+                    if (qrPreviewUrl.value) { try { URL.revokeObjectURL(qrPreviewUrl.value); } catch (e) {} }
+                    qrPreviewUrl.value = blob ? URL.createObjectURL(blob) : '';
+                }
+                // โหลดรูป QR จาก Storage (null = ยังไม่เคยอัปโหลด / โหลดไม่ได้)
+                function loadQrBlob(force) {
+                    if (qrBlob.value && !force) return Promise.resolve(qrBlob.value);
+                    if (qrLoadPromise && !force) return qrLoadPromise;
+                    const st = qrStorage();
+                    if (!st) return Promise.resolve(null);
+                    qrLoadPromise = (async () => {
+                        try {
+                            const { data, error } = await st.download(QR_PATH);
+                            if (error || !data) return null;
+                            const blob = data.type === 'image/png' ? data : new Blob([data], { type: 'image/png' });
+                            setQrBlob(blob);
+                            return blob;
+                        } catch (e) { return null; }
+                        finally { qrLoadPromise = null; }
+                    })();
+                    return qrLoadPromise;
+                }
+                async function openQrModal() {
+                    isQrModalOpen.value = true;
+                    qrPending.value = null;
+                    if (!qrBlob.value) {
+                        qrLoading.value = true;
+                        await loadQrBlob(true);
+                        qrLoading.value = false;
+                    }
+                }
+                function closeQrModal() {
+                    if (qrUploading.value) return;
+                    if (qrPending.value) { try { URL.revokeObjectURL(qrPending.value.url); } catch (e) {} }
+                    qrPending.value = null;
+                    isQrModalOpen.value = false;
+                }
+                // แปลงไฟล์รูป (jpg/png/...) เป็น PNG + ย่อขนาด (คลิปบอร์ดของเบราว์เซอร์รับรูปเฉพาะ PNG)
+                function fileToPngBlob(file) {
+                    return new Promise((resolve, reject) => {
+                        const url = URL.createObjectURL(file);
+                        const img = new Image();
+                        img.onload = () => {
+                            try {
+                                const scale = Math.min(1, QR_MAX_SIDE / Math.max(img.naturalWidth, img.naturalHeight));
+                                const w = Math.max(1, Math.round(img.naturalWidth * scale));
+                                const hh = Math.max(1, Math.round(img.naturalHeight * scale));
+                                const canvas = document.createElement('canvas');
+                                canvas.width = w; canvas.height = hh;
+                                const ctx = canvas.getContext('2d');
+                                ctx.fillStyle = '#ffffff';
+                                ctx.fillRect(0, 0, w, hh);
+                                ctx.drawImage(img, 0, 0, w, hh);
+                                canvas.toBlob((b) => { URL.revokeObjectURL(url); b ? resolve(b) : reject(new Error('toBlob failed')); }, 'image/png');
+                            } catch (e) { URL.revokeObjectURL(url); reject(e); }
+                        };
+                        img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('โหลดรูปไม่สำเร็จ')); };
+                        img.src = url;
+                    });
+                }
+                async function onQrFileChosen(ev) {
+                    const input = ev.target;
+                    const file = input.files && input.files[0];
+                    input.value = '';
+                    if (!file) return;
+                    if (!/^image\//i.test(file.type)) { showToast('กรุณาเลือกไฟล์รูปภาพ'); return; }
+                    try {
+                        const blob = await fileToPngBlob(file);
+                        if (qrPending.value) { try { URL.revokeObjectURL(qrPending.value.url); } catch (e) {} }
+                        qrPending.value = { blob, url: URL.createObjectURL(blob) };
+                    } catch (e) {
+                        console.error('QR file error:', e);
+                        showToast('อ่านไฟล์รูปไม่สำเร็จ ลองไฟล์อื่นนะครับ');
+                    }
+                }
+                async function saveQr() {
+                    const pending = qrPending.value;
+                    const st = qrStorage();
+                    if (!pending || !st || qrUploading.value) return;
+                    qrUploading.value = true;
+                    try {
+                        const { error } = await st.upload(QR_PATH, pending.blob, { contentType: 'image/png', upsert: true, cacheControl: '0' });
+                        if (error) throw error;
+                        setQrBlob(pending.blob);
+                        try { URL.revokeObjectURL(pending.url); } catch (e) {}
+                        qrPending.value = null;
+                        showToast('บันทึกรูป QR แล้ว ✅');
+                    } catch (e) {
+                        console.error('Save QR error:', e);
+                        showToast('บันทึกรูป QR ไม่สำเร็จ ตรวจสอบการเชื่อมต่อแล้วลองใหม่');
+                    } finally { qrUploading.value = false; }
+                }
+
+                // คัดลอก "ข้อความ (+ รูป QR)" ลงคลิปบอร์ด → 'both' | 'noqr' | 'text' | 'fail'
+                //   both = ข้อความ+รูป · noqr = ติ๊กแนบแต่ยังไม่เคยอัปโหลด QR (ได้แค่ข้อความ)
+                //   text = เบราว์เซอร์แนบรูปไม่ได้/ไม่ได้ติ๊กแนบ (ได้แค่ข้อความ) · fail = คัดลอกไม่สำเร็จ
+                async function copyTextWithQr(text, withQr) {
+                    let noQr = false;
+                    const canWriteImage = withQr && window.ClipboardItem && navigator.clipboard && navigator.clipboard.write && window.isSecureContext;
+                    if (canWriteImage) {
+                        try {
+                            // ส่ง Promise เข้า ClipboardItem เพื่อให้เรียก write() ทันทีใน gesture ของการกดปุ่ม (Safari ต้องการแบบนี้)
+                            const imgPromise = loadQrBlob().then((b) => { if (!b) throw new Error('no-qr'); return b; });
+                            const item = new ClipboardItem({
+                                'text/plain': new Blob([text], { type: 'text/plain' }),
+                                'image/png': imgPromise
+                            });
+                            await navigator.clipboard.write([item]);
+                            return 'both';
+                        } catch (e) {
+                            if (e && e.message === 'no-qr') noQr = true;
+                            else console.warn('คัดลอกข้อความ+รูปไม่สำเร็จ ลองคัดลอกเฉพาะข้อความ:', e);
+                        }
+                    }
                     try {
                         if (navigator.clipboard && window.isSecureContext) {
                             await navigator.clipboard.writeText(text);
@@ -1555,10 +1692,89 @@
                             document.execCommand('copy');
                             document.body.removeChild(textArea);
                         }
-                        showToast('คัดลอกข้อความสำเร็จแล้ว! ✅');
-                    } catch (err) {
-                        showToast('คัดลอกไม่สำเร็จ ลองแตะเลือกข้อความแล้วคัดลอกเองครับ');
+                        return noQr ? 'noqr' : 'text';
+                    } catch (err) { return 'fail'; }
+                }
+                function toastCopyResult(r) {
+                    if (r === 'both') showToast('คัดลอกข้อความ + รูป QR แล้ว ✅ วางในแชทได้เลย');
+                    else if (r === 'noqr') showToast('คัดลอกข้อความแล้ว แต่ยังไม่มีรูป QR — อัปโหลดที่เมนู ⋯ มุมขวาบน');
+                    else if (r === 'text') showToast('คัดลอกข้อความสำเร็จแล้ว! ✅');
+                    else showToast('คัดลอกไม่สำเร็จ ลองแตะเลือกข้อความแล้วคัดลอกเองครับ');
+                }
+
+                // มือถือ: ปุ่มแยก "คัดลอกข้อความ" / "คัดลอกรูป QR" (แอปแชทวางข้อความกับรูปพร้อมกันไม่ได้)
+                async function copyQrImageOnly() {
+                    if (!(window.ClipboardItem && navigator.clipboard && navigator.clipboard.write && window.isSecureContext)) {
+                        showToast('เบราว์เซอร์นี้คัดลอกรูปไม่ได้');
+                        return;
                     }
+                    try {
+                        // ส่ง Promise เข้า ClipboardItem เพื่อให้เรียก write() ทันทีใน gesture ของการกดปุ่ม
+                        const imgPromise = loadQrBlob().then((b) => { if (!b) throw new Error('no-qr'); return b; });
+                        await navigator.clipboard.write([new ClipboardItem({ 'image/png': imgPromise })]);
+                        showToast('คัดลอกรูป QR แล้ว ✅ วางในแชทได้เลย');
+                    } catch (e) {
+                        if (e && e.message === 'no-qr') showToast('ยังไม่มีรูป QR — อัปโหลดที่เมนู ⋯ มุมขวาบนก่อนนะครับ');
+                        else { console.warn('คัดลอกรูป QR ไม่สำเร็จ:', e); showToast('คัดลอกรูป QR ไม่สำเร็จ ลองใหม่อีกครั้งนะครับ'); }
+                    }
+                }
+                async function copyMessageTextOnly() { toastCopyResult(await copyTextWithQr(generatedMessage.value, false)); }
+                async function copyUnpaidTextOnly() {
+                    const info = unpaidMsgInfo.value;
+                    if (info) toastCopyResult(await copyTextWithQr(info.text, false));
+                }
+
+                // ---------- แจ้งยอดค้างชำระ ----------
+                const unpaidMsgOrder = ref(null);
+                function openUnpaidMessage(order) { unpaidMsgOrder.value = order; }
+                function closeUnpaidMessage() { unpaidMsgOrder.value = null; }
+                const unpaidMsgInfo = computed(() => {
+                    const o = unpaidMsgOrder.value;
+                    if (!o) return null;
+                    const money = (n) => (Number(n) || 0).toLocaleString();
+                    let rows;
+                    if (Array.isArray(o.items) && o.items.length) {
+                        rows = o.items.map(i => ({ details: String(i.details || '').trim(), qty: Number(i.qty) || 0, unit: i.unit || '', price: Number(i.price) || 0 })).filter(r => r.details);
+                    } else {
+                        rows = String(o.products || '').split('\n').map(l => l.trim()).filter(Boolean).map(l => ({ details: l, qty: 0, unit: '', price: 0 }));
+                    }
+                    const total = Number(o.totalAmount) || 0;
+                    const paid = Number(o.depositAmount) || 0;
+                    const remain = getRemainingBalance(o);
+                    const priced = rows.some(r => r.price > 0 && r.qty > 0);
+                    const itemsSum = rows.reduce((s, r) => s + (r.qty || 0) * (r.price || 0), 0);
+                    const fee = o.deliveryType === 'shipping' ? (Number(o.shippingFee) || 0) : 0;
+                    const showFeeLine = priced && fee > 0 && Math.abs(itemsSum + fee - total) < 0.01;
+                    const mismatch = priced && Math.abs(itemsSum - total) >= 0.01 && !showFeeLine ? { sum: itemsSum, total } : null;
+
+                    let itemsText = '';
+                    rows.forEach(r => {
+                        if (r.price > 0 && r.qty > 0) {
+                            const lineTotal = r.qty * r.price;
+                            itemsText += r.qty > 1
+                                ? `🌻💐 ${r.details} จำนวน ${r.qty} ${r.unit} x ${money(r.price)} บ. = ${money(lineTotal)} บาท\n`
+                                : `🌻💐 ${r.details} จำนวน ${r.qty} ${r.unit} = ${money(lineTotal)} บาท\n`;
+                        } else {
+                            itemsText += `🌻💐 ${r.details}\n`;
+                        }
+                    });
+                    if (showFeeLine) itemsText += `📦 ค่าส่ง ${money(fee)} บาท\n`;
+
+                    const text =
+                        `🌻 แจ้งยอดคงเหลือ 🌻\n\n` +
+                        `ทางร้านขอแจ้งยอดคงเหลือสำหรับรายการของคุณลูกค้านะคะ 💐\n` +
+                        `${itemsText}\n` +
+                        `💰 ยอดสั่งซื้อทั้งหมด : ${money(total)} บาท\n` +
+                        `💖 ชำระแล้ว : ${money(paid)} บาท\n` +
+                        `🧾 ยอดคงเหลือ : ${money(remain)} บาท\n\n` +
+                        `ลูกค้าสามารถชำระยอดคงเหลือได้เลยนะคะ 🥰\n` +
+                        `ขอบคุณที่ไว้วางใจให้ S.Flower Bloom ดูแลของขวัญชิ้นพิเศษนะคะ 🌷💗`;
+                    return { text, mismatch };
+                });
+                async function copyUnpaidMessage() {
+                    const info = unpaidMsgInfo.value;
+                    if (!info) return;
+                    toastCopyResult(await copyTextWithQr(info.text, attachQr.value));
                 }
 
                 // Tracking Number Notification Functions
@@ -2566,6 +2782,9 @@
                     authChecked, isLoggedIn, loginForm, loginError, isLoggingIn, handleLogin, handleLogout,
                     openMessageModal, closeMessageModal, addMessageItem, removeMessageItem,
                     selectMessageText, copyMessageToClipboard,
+                    attachQr, qrBlob, qrPreviewUrl, qrLoading, isQrModalOpen, qrPending, qrUploading, openQrModal, closeQrModal, onQrFileChosen, saveQr,
+                    unpaidMsgOrder, unpaidMsgInfo, openUnpaidMessage, closeUnpaidMessage, copyUnpaidMessage,
+                    copyQrImageOnly, copyMessageTextOnly, copyUnpaidTextOnly,
                     trackingTarget, trackingNumberInput, trackingSaveToOrder, trackingInputEl,
                     openTrackingModal, closeTrackingModal, generatedTrackingMessage, copyTrackingMessage, trackingUrl,
                     mainTab, transactions, accMonth, accAllMonths, accTypeFilter, isTxModalOpen, editingTxId, txForm,
