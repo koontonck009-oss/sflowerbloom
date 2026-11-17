@@ -361,116 +361,56 @@ button,input,select,textarea{ font-family:inherit; font-size:inherit; color:inhe
 }
 .img-list-row img{ width:40px; height:40px; border-radius:7px; object-fit:cover; background:var(--line-soft); flex:none; }
 
-/* ตารางตัวเลือกหลายชั้น */
-.combo-table{ width:100%; table-layout:fixed; border-collapse:collapse; font-size:13.5px; }
-.combo-table th{
-  text-align:left; font-weight:600; color:var(--ink-2);
-  font-size:12.5px; padding:6px 8px;
-  border-bottom:1px solid var(--line);
-  position:sticky; top:0; background:var(--panel); z-index:1;
+/* รายการแบบของตัวแปร: แถวสรุป + รายละเอียดที่กางออก */
+.vlist{ margin-top:10px; border-top:1px solid var(--line-soft); }
+.vrow{ border-bottom:1px solid var(--line-soft); }
+.vrow-main{
+  display:grid; grid-template-columns:56px minmax(0,1fr) 112px auto 32px;
+  gap:12px; align-items:center; padding:10px 4px; cursor:pointer;
 }
-.combo-table td{ padding:6px 8px; border-bottom:1px solid var(--line-soft); vertical-align:middle; }
-.combo-table .c-sell{ width:44px; text-align:center; }
-.combo-table .c-ready{ text-align:center; }
-.combo-table .c-thumb{ width:64px; }
-.combo-table .c-price{ width:12%; min-width:92px; }
-.combo-table .c-tag{ width:16%; min-width:116px; }
-.combo-table .c-more{ width:12%; min-width:92px; }
-.combo-table .c-attr{ width:13%; min-width:104px; }
-.combo-table .c-more .btn, .combo-table .c-attr .btn{ display:block; width:100%; margin:0; }
-.c-lbl{ display:none; }
-.c-ready label{ display:inline-flex; align-items:center; gap:6px; cursor:pointer; }
-
-.combo-item:hover > tr:first-child{ background:#FAF7F9; }
-.combo-item.is-filtered{ display:none; }
-/* แถวที่ปิดขาย: ยังอ่านชื่อออก แค่ลดความเด่น */
-.combo-item.is-off .combo-combo{ color:var(--ink-2); font-weight:500; }
-.combo-item.is-off .combo-thumb,
-.combo-item.is-off .c-ready,
-.combo-item.is-off .c-tag,
-.combo-item.is-off .c-attr,
-.combo-item.is-off .c-more{ opacity:.45; }
-.combo-item.is-off .c-price input{ background:var(--line-soft); }
-.combo-item.is-off .c-price input::placeholder{ color:var(--ink-3); }
-
-.combo-thumb{
-  display:block; cursor:zoom-in; width:52px; height:52px; padding:0; border:1px solid var(--line);
-  border-radius:9px; overflow:hidden; background:var(--line-soft); cursor:pointer;
-}
-.combo-thumb:disabled{ cursor:default; }
-.combo-thumb:not(:disabled):hover{ border-color:var(--brand); }
-.combo-thumb-img{ width:100%; height:100%; object-fit:cover; display:block; }
-.combo-thumb-img.is-missing{
-  background:repeating-linear-gradient(45deg, var(--line-soft), var(--line-soft) 6px, #fff 6px, #fff 12px);
-}
-.combo-imgrow td, .combo-attrrow td{ background:#FAF7F9; padding:8px 12px; }
-.combo-attr-group + .combo-attr-group{ margin-top:8px; }
-.combo-attr-label{ display:block; font-size:12.5px; font-weight:600; color:var(--ink-2); }
-.combo-attr-btn{ white-space:nowrap; padding:6px 8px; }
-.combo-pathlabel{ display:flex; align-items:center; gap:10px; font-size:12.5px; color:var(--ink-2); }
-.combo-pathlabel span{ flex:none; }
-
-.combo-table input[type="number"]{
-  width:100%; border:1px solid var(--line); border-radius:7px; padding:7px 8px;
-  font-variant-numeric:tabular-nums;
-}
-.combo-table input[type="text"]{ width:100%; border:1px solid var(--line); border-radius:7px; padding:6px 8px; }
-.combo-table select{ width:100%; border:1px solid var(--line); border-radius:7px; padding:7px 8px; background:#fff; font:inherit; }
-.combo-table input[type="checkbox"]{ width:18px; height:18px; accent-color:var(--brand); }
-.combo-combo{ font-weight:600; min-width:120px; line-height:1.4; }
-.combo-table th{ line-height:1.3; }
-.combo-table .c-ready{ width:76px; }
-.combo-table .combo-more{ margin:0; width:100%; white-space:nowrap; padding:6px 8px; }
-.combo-scroll{ overflow-x:auto; }
-
-/* แถบค้นหา + แก้หลายแถว */
-.combo-tools{ display:flex; align-items:center; gap:12px; margin:10px 0 8px; }
-.combo-tools input[type="search"]{
-  flex:1; min-width:0; border:1px solid var(--line); border-radius:8px; padding:8px 12px; font:inherit;
-}
-.combo-vis{ font-size:12.5px; color:var(--ink-2); white-space:nowrap; }
-.combo-bulk{
-  display:flex; flex-wrap:wrap; align-items:center; gap:8px;
-  padding:10px 12px; margin-bottom:10px;
-  background:var(--brand-soft); border-radius:10px;
-}
-.cb-label{ font-size:12.5px; font-weight:600; color:var(--brand-dark); margin-right:4px; }
-.cb-set{ display:inline-flex; gap:6px; align-items:center; }
-.cb-set input, .cb-set select{
-  border:1px solid var(--line); border-radius:7px; padding:5px 8px; background:#fff; font:inherit; font-size:13px;
-}
-.cb-set input{ width:84px; }
-.cb-set select{ max-width:150px; }
+.vrow.is-off .vrow-main{ cursor:default; }
+.vrow-main:hover{ background:#FAF7F9; }
+.vrow-thumb{ width:56px; height:56px; border-radius:10px; overflow:hidden; background:var(--line-soft); border:1px solid var(--line); }
+.vrow-thumb-img{ width:100%; height:100%; object-fit:cover; display:block; }
+.vrow-thumb-img.is-missing{ background:repeating-linear-gradient(45deg, var(--line-soft), var(--line-soft) 6px, #fff 6px, #fff 12px); }
+.vrow-name{ display:flex; flex-direction:column; gap:2px; min-width:0; line-height:1.4; }
+.vrow-name b{ font-weight:600; overflow-wrap:anywhere; }
+.vrow-sub{ font-size:12.5px; color:var(--ink-2); }
+.vrow-sub.is-warn{ color:#c92a2a; font-weight:600; }
+.vrow.is-off .vrow-name b{ color:var(--ink-2); font-weight:500; }
+.vrow.is-off .vrow-thumb{ opacity:.5; }
+.vrow-price{ width:100%; border:1px solid var(--line); border-radius:8px; padding:8px 10px; font:inherit; font-size:14px; background:#fff; }
+.vrow.is-off .vrow-price{ background:var(--line-soft); }
+.vsw{ display:inline-flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; color:var(--ink-2); white-space:nowrap; }
+.vsw input{ position:absolute; opacity:0; width:1px; height:1px; }
+.vsw-track{ position:relative; width:40px; height:22px; border-radius:999px; background:#cfc6cb; transition:background .15s; flex:none; }
+.vsw-track::after{ content:""; position:absolute; left:2px; top:2px; width:18px; height:18px; border-radius:50%; background:#fff; transition:transform .15s; }
+.vsw input:checked + .vsw-track{ background:#2f9e44; }
+.vsw input:checked + .vsw-track::after{ transform:translateX(18px); }
+.vsw input:focus-visible + .vsw-track{ outline:2px solid var(--brand); outline-offset:2px; }
+.vrow-chev{ border:0; background:none; font-size:16px; color:var(--ink-2); cursor:pointer; width:32px; height:32px; border-radius:8px; transition:transform .15s; }
+.vrow-chev:hover:not(:disabled){ background:var(--line-soft); }
+.vrow-chev:disabled{ opacity:.3; cursor:default; }
+.vrow.is-open .vrow-chev{ transform:rotate(180deg); }
+.vrow-detail{ display:none; margin:0 4px 12px; padding:14px 16px; background:#FAF7F9; border-radius:10px; }
+.vrow.is-open .vrow-detail{ display:block; }
+.vd-ready{ margin:0 0 14px; }
+.vd-field{ margin-bottom:14px; }
+.vd-label{ display:block; font-size:12.5px; font-weight:600; color:var(--ink-2); }
+.vrow-detail select{ margin-top:6px; max-width:260px; width:100%; border:1px solid var(--line); border-radius:8px; padding:8px 10px; background:#fff; font:inherit; }
+.vrow-detail .pd-grid{ grid-template-columns:repeat(auto-fill,minmax(96px,1fr)); }
 
 @media (max-width:760px){
-  .combo-tools{ flex-wrap:wrap; }
-  .combo-tools input[type="search"]{ font-size:16px; flex:1 1 100%; }
-  .combo-bulk .cb-set{ flex:1 1 100%; }
-  .cb-set input{ flex:0 0 96px; font-size:16px; }
-  .cb-set select{ flex:1; max-width:none; font-size:16px; }
-  .combo-table, .combo-table tbody, .combo-table tr, .combo-table td{ display:block; width:auto; min-width:0; }
-  .combo-combo{ min-width:0; }
-  .combo-table thead{ display:none; }
-  .combo-item{ border:1px solid var(--line); border-radius:12px; padding:10px; margin-bottom:10px; }
-  .combo-item > tr:first-child{
-    display:grid; gap:8px 10px; align-items:center;
-    grid-template-columns:32px 56px 1fr 1fr;
-    grid-template-areas:"sell thumb name name" "ready ready price price" "tag tag more attr";
+  .vrow-main{
+    grid-template-columns:56px minmax(0,1fr) 32px;
+    grid-template-areas:"thumb name chev" "price sw sw";
+    gap:8px 12px;
   }
-  .combo-table td{ padding:0; border:0; }
-  .combo-table .c-sell, .combo-table .c-ready, .combo-table .c-thumb,
-  .combo-table .c-price, .combo-table .c-tag, .combo-table .c-more, .combo-table .c-attr{ width:auto; }
-  .combo-table .c-sell{ grid-area:sell; }
-  .combo-table .c-thumb{ grid-area:thumb; }
-  .combo-table .combo-combo{ grid-area:name; }
-  .combo-table .c-ready{ grid-area:ready; text-align:left; }
-  .combo-table .c-price{ grid-area:price; }
-  .combo-table .c-tag{ grid-area:tag; }
-  .combo-table .c-more{ grid-area:more; }
-  .combo-table .c-attr{ grid-area:attr; }
-  .c-lbl{ display:inline; font-size:13px; }
-  .combo-imgrow td, .combo-attrrow td{ margin-top:8px; border-radius:8px; }
-  .combo-pathlabel{ flex-direction:column; align-items:stretch; gap:4px; }
+  .vrow-thumb{ grid-area:thumb; }
+  .vrow-name{ grid-area:name; }
+  .vrow-chev{ grid-area:chev; }
+  .vrow-price{ grid-area:price; font-size:16px; }
+  .vsw{ grid-area:sw; justify-self:end; }
 }
 
 .value-chips{ display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
@@ -574,7 +514,7 @@ button,input,select,textarea{ font-family:inherit; font-size:inherit; color:inhe
   .group{ padding:13px; }
   /* ช่องกรอกอย่างน้อย 16px กัน iOS Safari ซูมเองตอนกดช่อง */
   .field input, .field select, .field textarea,
-  .search-wrap input, .combo-table input, .combo-table select, .img-list-row input{ font-size:16px; }
+  .search-wrap input, .vrow-detail select, .img-list-row input{ font-size:16px; }
 }
 
 /* ───────────── Phase 1–2: เมนู ⋯ / สวิตช์ / ส่วนพับได้ ───────────── */
@@ -943,7 +883,6 @@ body.vm-chip-dragging, body.vm-chip-dragging *{ cursor:grabbing !important; user
 .im-thumb{ width:44px; height:44px; object-fit:cover; border-radius:8px; background:var(--line-soft); flex:none; }
 .im-thumb.is-missing{ border:1px dashed var(--line); }
 .im-path{ font-size:13.5px; color:var(--ink-2); word-break:break-all; }
-.combo-more{ margin-top:6px; width:100%; }
 
 /* =========================================================
    มุมมองการ์ด (ค่าเริ่มต้น) — หน้าตาใกล้เคียงการ์ดสินค้าของหน้าร้าน
