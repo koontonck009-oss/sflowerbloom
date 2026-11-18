@@ -2984,6 +2984,275 @@ function catalogTargets(){
   return visibleProducts().map(r => r.p).filter(p => !p.hidden);
 }
 
+/* ───────────────── แคตตาล็อก PDF (A4) สำหรับพนักงาน ─────────────────
+   หน้าปก 1 หน้า + หน้าละ 12 ช่อง (3 คอลัม × 4 แถว) ช่องละ รูป · ชื่อ · ราคา
+   ใช้สินค้าทุกชิ้นที่ไม่ได้ซ่อน (ไม่ขึ้นกับตัวกรอง/ที่ติ๊กเลือก) เรียงตามหมวดเหมือนหน้าร้าน
+   สินค้าที่มีหลายแบบ/สี/ไซซ์ แยกเป็นช่องของตัวเองพร้อมราคาจริง (ใช้ posterEntries ตัวเดียวกับภาพแคตตาล็อก)
+   วาดแต่ละหน้าด้วย canvas (A4 ที่ 200 dpi) แล้วรวมเป็นไฟล์ PDF เองจาก JPEG — ไม่ต้องใช้ไลบรารีเพิ่ม */
+
+const PDFCAT = {
+  W: 1654, H: 2339,            // A4 ที่ 200 dpi
+  MX: 80, HEAD: 140, BOTTOM: 50,
+  COLS: 3, ROWS: 4, GAP_X: 28, GAP_Y: 16,
+  TEXT_H: 134,                 // ความสูงส่วนชื่อ + ราคาใต้รูปแต่ละช่อง
+  PINK: '#F62188', INK: '#111111', GRAY: '#5A5A5A', LINE: '#EBDDE4', BG: '#FFF7FC'
+};
+PDFCAT.PER_PAGE = PDFCAT.COLS * PDFCAT.ROWS;
+
+// รายการช่องทั้งหมด: สินค้าที่ไม่ซ่อน เรียงตามหมวด (ลำดับเดียวกับตัวกรองหมวด) แล้วตามลำดับในหลังบ้าน
+function pdfCatEntries(){
+  const order = allCats().slice(1);
+  const rank = p => { const k = order.indexOf(p.cat); return k < 0 ? order.length : k; };
+  const prods = catalog.map((p, i) => ({ p, i })).filter(x => !x.p.hidden)
+    .sort((a, b) => rank(a.p) - rank(b.p) || a.i - b.i);
+  const out = [];
+  prods.forEach(({ p }) => posterEntries(p).forEach(e => out.push({
+    name: String(p.name || p.id || '') + (e.parts.length ? ` (${e.parts.join(' · ')})` : ''),
+    price: e.price,
+    image: e.image
+  })));
+  return out;
+}
+
+function pdfCatNewCanvas(){
+  const cv = document.createElement('canvas');
+  cv.width = PDFCAT.W; cv.height = PDFCAT.H;
+  const ctx = cv.getContext('2d');
+  ctx.textBaseline = 'alphabetic';
+  ctx.textAlign = 'left';
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  return { cv, ctx };
+}
+
+function pdfCatRoundRect(ctx, x, y, w, h, r){
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+// ตัดข้อความเป็นไม่เกิน maxLines บรรทัด ถ้าเกินใส่ … ท้ายบรรทัดสุดท้าย
+function pdfCatClamp(ctx, text, maxW, maxLines){
+  const lines = posterWrap(ctx, text, maxW);
+  if(lines.length <= maxLines) return lines;
+  const keep = lines.slice(0, maxLines);
+  let last = keep[maxLines - 1];
+  while(last && ctx.measureText(last + '…').width > maxW) last = last.slice(0, -1);
+  keep[maxLines - 1] = last.trimEnd() + '…';
+  return keep;
+}
+
+function pdfCatLogoCircle(ctx, logo, cx, cy, d){
+  ctx.save();
+  ctx.beginPath(); ctx.arc(cx, cy, d / 2, 0, Math.PI * 2); ctx.closePath(); ctx.clip();
+  ctx.fillStyle = '#fff'; ctx.fillRect(cx - d / 2, cy - d / 2, d, d);
+  if(logo){
+    const r = Math.min(d / logo.naturalWidth, d / logo.naturalHeight);
+    const w = logo.naturalWidth * r, h = logo.naturalHeight * r;
+    ctx.drawImage(logo, cx - w / 2, cy - h / 2, w, h);
+  }
+  ctx.restore();
+}
+
+function pdfCatDrawCover(logo, itemCount){
+  const { W, H, PINK, INK, GRAY, BG } = PDFCAT;
+  const { cv, ctx } = pdfCatNewCanvas();
+  ctx.fillStyle = BG; ctx.fillRect(0, 0, W, H);
+
+  // แถบชมพูด้านล่าง
+  const bandY = 1790;
+  ctx.fillStyle = PINK; ctx.fillRect(0, bandY, W, H - bandY);
+
+  // โลโก้ในวงแหวนชมพู
+  const cx = W / 2, cy = 640;
+  ctx.beginPath(); ctx.arc(cx, cy, 252, 0, Math.PI * 2);
+  ctx.fillStyle = '#fff'; ctx.fill();
+  ctx.lineWidth = 8; ctx.strokeStyle = PINK; ctx.stroke();
+  pdfCatLogoCircle(ctx, logo, cx, cy, 460);
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = INK;
+  ctx.font = '700 132px Kanit, sans-serif';
+  ctx.fillText('แคตตาล็อกสินค้า', cx, 1080);
+  ctx.fillStyle = PINK;
+  ctx.font = '600 68px Kanit, sans-serif';
+  ctx.fillText('S.Flower Bloom', cx, 1185);
+  ctx.fillStyle = GRAY;
+  ctx.font = '400 40px Kanit, sans-serif';
+  ctx.fillText(new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: 'numeric' }), cx, 1275);
+
+  ctx.fillStyle = '#fff';
+  ctx.font = '700 76px Kanit, sans-serif';
+  ctx.fillText(`ทั้งหมด ${itemCount.toLocaleString('th-TH')} รายการ`, cx, bandY + 205);
+  ctx.font = '400 42px Kanit, sans-serif';
+  ctx.fillText('สำหรับพนักงาน', cx, bandY + 290);
+  return cv;
+}
+
+function pdfCatDrawPage(cells, imgs, pageNo, pageCount, logo){
+  const { W, H, MX, HEAD, BOTTOM, COLS, ROWS, GAP_X, GAP_Y, TEXT_H, PINK, INK, GRAY, LINE } = PDFCAT;
+  const { cv, ctx } = pdfCatNewCanvas();
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
+
+  // หัวกระดาษ: โลโก้ + ชื่อร้าน ซ้าย · เลขหน้า ขวา
+  pdfCatLogoCircle(ctx, logo, MX + 32, 58, 64);
+  ctx.fillStyle = INK;
+  ctx.font = '600 38px Kanit, sans-serif';
+  ctx.fillText('S.Flower Bloom', MX + 84, 71);
+  ctx.fillStyle = GRAY;
+  ctx.font = '400 30px Kanit, sans-serif';
+  ctx.textAlign = 'right';
+  ctx.fillText(`หน้า ${pageNo} / ${pageCount}`, W - MX, 69);
+  ctx.textAlign = 'left';
+  ctx.fillStyle = PINK;
+  ctx.fillRect(MX, 112, W - MX * 2, 3);
+
+  // กริด 3 × 4
+  const cellW = (W - MX * 2 - GAP_X * (COLS - 1)) / COLS;
+  const rowH = (H - HEAD - BOTTOM - GAP_Y * (ROWS - 1)) / ROWS;
+  const photoH = rowH - TEXT_H;
+
+  cells.forEach((c, i) => {
+    const col = i % COLS, row = Math.floor(i / COLS);
+    const x = MX + col * (cellW + GAP_X), y = HEAD + row * (rowH + GAP_Y);
+
+    ctx.save();
+    pdfCatRoundRect(ctx, x, y, cellW, rowH, 16);
+    ctx.fillStyle = '#fff'; ctx.fill();
+    ctx.clip();
+    const img = imgs[i];
+    if(img){
+      const s = Math.max(cellW / img.naturalWidth, photoH / img.naturalHeight);
+      const sw = cellW / s, sh = photoH / s;
+      ctx.drawImage(img, (img.naturalWidth - sw) / 2, (img.naturalHeight - sh) / 2, sw, sh, x, y, cellW, photoH);
+    }else{
+      ctx.fillStyle = '#EFEAEC'; ctx.fillRect(x, y, cellW, photoH);
+      ctx.fillStyle = '#9A8F94';
+      ctx.font = '600 30px Kanit, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('ไม่มีรูปสินค้า', x + cellW / 2, y + photoH / 2 + 10);
+      ctx.textAlign = 'left';
+    }
+    ctx.restore();
+    pdfCatRoundRect(ctx, x, y, cellW, rowH, 16);
+    ctx.lineWidth = 2; ctx.strokeStyle = LINE; ctx.stroke();
+
+    // ชื่อ (สูงสุด 2 บรรทัด) + ราคา
+    const tx = x + 18, tw = cellW - 36;
+    ctx.fillStyle = INK;
+    ctx.font = '600 29px Kanit, sans-serif';
+    pdfCatClamp(ctx, c.name, tw, 2).forEach((ln, li) => ctx.fillText(ln, tx, y + photoH + 33 + li * 34));
+    ctx.fillStyle = PINK;
+    ctx.font = '700 38px Kanit, sans-serif';
+    ctx.fillText(c.price ? '฿' + Number(c.price).toLocaleString('en-US') : 'สอบถามราคา', tx, y + rowH - 16);
+  });
+  return cv;
+}
+
+async function pdfCatToJpeg(cv){
+  const blob = await new Promise(res => cv.toBlob(res, 'image/jpeg', 0.9));
+  if(!blob) throw new Error('แปลงหน้ากระดาษเป็นภาพไม่สำเร็จ');
+  const out = { data: new Uint8Array(await blob.arrayBuffer()), w: cv.width, h: cv.height };
+  cv.width = 0; cv.height = 0;   // คืนหน่วยความจำของ canvas ใหญ่ทันที
+  return out;
+}
+
+// รวม JPEG ทีละหน้าเป็น PDF A4 (595.28 × 841.89 pt) — เขียนโครงสร้างไฟล์ PDF เอง
+function pdfCatBuild(pages, title){
+  const enc = new TextEncoder();
+  const chunks = [], offsets = [];
+  let len = 0;
+  const put = d => { const u = typeof d === 'string' ? enc.encode(d) : d; chunks.push(u); len += u.length; };
+  const begin = n => { offsets[n] = len; put(`${n} 0 obj\n`); };
+  const PW = 595.28, PH = 841.89;
+  const n = pages.length;
+  const info = 3 + n * 3;
+  const hex = s => Array.from('\uFEFF' + s).map(ch => ch.charCodeAt(0).toString(16).padStart(4, '0')).join('').toUpperCase();
+
+  put('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n');
+  begin(1); put('<< /Type /Catalog /Pages 2 0 R >>\nendobj\n');
+  begin(2);
+  put(`<< /Type /Pages /Count ${n} /Kids [${pages.map((_, i) => `${5 + i * 3} 0 R`).join(' ')}] >>\nendobj\n`);
+  pages.forEach((pg, i) => {
+    const img = 3 + i * 3, con = 4 + i * 3, page = 5 + i * 3;
+    begin(img);
+    put(`<< /Type /XObject /Subtype /Image /Width ${pg.w} /Height ${pg.h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${pg.data.length} >>\nstream\n`);
+    put(pg.data);
+    put('\nendstream\nendobj\n');
+    const draw = `q ${PW} 0 0 ${PH} 0 0 cm /Im0 Do Q`;
+    begin(con);
+    put(`<< /Length ${draw.length} >>\nstream\n${draw}\nendstream\nendobj\n`);
+    begin(page);
+    put(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${PW} ${PH}] /Resources << /XObject << /Im0 ${img} 0 R >> >> /Contents ${con} 0 R >>\nendobj\n`);
+  });
+  begin(info);
+  put(`<< /Title <${hex(title)}> /Producer (S.Flower Bloom admin) >>\nendobj\n`);
+
+  const xref = len, total = info + 1;
+  put(`xref\n0 ${total}\n0000000000 65535 f \n`);
+  for(let k = 1; k < total; k++) put(String(offsets[k]).padStart(10, '0') + ' 00000 n \n');
+  put(`trailer\n<< /Size ${total} /Root 1 0 R /Info ${info} 0 R >>\nstartxref\n${xref}\n%%EOF\n`);
+  return new Blob(chunks, { type: 'application/pdf' });
+}
+
+async function exportPdfCatalog(){
+  if(posterBusy) return;
+  const cells = pdfCatEntries();
+  if(!cells.length){ toast('ไม่มีสินค้าให้ทำแคตตาล็อก', true); return; }
+  if(pricesHidden){
+    const ok = await askConfirm('ตอนนี้ซ่อนราคาบนหน้าร้านอยู่',
+      'ไฟล์ PDF นี้จะมีราคาทุกชิ้น ใช้ภายในร้านสำหรับพนักงานเท่านั้น ไม่ควรส่งต่อให้ลูกค้า', 'สร้าง PDF ต่อ');
+    if(!ok) return;
+  }
+
+  posterBusy = true;
+  posterCancel = false;
+  const pageCount = Math.ceil(cells.length / PDFCAT.PER_PAGE);
+  const pages = [];
+  let missing = 0;
+  try{
+    posterProgress(true, 'กำลังเตรียมฟอนต์…', 0);
+    await posterEnsureFonts();
+    const logo = await posterLoadImage('images/logo.png');
+
+    pages.push(await pdfCatToJpeg(pdfCatDrawCover(logo, cells.length)));
+
+    for(let pg = 0; pg < pageCount; pg++){
+      if(posterCancel) break;
+      posterProgress(true, `กำลังสร้างหน้า ${pg + 1}/${pageCount}`, (pg / pageCount) * 100);
+      await new Promise(r => setTimeout(r, 0));   // ให้เบราว์เซอร์วาดแถบความคืบหน้าก่อน
+      const slice = cells.slice(pg * PDFCAT.PER_PAGE, (pg + 1) * PDFCAT.PER_PAGE);
+      const imgs = await Promise.all(slice.map(c => posterLoadImage(c.image)));
+      missing += imgs.filter(im => !im).length;
+      pages.push(await pdfCatToJpeg(pdfCatDrawPage(slice, imgs, pg + 1, pageCount, logo)));
+      posterImgCache.clear();   // ไม่เก็บรูปทั้งร้านไว้ในหน่วยความจำ
+    }
+    if(posterCancel){ toast('ยกเลิกการสร้าง PDF แล้ว'); return; }
+
+    posterProgress(true, 'กำลังรวมไฟล์ PDF…', 100);
+    const stamp = new Date().toISOString().slice(0, 10);
+    posterSave(pdfCatBuild(pages, 'แคตตาล็อก S.Flower Bloom'), `catalog-A4-${stamp}.pdf`);
+    toast(missing
+      ? `สร้าง PDF เสร็จ ${pageCount + 1} หน้า (${missing} ช่องไม่พบไฟล์รูป ตรวจพาธรูปในสินค้า)`
+      : `สร้าง PDF เสร็จ ${pageCount + 1} หน้า (${cells.length} รายการ)`, !!missing);
+  }catch(err){
+    console.error(err);
+    const tainted = err && (err.name === 'SecurityError' || /tainted|insecure/i.test(String(err.message)));
+    toast(tainted
+      ? 'สร้าง PDF ไม่ได้ ต้องเปิดหน้าแอดมินผ่านเว็บไซต์จริง ไม่ใช่เปิดไฟล์ในเครื่อง'
+      : 'สร้าง PDF ไม่สำเร็จ: ' + (err.message || err), true);
+  }finally{
+    posterProgress(false);
+    posterImgCache.clear();
+    posterBusy = false;
+  }
+}
+
+
 function updateCatalogBtn(rows){
   const btn = $('catalogBtn');
   if(!btn) return;
@@ -4860,6 +5129,7 @@ $('catalogBtn').addEventListener('click', () => {
   const stamp = new Date().toISOString().slice(0, 10);
   exportPosters(list, `catalog-${stamp}`);
 });
+{ const pb = $('pdfCatalogBtn'); if(pb) pb.addEventListener('click', exportPdfCatalog); }
 $('posterOneBtn').addEventListener('click', () => {
   if(!draft) return;
   exportPosters([draft], `${String(draft.id || 'product').replace(/[\\/:*?"<>|\s]+/g, '-')}_catalog`);
