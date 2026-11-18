@@ -330,6 +330,7 @@
       <span class="total-amt" id="totalAmt">฿0</span>
     </div>
     <p class="field-hint" style="margin:-6px 0 12px;">ยังไม่รวมค่าจัดส่ง — นัดรับฟรีเมื่อสั่งครบ ฿<span class="js-free-min">399</span> ขึ้นไป (ต่ำกว่านั้นคิดค่าส่งตามระยะทางจริง) / ส่งพัสดุต่างจังหวัด ฿100 ต่อออเดอร์</p>
+    <p class="color-note color-note-cart">สีของลวดกำมะหยี่ กระดาษ และริบบิ้น อาจมีความแตกต่างจากภาพเล็กน้อย เนื่องจากสินค้าแต่ละรอบอาจมีเฉดสีไม่เหมือนกัน ทั้งนี้ทางร้านจะคัดเลือกสีและจัดทำให้ใกล้เคียงกับแบบมากที่สุดนะคะ 💗</p>
     <button class="checkout-btn" id="checkoutBtn" onclick="startCheckout(buildCartOrderLines)">
       <svg class="ic" aria-hidden="true"><use href="#i-flower"/></svg> ยืนยันสั่งทำสินค้า
     </button>
@@ -393,6 +394,7 @@
           </div>
         </div>
         <div class="modal-price" id="modalPrice"></div>
+        <p class="color-note color-note-m">สีวัสดุอาจต่างจากภาพเล็กน้อย ร้านจะจัดให้ใกล้เคียงที่สุดค่ะ 💗</p>
         <!-- ตอนปิดระบบสั่งทำ/ตะกร้า (ยังแสดงราคา): อยู่ใต้ราคา แทนปุ่มใส่ตะกร้า/สั่งทำสินค้า -->
         <div class="order-closed-box" id="orderClosedBox">
           <div class="price-ask-text"><svg class="ic" aria-hidden="true"><use href="#i-camera"/></svg> <b>แคปหน้าจอนี้</b> แล้วส่งให้เพจได้เลยค่ะ</div>
@@ -430,6 +432,7 @@
           <li><span class="pd-info-ic" aria-hidden="true"><svg class="ic" aria-hidden="true"><use href="#i-pin"/></svg></span><div><b>นัดรับได้</b><small>ในตัวเมืองนครสวรรค์ และอำเภอพยุหะคีรี</small></div></li>
           <li><span class="pd-info-ic" aria-hidden="true"><svg class="ic" aria-hidden="true"><use href="#i-package"/></svg></span><div><b>ส่งพัสดุ EMS</b><small>ผ่านไปรษณีย์ไทย แพ็กอย่างรัดกุม</small></div></li>
         </ul>
+        <p class="color-note color-note-dt">สีของลวดกำมะหยี่ กระดาษ และริบบิ้น อาจมีความแตกต่างจากภาพเล็กน้อย เนื่องจากสินค้าแต่ละรอบอาจมีเฉดสีไม่เหมือนกัน ทั้งนี้ทางร้านจะคัดเลือกสีและจัดทำให้ใกล้เคียงกับแบบมากที่สุดนะคะ 💗</p>
     </div>
     </div>
     <!-- สินค้าแนะนำด้านล่างหน้าสินค้า (มือถือ 6 ชิ้น · จอคอม 8 ชิ้น) -->
@@ -466,6 +469,11 @@
   <details class="faq-item">
     <summary>ใช้เวลาทำกี่วัน?</summary>
     <p class="faq-answer">โดยทั่วไปประมาณ 3–5 วัน (สามารถแจ้งเวลาประมาณการให้ลูกค้าทราบเป็นกรณีไป)</p>
+  </details>
+
+  <details class="faq-item">
+    <summary>สีของสินค้าตรงกับภาพไหม?</summary>
+    <p class="faq-answer">สีของลวดกำมะหยี่ กระดาษ และริบบิ้น อาจมีความแตกต่างจากภาพเล็กน้อย เนื่องจากสินค้าแต่ละรอบอาจมีเฉดสีไม่เหมือนกัน ทั้งนี้ทางร้านจะคัดเลือกสีและจัดทำให้ใกล้เคียงกับแบบมากที่สุดนะคะ 💗</p>
   </details>
 </section>
 
@@ -529,6 +537,7 @@
         <input type="checkbox" id="addCardCart"> <svg class="ic" aria-hidden="true"><use href="#i-gift"/></svg> เพิ่มการ์ดอวยพร (ฟรี)
       </label>
       <textarea id="orderNoteInput" class="form-input" rows="2" placeholder="หมายเหตุ (เช่น อยากเปลี่ยน/เพิ่มสีช่อดอกไม้ ข้อความในการ์ด หรือข้อความอื่นๆ ถึงร้าน)"></textarea>
+      <p class="color-note">สีของลวดกำมะหยี่ กระดาษ และริบบิ้น อาจมีความแตกต่างจากภาพเล็กน้อย เนื่องจากสินค้าแต่ละรอบอาจมีเฉดสีไม่เหมือนกัน ทั้งนี้ทางร้านจะคัดเลือกสีและจัดทำให้ใกล้เคียงกับแบบมากที่สุดนะคะ 💗</p>
       <p class="app-tip"><svg class="ic" aria-hidden="true"><use href="#i-bulb"/></svg> ยังไม่เคยทักแชทเพจใช่ไหม <a href="#" id="messengerLink" target="_blank" rel="noopener">เปิดแชท Facebook Messenger ที่นี่</a> เพื่อทักหาแอดมินไว้ก่อนได้เลยค่ะ (ใช้ชื่อเดียวกับที่แจ้งไว้)</p>
     </div>
 

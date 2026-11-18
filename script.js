@@ -3374,7 +3374,7 @@ function openProductModal(id, colorIndex, optionIndex, sizeIndex){
   page.classList.add('open');
   const scrollArea = document.getElementById('productPageScroll');
   if(scrollArea) scrollArea.scrollTop = 0;
-  document.body.style.overflow = 'hidden';
+  document.documentElement.classList.add('pd-open'); // ล็อกการเลื่อนของหน้าด้านหลัง (ต้องล็อกที่ <html> เพราะ html มี overflow-x:hidden)
   if(wasOpen){
     // สลับสินค้าในหน้าเดิม: แทนที่ประวัติเดิม (ไม่ push เพิ่ม) แล้วเล่นแอนิเมชันจางเข้า
     history.replaceState({ productPage:true }, '', '#product');
@@ -3420,7 +3420,7 @@ function closeProductModal(fromPopState){
   const page = document.getElementById('productModal');
   if(!page.classList.contains('open')) return;
   page.classList.remove('open');
-  document.body.style.overflow = '';
+  document.documentElement.classList.remove('pd-open');
   modalProductId = null;
   modalAllowedVariants = null;
   if(!fromPopState && history.state && history.state.productPage){

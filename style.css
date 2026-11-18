@@ -3383,3 +3383,23 @@ input::placeholder, textarea::placeholder{font-weight:200;}
 /* ExtraLight: ข้อความเสริมที่ไม่ต้องอ่านทันที (ทั้งหมดขนาด 13px ขึ้นไป)
    ท้ายหน้า · ข้อความตอนตะกร้าว่าง · คำอ่านชื่อร้านในหน้าติดต่อ · วงเล็บอธิบายเพิ่มในกล่องแจ้งราคา */
 footer, .empty-cart, .dt-contact-th, .price-notice .pn-more{font-weight:200;}
+
+/* ===== ข้อความแจ้งสีอาจต่างจากภาพ (หน้าสินค้า / ตะกร้า / สรุปคำสั่งซื้อ) ===== */
+.color-note{
+  margin:0 0 14px; padding:10px 14px;
+  background:var(--tint-1); border:1px solid var(--tint-2); border-radius:12px;
+  font-size:12.5px; line-height:1.65; font-weight:300; color:var(--plum);
+}
+.color-note-cart{ margin:0 0 12px; }
+#orderNoteInput + .color-note{ margin:10px 0 0; }
+
+/* ข้อความสีอาจต่างจากภาพ ในหน้าสินค้า: มือถือใช้ข้อความสั้นใต้ราคา / จอคอมใช้ข้อความเต็มใต้ "ส่งพัสดุ EMS" */
+.color-note-dt{display:none;}
+@media (min-width:860px){
+  .color-note-m{display:none;}
+  .color-note-dt{display:block; order:11; margin:14px 0 0;}
+}
+
+/* หน้าสินค้าเปิดอยู่: ล็อกการเลื่อนของหน้าด้านหลัง ให้เหลือแถบเลื่อนอันเดียว (ของหน้าสินค้า) */
+html.pd-open, html.pd-open body{overflow:hidden;}
+.product-page-scroll{overscroll-behavior:contain;}
