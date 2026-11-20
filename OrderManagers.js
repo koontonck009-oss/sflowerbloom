@@ -644,6 +644,11 @@
                     if (!o || CHECKLIST_STATUSES.indexOf(o.status) === -1) return null;
                     return checkItemsOf(o).length ? 'items' : 'whole';
                 }
+                // มือถือ: ออเดอร์ที่ติ๊กครบแล้วพับรายการสินค้าไว้ (แตะ "ดูรายการสินค้า" เพื่อเปิด) — ถ้าผู้ใช้ติ๊กเองในเครื่องนี้ จะไม่พับให้ทันที
+                const doneOpenIds = ref({});
+                function listCollapsed(o) { return checklistMode(o) === 'items' && isAllDone(o) && !doneOpenIds.value[o.id] && !isExpanded(o); }
+                function openDoneList(o) { doneOpenIds.value = { ...doneOpenIds.value, [o.id]: true }; }
+                function keepListOpen(o) { if (!doneOpenIds.value[o.id]) openDoneList(o); }
                 function isAllDone(o) {
                     const list = checkItemsOf(o);
                     if (!list.length) return !!(o && o.allDone);
@@ -2936,7 +2941,7 @@
                 });
 
                 return {
-                    checkItemsOf, checklistMode, progressOf, toggleItemDone, toggleCardDone, toggleOrderAllDone,
+                    checkItemsOf, checklistMode, progressOf, listCollapsed, openDoneList, keepListOpen, toggleItemDone, toggleCardDone, toggleOrderAllDone,
                     orders, ordersLoaded, searchQuery, filterType, statusFilter, datePreset, sortBy, sortOptions, currentView,
                     isFilterSheetOpen, isMobileMenuOpen, activeFilterCount, resetFilters,
                     TRACK_CARRIERS, trackDraft, trackEditing, startTrackEdit, cancelTrackEdit, saveInlineTracking, saveCarrier,
