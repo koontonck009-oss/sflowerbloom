@@ -595,6 +595,84 @@
                 function hasItemNotes(o) { return itemNotesOf(o).length > 0; }
                 // รายการสินค้าทีละชิ้นสำหรับใบสั่งงาน
                 function printItemsOf(o) { return ((o && o.items) || []).filter(i => String(i.details || '').trim()); }
+
+                // ===== ติ๊กความคืบหน้ารายชิ้น + การ์ดอวยพร (ทำเสร็จ / ทำการ์ดแล้ว) =====
+                // เก็บในออเดอร์: items[].done, items[].needCard, items[].cardDone  และ allDone (ออเดอร์แบบไม่แยกรายการ)
+                const CHECKLIST_STATUSES = ['pending', 'in_progress', 'ready'];
+                function checkItemsOf(o) { return ((o && o.items) || []).filter(i => String(i.details || '').trim()); }
+                // 'items' = ติ๊กรายชิ้น · 'whole' = ติ๊กทั้งออเดอร์ (ไม่มีรายการแยก) · null = ไม่แสดงช่องติ๊ก (ส่งสำเร็จ/ยกเลิก)
+                function checklistMode(o) {
+                    if (!o || CHECKLIST_STATUSES.indexOf(o.status) === -1) return null;
+                    return checkItemsOf(o).length ? 'items' : 'whole';
+                }
+                function isAllDone(o) {
+                    const list = checkItemsOf(o);
+                    if (!list.length) return !!(o && o.allDone);
+                    return list.every(i => !!i.done && (!i.needCard || !!i.cardDone));
+                }
+                function progressOf(o) {
+                    const list = checkItemsOf(o);
+                    const cards = list.filter(i => i.needCard);
+                    return { total: list.length, done: list.filter(i => i.done).length, cards: cards.length, cardsDone: cards.filter(i => i.cardDone).length, complete: isAllDone(o) };
+                }
+                // แก้ค่าติ๊กแบบธุรกรรม: อ่านออเดอร์ล่าสุดก่อน แก้เฉพาะชิ้นนั้น แล้วคำนวณสถานะใหม่ในครั้งเดียว (สองเครื่องติ๊กคนละชิ้นพร้อมกันไม่ทับกัน)
+                // ครบทุกอย่าง: รอดำเนินการ/กำลังทำ → พร้อมส่ง/รับ · มีของที่ยังไม่เสร็จ: พร้อมส่ง/รับ → กำลังทำ (ส่งสำเร็จ/ยกเลิก ไม่แตะ)
+                function mutateChecklist(orderId, mutate) {
+                    const ref = db.collection('orders').doc(orderId);
+                    let result = null;
+                    return db.runTransaction(async (tx) => {
+                        const snap = await tx.get(ref);
+                        if (!snap.exists) throw new Error('order-missing');
+                        const d = snap.data();
+                        const patch = mutate(d);
+                        if (!patch) { result = { from: d.status, to: d.status }; return; }
+                        const complete = isAllDone({ ...d, ...patch });
+                        let status = d.status;
+                        if (complete && (status === 'pending' || status === 'in_progress')) status = 'ready';
+                        else if (!complete && status === 'ready') status = 'in_progress';
+                        const upd = { ...patch };
+                        if (status !== d.status) upd.status = status;
+                        tx.update(ref, upd);
+                        result = { from: d.status, to: status };
+                    }).then(() => result);
+                }
+                function afterChecklistWrite(order, r) {
+                    if (!r || r.to === r.from) return;
+                    order.status = r.to;
+                    const msg = r.to === 'ready'
+                        ? 'ครบทุกอย่างแล้ว → เปลี่ยนสถานะเป็น \"พร้อมส่ง/รับ\"'
+                        : 'มีรายการที่ยังไม่เสร็จ → ย้อนสถานะเป็น \"กำลังทำ\"';
+                    showToast(msg, () => {
+                        order.status = r.from;
+                        db.collection('orders').doc(order.id).update({ status: r.from })
+                            .catch(() => showToast('ย้อนกลับไม่สำเร็จ ตรวจสอบการเชื่อมต่อ'));
+                        showToast('ย้อนกลับแล้ว');
+                    });
+                }
+                function setItemFlag(order, item, field, checked) {
+                    const idx = (order.items || []).indexOf(item);
+                    const id = item.id;
+                    const prev = !!item[field];
+                    item[field] = checked; // อัปเดตหน้าจอทันที ถ้าบันทึกไม่สำเร็จค่อยคืนค่า
+                    mutateChecklist(order.id, (d) => {
+                        const items = Array.isArray(d.items) ? d.items.map(i => ({ ...i })) : [];
+                        const t = (id !== undefined && id !== null) ? items.find(i => i.id === id) : items[idx];
+                        if (!t) return null;
+                        t[field] = checked;
+                        if (field === 'needCard' && !checked) delete t.cardDone;
+                        return { items };
+                    }).then(r => afterChecklistWrite(order, r))
+                      .catch(() => { item[field] = prev; showToast('บันทึกการติ๊กไม่สำเร็จ ตรวจสอบการเชื่อมต่อ'); });
+                }
+                function toggleItemDone(order, item, checked) { setItemFlag(order, item, 'done', !!checked); }
+                function toggleCardDone(order, item, checked) { setItemFlag(order, item, 'cardDone', !!checked); }
+                function toggleOrderAllDone(order, checked) {
+                    const prev = !!order.allDone;
+                    order.allDone = !!checked;
+                    mutateChecklist(order.id, () => ({ allDone: !!checked }))
+                        .then(r => afterChecklistWrite(order, r))
+                        .catch(() => { order.allDone = prev; showToast('บันทึกการติ๊กไม่สำเร็จ ตรวจสอบการเชื่อมต่อ'); });
+                }
                 const itemNoteOpen = ref({}); // item.id -> true เมื่อกดเปิดช่องหมายเหตุในฟอร์ม
                 function isItemNoteOpen(item) { return !!String(item.note || '').trim() || !!itemNoteOpen.value[item.id]; }
                 function openItemNote(item) {
@@ -1874,6 +1952,7 @@
                             items: (order.items && order.items.length ? order.items.map(i => ({ ...i })) : seedItemsFromOrder(order)),
                             images: getOrderImages(order).map(img => ({ ...img }))
                         };
+                        if (!(order.items && order.items.length) && order.allDone) form.value.items.forEach(i => { i.done = true; });
                         formItemizedMode.value = true;
                         showMoreFields.value = false;
                     } else {
@@ -2122,10 +2201,12 @@
                             const row = { ...i, qty: Number(i.qty) || 0, price: Number(i.price) || 0 };
                             const n = String(i.note || '').trim();
                             if (n) row.note = n; else delete row.note;
+                            if (!row.needCard) { delete row.needCard; delete row.cardDone; }
                             return row;
                         });
                     if (formItemizedMode.value && form.value.items && form.value.items.length > 0) {
                         // Itemized mode: products text + totalAmount are derived from the item rows (+ shipping fee)
+                        delete form.value.allDone; // มีรายการแยกแล้ว ใช้ติ๊กรายชิ้นแทน
                         form.value.products = form.value.items
                             .map(item => {
                                 const label = (item.details || '').trim();
@@ -2756,6 +2837,7 @@
                 });
 
                 return {
+                    checkItemsOf, checklistMode, progressOf, toggleItemDone, toggleCardDone, toggleOrderAllDone,
                     orders, ordersLoaded, searchQuery, filterType, statusFilter, datePreset, sortBy, sortOptions, currentView,
                     isFilterSheetOpen, isMobileMenuOpen, activeFilterCount, resetFilters,
                     TRACK_CARRIERS, trackDraft, trackEditing, startTrackEdit, cancelTrackEdit, saveInlineTracking, saveCarrier,

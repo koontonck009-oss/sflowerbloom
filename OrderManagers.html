@@ -749,8 +749,29 @@
                             </button>
                             <div class="min-w-0 flex-1">
                                 
-                                <p :class="isExpanded(order) ? '' : 'line-clamp-2 md:line-clamp-none'" class="text-slate-900 font-semibold whitespace-pre-line leading-relaxed">{{ order.products }}</p>
-                                <div v-if="hasItemNotes(order)" :class="isExpanded(order) ? '' : 'hidden md:block'" class="mt-1.5 space-y-1">
+                                <div v-if="checklistMode(order) === 'items'" class="space-y-1.5">
+                                    <div class="flex flex-wrap items-center gap-1.5">
+                                        <span class="px-2 py-0.5 rounded-full text-[11px] font-bold border" :class="progressOf(order).done === progressOf(order).total ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-50 text-slate-600 border-slate-200'">เสร็จ {{ progressOf(order).done }}/{{ progressOf(order).total }} ชิ้น</span>
+                                        <span v-if="progressOf(order).cards" class="px-2 py-0.5 rounded-full text-[11px] font-bold border" :class="progressOf(order).cardsDone === progressOf(order).cards ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-pink-50 text-pink-700 border-pink-200'">💌 การ์ด {{ progressOf(order).cardsDone }}/{{ progressOf(order).cards }}</span>
+                                    </div>
+                                    <div v-for="(it, ci) in checkItemsOf(order)" :key="'ck' + ci" class="space-y-1">
+                                        <label class="flex items-start gap-2.5 cursor-pointer select-none py-0.5">
+                                            <input type="checkbox" :checked="!!it.done" @change="toggleItemDone(order, it, $event.target.checked)" class="mt-0.5 w-5 h-5 shrink-0 accent-emerald-500">
+                                            <span class="font-semibold leading-relaxed" :class="it.done ? 'line-through text-slate-400' : 'text-slate-900'">{{ itemLabelOf(it) }}</span>
+                                        </label>
+                                        <label v-if="it.needCard" class="ml-7 flex items-center gap-2 cursor-pointer select-none text-xs">
+                                            <input type="checkbox" :checked="!!it.cardDone" @change="toggleCardDone(order, it, $event.target.checked)" class="w-4 h-4 shrink-0 accent-pink-500">
+                                            <span :class="it.cardDone ? 'text-emerald-700' : 'text-pink-700 font-semibold'">💌 {{ it.cardDone ? 'ทำการ์ดอวยพรแล้ว' : 'ต้องทำการ์ดอวยพร' }}</span>
+                                        </label>
+                                        <p v-if="String(it.note || '').trim()" class="ml-7 text-xs text-amber-800 pl-2 border-l-2 border-amber-400 leading-relaxed">📝 {{ it.note }}</p>
+                                    </div>
+                                </div>
+                                <p v-else :class="isExpanded(order) ? '' : 'line-clamp-2 md:line-clamp-none'" class="text-slate-900 font-semibold whitespace-pre-line leading-relaxed">{{ order.products }}</p>
+                                <label v-if="checklistMode(order) === 'whole'" class="mt-2 flex items-center gap-2.5 cursor-pointer select-none">
+                                    <input type="checkbox" :checked="!!order.allDone" @change="toggleOrderAllDone(order, $event.target.checked)" class="w-5 h-5 shrink-0 accent-emerald-500">
+                                    <span class="text-sm font-semibold" :class="order.allDone ? 'text-emerald-700' : 'text-slate-600'">เสร็จทั้งออเดอร์</span>
+                                </label>
+                                <div v-if="hasItemNotes(order) && checklistMode(order) !== 'items'" :class="isExpanded(order) ? '' : 'hidden md:block'" class="mt-1.5 space-y-1">
                                     <p v-for="(it, ni) in itemNotesOf(order)" :key="'in' + ni" class="text-xs text-amber-800 pl-2 border-l-2 border-amber-400 leading-relaxed">
                                         📝 <b>{{ itemLabelOf(it) }}</b> — {{ it.note }}
                                     </p>
@@ -1303,9 +1324,10 @@
                         <i class="fa-solid fa-list-check"></i>
                         <span>รายการสินค้า & รายละเอียดช่อดอกไม้ที่ต้องจัด:</span>
                     </div>
-                    <div v-if="hasItemNotes(order)" class="text-slate-900 text-sm leading-relaxed bg-white p-2.5 rounded-lg border border-pink-100 min-h-[40px] space-y-1.5">
+                    <div v-if="printItemsOf(order).length" class="text-slate-900 text-sm leading-relaxed bg-white p-2.5 rounded-lg border border-pink-100 min-h-[40px] space-y-1.5">
                         <div v-for="(it, pi2) in printItemsOf(order)" :key="'pi' + pi2">
-                            <div class="font-semibold">{{ pi2 + 1 }}. {{ itemLabelOf(it) }}</div>
+                            <div class="font-semibold"><span v-if="checklistMode(order)">{{ it.done ? '✔' : '☐' }} </span>{{ pi2 + 1 }}. {{ itemLabelOf(it) }}</div>
+                            <div v-if="it.needCard" class="ml-5 mt-0.5 text-xs font-bold text-pink-800"><span v-if="checklistMode(order)">{{ it.cardDone ? '✔' : '☐' }} </span>💌 การ์ดอวยพร</div>
                             <div v-if="String(it.note || '').trim()" class="ml-5 mt-0.5 text-xs font-bold text-amber-900 bg-amber-50 px-2 py-1 rounded border-l-4 border-amber-500">📝 หมายเหตุ: {{ it.note }}</div>
                         </div>
                     </div>
@@ -1459,6 +1481,10 @@
                                             <input :data-item-note="item.id" v-model="item.note" type="text" maxlength="200" placeholder="หมายเหตุเฉพาะชิ้นนี้ เช่น ใส่การ์ดวันเกิด, ริบบิ้นสีชมพู" class="w-full px-3 py-2 sm:py-1.5 border border-amber-200 rounded-xl text-sm bg-amber-50/60 focus:outline-none focus:ring-2 focus:ring-amber-400/30 focus:border-amber-400">
                                         </div>
                                     </div>
+                                    <label style="grid-column: 1 / -1" class="flex items-center gap-2 text-xs text-slate-600 cursor-pointer select-none">
+                                        <input type="checkbox" v-model="item.needCard" tabindex="-1" class="w-4 h-4 accent-pink-500">
+                                        <span>💌 ชิ้นนี้ต้องใส่การ์ดอวยพร</span>
+                                    </label>
                                 </div>
                             </div>
                             <p v-if="formErrors.items" class="text-[11px] text-rose-600 mt-1">{{ formErrors.items }}</p>
