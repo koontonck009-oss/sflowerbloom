@@ -318,3 +318,11 @@ body {
 .mc-fin-row b{display:block;font-size:13pt;line-height:1.3;}
 .mc-fin-row .net b{color:#be185d;}
 .mc-fin-cat{margin:1.5mm 0 0;font-size:7.5pt;color:#475569;line-height:1.35;}
+
+/* การ์ดออเดอร์: โครง wrapper (oc-*) ไม่มีผลต่อหน้าตา — แสดงเป็นการ์ดคอลัมน์เดียวแบบเดิม (3 ใบต่อแถวบนจอกว้าง)
+   ต่อสองกล่องให้ระยะห่างเท่ากับตอนเป็นกล่องเดียว */
+.oc-left-body { padding-bottom: 0 !important; }
+.oc-right { padding-top: .75rem !important; }
+@media (min-width: 640px) {
+    .oc-right { padding-top: 1rem !important; }
+}

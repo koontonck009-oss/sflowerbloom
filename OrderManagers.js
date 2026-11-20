@@ -165,13 +165,23 @@
                     if (!f.payDate) { showToast('กรุณาเลือกวันที่รับเงิน'); return; }
                     const editId = f.payEditId;
                     const entry = { id: editId || newPaymentId(), date: f.payDate, amount: roundMoney(f.amount), method: f.payMethod || '', note: (f.payNote || '').trim() };
+                    // รับเงินใหม่ (ไม่ใช่แก้รายการเดิม): ออกเลขออเดอร์ที่/คิวที่ที่ยังว่าง + รอดำเนินการ → กำลังทำ
+                    const confirmPatch = {}, confirmUndo = {};
+                    if (!editId) {
+                        Object.assign(confirmPatch, queueFieldsFor(o));
+                        if (o.status === 'pending') confirmPatch.status = 'in_progress';
+                        if (confirmPatch.orderNo !== undefined) confirmUndo.orderNo = firebase.firestore.FieldValue.delete();
+                        if (confirmPatch.queueNo !== undefined) confirmUndo.queueNo = firebase.firestore.FieldValue.delete();
+                        if (confirmPatch.status !== undefined) confirmUndo.status = 'pending';
+                    }
                     mutatePayments(o.id, list => {
                         const i = editId ? list.findIndex(x => x.id === editId) : -1;
                         if (i >= 0) list[i] = entry; else list.push(entry);
-                    }).then(() => {
+                    }, confirmPatch).then(() => {
                         if (editId) { showToast('แก้ไขรายการรับเงินแล้ว'); return; }
-                        showToast('บันทึกการรับเงินแล้ว', () => {
-                            mutatePayments(o.id, list => list.filter(x => x.id !== entry.id))
+                        const note = (confirmPatch.queueNo ? ' · ยืนยันคิวที่ ' + confirmPatch.queueNo : '') + (confirmPatch.status ? ' · เปลี่ยนเป็นกำลังทำสินค้า' : '');
+                        showToast('บันทึกการรับเงินแล้ว' + note, () => {
+                            mutatePayments(o.id, list => list.filter(x => x.id !== entry.id), confirmUndo)
                                 .then(() => showToast('ยกเลิกรายการรับเงินแล้ว'))
                                 .catch(() => showToast('ย้อนกลับไม่สำเร็จ ตรวจสอบการเชื่อมต่อ'));
                         });
@@ -549,17 +559,46 @@
                 // ใช้ค่าที่มากกว่าระหว่าง "จำนวนที่มี" กับ "เลขสูงสุดที่มี" แล้ว +1 กันเลขซ้ำเวลามีการลบออเดอร์กลางทาง (ออเดอร์ที่ยกเลิกยังนับรวม)
                 const padNo = (n) => String(n).padStart(2, '0');
                 const maxNumeric = (list, key) => list.reduce((mx, o) => { const v = String(o[key] == null ? '' : o[key]).trim(); return /^\d+$/.test(v) ? Math.max(mx, Number(v)) : mx; }, 0);
-                const nextOrderNo = () => padNo(Math.max(orders.value.length, maxNumeric(orders.value, 'orderNo')) + 1);
+                // ออเดอร์ที่สร้างใหม่ยังไม่มีเลข: ระบบจะออก \"ออเดอร์ที่/คิวที่\" ให้ตอนลูกค้าชำระเงินครั้งแรก (หรือพนักงานกดยืนยันคิวเอง สำหรับ COD)
+                // จึงนับเฉพาะใบที่มีเลขแล้ว ไม่นับใบที่ยังรอชำระ
+                const hasNoValue = (v) => v !== undefined && v !== null && String(v).trim() !== '';
+                const nextOrderNo = () => {
+                    const numbered = orders.value.filter(o => hasNoValue(o.orderNo));
+                    return padNo(Math.max(numbered.length, maxNumeric(numbered, 'orderNo')) + 1);
+                };
                 const nextQueueNo = (dateStr) => {
                     const k = String(dateStr || '').slice(0, 7);
-                    const inMonth = orders.value.filter(o => orderMonthOf(o) === k);
+                    const inMonth = orders.value.filter(o => orderMonthOf(o) === k && hasNoValue(o.queueNo));
                     return padNo(Math.max(inMonth.length, maxNumeric(inMonth, 'queueNo')) + 1);
                 };
+                // เลขที่ต้องใส่ให้ออเดอร์ (เฉพาะช่องที่ยังว่าง — ไม่ทับเลขที่มีอยู่/พิมพ์เอง)
+                function queueFieldsFor(o) {
+                    const f = {};
+                    if (!hasNoValue(o.orderNo)) f.orderNo = nextOrderNo();
+                    if (!hasNoValue(o.queueNo)) f.queueNo = nextQueueNo(o.orderDate);
+                    return f;
+                }
+                // พนักงานกดยืนยันคิวเอง (ใช้กับ COD ที่ไม่มีการชำระล่วงหน้า): ออกเลข + รอดำเนินการ → กำลังทำ
+                function confirmQueue(order) {
+                    if (!order || !order.id) return;
+                    const patch = queueFieldsFor(order);
+                    if (order.status === 'pending') patch.status = 'in_progress';
+                    if (!Object.keys(patch).length) return;
+                    const undo = {};
+                    if (patch.orderNo !== undefined) undo.orderNo = firebase.firestore.FieldValue.delete();
+                    if (patch.queueNo !== undefined) undo.queueNo = firebase.firestore.FieldValue.delete();
+                    if (patch.status !== undefined) undo.status = 'pending';
+                    db.collection('orders').doc(order.id).update(patch)
+                        .then(() => showToast('ยืนยันคิวแล้ว' + (patch.queueNo ? ' (คิวที่ ' + patch.queueNo + ')' : '') + (patch.status ? ' → กำลังทำสินค้า' : ''), () => {
+                            db.collection('orders').doc(order.id).update(undo)
+                                .then(() => showToast('ย้อนการยืนยันคิวแล้ว'))
+                                .catch(() => showToast('ย้อนกลับไม่สำเร็จ ตรวจสอบการเชื่อมต่อ'));
+                        }))
+                        .catch(() => showToast('ยืนยันคิวไม่สำเร็จ ตรวจสอบการเชื่อมต่อ'));
+                }
+                // ออเดอร์ที่ยังไม่ได้ออกเลข (รอชำระ/รอยืนยัน) และยังไม่จบงาน
+                function isQueuePending(o) { return !!o && !hasNoValue(o.orderNo) && !hasNoValue(o.queueNo) && !isFinishedStatus(o.status); }
                 const queueManual = ref(false);
-                watch(() => form.value.orderDate, (d) => {
-                    if (!isModalOpen.value || isEditing.value || queueManual.value || !d) return;
-                    form.value.queueNo = nextQueueNo(d);
-                });
                 const desktopStatusTabs = computed(() => [
                     { k: 'active', t: 'ที่ต้องทำ', count: activeOrdersCount.value, dot: '' },
                     { k: 'pending', t: 'รอดำเนินการ', count: statusCounts.value.pending, dot: 'bg-amber-400' },
@@ -1476,11 +1515,69 @@
                         deliveryDateText: order.deliveryDate ? deliveryLabel(order.deliveryDate) + (order.deliveryType === 'pickup' && order.deliveryTime ? ' เวลา ' + order.deliveryTime + ' น.' : '') : '',
                         paymentMode: order.paymentMode || 'default',
                         fullPay: order.totalAmount || 0,
-                        deposit: order.depositAmount || 0,
+                        deposit: 0,
                         includeNote: true
                     };
+                    messageDepositManual.value = false;
+                    messageForm.value.deposit = calcDeposit(messageForm.value.fullPay);
+                    loadDepositPercent();
                     isMessageModalOpen.value = true;
                     messageMobileTab.value = 'form';
+                }
+
+                // ---------- มัดจำ: คำนวณจาก % คงที่ (ตั้งค่าร่วมกันทุกเครื่อง) ปัดเป็นจำนวนเต็ม ----------
+                // เก็บเป็นไฟล์ settings/deposit-percent.json ใน bucket order-photos (แบบเดียวกับรูป QR) · ไม่ได้ก็ใช้ค่าในเครื่องแทน
+                const DEP_PATH = 'settings/deposit-percent.json';
+                const DEP_LOCAL_KEY = 'sfb-deposit-percent';
+                const depositPercent = ref(50);
+                const depositPercentSaving = ref(false);
+                const messageDepositManual = ref(false); // พิมพ์ยอดมัดจำเองแล้ว → ไม่คำนวณทับ
+                let depositPercentLoaded = false;
+                function validPercent(n) { n = Number(n); return isFinite(n) && n > 0 && n <= 100 ? n : null; }
+                function calcDeposit(full) {
+                    const n = Number(full) || 0;
+                    return Math.round(n * (Number(depositPercent.value) || 0) / 100);
+                }
+                try { const lv = validPercent(localStorage.getItem(DEP_LOCAL_KEY)); if (lv) depositPercent.value = lv; } catch (e) {}
+                async function loadDepositPercent() {
+                    if (depositPercentLoaded) return;
+                    const st = qrStorage();
+                    if (!st) return;
+                    depositPercentLoaded = true;
+                    try {
+                        const { data, error } = await st.download(DEP_PATH);
+                        if (error || !data) return; // ยังไม่เคยตั้งค่า → ใช้ค่าเริ่มต้น 50%
+                        const j = JSON.parse(await data.text());
+                        const v = validPercent(j && j.percent);
+                        if (v) { depositPercent.value = v; try { localStorage.setItem(DEP_LOCAL_KEY, String(v)); } catch (e) {} }
+                    } catch (e) { depositPercentLoaded = false; }
+                }
+                async function saveDepositPercent() {
+                    const v = validPercent(depositPercent.value);
+                    if (!v) { showToast('ใส่เปอร์เซ็นต์มัดจำ 1–100'); try { depositPercent.value = validPercent(localStorage.getItem(DEP_LOCAL_KEY)) || 50; } catch (e) { depositPercent.value = 50; } return; }
+                    depositPercent.value = v;
+                    try { localStorage.setItem(DEP_LOCAL_KEY, String(v)); } catch (e) {}
+                    const st = qrStorage();
+                    if (!st) { showToast('บันทึกมัดจำ ' + v + '% ในเครื่องนี้แล้ว (ยังเชื่อมฐานข้อมูลไม่ได้)'); return; }
+                    depositPercentSaving.value = true;
+                    try {
+                        const blob = new Blob([JSON.stringify({ percent: v })], { type: 'application/json' });
+                        const { error } = await st.upload(DEP_PATH, blob, { contentType: 'application/json', upsert: true, cacheControl: '0' });
+                        if (error) throw error;
+                        showToast('ตั้งค่ามัดจำ ' + v + '% ใช้ร่วมกันทุกเครื่องแล้ว ✅');
+                    } catch (e) {
+                        console.error('Save deposit percent error:', e);
+                        showToast('บันทึกลงฐานข้อมูลไม่สำเร็จ — ใช้ค่านี้ในเครื่องนี้ไปก่อน');
+                    } finally { depositPercentSaving.value = false; }
+                }
+                // ยอดโอนเต็ม / % เปลี่ยน → คำนวณมัดจำใหม่ (ยกเว้นพนักงานพิมพ์ยอดเอง)
+                watch([() => messageForm.value.fullPay, depositPercent], () => {
+                    if (!isMessageModalOpen.value || messageDepositManual.value) return;
+                    messageForm.value.deposit = calcDeposit(messageForm.value.fullPay);
+                });
+                function resetDepositAuto() {
+                    messageDepositManual.value = false;
+                    messageForm.value.deposit = calcDeposit(messageForm.value.fullPay);
                 }
 
                 function closeMessageModal() {
@@ -1968,8 +2065,8 @@
                         form.value = {
                             customerName: '',
                             customerPhone: '',
-                            orderNo: nextOrderNo(),
-                            queueNo: nextQueueNo(localDateString()),
+                            orderNo: '',
+                            queueNo: '',
                             orderMonth: monthLabelOf(localDateString()),
                             products: '',
                             items: [{ id: Date.now() + Math.random(), details: '', qty: 1, unit: 'ช่อ', price: '' }],
@@ -2717,10 +2814,12 @@
                     if (orderNumbersMigrated) return;
                     orderNumbersMigrated = true;
                     const hasNo = (o) => o.orderNo !== undefined && o.orderNo !== null && String(o.orderNo).trim() !== '';
-                    const missing = list.filter(o => o.id && !hasNo(o));
+                    // ข้ามใบที่ยังรอยืนยันคิว (สถานะรอดำเนินการ + ยังไม่มีเงินเข้า + ไม่มีเลขคิวเดิม) — ใบพวกนี้จะได้เลขตอนชำระเงิน
+                    const awaiting = (o) => o.status === 'pending' && !(Number(o.depositAmount) > 0) && !String(o.queueNo == null ? '' : o.queueNo).trim() && !(Array.isArray(o.payments) && o.payments.length);
+                    const missing = list.filter(o => o.id && !hasNo(o) && !awaiting(o));
                     if (!missing.length) return;
                     const tsOf = (o) => { const m = /^ORD-(\d+)/.exec(String(o.id)); return m ? Number(m[1]) : 0; };
-                    const sorted = list.filter(o => o.id).sort((a, b) => tsOf(a) - tsOf(b) || String(a.orderDate || '').localeCompare(String(b.orderDate || '')));
+                    const sorted = list.filter(o => o.id && !awaiting(o)).sort((a, b) => tsOf(a) - tsOf(b) || String(a.orderDate || '').localeCompare(String(b.orderDate || '')));
                     const seqOf = new Map(); const monthRank = new Map(); const monthCount = {};
                     sorted.forEach((o, i) => {
                         seqOf.set(o.id, i + 1);
@@ -2849,7 +2948,7 @@
                     filteredOrders, activeOrdersCount, statusCounts, completedCount, cancelledCount, totalOrderCount, thisMonthCount, desktopStatusTabs, typeTabs, hasActiveFilters, clearAllFilters, isMoreMenuOpen, cardMoreId, isRangeOpen, rangeFrom, rangeTo, rangeLabel, rangeStats, setRangePreset, clearRange, toggleOverdue, monthUi, setMonthUi, onMonthChange, pendingCount, pickupCount, shippingCount, totalDepositSum, totalRemainingSum,
                     toastMessage, deleteTarget, receiptTarget, selectedForPrint, ordersToPrint,
                     isCodOrder, itemLabelOf, itemNotesOf, hasItemNotes, printItemsOf, isItemNoteOpen, openItemNote,
-                    openModal, closeModal, saveOrder, confirmDelete, executeDelete, queueManual,
+                    openModal, closeModal, saveOrder, confirmDelete, executeDelete, queueManual, mcShortDate, confirmQueue, isQueuePending, depositPercent, depositPercentSaving, messageDepositManual, saveDepositPercent, resetDepositAuto, calcDeposit,
                     getRemainingBalance, getDeliveryUrgency, mapUrlOf, formatNumber, formatDate, getStatusClass,
                     getProgressWidth, isStepActive, getProgressColor, getProgressDotColor, handleStatusChange, unpaidConfirm, resolveUnpaid, unpaidOnly, paymentBadge, statusLabelOf, queueOpen, todayQueue, overdueCount, jumpToOrder, toastUndo, runToastUndo,
                     printSingleWorkOrder, openBatchPrintModal, openReceiptModal, triggerPrintReceipt,
