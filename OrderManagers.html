@@ -6,43 +6,38 @@
     <title>ระบบจัดการออเดอร์ & พิมพ์ใบสั่งงาน S.FLOWER BLOOM</title>
     <link rel="icon" type="image/png" sizes="192x192" href="images/favicon.png">
     <link rel="apple-touch-icon" sizes="180x180" href="images/apple-touch-icon admin.png">
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts: Prompt & Sarabun -->
+    <!-- หน้า "กำลังเปิดระบบ" ใช้ CSS ในหน้านี้เองล้วนๆ ไม่ต้องรอไฟล์ภายนอก จะได้ไม่เห็นจอขาวตอนรอโหลด -->
+    <style>
+        html, body { margin: 0; background: #fff; }
+        #app[data-boot] { visibility: hidden; }
+        #boot { position: fixed; inset: 0; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; background: #fff; color: #64748b; font: 500 15px/1.5 system-ui, -apple-system, 'Sarabun', sans-serif; text-align: center; padding: 24px; }
+        #boot .boot-spin { width: 38px; height: 38px; border: 4px solid #fbcfe8; border-top-color: #ec4899; border-radius: 50%; animation: bootspin .8s linear infinite; }
+        #boot a { color: #db2777; font-weight: 600; }
+        @keyframes bootspin { to { transform: rotate(360deg); } }
+    </style>
+    <!-- เชื่อมต่อล่วงหน้า + เริ่มโหลดไฟล์ใหญ่ขนานกัน (ตัวสคริปต์จริงอยู่ท้ายหน้า เพื่อไม่บล็อกการแสดงผล) -->
+    <link rel="preconnect" href="https://cdn.tailwindcss.com">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Vue 3 CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Prompt', 'Sarabun', 'sans-serif'],
-                    },
-                    colors: {
-                        brand: {
-                            50: '#fdf2f8',
-                            100: '#fce7f3',
-                            500: '#ec4899',
-                            600: '#db2777',
-                            700: '#be185d',
-                        }
-                    }
-                }
-            }
-        }
-    </script>
+    <link rel="preload" as="script" href="https://cdn.tailwindcss.com">
+    <link rel="preload" as="script" href="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.js">
+    <link rel="preload" as="script" href="supabase-js.umd.js">
+    <link rel="preload" as="script" href="OrderData.js">
+    <link rel="preload" as="script" href="OrderManagers.js">
+    <!-- ฟอนต์ Prompt & Sarabun / FontAwesome: โหลดแบบไม่บล็อกหน้าจอ -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600&display=swap">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    </noscript>
     <link rel="stylesheet" href="OrderManagers.css">
 </head>
 <body class="text-slate-800 antialiased min-h-screen pb-12">
 
-    <div id="app" class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 pt-3 md:pt-6 pb-16 md:pb-0">
+    <div id="app" data-boot class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 pt-3 md:pt-6 pb-16 md:pb-0">
         <!-- ===== นำเข้าข้อมูลเก่าจาก Excel/CSV ===== -->
         <div v-if="imp.open" class="fixed inset-0 z-[70] bg-slate-900/50 flex items-end sm:items-center justify-center p-0 sm:p-4" @click.self="closeImportModal()">
             <div class="bg-white w-full sm:max-w-3xl max-h-[92vh] flex flex-col rounded-t-2xl sm:rounded-2xl shadow-2xl">
@@ -2138,6 +2133,37 @@
 
     </div>
 
+    <!-- หน้า "กำลังเปิดระบบ" — ขึ้นทันที ไม่ต้องรอสคริปต์ใดๆ และหายเองเมื่อระบบพร้อม -->
+    <div id="boot" role="status">
+        <div class="boot-spin"></div>
+        <div>กำลังเปิดระบบ...</div>
+        <div id="boot-msg" hidden>ใช้เวลานานกว่าปกติ ตรวจสอบอินเทอร์เน็ตแล้ว <a href="" onclick="location.reload();return false;">แตะเพื่อลองใหม่</a></div>
+    </div>
+    <script>setTimeout(function () { var m = document.getElementById('boot-msg'); if (m && document.getElementById('boot')) m.hidden = false; }, 15000);</script>
+
+    <!-- สคริปต์จากภายนอก (ย้ายมาท้ายหน้า เพื่อให้หน้า "กำลังเปิดระบบ" ขึ้นก่อน) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Prompt', 'Sarabun', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#fdf2f8',
+                            100: '#fce7f3',
+                            500: '#ec4899',
+                            600: '#db2777',
+                            700: '#be185d',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.js"></script>
     <script src="supabase-config.js"></script>
     <script src="supabase-js.umd.js"></script>
     <script src="OrderData.js"></script>

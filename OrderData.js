@@ -251,12 +251,35 @@
         if (!st.ready) return;
         const need = missingSigned(st);
         if (!need.length) { emitNow(st, fromCache); return; }
+        if (fromCache) {
+            // ของในเครื่อง: โชว์ออเดอร์ทันที ไม่รอขอลิงก์รูป แล้วค่อยขอลิงก์ตามหลังและส่งให้แอปอีกรอบ (รูปที่ยังไม่มีลิงก์จะโผล่ตามมา)
+            emitNow(st, true);
+            st.signP = signPaths(need)
+                .catch((e) => console.warn('ขอลิงก์รูปไม่สำเร็จ:', e))
+                .then(() => { st.signP = null; emitNow(st, true); saveCache(st); });
+            return;
+        }
         // มีรูปที่ยังไม่มีลิงก์ชั่วคราว → ขอลิงก์ก่อนแล้วค่อยส่งข้อมูลให้แอป (ถ้าขอไม่ได้ก็ส่งไปก่อน)
-        signPaths(need).catch((e) => console.warn('ขอลิงก์รูปไม่สำเร็จ:', e)).then(() => emitNow(st, fromCache));
+        // ถ้ากำลังขอลิงก์จากรอบแคชอยู่ ให้รอรอบนั้นก่อน แล้วขอเฉพาะที่ยังขาด (ไม่ยิงซ้ำ)
+        (st.signP || Promise.resolve())
+            .then(() => { const n2 = missingSigned(st); return n2.length ? signPaths(n2) : null; })
+            .catch((e) => console.warn('ขอลิงก์รูปไม่สำเร็จ:', e))
+            .then(() => { emitNow(st, fromCache); saveCache(st); });
+    }
+    // ลิงก์รูปชั่วคราวที่ยังใช้ได้อีกนาน ของแถวในตารางนี้ — เก็บลงแคชด้วย เปิดวันถัดไปรูปจะขึ้นเลยโดยไม่ต้องขอใหม่
+    function signedFor(st) {
+        const out = [], seen = new Set(), now = Date.now();
+        st.map.forEach((v) => pathsIn(v.data).forEach((p) => {
+            if (seen.has(p)) return;
+            seen.add(p);
+            const s = signed.get(p);
+            if (s && s.url && s.exp - now > SIGN_REFRESH_MS) out.push([p, s]);
+        }));
+        return out;
     }
     function saveCache(st) {
         clearTimeout(st.saveT);
-        st.saveT = setTimeout(() => cacheSet(cacheKey(st.name), { at: Date.now(), rows: Array.from(st.map.entries()) }), 800);
+        st.saveT = setTimeout(() => cacheSet(cacheKey(st.name), { at: Date.now(), rows: Array.from(st.map.entries()), signed: signedFor(st) }), 800);
     }
 
     /* ---------- อ่านจาก Supabase ---------- */
@@ -345,6 +368,13 @@
     async function startTable(st) {
         const cached = await cacheGet(cacheKey(st.name));
         if (cached && Array.isArray(cached.rows) && cached.rows.length && !st.loaded) {
+            if (Array.isArray(cached.signed)) {
+                const now = Date.now();
+                cached.signed.forEach((e) => {
+                    const p = e && e[0], s = e && e[1];
+                    if (typeof p === 'string' && s && s.url && s.exp - now > SIGN_REFRESH_MS && !signed.has(p)) signed.set(p, s);
+                });
+            }
             cached.rows.forEach((r) => st.map.set(r[0], r[1]));
             st.ready = true;
             emit(st, true); // โชว์ของในเครื่องก่อน แล้วค่อยอัปเดตจากเซิร์ฟเวอร์
