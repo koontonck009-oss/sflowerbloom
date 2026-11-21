@@ -643,27 +643,17 @@
                  class="order-card rounded-2xl border shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between overflow-hidden group relative"
                  :class="getDeliveryUrgency(order).cardClass">
                 
-                <!-- สถานะ 4 ขั้น: เส้นบางที่ขอบบนการ์ด (ไม่กินพื้นที่) -->
-                <div v-if="order.status !== 'cancelled'" class="absolute inset-x-0 top-0 z-10 flex gap-0.5 pointer-events-none" :title="statusLabelOf(order.status)">
-                    <span v-for="step in ['pending', 'in_progress', 'ready', 'completed']" :key="step" class="flex-1 h-[7px]" :class="isStepActive(order.status, step) ? (order.status === 'completed' ? 'bg-emerald-500' : 'bg-pink-500') : 'bg-slate-300'"></span>
+                <!-- สถานะ 4 ขั้น: ตัวต่อขั้นตอนมีตัวหนังสือ (ผ่านแล้ว = ติ๊กถูก, ขั้นปัจจุบัน = ป้ายเด่น, ยังไม่ถึง = เทาจาง) -->
+                <div v-if="order.status !== 'cancelled'" class="oc-stepper" :title="'สถานะ: ' + statusLabelOf(order.status)">
+                    <template v-for="(step, si) in [{ k: 'pending', l: 'รอดำเนินการ' }, { k: 'in_progress', l: 'กำลังทำ' }, { k: 'ready', l: 'พร้อมส่ง/รับ' }, { k: 'completed', l: 'ส่งสำเร็จ' }]" :key="step.k">
+                        <span v-if="si" class="oc-step-line" :class="isStepActive(order.status, step.k) ? 'is-on' : ''"></span>
+                        <span class="oc-step" :class="['st-' + step.k, order.status === step.k ? 'is-current' : (isStepActive(order.status, step.k) ? 'is-done' : 'is-todo')]">
+                            <span class="oc-step-dot"><i v-if="isStepActive(order.status, step.k) && (order.status !== step.k || order.status === 'completed')" class="fa-solid fa-check"></i></span>
+                            <span class="oc-step-label">{{ step.l }}</span>
+                        </span>
+                    </template>
                 </div>
-                <!-- Urgent Banner -->
-                <div v-if="getDeliveryUrgency(order).type === 'overdue' && order.status !== 'completed' && order.status !== 'cancelled'"
-                     class="bg-rose-600 text-white font-bold text-xs px-4 py-2 hidden md:flex items-center justify-between tracking-wide shadow-sm">
-                    <span class="flex items-center gap-1.5">
-                        <i class="fa-solid fa-triangle-exclamation text-sm animate-bounce"></i>
-                        <span>{{ getDeliveryUrgency(order).text }}</span>
-                    </span>
-                    <span class="text-[10px] bg-white/20 px-2 py-0.5 rounded-full font-semibold">ด่วนมาก</span>
-                </div>
-                <div v-else-if="getDeliveryUrgency(order).type === 'today' && order.status !== 'completed' && order.status !== 'cancelled'"
-                     class="bg-amber-500 text-slate-900 font-bold text-xs px-4 py-2 hidden md:flex items-center justify-between tracking-wide shadow-sm">
-                    <span class="flex items-center gap-1.5">
-                        <i class="fa-solid fa-fire text-sm animate-pulse"></i>
-                        <span>{{ getDeliveryUrgency(order).text }}</span>
-                    </span>
-                    <span class="text-[10px] bg-slate-900/15 px-2 py-0.5 rounded-full font-bold">กำหนดส่งวันนี้</span>
-                </div>
+                <div v-else class="oc-stepper oc-stepper-cancel">🔴 ยกเลิกแล้ว</div>
 
                 <div class="oc-cols">
                   <div class="oc-left">
@@ -706,11 +696,11 @@
                             <div class="min-w-0">
                                 <div class="text-[11px] text-slate-400 leading-tight">กำหนดส่ง/นัดรับ</div>
                                 <div class="flex items-center gap-1.5 flex-wrap mt-0.5">
-                                    <span v-if="order.deliveryDate || isFinishedStatus(order.status)" class="text-base font-bold text-slate-900">{{ deliveryLabel(order.deliveryDate) }}{{ timeSuffix(order) }}</span>
+                                    <span v-if="order.deliveryDate || isFinishedStatus(order.status)" class="oc-date text-base font-bold text-slate-900">{{ deliveryLabel(order.deliveryDate) }}{{ timeSuffix(order) }}</span>
                                     <button v-else type="button" @click="openQuickEdit('date', order)" class="text-xs font-medium text-pink-600 px-2.5 py-1.5 rounded-lg border border-dashed border-pink-300 bg-pink-50/40 active:bg-pink-100">＋ ระบุวันส่ง</button>
                                     <button v-if="order.deliveryDate && !isFinishedStatus(order.status)" type="button" @click="openQuickEdit('date', order)" title="เลื่อน/แก้วันส่ง" class="w-7 h-7 rounded-lg md:bg-slate-100 active:bg-slate-200 text-slate-400 md:text-slate-500 flex items-center justify-center"><i class="fa-solid fa-pen text-[10px]"></i></button>
                                     <button v-if="order.deliveryType === 'pickup' && order.deliveryDate && !order.deliveryTime && !isFinishedStatus(order.status)" type="button" @click="openQuickEdit('date', order)" class="text-[11px] font-medium text-indigo-600 px-2 py-0.5 rounded-full border border-dashed border-indigo-300 bg-indigo-50/50 active:bg-indigo-100">＋ ระบุเวลา</button>
-                                    <span v-if="urgencyChip(order)" :class="urgencyChip(order).cls" class="px-2 py-0.5 rounded-full text-[11px] font-bold">{{ urgencyChip(order).text }}</span>
+                                    <span v-if="urgencyChip(order)" :class="urgencyChip(order).cls" class="oc-urgency-chip px-2 py-0.5 rounded-full text-[11px] font-bold">{{ urgencyChip(order).text }}</span>
                                     <span v-if="(order.notes || hasItemNotes(order)) && !isExpanded(order)" class="md:hidden px-1.5 py-0.5 rounded-full text-[11px] text-amber-700 bg-amber-50 border border-amber-100">📌 มีหมายเหตุ</span>
                                 </div>
                             </div>

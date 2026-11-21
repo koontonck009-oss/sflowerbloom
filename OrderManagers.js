@@ -530,9 +530,9 @@
                     const diffDays = Math.round((delivery.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 
                     if (diffDays < 0) {
-                        return { type: 'overdue', text: `🚨 เกินกำหนด ${Math.abs(diffDays)} วัน!`, cardClass: 'bg-rose-50/80 border-rose-400 border-l-8 border-l-rose-600' };
+                        return { type: 'overdue', text: `🚨 เกินกำหนด ${Math.abs(diffDays)} วัน!`, cardClass: 'bg-rose-50/80 border-rose-400 border-l-8 border-l-rose-600 oc-overdue' };
                     } else if (diffDays === 0) {
-                        return { type: 'today', text: '⚡️ กำหนดจัดส่ง / นัดรับวันนี้!', cardClass: 'bg-amber-50/80 border-amber-400 border-l-8 border-l-amber-500' };
+                        return { type: 'today', text: '⚡️ กำหนดจัดส่ง / นัดรับวันนี้!', cardClass: 'bg-amber-50/80 border-amber-400 border-l-8 border-l-amber-500 oc-today' };
                     }
                     return { type: 'normal', text: `อีก ${diffDays} วัน`, cardClass: 'bg-white border-slate-300' };
                 }

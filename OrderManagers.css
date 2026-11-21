@@ -326,3 +326,54 @@ body {
 @media (min-width: 640px) {
     .oc-right { padding-top: 1rem !important; }
 }
+/* การ์ดออเดอร์ (เฉพาะจอคอม ≥768px): ย่อให้เล็กลง ให้เห็นครบโดยไม่ซ่อนข้อมูล — รอบ 1: ลด padding/ช่องว่างแนวตั้ง + ย่อรูปสินค้า */
+@media (min-width: 768px) {
+    /* แบนเนอร์ด่วน/วันนี้ */
+    .order-card > [class*="bg-rose-600"], .order-card > [class*="bg-amber-500"] { padding-top: .25rem !important; padding-bottom: .25rem !important; }
+    /* ส่วนหัวการ์ด (ชื่อ/สถานะ/วันส่ง) */
+    .order-card .oc-left > div:first-child { padding: .75rem 1rem !important; }
+    /* ส่วนรายการสินค้า */
+    .order-card .oc-left-body { padding: .75rem 1rem 0 !important; }
+    .order-card .oc-left-body > * + * { margin-top: .5rem !important; }
+    /* ส่วนจุดนัดรับ/ยอดเงิน */
+    .order-card .oc-right { padding: .5rem 1rem .75rem !important; }
+    .order-card .oc-right > * + * { margin-top: .5rem !important; }
+    .order-card .oc-right .pt-3 { padding-top: .5rem !important; }
+    /* รายการสินค้าแต่ละชิ้น: ช่องว่างแน่นขึ้น */
+    .order-card .oc-items-wrap > * + * { margin-top: .25rem !important; }
+    .order-card .oc-items > * + * { margin-top: .125rem !important; }
+    .order-card .oc-item > * + * { margin-top: .125rem !important; }
+    .order-card .oc-item > label:first-child { padding-top: 0 !important; padding-bottom: 0 !important; }
+    /* รูปสินค้า 80px → 64px */
+    .order-card .oc-prod > button.relative { width: 4rem !important; height: 4rem !important; }
+    /* แถบปุ่มล่าง */
+    .order-card > .oc-cols + div { padding-top: .625rem !important; padding-bottom: .625rem !important; }
+}
+
+/* การ์ดส่งวันนี้ / เกินกำหนด (เฉพาะจอคอม ≥768px): กรอบรอบใบ 2px + เงาเรืองแสง แทนแถบหนาซ้าย และชิปเด่นขึ้น (แบนเนอร์ด้านบนถูกเอาออกแล้ว) */
+@media (min-width: 768px) {
+    .order-card.oc-today { border: 2px solid #f59e0b !important; box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.18), 0 6px 18px rgba(245, 158, 11, 0.22) !important; }
+    .order-card.oc-today:hover { box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.24), 0 10px 24px rgba(245, 158, 11, 0.28) !important; }
+    .order-card.oc-overdue { border: 2px solid #e11d48 !important; box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.16), 0 6px 18px rgba(225, 29, 72, 0.22) !important; }
+    .order-card.oc-overdue:hover { box-shadow: 0 0 0 4px rgba(225, 29, 72, 0.22), 0 10px 24px rgba(225, 29, 72, 0.28) !important; }
+    .order-card.oc-today .oc-date { color: #92400e; }
+    .order-card.oc-overdue .oc-date { color: #9f1239; }
+    .order-card.oc-today .oc-urgency-chip, .order-card.oc-overdue .oc-urgency-chip { font-size: .8125rem !important; padding: .2rem .75rem !important; box-shadow: 0 1px 3px rgba(15, 23, 42, 0.18); }
+}
+
+/* แถบสถานะบนการ์ดออเดอร์: ตัวต่อขั้นตอนมีตัวหนังสือ (ทุกขนาดจอ)
+   ขั้นที่ผ่านแล้ว = เทาเข้ม + ติ๊กถูก, ขั้นปัจจุบัน = ป้ายสีตามสถานะ (เหมือนช่องเลือกสถานะ), ขั้นที่ยังไม่ถึง = เทาจาง */
+.oc-stepper { --st: #64748b; display: flex; align-items: center; gap: .25rem; padding: .3rem .75rem; min-height: 26px; background: rgba(255, 255, 255, 0.75); border-bottom: 1px solid #f1f5f9; }
+.oc-step { display: inline-flex; align-items: center; gap: .3rem; white-space: nowrap; font-size: 11px; line-height: 1; font-weight: 500; color: #94a3b8; }
+.oc-step-dot { width: 14px; height: 14px; flex-shrink: 0; border-radius: 9999px; border: 2px solid #cbd5e1; background: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 8px; color: #fff; }
+.oc-step-line { flex: 1 1 0; min-width: 6px; height: 2px; border-radius: 2px; background: #e2e8f0; }
+.oc-step-line.is-on { background: #94a3b8; }
+.oc-step.is-done { color: #475569; }
+.oc-step.is-done .oc-step-dot { background: #64748b; border-color: #64748b; }
+.oc-step.st-pending { --st: #f59e0b; --st-bg: #fef3c7; --st-fg: #92400e; }
+.oc-step.st-in_progress { --st: #0ea5e9; --st-bg: #e0f2fe; --st-fg: #075985; }
+.oc-step.st-ready { --st: #6366f1; --st-bg: #e0e7ff; --st-fg: #3730a3; }
+.oc-step.st-completed { --st: #10b981; --st-bg: #d1fae5; --st-fg: #065f46; }
+.oc-step.is-current .oc-step-dot { background: var(--st); border-color: var(--st); box-shadow: 0 0 0 3px color-mix(in srgb, var(--st) 28%, transparent); }
+.oc-step.is-current .oc-step-label { color: var(--st-fg); background: var(--st-bg); font-weight: 800; font-size: 12px; padding: .2rem .5rem; border-radius: 9999px; }
+.oc-stepper-cancel { justify-content: center; font-size: 12px; font-weight: 700; color: #475569; background: #f1f5f9; }
