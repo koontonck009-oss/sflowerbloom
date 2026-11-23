@@ -693,10 +693,48 @@
                         showToast('ย้อนกลับแล้ว');
                     });
                 }
+                // ===== เสียงยืนยันการติ๊ก (Web Audio สังเคราะห์เสียงในโค้ด ไม่ใช้ไฟล์เสียง) =====
+                // เสียงดังหลัง "บันทึกสำเร็จ" เท่านั้น · บันทึกไม่สำเร็จ = เสียงต่ำสั้นๆ · ตัว AudioContext ต้องปลุกตอนกดจริง (unlockAudio) เบราว์เซอร์ถึงยอมให้เล่นทีหลัง
+                let _audioCtx = null;
+                function unlockAudio() {
+                    try {
+                        const AC = window.AudioContext || window.webkitAudioContext;
+                        if (!AC) return null;
+                        if (!_audioCtx) _audioCtx = new AC();
+                        if (_audioCtx.state === 'suspended') _audioCtx.resume();
+                        return _audioCtx;
+                    } catch (e) { return null; }
+                }
+                function playCheckSound(kind) {
+                    try {
+                        const ctx = unlockAudio();
+                        if (!ctx) return;
+                        const t0 = ctx.currentTime + 0.01;
+                        const tone = (freq, at, dur, vol, type) => {
+                            const o = ctx.createOscillator(), g = ctx.createGain();
+                            o.type = type || 'sine';
+                            o.frequency.setValueAtTime(freq, t0 + at);
+                            g.gain.setValueAtTime(0.0001, t0 + at);
+                            g.gain.exponentialRampToValueAtTime(vol, t0 + at + 0.01);
+                            g.gain.exponentialRampToValueAtTime(0.0001, t0 + at + dur);
+                            o.connect(g); g.connect(ctx.destination);
+                            o.start(t0 + at); o.stop(t0 + at + dur + 0.02);
+                        };
+                        if (kind === 'on') { tone(880, 0, 0.09, 0.22); tone(1320, 0.07, 0.12, 0.2); }          // ติ๊กถูก
+                        else if (kind === 'off') { tone(520, 0, 0.1, 0.16); }                                    // ยกเลิกติ๊ก (เบากว่า)
+                        else if (kind === 'ready') { tone(660, 0, 0.1, 0.22); tone(880, 0.09, 0.1, 0.22); tone(1320, 0.18, 0.22, 0.24); } // ครบทั้งออเดอร์
+                        else if (kind === 'error') { tone(220, 0, 0.16, 0.25, 'square'); tone(165, 0.15, 0.22, 0.25, 'square'); }        // บันทึกไม่สำเร็จ
+                    } catch (e) { /* เสียงเป็นส่วนเสริม ห้ามกระทบการบันทึก */ }
+                }
+                function soundAfterChecklist(r, checked) {
+                    playCheckSound(r && r.to === 'ready' && r.from !== 'ready' ? 'ready' : (checked ? 'on' : 'off'));
+                }
                 function setItemFlag(order, item, field, checked) {
+                    unlockAudio(); // เรียกตอนผู้ใช้กดจริง
                     const idx = (order.items || []).indexOf(item);
                     const id = item.id;
                     const prev = !!item[field];
+                    let applied = false;
                     item[field] = checked; // อัปเดตหน้าจอทันที ถ้าบันทึกไม่สำเร็จค่อยคืนค่า
                     mutateChecklist(order.id, (d) => {
                         const items = Array.isArray(d.items) ? d.items.map(i => ({ ...i })) : [];
@@ -704,18 +742,20 @@
                         if (!t) return null;
                         t[field] = checked;
                         if (field === 'needCard' && !checked) delete t.cardDone;
+                        applied = true;
                         return { items };
-                    }).then(r => afterChecklistWrite(order, r))
-                      .catch(() => { item[field] = prev; showToast('บันทึกการติ๊กไม่สำเร็จ ตรวจสอบการเชื่อมต่อ'); });
+                    }).then(r => { afterChecklistWrite(order, r); if (applied) soundAfterChecklist(r, checked); })
+                      .catch(() => { item[field] = prev; playCheckSound('error'); showToast('บันทึกการติ๊กไม่สำเร็จ ตรวจสอบการเชื่อมต่อ'); });
                 }
                 function toggleItemDone(order, item, checked) { setItemFlag(order, item, 'done', !!checked); }
                 function toggleCardDone(order, item, checked) { setItemFlag(order, item, 'cardDone', !!checked); }
                 function toggleOrderAllDone(order, checked) {
+                    unlockAudio(); // เรียกตอนผู้ใช้กดจริง
                     const prev = !!order.allDone;
                     order.allDone = !!checked;
                     mutateChecklist(order.id, () => ({ allDone: !!checked }))
-                        .then(r => afterChecklistWrite(order, r))
-                        .catch(() => { order.allDone = prev; showToast('บันทึกการติ๊กไม่สำเร็จ ตรวจสอบการเชื่อมต่อ'); });
+                        .then(r => { afterChecklistWrite(order, r); soundAfterChecklist(r, !!checked); })
+                        .catch(() => { order.allDone = prev; playCheckSound('error'); showToast('บันทึกการติ๊กไม่สำเร็จ ตรวจสอบการเชื่อมต่อ'); });
                 }
                 const itemNoteOpen = ref({}); // item.id -> true เมื่อกดเปิดช่องหมายเหตุในฟอร์ม
                 function isItemNoteOpen(item) { return !!String(item.note || '').trim() || !!itemNoteOpen.value[item.id]; }
