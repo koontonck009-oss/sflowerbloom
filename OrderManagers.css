@@ -82,13 +82,42 @@ body {
 .print-img-h-4 { max-height: 65mm; }
 .print-img-h-6 { max-height: 42mm; }
 
-/* รูปในใบสั่งงาน: ครอปให้เต็มช่อง และให้ตารางรูปสูงเต็มกรอบ (แบ่งความสูงเท่ากันทุกแถว) */
+/* รูปในใบสั่งงาน: ทุกช่องเป็นสัดส่วน 4:5 แนวตั้ง (ไม่ครอปยอดช่อ/ฐานกระถางเหมือนเดิม) จัดกึ่งกลางกรอบ
+   รองรับ 1-5 รูป: 1 = รูปเดียว, 2 = เคียงกัน, 3 = แถวเดียว, 4 = 2x2, 5 = แถวบน 3 + แถวล่าง 2 กึ่งกลาง
+   (JS ส่งคลาส print-img-grid-1 / -2 (2-4 รูป) / -3 (5 รูป) มา จึงแยก 2/3/4 รูปด้วย :has() ตามจำนวนลูก) */
 .image-frame { height: 145mm; box-sizing: border-box; }
-.image-frame .print-img-grid { flex: 1 1 auto; width: 100%; height: 100%; min-height: 0; grid-auto-rows: minmax(0, 1fr); }
-.image-frame .print-img-grid > div { position: relative; min-width: 0; min-height: 0; }
-.image-frame .print-img-grid img { width: 100%; height: 100%; max-width: 100%; max-height: none !important; object-fit: cover; }
-/* ใบสั่งงานที่มีรูปเดียว: แสดงเป็นสัดส่วน 4:5 (แนวตั้ง) กึ่งกลางกรอบ ไม่ครอปจนเต็มขอบ */
-.image-frame .print-img-grid-1 img { width: auto; height: 100%; max-width: 100%; aspect-ratio: 4 / 5; object-fit: cover; }
+.image-frame .print-img-grid {
+    display: flex !important;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-content: center;
+    align-items: center;
+    gap: 2mm !important;
+    margin: 0 auto;
+    flex: 0 0 auto;
+    height: auto !important;
+    min-height: 0;
+    max-width: 100%;
+}
+.image-frame .print-img-grid > div { position: relative; flex: 0 0 auto; aspect-ratio: 4 / 5; min-width: 0; min-height: 0; overflow: hidden; }
+.image-frame .print-img-grid img { width: 100%; height: 100%; max-width: 100%; max-height: none !important; object-fit: cover; display: block; }
+/* 1 รูป */
+.image-frame .print-img-grid-1 { width: 107mm !important; }
+.image-frame .print-img-grid-1 > div { width: 107mm; height: 133.75mm; }
+/* 2 รูป: สูงเต็มกรอบ และกว้างเต็มกรอบ (แต่ละช่องกว้างครึ่งหนึ่งของกรอบ สูงสุดไม่เกินสัดส่วน 4:5) — ครอปเฉพาะส่วนที่เกินเล็กน้อย */
+.image-frame .print-img-grid-2:not(:has(> :nth-child(3))) { width: 100% !important; }
+.image-frame .print-img-grid-2:not(:has(> :nth-child(3))) > div { width: min(calc((100% - 2mm) / 2), 107.2mm); height: 134mm; aspect-ratio: auto; }
+.image-frame .print-img-grid-2:not(:has(> :nth-child(3))) img { object-position: center; }
+/* 3 รูป: รูปใหญ่ซ้าย 1 รูป (สูงเต็มกรอบ) + รูปเล็กซ้อนขวา 2 รูป — ทุกช่อง 4:5 */
+.image-frame .print-img-grid-2:has(> :nth-child(3)):not(:has(> :nth-child(4))) { display: grid !important; grid-template-columns: 107.2mm 52.8mm; grid-template-rows: 66mm 66mm; gap: 2mm !important; width: 162mm !important; }
+.image-frame .print-img-grid-2:has(> :nth-child(3)):not(:has(> :nth-child(4))) > div:nth-child(1) { grid-row: 1 / span 2; width: 107.2mm; height: 134mm; }
+.image-frame .print-img-grid-2:has(> :nth-child(3)):not(:has(> :nth-child(4))) > div:nth-child(2), .image-frame .print-img-grid-2:has(> :nth-child(3)):not(:has(> :nth-child(4))) > div:nth-child(3) { width: 52.8mm; height: 66mm; }
+/* 4 รูป (2x2) */
+.image-frame .print-img-grid-2:has(> :nth-child(4)) { width: 108mm !important; }
+.image-frame .print-img-grid-2:has(> :nth-child(4)) > div { width: 53mm; height: 66.25mm; }
+/* 5 รูป (แถวบน 3 + แถวล่าง 2 กึ่งกลาง) */
+.image-frame .print-img-grid-3 { width: 163mm !important; }
+.image-frame .print-img-grid-3 > div { width: 53mm; height: 66.25mm; }
 /* รูปที่ถูกหมุน 90/270 องศา ใช้ครอปไม่ได้ (สัดส่วนสลับ) จึงคงแบบเห็นรูปครบ */
 .image-frame .print-img-grid img[style*="rotate(90deg)"],
 .image-frame .print-img-grid img[style*="rotate(270deg)"],
